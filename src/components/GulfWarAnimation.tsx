@@ -10,6 +10,7 @@ import {
 import { gulfCampaignCountries, gulfCountryClassName } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -94,7 +95,7 @@ export function GulfWarAnimation() {
       legendSecondary="联军行动"
       mapPoints={mapPoints}
       maxGapDays={4}
-      musicSource="/audio/wikimedia-holst-uranus.ogg"
+      musicSource={publicPath("/audio/wikimedia-holst-uranus.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

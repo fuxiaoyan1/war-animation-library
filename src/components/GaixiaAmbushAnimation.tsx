@@ -19,13 +19,14 @@ import {
 } from "../data/gaixiaAmbush";
 import { createCampaignProjection, projectPoint } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
+import { publicPath } from "../lib/publicPath";
 import { formatChineseDate } from "../lib/timeline";
 import { useMapInteraction } from "../lib/useMapInteraction";
 import { WarScore } from "../lib/warScore";
 
 const mapWidth = 1180;
 const mapHeight = 704;
-const musicSource = "/audio/shi-mian-mai-fu-pipa.mp3";
+const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventPoints = battleEvents.map((event) => ({
   id: event.id,
@@ -137,12 +138,12 @@ function routeShouldRender(route: (typeof routes)[number], progress: number, act
 function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKind }) {
   const faction = kind.startsWith("han") ? "han" : "chu";
   const imageConfig: Record<GaixiaUnitKind, { height: number; href: string; label: string; width: number }> = {
-    "chu-cavalry": { height: 50, href: "/assets/unit-icons/gaixia-chu-cavalry.webp", label: "楚骑", width: 65 },
-    "chu-command": { height: 56, href: "/assets/unit-icons/gaixia-chu-command.webp", label: "项", width: 34 },
-    "chu-infantry": { height: 56, href: "/assets/unit-icons/gaixia-chu-infantry.webp", label: "楚卒", width: 45 },
-    "han-cavalry": { height: 50, href: "/assets/unit-icons/gaixia-han-cavalry.webp", label: "汉骑", width: 65 },
-    "han-crossbow": { height: 58, href: "/assets/unit-icons/gaixia-han-crossbow.webp", label: "汉弩", width: 39 },
-    "han-infantry": { height: 58, href: "/assets/unit-icons/gaixia-han-infantry.webp", label: "汉卒", width: 39 }
+    "chu-cavalry": { height: 50, href: publicPath("/assets/unit-icons/gaixia-chu-cavalry.webp"), label: "楚骑", width: 65 },
+    "chu-command": { height: 56, href: publicPath("/assets/unit-icons/gaixia-chu-command.webp"), label: "项", width: 34 },
+    "chu-infantry": { height: 56, href: publicPath("/assets/unit-icons/gaixia-chu-infantry.webp"), label: "楚卒", width: 45 },
+    "han-cavalry": { height: 50, href: publicPath("/assets/unit-icons/gaixia-han-cavalry.webp"), label: "汉骑", width: 65 },
+    "han-crossbow": { height: 58, href: publicPath("/assets/unit-icons/gaixia-han-crossbow.webp"), label: "汉弩", width: 39 },
+    "han-infantry": { height: 58, href: publicPath("/assets/unit-icons/gaixia-han-infantry.webp"), label: "汉卒", width: 39 }
   };
   const config = imageConfig[kind];
   const x = -config.width / 2;
@@ -415,7 +416,7 @@ export function GaixiaAmbushAnimation() {
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
             <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" transform={mapTransform}>
-              <image className="gaixia-ground" href="/assets/maps/gaixia-terrain-dem.webp" x="0" y="0" width={mapWidth} height={mapHeight} preserveAspectRatio="xMidYMid slice" />
+              <image className="gaixia-ground" href={publicPath("/assets/maps/gaixia-terrain-dem.webp")} x="0" y="0" width={mapWidth} height={mapHeight} preserveAspectRatio="xMidYMid slice" />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <rect x="0" y="0" width={mapWidth} height={mapHeight} />
                 <g className="gaixia-contour-layer" data-testid="gaixia-contour-layer">

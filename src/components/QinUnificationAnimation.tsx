@@ -9,6 +9,7 @@ import {
 import { qinCampaignCountries, qinCountryClassName } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -79,7 +80,7 @@ export function QinUnificationAnimation() {
       legendSecondary="六国反击"
       mapPoints={mapPoints}
       maxGapDays={45}
-      musicSource="/audio/fiftysounds-invincible.mp3"
+      musicSource={publicPath("/audio/fiftysounds-invincible.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

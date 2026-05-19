@@ -9,6 +9,7 @@ import {
 } from "../data/koreanWar";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { koreanWarCampaignCountries, koreanWarCountryClassName } from "../lib/geoMap";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -95,7 +96,7 @@ export function KoreanWarAnimation() {
       legendSecondary="联合国军行动"
       mapPoints={mapPoints}
       maxGapDays={18}
-      musicSource="/audio/wikimedia-holst-jupiter.ogg"
+      musicSource={publicPath("/audio/wikimedia-holst-jupiter.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

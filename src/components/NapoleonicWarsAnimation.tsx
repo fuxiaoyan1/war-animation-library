@@ -11,6 +11,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -89,7 +90,7 @@ export function NapoleonicWarsAnimation() {
       legendSecondary="反法联盟反攻"
       mapPoints={mapPoints}
       maxGapDays={120}
-      musicSource="/audio/radetzky-march.mp3"
+      musicSource={publicPath("/audio/radetzky-march.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

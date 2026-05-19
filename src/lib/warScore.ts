@@ -1,3 +1,5 @@
+import { publicPath } from "./publicPath";
+
 export type BattleCueKind = "cannon" | "dive" | "melee" | "strafing" | "combined";
 
 type SfxKey = "cannon" | "explosion" | "aircraft" | "melee" | "strafing";
@@ -9,33 +11,33 @@ type SfxClip = {
   maxDuration?: number;
 };
 
-const defaultMusicSource = "/audio/semper-fidelis-march.mp3";
+const defaultMusicSource = publicPath("/audio/semper-fidelis-march.mp3");
 
 const sfxClips: Record<SfxKey, SfxClip> = {
   cannon: {
-    src: "/audio/sfx/cannon-howitzer.mp3",
+    src: publicPath("/audio/sfx/cannon-howitzer.mp3"),
     volume: 0.34,
     maxDuration: 3.2
   },
   explosion: {
-    src: "/audio/sfx/explosion-heavy.mp3",
+    src: publicPath("/audio/sfx/explosion-heavy.mp3"),
     volume: 0.28,
     maxDuration: 4.6
   },
   aircraft: {
-    src: "/audio/sfx/airplane-in-flight.mp3",
+    src: publicPath("/audio/sfx/airplane-in-flight.mp3"),
     volume: 0.34,
     offset: 4.5,
     maxDuration: 5.2
   },
   melee: {
-    src: "/audio/sfx/swords-clashing.mp3",
+    src: publicPath("/audio/sfx/swords-clashing.mp3"),
     volume: 0.34,
     offset: 3.1,
     maxDuration: 3.2
   },
   strafing: {
-    src: "/audio/sfx/machine-gun-vulcan.mp3",
+    src: publicPath("/audio/sfx/machine-gun-vulcan.mp3"),
     volume: 0.3,
     offset: 1.15,
     maxDuration: 2.6
@@ -117,7 +119,7 @@ export class WarScore {
       return;
     }
 
-    const music = new Audio(this.musicSource);
+    const music = new Audio(publicPath(this.musicSource));
     music.loop = true;
     music.preload = "auto";
     music.volume = 0.72;

@@ -12,6 +12,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -91,7 +92,7 @@ export function AlexanderConquestsAnimation() {
       legendSecondary="抵抗 / 东进极限"
       mapPoints={mapPoints}
       maxGapDays={80}
-      musicSource="/audio/wikimedia-holst-mars.ogg"
+      musicSource={publicPath("/audio/wikimedia-holst-mars.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

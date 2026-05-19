@@ -1,3 +1,4 @@
+import { publicPath } from "../lib/publicPath";
 import type { UnitIconKind } from "../types/units";
 
 type UnitIconProps = {
@@ -18,7 +19,7 @@ const iconConfig: Record<
     className: "cannon-marker",
     defaultFacingX: 1,
     height: 64,
-    href: "/assets/unit-icons/cannon.webp",
+    href: publicPath("/assets/unit-icons/cannon.webp"),
     testId: "cannon-marker",
     width: 78
   },
@@ -26,7 +27,7 @@ const iconConfig: Record<
     className: "carrier-marker",
     defaultFacingX: 1,
     height: 50,
-    href: "/assets/unit-icons/carrier.webp",
+    href: publicPath("/assets/unit-icons/carrier.webp"),
     testId: "carrier-marker",
     width: 136
   },
@@ -34,7 +35,7 @@ const iconConfig: Record<
     className: "carrier-essex-marker",
     defaultFacingX: 1,
     height: 54,
-    href: "/assets/unit-icons/carrier-essex.webp",
+    href: publicPath("/assets/unit-icons/carrier-essex.webp"),
     testId: "carrier-essex-marker",
     width: 150
   },
@@ -42,7 +43,7 @@ const iconConfig: Record<
     className: "cavalry-marker",
     defaultFacingX: -1,
     height: 72,
-    href: "/assets/unit-icons/cavalry.webp",
+    href: publicPath("/assets/unit-icons/cavalry.webp"),
     testId: "cavalry-marker",
     width: 90
   },
@@ -50,7 +51,7 @@ const iconConfig: Record<
     className: "chariot-marker",
     defaultFacingX: 1,
     height: 58,
-    href: "/assets/unit-icons/chariot.webp",
+    href: publicPath("/assets/unit-icons/chariot.webp"),
     testId: "chariot-marker",
     width: 136
   },
@@ -58,7 +59,7 @@ const iconConfig: Record<
     className: "fighter-marker",
     defaultFacingX: 1,
     height: 58,
-    href: "/assets/unit-icons/fighter.webp",
+    href: publicPath("/assets/unit-icons/fighter.webp"),
     testId: "fighter-marker",
     width: 136
   },
@@ -66,7 +67,7 @@ const iconConfig: Record<
     className: "infantry-marker",
     defaultFacingX: 1,
     height: 92,
-    href: "/assets/unit-icons/infantry.webp",
+    href: publicPath("/assets/unit-icons/infantry.webp"),
     testId: "infantry-marker",
     width: 74
   },
@@ -74,7 +75,7 @@ const iconConfig: Record<
     className: "infantry-pva-marker",
     defaultFacingX: 1,
     height: 92,
-    href: "/assets/unit-icons/infantry-pva.webp",
+    href: publicPath("/assets/unit-icons/infantry-pva.webp"),
     testId: "infantry-pva-marker",
     width: 57
   },
@@ -82,7 +83,7 @@ const iconConfig: Record<
     className: "sabre-marker",
     defaultFacingX: 1,
     height: 58,
-    href: "/assets/unit-icons/sabre.webp",
+    href: publicPath("/assets/unit-icons/sabre.webp"),
     testId: "sabre-marker",
     width: 138
   },
@@ -90,7 +91,7 @@ const iconConfig: Record<
     className: "ship-marker",
     defaultFacingX: 1,
     height: 62,
-    href: "/assets/unit-icons/ship.webp",
+    href: publicPath("/assets/unit-icons/ship.webp"),
     testId: "ship-marker",
     width: 94
   },
@@ -98,7 +99,7 @@ const iconConfig: Record<
     className: "tank-marker",
     defaultFacingX: -1,
     height: 66,
-    href: "/assets/unit-icons/tank.webp",
+    href: publicPath("/assets/unit-icons/tank.webp"),
     testId: "tank-marker",
     width: 92
   },
@@ -106,7 +107,7 @@ const iconConfig: Record<
     className: "tank-korean-marker",
     defaultFacingX: 1,
     height: 60,
-    href: "/assets/unit-icons/tank-korean.webp",
+    href: publicPath("/assets/unit-icons/tank-korean.webp"),
     testId: "tank-korean-marker",
     width: 96
   },
@@ -114,7 +115,7 @@ const iconConfig: Record<
     className: "warship-marker",
     defaultFacingX: 1,
     height: 56,
-    href: "/assets/unit-icons/warship.webp",
+    href: publicPath("/assets/unit-icons/warship.webp"),
     testId: "warship-marker",
     width: 168
   }

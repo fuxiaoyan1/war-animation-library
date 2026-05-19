@@ -11,6 +11,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -87,7 +88,7 @@ export function CrusadesAnimation() {
       legendSecondary="穆斯林政权反攻"
       mapPoints={mapPoints}
       maxGapDays={70}
-      musicSource="/audio/wikimedia-washington-post.ogg"
+      musicSource={publicPath("/audio/wikimedia-washington-post.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

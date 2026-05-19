@@ -11,6 +11,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -86,7 +87,7 @@ export function MongolEmpireAnimation() {
       legendSecondary="防御/反击"
       mapPoints={mapPoints}
       maxGapDays={95}
-      musicSource="/audio/gutenberg-stars-and-stripes.mp3"
+      musicSource={publicPath("/audio/gutenberg-stars-and-stripes.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

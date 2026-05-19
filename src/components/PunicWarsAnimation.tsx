@@ -11,6 +11,7 @@ import {
   mediterraneanCountryClassName
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -84,7 +85,7 @@ export function PunicWarsAnimation() {
       legendSecondary="罗马推进"
       mapPoints={mapPoints}
       maxGapDays={80}
-      musicSource="/audio/fiftysounds-only-the-braves.mp3"
+      musicSource={publicPath("/audio/fiftysounds-only-the-braves.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

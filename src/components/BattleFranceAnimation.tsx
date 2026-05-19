@@ -7,6 +7,7 @@ import {
 } from "../data/battleOfFrance";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { countryClassName, westernEuropeCountries } from "../lib/geoMap";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const timeline = createCampaignTimeline({
@@ -82,7 +83,7 @@ export function BattleFranceAnimation() {
       legendPrimary="德军推进"
       legendSecondary="盟军行动"
       mapPoints={mapPoints}
-      musicSource="/audio/directory-audio-military-exercise.mp3"
+      musicSource={publicPath("/audio/directory-audio-military-exercise.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

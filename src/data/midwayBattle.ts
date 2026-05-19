@@ -1,3 +1,5 @@
+import { publicPath } from "../lib/publicPath";
+
 export const campaignStart = "1942-06-04T04:30";
 export const campaignEnd = "1942-06-07T06:00";
 
@@ -131,7 +133,7 @@ export const tacticalPoints: TacticalPoint[] = [
 export const carriers: Carrier[] = [
   {
     id: "enterprise",
-    asset: "/assets/unit-icons/midway-enterprise.webp",
+    asset: publicPath("/assets/unit-icons/midway-enterprise.webp"),
     faction: "us",
     formationId: "us-tf16",
     formationOffset: [0, -28],
@@ -144,7 +146,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "hornet",
-    asset: "/assets/unit-icons/midway-hornet.webp",
+    asset: publicPath("/assets/unit-icons/midway-hornet.webp"),
     faction: "us",
     formationId: "us-tf16",
     formationOffset: [-70, 28],
@@ -157,7 +159,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "yorktown",
-    asset: "/assets/unit-icons/midway-yorktown.webp",
+    asset: publicPath("/assets/unit-icons/midway-yorktown.webp"),
     faction: "us",
     formationId: "us-tf17",
     formationOffset: [0, 0],
@@ -172,7 +174,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "akagi",
-    asset: "/assets/unit-icons/midway-akagi.webp",
+    asset: publicPath("/assets/unit-icons/midway-akagi.webp"),
     faction: "japan",
     formationId: "japan-kido-butai",
     formationOffset: [0, -34],
@@ -187,7 +189,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "kaga",
-    asset: "/assets/unit-icons/midway-kaga.webp",
+    asset: publicPath("/assets/unit-icons/midway-kaga.webp"),
     faction: "japan",
     formationId: "japan-kido-butai",
     formationOffset: [-72, 34],
@@ -202,7 +204,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "soryu",
-    asset: "/assets/unit-icons/midway-soryu.webp",
+    asset: publicPath("/assets/unit-icons/midway-soryu.webp"),
     faction: "japan",
     formationId: "japan-kido-butai",
     formationOffset: [-144, -28],
@@ -217,7 +219,7 @@ export const carriers: Carrier[] = [
   },
   {
     id: "hiryu",
-    asset: "/assets/unit-icons/midway-hiryu.webp",
+    asset: publicPath("/assets/unit-icons/midway-hiryu.webp"),
     faction: "japan",
     formationId: "japan-hiryu",
     formationOffset: [0, 0],

@@ -11,6 +11,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -97,7 +98,7 @@ export function PacificWarAnimation() {
       legendSecondary="美军航母反攻"
       mapPoints={mapPoints}
       maxGapDays={30}
-      musicSource="/audio/semper-fidelis-march.mp3"
+      musicSource={publicPath("/audio/semper-fidelis-march.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

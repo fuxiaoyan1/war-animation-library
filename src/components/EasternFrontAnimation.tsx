@@ -11,6 +11,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const timeline = createCampaignTimeline({
@@ -142,7 +143,7 @@ export function EasternFrontAnimation() {
       legendPrimary="德军推进"
       legendSecondary="苏军反攻"
       mapPoints={mapPoints}
-      musicSource="/audio/fiftysounds-false-flag.mp3"
+      musicSource={publicPath("/audio/fiftysounds-false-flag.mp3")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

@@ -11,6 +11,7 @@ import {
   projectPoint
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
+import { publicPath } from "../lib/publicPath";
 import { formatChineseDate, interpolatePoint } from "../lib/timeline";
 import { useMapInteraction } from "../lib/useMapInteraction";
 import { WarScore, type BattleCueKind } from "../lib/warScore";
@@ -777,7 +778,7 @@ export function CampaignMapAnimation({
                 <image
                   className="ancient-map-ornaments"
                   data-testid="ancient-map-ornaments"
-                  href="/assets/maps/qin-warring-states-map.svg"
+                  href={publicPath("/assets/maps/qin-warring-states-map.svg")}
                   width={mapWidth}
                   height={mapHeight}
                   preserveAspectRatio="xMidYMid meet"

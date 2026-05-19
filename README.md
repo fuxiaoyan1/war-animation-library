@@ -4,6 +4,10 @@ Data-driven interactive web animations for historical campaigns, with reusable r
 
 The project is separated from the original local working folder so it can be managed as a standalone GitHub repository.
 
+## Live Demo
+
+Open the GitHub Pages demo at <https://fuxiaoyan1.github.io/war-animation-lab/>.
+
 ## What's Included
 
 - A React/Vite war animation library homepage.
@@ -45,6 +49,10 @@ The smoke tests expect browser dependencies installed by Playwright. If needed:
 ```bash
 npx playwright install chromium
 ```
+
+## Publish Demo
+
+The GitHub Pages workflow builds the Vite app with the repository base path and deploys `dist` from GitHub Actions after pushes to `main`.
 
 ## Skill / Agent
 

@@ -22,12 +22,13 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline, toTime } from "../lib/campaignTimeline";
 import { formatChineseDate } from "../lib/timeline";
+import { publicPath } from "../lib/publicPath";
 import { useMapInteraction } from "../lib/useMapInteraction";
 import { WarScore, type BattleCueKind } from "../lib/warScore";
 
 const mapWidth = 1180;
 const mapHeight = 704;
-const musicSource = "/audio/wikimedia-liberty-bell.ogg";
+const musicSource = publicPath("/audio/wikimedia-liberty-bell.ogg");
 
 const eventPoints = battleEvents.map((event) => ({
   id: event.id,

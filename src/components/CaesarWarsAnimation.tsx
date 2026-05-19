@@ -12,6 +12,7 @@ import {
 } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -93,7 +94,7 @@ export function CaesarWarsAnimation() {
       legendSecondary="共和派 / 抵抗"
       mapPoints={mapPoints}
       maxGapDays={75}
-      musicSource="/audio/wikimedia-1812-overture.ogg"
+      musicSource={publicPath("/audio/wikimedia-1812-overture.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

@@ -9,6 +9,7 @@ import {
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { tsushimaCampaignCountries, tsushimaCountryClassName } from "../lib/geoMap";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
+import { publicPath } from "../lib/publicPath";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const timeline = createCampaignTimeline({
@@ -78,7 +79,7 @@ export function TsushimaBattleAnimation() {
       legendPrimary="俄第二太平洋舰队北上/残部"
       legendSecondary="日本联合舰队截击"
       mapPoints={mapPoints}
-      musicSource="/audio/wikimedia-hands-across-the-sea.ogg"
+      musicSource={publicPath("/audio/wikimedia-hands-across-the-sea.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[
