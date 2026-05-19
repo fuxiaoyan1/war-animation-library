@@ -783,8 +783,12 @@ test("war library home lists ancient and modern animations", async ({ page }) =>
 
   await page.goto("/");
   await expect(page.getByTestId("war-library-home")).toBeVisible();
+  await expect(page).toHaveTitle("战争动画藏书馆");
   await expect(page.getByTestId("return-home")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "战争动画藏书馆" })).toBeVisible();
+  await expect(page.getByTestId("war-library-home")).toContainText("Codex Bellorum / 战争动画藏书馆");
+  await expect(page.locator("body")).not.toContainText("War Animation Lab");
+  await expect(page.locator("body")).not.toContainText("战争动画实验室");
   await expect(page.getByRole("heading", { name: "古代战争" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "现代战争" })).toBeVisible();
   await expect(page.locator(".campaign-switcher")).toHaveCount(0);
@@ -852,6 +856,9 @@ test("interactive battle of france animation still works", async ({ page }) => {
   await openCampaignFromHome(page, "france");
   await expect(page.getByTestId("battle-app")).toBeVisible();
   await expect(page.getByRole("heading", { name: "1940 德法战役" })).toBeVisible();
+  await expect(page.locator("body")).toContainText("战争动画藏书馆 / 现代战争");
+  await expect(page.locator("body")).not.toContainText("War Animation Lab");
+  await expect(page.locator("body")).not.toContainText("战争动画实验室");
   await expect(page.getByTestId("active-event-card")).toContainText("黄色方案启动");
   await expect(page.getByTestId("score-toggle")).toContainText("配乐待播放");
 

@@ -694,7 +694,8 @@ export function CampaignMapAnimation({
       <section className="cinema-grid">
         <article ref={stageRef} className="map-stage" data-testid="map-stage">
           <div className="map-topbar map-overlay">
-            <div data-testid="map-title-card">
+            <div className="map-title-card" data-testid="map-title-card">
+              <p className="map-eyebrow">{eyebrow}</p>
               <h1>{title}</h1>
             </div>
             <span className="day-counter">

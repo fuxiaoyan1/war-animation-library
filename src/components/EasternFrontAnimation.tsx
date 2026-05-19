@@ -130,7 +130,7 @@ export function EasternFrontAnimation() {
       countryClassName={easternCountryClassName}
       cueEvents={cueEvents}
       diveCueEvents={new Set(["stalingrad-urban"])}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "easternOpening" },
         { fromProgress: timeline.dateToProgress("1942-06-28"), focus: "easternSouth" },

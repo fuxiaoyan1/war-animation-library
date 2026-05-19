@@ -73,7 +73,7 @@ export function MongolEmpireAnimation() {
       countries={mongolCampaignCountries}
       countryClassName={mongolCountryClassName}
       cueEvents={new Set(["kurultai-1206", "samarkand-1220", "kalka-1223", "baghdad-1258", "xiangyang-1273", "yamen-1279"])}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "mongolWide" },
         { fromProgress: timeline.dateToProgress("1219-09-01"), focus: "mongolCentralAsia" },

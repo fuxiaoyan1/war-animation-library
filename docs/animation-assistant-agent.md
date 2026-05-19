@@ -15,7 +15,7 @@
 
 ### 阶段 1：从试验项目到可运行页面
 
-- 创建桌面项目 `War Animation Lab`。
+- 创建桌面项目 `战争动画藏书馆`。
 - 采用 Vite + React + TypeScript，保持轻量。
 - 建立 `src/data`、`src/lib`、`docs/sources`、`tests`。
 - 用结构化数据驱动二战德法战役时间线。

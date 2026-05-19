@@ -1,6 +1,6 @@
 # Battle of France Animation Retrospective
 
-This retrospective captures reusable lessons from building the War Animation Lab React/Vite web animation for the 1940 Battle of France.
+This retrospective captures reusable lessons from building the 战争动画藏书馆 React/Vite web animation for the 1940 Battle of France.
 
 ## What Worked
 

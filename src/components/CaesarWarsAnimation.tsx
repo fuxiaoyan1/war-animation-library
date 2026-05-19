@@ -75,7 +75,7 @@ export function CaesarWarsAnimation() {
       countries={caesarCampaignCountries}
       countryClassName={caesarCountryClassName}
       cueEvents={battleCueEventIds}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "caesarGaul" },
         { fromProgress: timeline.dateToProgress("BCE-0055-08-01"), focus: "caesarBritain" },

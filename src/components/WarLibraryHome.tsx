@@ -130,7 +130,7 @@ export function WarLibraryHome({ onOpen }: WarLibraryHomeProps) {
         <div className="book-spine" />
         <div className="illumination illumination-left" />
         <div className="illumination illumination-right" />
-        <p className="eyebrow">Codex Bellorum / War Animation Lab</p>
+        <p className="eyebrow">Codex Bellorum / 战争动画藏书馆</p>
         <h1>战争动画藏书馆</h1>
         <p className="hero-lede">
           以拿破仑时代为分界：拿破仑及其后的战争归入现代战争，更早的战争归入古代战争。每部动画控制在 5 分钟，保留播放、暂停、回放和时间轴拖拽。

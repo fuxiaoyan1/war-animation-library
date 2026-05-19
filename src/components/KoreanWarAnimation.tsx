@@ -75,7 +75,7 @@ export function KoreanWarAnimation() {
       countryClassName={koreanWarCountryClassName}
       cueEvents={cueEventIds}
       diveCueEvents={diveCueEventIds}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "koreaPeninsula" },
         { fromProgress: timeline.dateToProgress("1950-08-04"), focus: "koreaSouth" },

@@ -74,7 +74,7 @@ export function AlexanderConquestsAnimation() {
       countries={alexanderCampaignCountries}
       countryClassName={alexanderCountryClassName}
       cueEvents={battleCueEventIds}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "alexanderAegean" },
         { fromProgress: timeline.dateToProgress("BCE-0333-11-02"), focus: "alexanderLevantEgypt" },

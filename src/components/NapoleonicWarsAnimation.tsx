@@ -75,7 +75,7 @@ export function NapoleonicWarsAnimation() {
       countryClassName={europeCampaignCountryClassName}
       cueEvents={new Set(["italian-campaign", "austerlitz", "jena", "wagram", "russia", "leipzig", "waterloo"])}
       diveCueEvents={new Set(["austerlitz", "waterloo"])}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "europeCentral" },
         { fromProgress: timeline.dateToProgress("1798-07-21"), focus: "mediterranean" },

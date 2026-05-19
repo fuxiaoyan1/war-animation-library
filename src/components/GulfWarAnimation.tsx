@@ -77,7 +77,7 @@ export function GulfWarAnimation() {
       countryClassName={gulfCountryClassName}
       cueEvents={cueEventIds}
       diveCueEvents={diveCueEventIds}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "gulfKuwait" },
         { fromProgress: timeline.dateToProgress("1990-08-07"), focus: "gulfWide" },

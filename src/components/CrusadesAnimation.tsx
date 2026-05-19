@@ -74,7 +74,7 @@ export function CrusadesAnimation() {
       countries={crusadesCampaignCountries}
       countryClassName={crusadesCountryClassName}
       cueEvents={new Set(["jerusalem-1099", "edessa-1144", "hattin", "constantinople-1204", "acre-1291"])}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "easternMediterranean" },
         { fromProgress: timeline.dateToProgress("1099-01-13"), focus: "levant" },

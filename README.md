@@ -1,4 +1,4 @@
-# War Animation Lab
+# 战争动画藏书馆
 
 Data-driven interactive web animations for historical campaigns, with reusable renderer patterns, source notes, Playwright smoke tests, and an included Codex skill for building more animations.
 
@@ -6,7 +6,7 @@ The project is separated from the original local working folder so it can be man
 
 ## Live Demo
 
-Open the GitHub Pages demo at <https://fuxiaoyan1.github.io/war-animation-lab/>.
+Open the GitHub Pages demo at <https://fuxiaoyan1.github.io/war-animation-library/>.
 
 ## What's Included
 

@@ -65,7 +65,7 @@ export function QinUnificationAnimation() {
       countries={qinCampaignCountries}
       countryClassName={qinCountryClassName}
       cueEvents={new Set(["han-falls", "zhao-falls", "wei-falls", "li-xin-defeat", "chu-falls", "qi-falls"])}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "chinaGuanzhongExpanded" },
         { fromProgress: timeline.dateToProgress("BCE-0228-01-01"), focus: "chinaWarringStates" },

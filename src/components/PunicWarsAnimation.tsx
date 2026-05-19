@@ -71,7 +71,7 @@ export function PunicWarsAnimation() {
       countryClassName={mediterraneanCountryClassName}
       cueEvents={battleCueEventIds}
       diveCueEvents={new Set(["cannae"])}
-      eyebrow="War Animation Lab / 古代战争"
+      eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
         { fromProgress: 0, focus: "centralMediterranean" },
         { fromProgress: timeline.dateToProgress("BCE-0219-01-01"), focus: "westernMediterranean" },

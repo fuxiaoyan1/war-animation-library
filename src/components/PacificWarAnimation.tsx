@@ -76,7 +76,7 @@ export function PacificWarAnimation() {
       countryClassName={pacificCountryClassName}
       cueEvents={new Set(["pearl-harbor", "midway", "guadalcanal", "saipan", "leyte-gulf", "okinawa", "surrender"])}
       diveCueEvents={new Set(["pearl-harbor", "midway", "leyte-gulf", "okinawa"])}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "pacificPearl" },
         { fromProgress: timeline.dateToProgress("1942-02-15"), focus: "pacificWide" },

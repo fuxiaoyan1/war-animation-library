@@ -68,7 +68,7 @@ export function TsushimaBattleAnimation() {
       countries={tsushimaCampaignCountries}
       countryClassName={tsushimaCountryClassName}
       cueEvents={cueEventIds}
-      eyebrow="War Animation Lab / 现代战争"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "tsushimaStrait" },
         { fromProgress: timeline.dateToProgress("1905-05-27T13:40"), focus: "tsushimaBattle" },

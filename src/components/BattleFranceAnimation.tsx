@@ -72,7 +72,7 @@ export function BattleFranceAnimation() {
       countryClassName={countryClassName}
       cueEvents={cueEvents}
       diveCueEvents={new Set(["dunkirk-pocket"])}
-      eyebrow="War Animation Lab / 实验一"
+      eyebrow="战争动画藏书馆 / 现代战争"
       focusSteps={[
         { fromProgress: 0, focus: "north" },
         { fromProgress: timeline.dateToProgress("1940-06-10"), focus: "france" },

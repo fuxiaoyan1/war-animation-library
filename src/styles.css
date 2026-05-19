@@ -542,12 +542,25 @@ h1 {
   width: auto;
   max-width: min(430px, calc(100vw - 64px));
   min-height: 34px;
-  padding: 5px 10px;
+  padding: 5px 10px 6px;
   border: 1px solid rgba(247, 237, 213, 0.12);
-  border-radius: 999px;
+  border-radius: 12px;
   background: rgba(5, 12, 14, 0.16);
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.map-eyebrow {
+  margin: 0 0 2px;
+  overflow: hidden;
+  color: var(--gold);
+  font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .map-topbar h1 {
