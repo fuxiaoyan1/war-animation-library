@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 880" role="img" aria-label="战国古舆图背景">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ead8a6"/>
+      <stop offset="0.48" stop-color="#cfad72"/>
+      <stop offset="1" stop-color="#a77949"/>
+    </linearGradient>
+    <radialGradient id="age" cx="52%" cy="48%" r="74%">
+      <stop offset="0" stop-color="#f6e6b9" stop-opacity="0.12"/>
+      <stop offset="0.68" stop-color="#7a5430" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#2e1d10" stop-opacity="0.3"/>
+    </radialGradient>
+    <filter id="paperGrain" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.016 0.038" numOctaves="3" seed="221"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.16"/>
+      </feComponentTransfer>
+    </filter>
+    <filter id="inkSoft" x="-4%" y="-4%" width="108%" height="108%">
+      <feGaussianBlur stdDeviation="0.22"/>
+    </filter>
+    <style>
+      .state{stroke:#5b3c21;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round;filter:url(#inkSoft)}
+      .coast{fill:none;stroke:#315f66;stroke-width:3.2;stroke-linejoin:round;stroke-linecap:round;opacity:.58}
+      .river{fill:none;stroke:#376b70;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:.5}
+      .river-thin{fill:none;stroke:#376b70;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.42}
+      .boundary{fill:none;stroke:#5b3c21;stroke-width:1.5;stroke-dasharray:13 10;stroke-linecap:round;opacity:.46}
+      .place{fill:#3b2413;font-family:"Songti SC","STSong","Kaiti SC",serif;font-weight:700;letter-spacing:8px;opacity:.74}
+      .small-place{fill:#3b2413;font-family:"Songti SC","STSong","Kaiti SC",serif;font-weight:600;letter-spacing:4px;opacity:.6}
+      .seal{fill:none;stroke:#5a321c;stroke-width:2;opacity:.34}
+    </style>
+  </defs>
+
+  <rect width="1180" height="880" fill="url(#paper)"/>
+  <rect width="1180" height="880" filter="url(#paperGrain)" opacity="0.68"/>
+
+  <g opacity="0.9">
+    <path class="coast" d="M789 160C838 146 880 160 905 196C933 238 975 250 1030 246C1078 243 1116 268 1130 312C1148 371 1126 429 1088 474C1055 514 1040 553 1054 604C1068 659 1030 718 956 746C878 776 801 754 730 792C666 826 581 833 514 800C461 774 400 778 335 800C258 828 196 787 182 716C168 645 193 596 180 540C166 480 176 432 226 392C284 345 327 320 342 260C354 212 397 171 454 166C520 160 565 186 622 180C688 172 724 176 789 160Z"/>
+
+    <path class="state" fill="#c99545" d="M161 505C177 452 225 407 288 390C330 379 350 340 356 300C362 258 386 226 429 215C458 208 484 213 506 228C493 267 495 310 518 341C494 376 484 420 498 464C468 488 442 518 425 555C404 598 372 634 326 658C272 686 210 675 184 625C164 588 148 550 161 505Z"/>
+    <path class="state" fill="#b88174" d="M417 212C479 191 533 207 584 221C629 233 671 222 710 205C722 249 715 298 688 335C646 330 605 345 574 374C542 369 516 357 498 337C474 310 474 265 494 229C468 214 443 207 417 212Z"/>
+    <path class="state" fill="#9b7964" d="M705 203C765 177 836 156 904 176C953 190 981 228 977 275C973 326 934 366 886 385C829 407 771 382 724 351C696 333 695 334 687 337C715 298 722 249 705 203Z"/>
+    <path class="state" fill="#93a164" d="M719 352C752 369 782 399 801 436C828 492 879 499 936 484C990 470 1025 491 1034 540C1044 597 998 634 935 639C872 644 811 624 756 652C703 678 651 660 638 608C626 561 640 508 667 469C692 431 704 389 719 352Z"/>
+    <path class="state" fill="#b37556" d="M498 464C485 420 495 376 519 341C550 358 593 374 632 381C657 386 676 368 688 337C698 337 710 345 722 353C706 389 694 431 668 470C642 509 628 559 638 607C591 616 545 604 512 571C484 545 456 539 425 555C442 519 468 488 498 464Z"/>
+    <path class="state" fill="#c7b187" d="M500 463C532 458 559 461 584 474C614 489 627 519 639 607C597 611 553 602 520 573C493 549 462 538 426 556C440 519 468 488 500 463Z"/>
+    <path class="state" fill="#89a487" d="M426 556C458 539 491 548 520 574C555 605 601 615 639 607C653 659 703 678 756 653C807 628 867 645 934 640C928 698 870 745 782 756C706 765 645 798 572 786C503 774 467 728 434 681C405 640 397 601 426 556Z"/>
+  </g>
+
+  <g>
+    <path class="river" d="M191 366C278 331 371 327 472 354C565 379 650 379 743 345C833 313 921 315 1010 344"/>
+    <path class="river-thin" d="M445 461C520 456 592 477 647 514C707 553 790 565 884 540"/>
+    <path class="river-thin" d="M383 604C473 591 535 618 590 658C650 701 743 710 848 674"/>
+  </g>
+
+  <g>
+    <path class="boundary" d="M510 230C493 280 499 321 528 350"/>
+    <path class="boundary" d="M687 336C660 360 655 397 670 470"/>
+    <path class="boundary" d="M500 464C537 458 588 472 639 607"/>
+    <path class="boundary" d="M425 555C470 539 496 549 521 574"/>
+    <path class="boundary" d="M719 352C696 397 692 436 668 470"/>
+    <path class="boundary" d="M354 299C407 302 458 321 498 337"/>
+  </g>
+
+  <g class="place">
+    <text x="270" y="410" font-size="44">秦</text>
+    <text x="520" y="306" font-size="34">赵</text>
+    <text x="810" y="246" font-size="36">燕</text>
+    <text x="848" y="438" font-size="38">齐</text>
+    <text x="493" y="439" font-size="30">韩魏</text>
+    <text x="585" y="670" font-size="48">楚</text>
+  </g>
+
+  <g class="small-place">
+    <text x="250" y="360" font-size="23">关中</text>
+    <text x="412" y="374" font-size="21">函谷</text>
+    <text x="542" y="376" font-size="21">邯郸</text>
+    <text x="570" y="430" font-size="21">大梁</text>
+    <text x="710" y="444" font-size="21">临淄</text>
+    <text x="650" y="575" font-size="21">寿春</text>
+    <text x="845" y="300" font-size="21">蓟</text>
+  </g>
+
+  <g class="seal">
+    <path d="M48 48H1132V832H48Z"/>
+    <path d="M72 72H1108V808H72Z" stroke-dasharray="18 14"/>
+    <path d="M982 112c34 6 58 28 61 61 4 39-21 70-60 72-35 1-63-22-65-57-2-38 25-69 64-76Z"/>
+    <path d="M949 161h66M980 128v92"/>
+  </g>
+
+  <rect width="1180" height="880" fill="url(#age)"/>
+</svg>

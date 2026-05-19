@@ -1,0 +1,4 @@
+interface:
+  display_name: "动画助手"
+  short_description: "交付可播放可验证可常驻运行的精美交互式网页动画作品。"
+  default_prompt: "使用 animation-assistant，把一个主题做成可播放、可暂停、可拖拽时间轴的精美网页动画，并保留来源、测试和常驻运行方案。"

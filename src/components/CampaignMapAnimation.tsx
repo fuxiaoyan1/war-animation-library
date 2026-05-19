@@ -1,0 +1,1125 @@
+import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { BattleEvent, FrontLine, MapPoint } from "../data/battleOfFrance";
+import { UnitIcon, type HorizontalFacing } from "./UnitIcon";
+import type { UnitIconKind } from "../types/units";
+import type { HistoricalRegion } from "../types/maps";
+import type { CountryFeature } from "../lib/geoMap";
+import {
+  countryPathFactory,
+  createCampaignProjection,
+  projectPoint
+} from "../lib/geoMap";
+import { createCampaignTimeline } from "../lib/campaignTimeline";
+import { formatChineseDate, interpolatePoint } from "../lib/timeline";
+import { useMapInteraction } from "../lib/useMapInteraction";
+import { WarScore, type BattleCueKind } from "../lib/warScore";
+
+type FocusStep = {
+  fromProgress: number;
+  focus: string;
+};
+
+type GeoLine = {
+  id: string;
+  label: string;
+  points: Array<[number, number]>;
+};
+
+export type NarrationCue = {
+  end: string;
+  id: string;
+  start: string;
+  text: string;
+  title?: string;
+};
+
+type CampaignMapAnimationProps = {
+  activeSpans?: Array<{
+    end: string;
+    start: string;
+  }>;
+  ariaLabel: string;
+  battleEvents: BattleEvent[];
+  campaignEnd: string;
+  campaignStart: string;
+  countries: CountryFeature[];
+  countryClassName: (country: CountryFeature) => string;
+  cueEvents: Set<string>;
+  diveCueEvents?: Set<string>;
+  eyebrow: string;
+  frontLines: FrontLine[];
+  focusSteps: FocusStep[];
+  gapScale?: number;
+  gapOverrides?: Array<{
+    displayDays: number;
+    end: string;
+    start: string;
+  }>;
+  historicalRegions?: HistoricalRegion[];
+  inactiveGapDisplayDays?: number;
+  legendAxis?: string;
+  legendPrimary?: string;
+  legendSecondary?: string;
+  mapPoints: MapPoint[];
+  maxGapDays?: number;
+  musicSource?: string;
+  cinematicMode?: boolean;
+  narrationCues?: NarrationCue[];
+  playbackDurationSeconds: number;
+  regionLabels: Array<{ label: string; coordinates: [number, number] }>;
+  rivers?: GeoLine[];
+  shellClassName?: string;
+  sfxProfile?: "ancient" | "gunpowder" | "ww2";
+  subtitle: string;
+  tacticalRouteRetention?: boolean;
+  terrainZones?: Array<{
+    className?: string;
+    coordinates: [number, number];
+    label: string;
+    labelCoordinates: [number, number];
+    rx: number;
+    ry: number;
+  }>;
+  testId: string;
+  timeCounterLabel?: "天" | "小时" | "周";
+  timeStepDays?: number;
+  timingMode?: "calendar" | "compressed";
+  timelineTitle: string;
+  title: string;
+  unitIcon?: UnitIconKind;
+};
+
+const mapWidth = 1180;
+const mapHeight = 704;
+
+const cinematicSpecks = Array.from({ length: 34 }, (_, index) => ({
+  delay: `${(index % 9) * 0.34}s`,
+  id: `speck-${index}`,
+  opacity: 0.16 + (index % 5) * 0.035,
+  radius: 1.4 + (index % 4) * 0.62,
+  x: 48 + ((index * 89) % 1080),
+  y: 42 + ((index * 137) % 780)
+}));
+
+function factionClass(faction: string) {
+  if (faction === "rome") {
+    return "faction-allies faction-rome";
+  }
+
+  if (faction === "un") {
+    return "faction-allies faction-un";
+  }
+
+  if (faction === "communist") {
+    return "faction-germany faction-communist";
+  }
+
+  if (faction === "carthage") {
+    return "faction-germany faction-carthage";
+  }
+
+  return `faction-${faction}`;
+}
+
+function buildRoutePath(from: [number, number], to: [number, number]) {
+  return buildCurvedPath([from, to]);
+}
+
+function buildCurvedPath(points: Array<[number, number]>) {
+  if (points.length < 2) {
+    return "";
+  }
+
+  if (points.length > 2) {
+    return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0]} ${point[1]}`).join(" ");
+  }
+
+  const [from, to] = points;
+  const distance = Math.hypot(to[0] - from[0], to[1] - from[1]);
+  if (distance < 0.01) {
+    return `M ${from[0]} ${from[1]} L ${to[0]} ${to[1]}`;
+  }
+
+  const curve = Math.min(92, Math.max(24, distance * 0.16));
+  const controlX = (from[0] + to[0]) / 2;
+  const controlY = (from[1] + to[1]) / 2 - curve;
+  return `M ${from[0]} ${from[1]} Q ${controlX} ${controlY} ${to[0]} ${to[1]}`;
+}
+
+function frontStrokeWidth(faction: string) {
+  if (["germany", "allies", "carthage", "rome"].includes(faction)) {
+    return 3.5;
+  }
+  return 3.1;
+}
+
+function routeFacingX(from: [number, number], to: [number, number], fallbackTo?: [number, number]): HorizontalFacing {
+  const dx = to[0] - from[0];
+  if (Math.abs(dx) >= 0.01) {
+    return dx > 0 ? 1 : -1;
+  }
+
+  const fallbackDx = fallbackTo ? fallbackTo[0] - from[0] : 0;
+  return fallbackDx < 0 ? -1 : 1;
+}
+
+function routeDirectionVector(from: [number, number], to: [number, number], fallbackTo?: [number, number]) {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const fallbackDx = fallbackTo ? fallbackTo[0] - from[0] : 1;
+  const fallbackDy = fallbackTo ? fallbackTo[1] - from[1] : 0;
+  const length = Math.hypot(dx, dy);
+  const fallbackLength = Math.hypot(fallbackDx, fallbackDy);
+
+  if (length >= 0.01) {
+    return { x: dx / length, y: dy / length };
+  }
+
+  if (fallbackLength >= 0.01) {
+    return { x: fallbackDx / fallbackLength, y: fallbackDy / fallbackLength };
+  }
+
+  return { x: 1, y: 0 };
+}
+
+function routeLocalOffset(
+  point: [number, number],
+  direction: { x: number; y: number },
+  offset: [number, number]
+): [number, number] {
+  const [along, cross] = offset;
+  return [point[0] + direction.x * along - direction.y * cross, point[1] + direction.y * along + direction.x * cross];
+}
+
+function routeLength(points: Array<[number, number]>) {
+  return points
+    .slice(0, -1)
+    .reduce((sum, point, index) => sum + Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]), 0);
+}
+
+function formationUnitPlacement(
+  points: Array<[number, number]>,
+  progress: number,
+  offset: [number, number]
+) {
+  const totalLength = Math.max(routeLength(points), 1);
+  const [along, cross] = offset;
+  const rawProgress = progress + along / totalLength;
+  const unitProgress = Math.min(1, Math.max(0, rawProgress));
+  const pointOnRoute = interpolateRoute(points, unitProgress);
+  const directionAnchor = interpolateRoute(points, Math.max(0, unitProgress - 0.018));
+  const fallbackPoint = interpolateRoute(points, Math.min(1, unitProgress + 0.018));
+  const direction = routeDirectionVector(directionAnchor, pointOnRoute, fallbackPoint);
+  const clampedAlongOverflow = rawProgress < 0 ? rawProgress * totalLength : rawProgress > 1 ? (rawProgress - 1) * totalLength : 0;
+  const markerPoint = routeLocalOffset(pointOnRoute, direction, [clampedAlongOverflow, cross]);
+
+  return {
+    direction,
+    facingX: routeFacingX(directionAnchor, pointOnRoute, fallbackPoint),
+    point: markerPoint
+  };
+}
+
+function historicalRegionFeature(region: HistoricalRegion): GeoJSON.Feature<GeoJSON.Polygon, { name: string }> {
+  const first = region.coordinates[0];
+  const last = region.coordinates.at(-1);
+  const ring =
+    first && last && (first[0] !== last[0] || first[1] !== last[1])
+      ? [...region.coordinates, first]
+      : region.coordinates;
+
+  return {
+    type: "Feature",
+    properties: { name: region.label },
+    geometry: {
+      type: "Polygon",
+      coordinates: [ring]
+    }
+  };
+}
+
+function interpolateRoute(points: Array<[number, number]>, progress: number) {
+  if (points.length < 2) {
+    return points[0] ?? [0, 0];
+  }
+
+  const segmentLengths = points.slice(0, -1).map((point, index) => Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]));
+  const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
+  let remaining = totalLength * Math.min(1, Math.max(0, progress));
+
+  for (let index = 0; index < segmentLengths.length; index += 1) {
+    const length = segmentLengths[index];
+    if (remaining <= length || index === segmentLengths.length - 1) {
+      const ratio = length === 0 ? 0 : remaining / length;
+      return interpolatePoint(points[index], points[index + 1], ratio);
+    }
+    remaining -= length;
+  }
+
+  return points.at(-1)!;
+}
+
+function routePointsUntil(points: Array<[number, number]>, progress: number) {
+  if (points.length < 2) {
+    return points;
+  }
+
+  const currentPoint = interpolateRoute(points, progress);
+  const segmentLengths = points.slice(0, -1).map((point, index) => Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]));
+  const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
+  let remaining = totalLength * Math.min(1, Math.max(0, progress));
+  const visible = [points[0]];
+
+  for (let index = 0; index < segmentLengths.length; index += 1) {
+    const length = segmentLengths[index];
+    if (remaining >= length) {
+      visible.push(points[index + 1]);
+      remaining -= length;
+    } else {
+      visible.push(currentPoint);
+      break;
+    }
+  }
+
+  return visible;
+}
+
+function ActiveEventEffect({
+  kind,
+  pulse,
+  x,
+  y
+}: {
+  kind: "ancient" | "gunpowder" | "ww2";
+  pulse: number;
+  x: number;
+  y: number;
+}) {
+  if (kind === "ancient") {
+    return (
+      <g className="melee-clash" data-testid="melee-clash">
+        <circle cx={x} cy={y} r={16 + pulse * 14} />
+        <circle cx={x} cy={y} r={26 + pulse * 16} />
+        <path d={`M ${x - 18} ${y - 18} L ${x + 18} ${y + 18}`} />
+        <path d={`M ${x + 18} ${y - 18} L ${x - 18} ${y + 18}`} />
+        <path d={`M ${x - 7} ${y - 24} L ${x + 7} ${y - 24} L ${x} ${y - 34} Z`} />
+        <path d={`M ${x - 7} ${y + 24} L ${x + 7} ${y + 24} L ${x} ${y + 34} Z`} />
+      </g>
+    );
+  }
+
+  return (
+    <g className="explosion-burst" data-testid="explosion-burst">
+      <circle cx={x} cy={y} r={16 + pulse * 16} />
+      <circle cx={x} cy={y} r={28 + pulse * 18} />
+      <path
+        d={`M ${x} ${y - 23} L ${x + 7} ${y - 8} L ${x + 23} ${y - 7} L ${x + 10} ${y + 3} L ${x + 15} ${y + 20} L ${x} ${y + 11} L ${x - 15} ${y + 20} L ${x - 10} ${y + 3} L ${x - 23} ${y - 7} L ${x - 7} ${y - 8} Z`}
+      />
+    </g>
+  );
+}
+
+function StaticEventIcon({
+  kind,
+  x,
+  y
+}: {
+  kind: "ancient" | "gunpowder" | "ww2";
+  x: number;
+  y: number;
+}) {
+  if (kind === "ancient") {
+    return (
+      <g className="static-melee-icon">
+        <path d={`M ${x - 10} ${y - 10} L ${x + 10} ${y + 10}`} />
+        <path d={`M ${x + 10} ${y - 10} L ${x - 10} ${y + 10}`} />
+      </g>
+    );
+  }
+
+  return (
+    <path
+      className="static-battle-icon"
+      d={`M ${x} ${y - 11} L ${x + 5} ${y - 3} L ${x + 14} ${y - 2} L ${x + 7} ${y + 4} L ${x + 9} ${y + 13} L ${x} ${y + 8} L ${x - 9} ${y + 13} L ${x - 7} ${y + 4} L ${x - 14} ${y - 2} L ${x - 5} ${y - 3} Z`}
+    />
+  );
+}
+
+export function CampaignMapAnimation({
+  activeSpans,
+  ariaLabel,
+  battleEvents,
+  campaignEnd,
+  campaignStart,
+  cinematicMode = false,
+  countries,
+  countryClassName,
+  cueEvents,
+  diveCueEvents = new Set(),
+  eyebrow,
+  frontLines,
+  focusSteps,
+  gapScale,
+  gapOverrides,
+  historicalRegions = [],
+  inactiveGapDisplayDays,
+  legendAxis = "战役轴线",
+  legendPrimary = "主攻推进",
+  legendSecondary = "反击/联军行动",
+  mapPoints,
+  maxGapDays,
+  musicSource,
+  narrationCues = [],
+  playbackDurationSeconds,
+  regionLabels,
+  rivers = [],
+  shellClassName = "",
+  sfxProfile = "ww2",
+  subtitle,
+  tacticalRouteRetention = false,
+  terrainZones = [],
+  testId,
+  timeCounterLabel = "周",
+  timeStepDays = 7,
+  timingMode,
+  timelineTitle,
+  title,
+  unitIcon = "tank"
+}: CampaignMapAnimationProps) {
+  const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isScoreEnabled, setIsScoreEnabled] = useState(true);
+  const [isScoreRunning, setIsScoreRunning] = useState(false);
+  const lastFrameRef = useRef<number | null>(null);
+  const scoreRef = useRef<WarScore | null>(null);
+  const lastCueEventRef = useRef<string | null>(null);
+  const playbackSpeed = 1 / playbackDurationSeconds;
+
+  const timeline = useMemo(
+    () =>
+      createCampaignTimeline({
+        campaignStart,
+        campaignEnd,
+        activeSpans,
+        gapScale,
+        gapOverrides,
+        inactiveGapDisplayDays,
+        maxGapDays,
+        events: battleEvents,
+        points: mapPoints,
+        timingMode
+      }),
+    [
+      activeSpans,
+      battleEvents,
+      campaignEnd,
+      campaignStart,
+      gapScale,
+      gapOverrides,
+      inactiveGapDisplayDays,
+      mapPoints,
+      maxGapDays,
+      timingMode
+    ]
+  );
+
+  const activeEvent = timeline.getActiveEvent(progress);
+  const upcomingEvent = timeline.getUpcomingEvent(progress);
+  const currentDate = timeline.progressToDate(progress, timeStepDays);
+  const elapsedDisplayDays = timeline.displayDaysAtProgress(progress);
+  const currentTimeCounter =
+    timeCounterLabel === "小时"
+      ? Math.max(1, Math.round(elapsedDisplayDays * 24) + 1)
+      : timeCounterLabel === "天"
+        ? Math.max(1, Math.round(elapsedDisplayDays) + 1)
+        : Math.max(1, Math.round(elapsedDisplayDays / 7) + 1);
+  const mapFocus = [...focusSteps].sort((a, b) => b.fromProgress - a.fromProgress).find((step) => progress >= step.fromProgress)?.focus ?? focusSteps[0]?.focus ?? "north";
+  const {
+    canZoomIn,
+    canZoomOut,
+    isMapDragging,
+    mapInteractionProps,
+    mapTransform,
+    resetMapView,
+    stageRef,
+    svgRef,
+    zoomIn,
+    zoomOut
+  } = useMapInteraction(mapWidth, mapHeight, mapFocus);
+  const projection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus]);
+  const countryPath = useMemo(() => countryPathFactory(projection), [projection]);
+
+  useEffect(() => {
+    scoreRef.current = new WarScore(musicSource);
+    return () => {
+      void scoreRef.current?.stop();
+      scoreRef.current = null;
+    };
+  }, [musicSource]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      lastFrameRef.current = null;
+      return;
+    }
+
+    let frameId = 0;
+
+    const tick = (timestamp: number) => {
+      if (lastFrameRef.current === null) {
+        lastFrameRef.current = timestamp;
+      }
+
+      const delta = timestamp - lastFrameRef.current;
+      lastFrameRef.current = timestamp;
+
+      setProgress((current) => {
+        const next = timeline.clampProgress(current + (delta / 1000) * playbackSpeed);
+        if (next >= 1) {
+          setIsPlaying(false);
+          void scoreRef.current?.pause().then(() => setIsScoreRunning(false));
+        }
+        return next;
+      });
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [isPlaying, playbackSpeed, timeline]);
+
+  useEffect(() => {
+    if (!isPlaying || !isScoreEnabled || lastCueEventRef.current === activeEvent.id || !cueEvents.has(activeEvent.id)) {
+      return;
+    }
+
+    lastCueEventRef.current = activeEvent.id;
+    void scoreRef.current?.playBattleCue(battleCueForEvent(activeEvent.id));
+  }, [activeEvent.id, cueEvents, diveCueEvents, isPlaying, isScoreEnabled, sfxProfile]);
+
+  const visibleEvents = useMemo(
+    () =>
+      battleEvents.map((event) => ({
+        ...event,
+        weight: timeline.eventProgress(event.date, progress),
+        passed: timeline.dateToProgress(event.date) <= progress
+      })),
+    [battleEvents, progress, timeline]
+  );
+
+  const projectedPoints = useMemo(
+    () => new Map(mapPoints.map((point) => [point.id, projectPoint(projection, point.coordinates)] as const)),
+    [mapPoints, projection]
+  );
+
+  const projectedBattleEvents = useMemo(
+    () =>
+      visibleEvents.map((event) => ({
+        ...event,
+        xy: projectPoint(projection, event.coordinates)
+      })),
+    [projection, visibleEvents]
+  );
+
+  const activeEventPoint = useMemo(() => projectPoint(projection, activeEvent.coordinates), [activeEvent.coordinates, projection]);
+
+  const activeNarrationCue = useMemo(() => {
+    if (narrationCues.length === 0) {
+      return undefined;
+    }
+
+    return narrationCues.find((cue, index) => {
+      const start = timeline.dateToProgress(cue.start);
+      const end = timeline.dateToProgress(cue.end);
+      const isLast = index === narrationCues.length - 1;
+      return progress >= start && (progress < end || (isLast && progress <= end));
+    });
+  }, [narrationCues, progress, timeline]);
+
+  const projectLine = (points: Array<[number, number]>) =>
+    points
+      .map((coordinates) => projectPoint(projection, coordinates))
+      .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+      .join(" ");
+
+  const battleCueForEvent = (eventId: string): BattleCueKind => {
+    if (sfxProfile === "ancient") {
+      return "melee";
+    }
+
+    if (sfxProfile === "gunpowder") {
+      return "cannon";
+    }
+
+    return diveCueEvents.has(eventId) ? "dive" : "combined";
+  };
+
+  const playEventCue = (eventId: string) => {
+    if (!isScoreEnabled || !cueEvents.has(eventId)) {
+      return;
+    }
+
+    lastCueEventRef.current = eventId;
+    void scoreRef.current?.playBattleCue(battleCueForEvent(eventId));
+  };
+
+  const handleRangeChange = (value: string) => {
+    setProgress(Number(value) / 1000);
+    lastCueEventRef.current = null;
+  };
+
+  const startScore = async () => {
+    if (!isScoreEnabled) {
+      return;
+    }
+
+    await scoreRef.current?.start();
+    setIsScoreRunning(true);
+  };
+
+  const pauseScore = async () => {
+    await scoreRef.current?.pause();
+    setIsScoreRunning(false);
+  };
+
+  const togglePlayback = async () => {
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+
+    if (nextPlaying) {
+      await startScore();
+    } else {
+      await pauseScore();
+    }
+  };
+
+  const toggleScore = async () => {
+    const nextEnabled = !isScoreEnabled;
+    setIsScoreEnabled(nextEnabled);
+
+    if (nextEnabled) {
+      await scoreRef.current?.start();
+      setIsScoreRunning(true);
+    } else {
+      await pauseScore();
+    }
+  };
+
+  const jumpToEvent = (event: BattleEvent) => {
+    setProgress(timeline.dateToProgress(event.date));
+    window.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+    playEventCue(event.id);
+  };
+
+  const shellClasses = ["app-shell", shellClassName, cinematicMode ? "cinematic-mode" : ""].filter(Boolean).join(" ");
+
+  return (
+    <main className={shellClasses} data-testid={testId}>
+      <section className="control-deck" data-testid="control-deck">
+        <div className="transport">
+          <button
+            type="button"
+            data-testid="play-pause"
+            onClick={() => {
+              void togglePlayback();
+            }}
+            aria-label={isPlaying ? "暂停动画" : "播放动画"}
+          >
+            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+            {isPlaying ? "暂停" : "播放"}
+          </button>
+          <button
+            type="button"
+            data-testid="replay"
+            onClick={() => {
+              setIsPlaying(false);
+              void pauseScore();
+              lastCueEventRef.current = null;
+              setProgress(0);
+            }}
+          >
+            <RotateCcw size={18} />
+            回放
+          </button>
+          <button
+            type="button"
+            data-testid="score-toggle"
+            data-music-source={musicSource}
+            onClick={() => {
+              void toggleScore();
+            }}
+            aria-label={isScoreEnabled ? "关闭循环战争配乐" : "开启循环战争配乐"}
+          >
+            {isScoreEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            配乐{isScoreEnabled ? (isScoreRunning ? "循环中" : "待播放") : "关闭"}
+          </button>
+          <span className="clock" data-testid="current-date">
+            {formatChineseDate(currentDate)}
+          </span>
+        </div>
+
+        <div className="timeline-stack">
+          <label className="timeline-range" htmlFor={`${testId}-timeline`}>
+            <span>时间轴拖拽</span>
+            <input
+              id={`${testId}-timeline`}
+              data-testid="timeline"
+              type="range"
+              min="0"
+              max="1000"
+              value={Math.round(progress * 1000)}
+              onChange={(event) => handleRangeChange(event.target.value)}
+            />
+          </label>
+
+          <div className="event-rail" data-testid="event-rail">
+            {battleEvents.map((event) => (
+              <button
+                key={event.id}
+                type="button"
+                className={event.id === activeEvent.id ? "active" : ""}
+                style={{ left: `${timeline.dateToProgress(event.date) * 100}%` }}
+                onClick={() => jumpToEvent(event)}
+                aria-label={`跳到${event.title}`}
+                title={`${event.date} ${event.title}`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cinema-grid">
+        <article ref={stageRef} className="map-stage" data-testid="map-stage">
+          <div className="map-topbar map-overlay">
+            <div data-testid="map-title-card">
+              <h1>{title}</h1>
+            </div>
+            <span className="day-counter">
+              第 {currentTimeCounter} {timeCounterLabel}
+            </span>
+          </div>
+
+          <svg
+            ref={svgRef}
+            className={`battle-map is-interactive-map ${isMapDragging ? "is-dragging" : ""}`}
+            viewBox={`0 0 ${mapWidth} ${mapHeight}`}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label={ariaLabel}
+            {...mapInteractionProps}
+          >
+            <defs>
+              <linearGradient id="oceanGradient" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stopColor="#263f47" />
+                <stop offset="55%" stopColor="#1d3439" />
+                <stop offset="100%" stopColor="#14282c" />
+              </linearGradient>
+              <linearGradient id="landGradient" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stopColor="#e3d8ae" />
+                <stop offset="52%" stopColor="#aebc91" />
+                <stop offset="100%" stopColor="#718e76" />
+              </linearGradient>
+              <linearGradient id="frontGermanyGradient" x1="0" x2="1">
+                <stop offset="0%" stopColor="#f6a34b" />
+                <stop offset="60%" stopColor="#d84a36" />
+                <stop offset="100%" stopColor="#8f2526" />
+              </linearGradient>
+              <linearGradient id="frontAlliesGradient" x1="0" x2="1">
+                <stop offset="0%" stopColor="#bce8ff" />
+                <stop offset="55%" stopColor="#4aa3d8" />
+                <stop offset="100%" stopColor="#1f5f9d" />
+              </linearGradient>
+              <radialGradient id="blast" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#ffef9a" stopOpacity="0.95" />
+                <stop offset="65%" stopColor="#d34532" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#d34532" stopOpacity="0" />
+              </radialGradient>
+              <pattern id="mapTexture" width="36" height="36" patternUnits="userSpaceOnUse">
+                <path d="M0 18H36M18 0V36" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                <circle cx="18" cy="18" r="1.2" fill="rgba(255,255,255,0.08)" />
+              </pattern>
+              <linearGradient id="ancientPaperGradient" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stopColor="#e7c98d" />
+                <stop offset="46%" stopColor="#d8b36e" />
+                <stop offset="100%" stopColor="#b9874d" />
+              </linearGradient>
+              <pattern id="ancientPaperTexture" width="92" height="92" patternUnits="userSpaceOnUse">
+                <rect width="92" height="92" fill="rgba(79, 45, 18, 0.06)" />
+                <path d="M0 18C18 8 31 26 46 16S78 9 92 20M0 62C21 51 34 72 52 60S76 51 92 64" stroke="rgba(88, 50, 22, 0.11)" strokeWidth="1.1" />
+                <path d="M18 0V92M55 0V92" stroke="rgba(95, 52, 20, 0.07)" strokeWidth="1" />
+                <circle cx="22" cy="26" r="1.1" fill="rgba(75, 42, 17, 0.14)" />
+                <circle cx="68" cy="74" r="1.4" fill="rgba(75, 42, 17, 0.1)" />
+              </pattern>
+              <filter id="frontGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="cinematicSoftBlur" x="-35%" y="-35%" width="170%" height="170%">
+                <feGaussianBlur stdDeviation="10" />
+              </filter>
+              <marker id="arrow-germany" markerHeight="8" markerWidth="10" orient="auto" refX="9" refY="4">
+                <path d="M0 0L10 4L0 8L2 4Z" fill="#d84a36" />
+              </marker>
+              <marker id="arrow-allies" markerHeight="8" markerWidth="10" orient="auto" refX="9" refY="4">
+                <path d="M0 0L10 4L0 8L2 4Z" fill="#4aa3d8" />
+              </marker>
+            </defs>
+
+            <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
+            <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
+            <g className="camera-layer" data-testid="camera-layer" transform={mapTransform}>
+              {historicalRegions.length === 0 && (
+                <image
+                  className="ancient-map-ornaments"
+                  data-testid="ancient-map-ornaments"
+                  href="/assets/maps/qin-warring-states-map.svg"
+                  width={mapWidth}
+                  height={mapHeight}
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-hidden="true"
+                />
+              )}
+              <g className="country-layer">
+                {countries.map((country) => (
+                  <path
+                    key={country.properties?.name}
+                    d={countryPath(country) ?? undefined}
+                    className={countryClassName(country)}
+                  />
+                ))}
+              </g>
+              {historicalRegions.length > 0 && (
+                <g className="historical-map-layer" data-testid="historical-map-layer">
+                  <rect className="historical-paper-field" x={26} y={24} width={mapWidth - 52} height={mapHeight - 48} rx={28} />
+                  {historicalRegions.map((region) => {
+                    const [x, y] = projectPoint(projection, region.labelCoordinates ?? region.coordinates[0]);
+                    return (
+                      <g key={region.id} className="historical-region-group">
+                        <path
+                          className={`historical-region historical-region-${region.id} ${region.className ?? ""}`}
+                          data-testid={`historical-region-${region.id}`}
+                          d={countryPath(historicalRegionFeature(region)) ?? undefined}
+                        />
+                        <text
+                          className={`historical-region-name historical-region-name-${region.id}`}
+                          data-testid={`historical-region-label-${region.id}`}
+                          x={x}
+                          y={y}
+                        >
+                          {region.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  <g className="historical-control-layer" data-testid="historical-control-layer">
+                    {historicalRegions.map((region) => {
+                      if (!region.captureDate || timeline.dateToProgress(region.captureDate) > progress) {
+                        return null;
+                      }
+
+                      return (
+                        <path
+                          key={region.id}
+                          className={`historical-control historical-control-${region.id}`}
+                          data-testid={`historical-control-${region.id}`}
+                          d={countryPath(historicalRegionFeature(region)) ?? undefined}
+                        />
+                      );
+                    })}
+                  </g>
+                </g>
+              )}
+              <g className="river-layer">
+                {rivers.map((river) => (
+                  <polyline key={river.id} points={projectLine(river.points)} className={`river river-${river.id}`} />
+                ))}
+              </g>
+              <g className="terrain-layer">
+                {terrainZones.map((zone) => {
+                  const [cx, cy] = projectPoint(projection, zone.coordinates);
+                  const [x, y] = projectPoint(projection, zone.labelCoordinates);
+                  return (
+                    <g key={zone.label}>
+                      <ellipse cx={cx} cy={cy} rx={zone.rx} ry={zone.ry} className={zone.className ?? "forest-zone"} />
+                      <text x={x} y={y} className="terrain-label">
+                        {zone.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+              <g className="region-labels">
+                {regionLabels.map((label) => {
+                  const [x, y] = projectPoint(projection, label.coordinates);
+                  return (
+                    <text key={label.label} x={x} y={y}>
+                      {label.label}
+                    </text>
+                  );
+                })}
+              </g>
+
+              {frontLines.map((line) => {
+                const startPoint = projectedPoints.get(line.from) ?? projectPoint(projection, timeline.findPoint(line.from).coordinates);
+                const endPoint = projectedPoints.get(line.to) ?? projectPoint(projection, timeline.findPoint(line.to).coordinates);
+                const projectedRoutePoints = [
+                  startPoint,
+                  ...(line.waypoints ?? []).map((coordinates) => projectPoint(projection, coordinates)),
+                  endPoint
+                ];
+                const segmentProgress = timeline.lineProgress(line.start, line.end, progress);
+                const lineStartProgress = timeline.dateToProgress(line.start);
+                const lineEndProgress = timeline.dateToProgress(line.end);
+                const isComplete = progress >= lineEndProgress;
+                const drawnProgress = tacticalRouteRetention && isComplete ? 1 : segmentProgress;
+                const visibleRoutePoints = routePointsUntil(projectedRoutePoints, drawnProgress);
+                const movingPoint = interpolateRoute(projectedRoutePoints, segmentProgress);
+                const currentPoint = tacticalRouteRetention && isComplete ? (visibleRoutePoints.at(-1) ?? startPoint) : movingPoint;
+                const isActive = segmentProgress > 0 && segmentProgress < 1;
+                const routeState = isActive ? "is-active" : isComplete ? "is-complete" : "is-forming";
+                const isVisible =
+                  progress >= lineStartProgress &&
+                  ((tacticalRouteRetention && isComplete) || !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil));
+                const isUnitVisible =
+                  progress >= lineStartProgress &&
+                  (!line.unitVisibleUntil || progress <= timeline.dateToProgress(line.unitVisibleUntil));
+                const routePath = buildCurvedPath(visibleRoutePoints);
+                const directionAnchorPoint = interpolateRoute(projectedRoutePoints, Math.max(0, segmentProgress - 0.018));
+                const labelPoint =
+                  tacticalRouteRetention && isComplete ? interpolateRoute(projectedRoutePoints, 0.58) : currentPoint;
+                const icon = line.unitIcon ?? (line.routeKind === "sea" ? "ship" : line.routeKind === "air" ? "fighter" : unitIcon);
+                const fallbackDirectionPoint = interpolateRoute(projectedRoutePoints, Math.min(1, segmentProgress + 0.018));
+                const facingX = routeFacingX(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
+                const routeDirection = routeDirectionVector(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
+                const formationUnits =
+                  line.formationUnits && line.formationUnits.length > 0
+                    ? line.formationUnits
+                    : [
+                        {
+                          badgeLabel: line.unitBadgeLabel,
+                          faction: line.faction,
+                          icon,
+                          id: "unit",
+                          label: "",
+                          offset: [0, 0] as [number, number]
+                        }
+                      ];
+
+                if (!isVisible) {
+                  return null;
+                }
+
+                return (
+                  <g
+                    key={line.id}
+                    className={`front-line route-${line.routeKind ?? "land"} ${factionClass(line.faction)} ${routeState}`}
+                    data-route-from={line.from}
+                    data-route-id={line.id}
+                    data-route-label={line.label}
+                    data-route-state={routeState}
+                    data-route-to={line.to}
+                    data-unit-visible={isUnitVisible}
+                  >
+                    <path className="front-halo" d={routePath} strokeWidth={frontStrokeWidth(line.faction) + 7} />
+                    <path
+                      className="front-route"
+                      d={routePath}
+                      strokeWidth={frontStrokeWidth(line.faction)}
+                      markerEnd={["germany", "carthage"].includes(line.faction) ? undefined : "url(#arrow-allies)"}
+                    />
+                    <path className="front-direction" d={routePath} strokeWidth={1.4} />
+                    <circle cx={currentPoint[0]} cy={currentPoint[1]} r={isActive ? 4.6 : 3.2} />
+                    {isUnitVisible && (
+                      <g className="formation-units">
+                        {formationUnits.map((formationUnit) => {
+                          const placement = formationUnitPlacement(
+                            projectedRoutePoints,
+                            segmentProgress,
+                            formationUnit.offset ?? [0, 0]
+                          );
+                          const [markerX, markerY] = placement.point;
+                          const markerFaction = formationUnit.faction ?? line.faction;
+                          const markerIcon = formationUnit.icon ?? icon;
+
+                          return (
+                            <g
+                              key={formationUnit.id}
+                              className={`unit-icon-orientation formation-unit ${formationUnit.className ?? ""}`}
+                              data-facing-x={placement.facingX}
+                              data-ship-label={formationUnit.label}
+                              data-route-progress={segmentProgress.toFixed(4)}
+                              data-unit-offset-along={(formationUnit.offset?.[0] ?? 0).toString()}
+                              data-testid={`formation-unit-${line.id}-${formationUnit.id}`}
+                              transform={`translate(${markerX} ${markerY})`}
+                            >
+                              <UnitIcon
+                                badgeLabel={formationUnit.badgeLabel ?? line.unitBadgeLabel}
+                                icon={markerIcon}
+                                isActive={isActive}
+                                facingX={placement.facingX}
+                                faction={markerFaction}
+                              />
+                              {formationUnit.label && (
+                                <text className="formation-unit-label" x={0} y={-38}>
+                                  {formationUnit.label}
+                                </text>
+                              )}
+                            </g>
+                          );
+                        })}
+                      </g>
+                    )}
+                    {(isActive || (tacticalRouteRetention && isComplete)) && (
+                      <text x={labelPoint[0] + 14} y={labelPoint[1] - 14} className="line-label">
+                        {line.label}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {projectedBattleEvents.map((event) => {
+                const [x, y] = event.xy;
+                const pulse = event.weight;
+                const isCurrent = event.id === activeEvent.id;
+                return (
+                  <g key={event.id} className={`event-pin ${event.passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
+                    {isCurrent && <ActiveEventEffect kind={sfxProfile} pulse={pulse} x={x} y={y} />}
+                    {!isCurrent && event.passed && <StaticEventIcon kind={sfxProfile} x={x} y={y} />}
+                    <circle cx={x} cy={y} r={isCurrent ? 7 : 4.4} />
+                    {isCurrent && (
+                      <text x={x + 16} y={y + 5} className="active-event-label">
+                        {event.title}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {mapPoints.map((point) => {
+                const [x, y] = projectedPoints.get(point.id) ?? projectPoint(projection, point.coordinates);
+                const isFocused = activeEvent.mapFocus.includes(point.id);
+                return (
+                  <g
+                    key={point.id}
+                    className={`map-point point-${point.kind} ${isFocused ? "focused" : ""}`}
+                    data-testid={`map-point-${point.id}`}
+                  >
+                    <circle cx={x} cy={y} r={isFocused ? 5.2 : 3.2} />
+                    <text x={x + 8} y={y + 4}>
+                      {point.label}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+            {cinematicMode && (
+              <g className="cinematic-map-effects" data-testid="cinematic-map-effects" aria-hidden="true">
+                <circle className="cinematic-focus-glow" cx={activeEventPoint[0]} cy={activeEventPoint[1]} r="148" />
+                <path className="cinematic-front-haze" d="M40 688C218 594 314 688 482 616C662 538 810 616 1140 498V880H40Z" />
+                {cinematicSpecks.map((speck) => (
+                  <circle
+                    key={speck.id}
+                    cx={speck.x}
+                    cy={speck.y}
+                    r={speck.radius}
+                    opacity={speck.opacity}
+                    style={{ animationDelay: speck.delay }}
+                  />
+                ))}
+              </g>
+            )}
+          </svg>
+
+          <div className="map-zoom-controls" data-testid="map-zoom-controls" aria-label="地图缩放控制">
+            <button type="button" data-testid="map-zoom-in" onClick={zoomIn} disabled={!canZoomIn} aria-label="放大地图">
+              +
+            </button>
+            <button type="button" data-testid="map-zoom-out" onClick={zoomOut} disabled={!canZoomOut} aria-label="缩小地图">
+              -
+            </button>
+            <button type="button" data-testid="map-reset" onClick={resetMapView} aria-label="复位地图">
+              复位
+            </button>
+          </div>
+
+          {cinematicMode && <div className="cinematic-vignette" aria-hidden="true" />}
+          {activeNarrationCue && (
+            <div className="narration-subtitle" data-testid="narration-subtitle" aria-live="polite">
+              <span>{activeNarrationCue.title ?? activeEvent.phase}</span>
+              <div className="narration-ticker">
+                <p>{activeNarrationCue.text}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="map-legend" aria-label="图例">
+            <span className="legend-germany">{legendPrimary}</span>
+            <span className="legend-allies">{legendSecondary}</span>
+            <span className="legend-evacuation">{legendAxis}</span>
+            <span className="legend-event">关键事件</span>
+          </div>
+        </article>
+
+        <aside className="story-panel">
+          <div className="now-card story-card" data-testid="active-event-card">
+            <span className="phase-pill">{activeEvent.phase}</span>
+            <p className="date-line">{formatChineseDate(currentDate)}</p>
+            <h2>{activeEvent.title}</h2>
+            <p>{activeEvent.summary}</p>
+          </div>
+
+          <div className="story-card detail-card">
+            <p className="label">当前章节</p>
+            <h2>{activeEvent.title}</h2>
+            <p>{activeEvent.detail}</p>
+            {activeNarrationCue && (
+              <div className="narration-card" data-testid="narration-card">
+                <span>旁白字幕轨</span>
+                <p>{activeNarrationCue.text}</p>
+              </div>
+            )}
+            <div className="impact-box">
+              <span>意义</span>
+              <p>{activeEvent.significance}</p>
+            </div>
+          </div>
+
+          <div className="story-card next-card">
+            <p className="label">下一个节点</p>
+            <h3>{upcomingEvent.title}</h3>
+            <p>
+              {formatChineseDate(upcomingEvent.date)} / {upcomingEvent.location}
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <section className="timeline-list">
+        <div className="section-heading">
+          <p className="label">完整过程</p>
+          <h2>{timelineTitle}</h2>
+        </div>
+        <div className="event-list" data-testid="event-list">
+          {battleEvents.map((event) => (
+            <button
+              key={event.id}
+              type="button"
+              className={event.id === activeEvent.id ? "active" : ""}
+              onClick={() => jumpToEvent(event)}
+            >
+              <span>{formatChineseDate(event.date)}</span>
+              <strong>{event.title}</strong>
+              <small>{event.summary}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}

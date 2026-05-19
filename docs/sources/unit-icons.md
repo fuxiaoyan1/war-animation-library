@@ -1,0 +1,64 @@
+# Unit icon image sources
+
+These assets replace the earlier hand-drawn SVG unit markers. They are used as realistic raster map markers for local, non-commercial historical animation demos.
+
+## Processed project assets
+
+- `public/assets/unit-icons/tank.webp`
+- `public/assets/unit-icons/cannon.webp`
+- `public/assets/unit-icons/ship.webp`
+- `public/assets/unit-icons/carrier.webp`
+- `public/assets/unit-icons/cavalry.webp`
+- `public/assets/unit-icons/chariot.webp`
+- `public/assets/unit-icons/fighter.webp`
+- `public/assets/unit-icons/sabre.webp`
+- `public/assets/unit-icons/carrier-essex.webp`
+- `public/assets/unit-icons/infantry.webp`
+- `public/assets/unit-icons/infantry-pva.webp`
+- `public/assets/unit-icons/tank-korean.webp`
+- `public/assets/unit-icons/warship.webp`
+- `public/assets/unit-icons/midway-enterprise.webp`
+- `public/assets/unit-icons/midway-hornet.webp`
+- `public/assets/unit-icons/midway-yorktown.webp`
+- `public/assets/unit-icons/midway-akagi.webp`
+- `public/assets/unit-icons/midway-kaga.webp`
+- `public/assets/unit-icons/midway-soryu.webp`
+- `public/assets/unit-icons/midway-hiryu.webp`
+
+Processed assets are transparent PNG/WebP markers generated from downloaded source images by cropping transparent/background padding, sharpening/contrast adjustment, shadow pass, and WebP export. Most are 512 x 512; wide subjects keep a wider transparent canvas so they do not get crushed in the SVG marker (`cavalry.png` is 640 x 512, `chariot.png` is 900 x 360). Source copies are retained under `public/assets/unit-icons/source/`.
+
+## Source files and license notes
+
+- Tank: `public/assets/unit-icons/source/tank-pngimg.png`, downloaded from PNGIMG tank asset URL `https://pngimg.com/uploads/tank/tank_PNG101043.png`.
+- Cannon: `public/assets/unit-icons/source/cannon-pngimg-54.png`, downloaded from PNGIMG cannon asset URL `https://pngimg.com/uploads/cannon/%D1%81annon_PNG54.png`. The first character of `сannon` in the URL is Cyrillic small es, not Latin `c`.
+- Ship: `public/assets/unit-icons/source/ship-viking-pngimg.png`, downloaded from PNGIMG Viking ship asset URL `https://pngimg.com/uploads/viking/viking_PNG60.png`.
+- Aircraft carrier: `public/assets/unit-icons/source/nimitz-class-wikimedia.png`, downloaded through Wikimedia Commons file redirect `https://commons.wikimedia.org/wiki/Special:Redirect/file/Nimitz_Class.png`, then trimmed and exported as `carrier.png` / `carrier.webp`. This transparent side-view carrier marker is used for the Pacific War animation so carrier routes do not appear as generic ships. Earlier photographic candidate `uss-nimitz-cvn68-wikimedia.jpg` is retained for traceability but not used because its sea-background rectangle was too intrusive at marker scale.
+- F-16 fighter: `public/assets/unit-icons/source/usaf-f16-without-background-wikimedia.png`, downloaded through Wikimedia Commons file redirect `https://commons.wikimedia.org/wiki/Special:Redirect/file/USAF_F-16_without_background.png`, then trimmed and exported as `fighter.webp`. This marker is used for modern air-strike routes such as the 1991 Gulf War air campaign so air operations do not appear as tanks.
+- Korean War F-86 Sabre: `public/assets/unit-icons/source/f86-sabre-wikimedia.svg`, downloaded through Wikimedia Commons file redirect for an F-86 Sabre SVG/vector drawing, then restroked for map contrast and exported as `sabre.webp`. This marker is used for Korean War/MiG Alley air routes so 1950s jet combat does not reuse the 1991 Gulf War F-16 marker.
+- Korean War Essex-class carrier: `public/assets/unit-icons/source/cv-essex-silhouette-wikimedia.png`, downloaded through Wikimedia Commons file redirect for a CV Essex-class silhouette/reference image, cropped to the carrier silhouette, thresholded, recolored, and exported as `carrier-essex.webp`. This marker is used for Korean War carrier-supported amphibious/air operations and avoids a modern Nimitz carrier silhouette.
+- Infantry: `public/assets/unit-icons/source/soldier-pngimg-16050.png`, downloaded from PNGIMG soldier asset URL `https://pngimg.com/uploads/soldier/soldier_PNG16050.png`, cropped to the steel-helmet/rifle silhouette and exported as `infantry.webp`. It is used for Korean War infantry-heavy mountain and trench operations so foot units do not fall back to cartoon/first-responder SVG symbols. Earlier candidates retained for traceability: `soldier-openclipart.svg` was rejected as too cartoon-like, `soldier-pngimg-16074.png` was rejected as too modern tactical, and `soldier-pngimg-16083.png` was rejected because the weapon silhouette was not visible enough at map scale.
+- PVA infantry: `public/assets/unit-icons/source/pva-baidu-volunteer-soldier-rifle.jpeg`, found via Baidu Image search result for `志愿军战士 单人 照片` and downloaded from `https://img2.baidu.com/it/u=1629826893,2746844735&fm=253&app=138&f=JPEG?w=800&h=1218`, then cropped to a narrow vertical single-soldier marker with rifle and exported as `infantry-pva.webp`. This is a better local-demo marker than the earlier Wikimedia/NARA POW crops because the soldier is clearer at map scale and the marker no longer looks like a wide photo block. The image license is not verified; keep it for local/private demo only and replace with licensed/public-domain art before public or commercial distribution.
+- Earlier PVA infantry candidates retained for traceability: `public/assets/unit-icons/source/pva-soldier-peoples-pictorial-195103.png`, downloaded from Wikimedia Commons `https://commons.wikimedia.org/wiki/File:195103_1950%E5%B9%B4%E6%9C%9D%E9%B2%9C%E6%88%98%E4%BA%89%E4%B8%AD%E5%9B%BD%E5%BF%97%E6%84%BF%E5%86%9B%E5%A3%AB%E5%85%B5.png`, cropped to a padded-uniform machine-gunner in a previous version but rejected as too wide and photo-like for a compact map marker; `public/assets/unit-icons/source/pva-chinese-pows-koto-ri-hm-sn-98-06779.jpeg`, a public-domain USMC/NARA Koto-ri POW photo, was also tested but the available single-soldier crop was less readable and still occupied too much map space.
+- PVA padded-uniform reference: `public/assets/unit-icons/source/pva-padded-uniforms-nara-127-n-a5387.jpg`, downloaded from Wikimedia Commons `https://commons.wikimedia.org/wiki/File:NARA_127-N-A5387_Chinese_POW_with_padded_uniforms_in_Battle_of_Chosin_Reservoir.jpg`. Wikimedia structured data identifies it as public domain in the United States, determined as a work of the federal government of the United States. It is retained as a period visual reference for quilted winter uniforms.
+- Korean War infantry reference: Truman Library photograph record `https://www.trumanlibrary.gov/photograph-records/2017-242` / source image `public/assets/unit-icons/source/korean-war-un-soldier-truman-2017-242.jpg`, identified by the library as a public-domain photograph of a United Nations soldier in Korea with helmet and weapon. This is retained as a period reference, not the final transparent marker.
+- Korean War tank: `public/assets/unit-icons/source/t34-side-openclipart.svg`, downloaded from Openclipart `tank-t34`, background removed and exported as `tank-korean.webp`. It is used for Korean War armored movement instead of the generic modern tank marker.
+- Russo-Japanese War pre-dreadnought warship: `public/assets/unit-icons/source/mikasa-underway-side.jpg`, downloaded from Wikimedia Commons `https://commons.wikimedia.org/wiki/File:Japanese_battleship_Mikasa.jpg`, then cropped to the side-view underway hull, background removed, and exported as `warship.webp`. The Commons page identifies the image as public domain. It replaces the earlier JFS1906 plan/technical-view crop so the Tsushima fleet marker looks like a ship underway rather than a design drawing.
+- Midway carrier markers: seven per-carrier assets were generated by `scripts/generate-midway-carrier-assets.py` from archival carrier photographs plus model/walkaround side-view candidates under `public/assets/unit-icons/source/midway-models/`, not from the generic carrier marker. Processed marker files are `public/assets/unit-icons/midway-*.webp`, and the animation labels use Chinese carrier names such as 企业号、约克城号、赤城 and 飞龙. Several model/product image sources have not had public/commercial redistribution rights verified, so these Midway carrier markers are for the current local/private demo only; source pages and uncertainty notes are documented in `docs/sources/midway-battle.md`.
+- Gaixia infantry/crossbow markers: `public/assets/unit-icons/gaixia-han-infantry.webp`, `gaixia-han-crossbow.webp`, and `gaixia-chu-infantry.webp` are transparent local-demo markers processed from PNG素材网 ancient Chinese soldier/infantry candidates under `public/assets/unit-icons/source/gaixia/`, including `pngsucai-9564806-ancient-chinese-soldier.webp`, `pngsucai-9564803-ancient-handsome-soldier.webp`, `pngsucai-8978916-ancient-infantry.webp`, `pngsucai-8984409-ancient-soldiers-fighting.webp`, and `pngsucai-8810364-ancient-armor-vector.webp`. Reference pages include `https://www.pngsucai.com/png/9564806.html` and `https://www.pngsucai.com/png/8978916.html`. These replaced the first-pass Han tomb/terracotta crops because the user wanted clearer, more realistic battlefield markers at map scale.
+- Gaixia cavalry/command markers: `public/assets/unit-icons/gaixia-han-cavalry.webp`, `gaixia-chu-cavalry.webp`, and `gaixia-chu-command.webp` are transparent local-demo markers processed from PNG素材网 mounted general/cavalry/general candidates under `public/assets/unit-icons/source/gaixia/`, including `pngsucai-9006970-ancient-chinese-cavalry.webp`, `pngsucai-8323575-mounted-general.webp`, `pngsucai-9258937-ancient-general.webp`, and `pngsucai-10244509-ancient-general-red.webp`. Reference pages include `https://www.pngsucai.com/png/9006970.html` and `https://www.pngsucai.com/png/9258937.html`. The PNG素材网 page access may be protected outside a browser session and redistribution rights are not verified; keep these assets for local/private demo only and replace with licensed/public-domain art before public or commercial distribution.
+- Cavalry: composite asset built from `public/assets/unit-icons/source/horse-pngimg.png` and `public/assets/unit-icons/source/knight-pngimg-117073.png`, with a locally drawn lance and shadow pass. Horse URL: `https://pngimg.com/uploads/horse/horse_PNG2558.png`. Knight source was downloaded from PNGIMG and retained locally for traceability.
+- Chariot: `public/assets/unit-icons/source/qin-chariot-illustration-user-provided.png`, supplied in the local Codex conversation on 2026-05-18, then locally flood-filled/cut out from its sky-and-sand illustration background, sharpened, and exported as `chariot.png` / `chariot.webp`. It replaces the Qin bronze museum-photo marker because the user selected this clearer Qin-style four-horse war chariot illustration for the map marker. The file is suitable for this local/private demo; redistribution rights are not verified. Earlier candidates retained locally only for traceability include `qin-bronze-chariot-two-jmhullot-ccby3.jpg`, `chariot19-wikimedia.jpg`, `egyptian-chariot-colour-wikimedia.jpg`, `egyptian-chariot-wikimedia.png`, and `monteleone-chariot-wikimedia.png`.
+- Earlier tank candidate retained for traceability: `public/assets/unit-icons/source/tank-real-army.png`, downloaded from PurePNG direct asset URL `https://purepng.com/public/uploads/large/purepng.com-real-army-tanktankcamouflagearmy-401521067613ecxs4.png`.
+
+PNGIMG license page: `https://pngimg.com/license`.
+The page identifies the license as Creative Commons Attribution-NonCommercial 4.0 International. PNGIMG-derived icons are acceptable for this local non-commercial demo only. For commercial/public distribution, replace PNGIMG-derived tank/cannon/ship/horse/knight sources and the user-supplied chariot illustration with CC0, public-domain, or properly purchased commercial assets.
+
+## Visual acceptance rule
+
+When the user asks for realistic icons, do not substitute hand-drawn SVG mini-symbols. Use finished raster/vector assets with visible material detail, or explicitly report that suitable assets were not found.
+
+Infantry markers must meet the same realism bar as tanks, aircraft, carriers, cavalry, and cannon. Do not use cartoon soldiers, first-responder pictograms, flat stick figures, or generic abstract infantry symbols next to realistic vehicle icons. At map scale the helmet/body/weapon silhouette should remain identifiable.
+
+If opposing infantry forces have visibly different uniforms, create faction-specific infantry assets rather than relying only on badges. In Korean War scenes, United Nations infantry should use the steel-helmet/rifle `infantry.webp` asset, while Chinese People's Volunteer Army infantry should use the padded-uniform `infantry-pva.webp` asset.
+
+Do not let wide subjects be squeezed into square marker geometry. Set `UnitIcon` width/height to match the final asset silhouette so cavalry/chariot/ship/carrier markers remain recognizable at map scale.
