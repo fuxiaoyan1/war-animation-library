@@ -5,7 +5,7 @@ export function publicPath(path: string) {
     return path;
   }
 
-  const base = import.meta.env.BASE_URL || "/";
+  const base = import.meta.env?.BASE_URL || "/";
   const normalizedBase = base.endsWith("/") ? base : `${base}/`;
 
   if (path.startsWith(normalizedBase)) {

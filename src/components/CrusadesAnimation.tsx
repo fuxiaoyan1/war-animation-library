@@ -76,11 +76,13 @@ export function CrusadesAnimation() {
       cueEvents={new Set(["jerusalem-1099", "edessa-1144", "hattin", "constantinople-1204", "acre-1291"])}
       eyebrow="战争动画藏书馆 / 古代战争"
       focusSteps={[
-        { fromProgress: 0, focus: "easternMediterranean" },
+        { fromProgress: 0, focus: "crusadesFirstCall" },
+        { fromProgress: timeline.dateToProgress("1097-04-01"), focus: "easternMediterranean" },
         { fromProgress: timeline.dateToProgress("1099-01-13"), focus: "levant" },
         { fromProgress: timeline.dateToProgress("1202-10-01"), focus: "easternMediterranean" },
         { fromProgress: timeline.dateToProgress("1248-06-01"), focus: "levant" }
       ]}
+      focusTransitionProgress={0.025}
       frontLines={semanticFrontLines}
       gapScale={0.02}
       legendAxis="远征轴线"

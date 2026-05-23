@@ -78,7 +78,8 @@ export function AlexanderConquestsAnimation() {
       focusSteps={[
         { fromProgress: 0, focus: "alexanderAegean" },
         { fromProgress: timeline.dateToProgress("BCE-0333-11-02"), focus: "alexanderLevantEgypt" },
-        { fromProgress: timeline.dateToProgress("BCE-0331-04-08"), focus: "alexanderMesopotamia" },
+        { fromProgress: timeline.dateToProgress("BCE-0331-04-07"), focus: "alexanderEgypt" },
+        { fromProgress: timeline.dateToProgress("BCE-0331-10-01"), focus: "alexanderMesopotamia" },
         { fromProgress: timeline.dateToProgress("BCE-0330-05-02"), focus: "alexanderPersia" },
         { fromProgress: timeline.dateToProgress("BCE-0330-07-02"), focus: "alexanderCentralAsia" },
         { fromProgress: timeline.dateToProgress("BCE-0327-05-01"), focus: "alexanderIndus" },

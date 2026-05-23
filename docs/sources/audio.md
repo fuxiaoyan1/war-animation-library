@@ -20,6 +20,7 @@
 - 许可状态：Directory.Audio 同批次战场音效素材页面标注 `Creative Commons 0`；本文件作为 1940 德法战役独立军乐背景使用。
 - 本地校验：文件大小 `1,682,435 bytes`，MP3，Stereo，44100Hz，96kbps，`afinfo` 估算时长约 `140.173s`。
 - 使用位置：`1940 德法战役`。
+- 复用位置：`伦敦上空的鹰`。该复用是临时方案；后续公开发布前应替换为独立配乐以重新满足系列配乐不重复规则。
 
 ### Mars, the Bringer of War
 
@@ -56,6 +57,7 @@
 - 版权状态：Wikimedia Commons 文件页标注为公有领域/美国政府作品来源；当前项目在美国本机环境中作为实验演示使用。
 - 本地校验：文件大小 `4,711,583 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `319.399s`。
 - 使用位置：`1991年第一次海湾战争`。
+- 复用位置：`大周行动：欧洲昼间制空权争夺`。该复用是临时方案；后续公开发布前应替换为独立配乐以重新满足系列配乐不重复规则。
 
 ### Jupiter, the Bringer of Jollity
 
@@ -115,6 +117,40 @@
 - 版权状态：Wikimedia Commons 文件为美国政府作品/公有领域标注；当前项目在美国本机环境中作为实验演示使用。
 - 本地校验：文件大小约 `9.3 MB`，Ogg Vorbis。
 - 使用位置：`中途岛海空战`。
+- 复用位置：`俾斯麦海海空战`。该复用是临时方案；后续公开发布前应替换为独立配乐以重新满足系列配乐不重复规则。
+
+### Rule, Britannia!
+
+- 文件：`public/audio/wikimedia-rule-britannia.ogg`
+- 曲目：`Rule, Britannia!`
+- 作曲：Thomas Arne。
+- 来源标注：Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Rule,_Britannia.ogg>
+- 版权状态：Wikimedia Commons 文件页标注为公有领域；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小约 `3.9 MB`，Ogg Vorbis，Monaural，44100Hz，`afinfo` 估算时长约 `247.137s`。
+- 使用位置：`特拉法尔加大海战`。该曲未被其他战争动画使用，满足系列配乐不重复规则。
+
+### Anchors Aweigh
+
+- 文件：`public/audio/wikimedia-anchors-aweigh-2009.oga`
+- 曲目：`Anchors Aweigh`，2009年1月20日美国海军乐队演奏录音。
+- 来源标注：Wikimedia Commons 音频文件，美国海军乐队。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Anchors_Aweigh_(January_20,_2009).oga>
+- OGA：<https://commons.wikimedia.org/wiki/Special:Redirect/file/Anchors%20Aweigh%20(January%2020,%202009).oga>
+- 版权状态：Wikimedia Commons 文件页标注为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `3,699,406 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `99.853s`，约 `292kbps`。
+- 使用位置：`第二次瓜岛海战`。该曲未被其他战争动画使用，满足系列配乐不重复规则。
+
+### Eternal Father, Strong to Save
+
+- 文件：`public/audio/wikimedia-eternal-father-instrumental.ogg`
+- 曲目：`Eternal Father, Strong to Save` 器乐版。
+- 来源标注：Wikimedia Commons 音频文件，美国海军乐队。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Eternal_Father,_Strong_to_Save_(instrumental).ogg>
+- OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/Eternal%20Father,%20Strong%20to%20Save%20(instrumental).ogg>
+- 版权状态：Wikimedia Commons 文件页标注为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `2,873,457 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `63.583s`，约 `357kbps`。
+- 使用位置：`日德兰海战`。该曲未被其他战争动画使用，满足系列配乐不重复规则。
 
 ### 拉德茨基进行曲
 

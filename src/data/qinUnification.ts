@@ -289,7 +289,7 @@ export const frontLines: FrontLine[] = [
     from: "daliang",
     to: "linzi",
     start: "BCE-0221-01-01",
-    end: "BCE-0221-10-01",
+    end: "BCE-0221-01-01",
     unitIcon: "chariot"
   }
 ];

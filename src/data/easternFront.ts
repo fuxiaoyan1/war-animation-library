@@ -300,20 +300,6 @@ export const battleEvents: BattleEvent[] = [
     mapFocus: ["minsk", "smolensk", "moscow"]
   },
   {
-    id: "kiev-pocket",
-    date: "1941-09-26",
-    title: "基辅大合围结束",
-    location: "基辅",
-    coordinates: [30.5234, 50.4501],
-    phase: "南线包围",
-    summary: "德军在乌克兰完成大规模包围，夺取重要农业、工业与交通区域。",
-    detail:
-      "南方集团军群和从中央方向转来的装甲兵力夹击基辅地区。战果巨大，但也消耗了进攻莫斯科的季节窗口。",
-    significance:
-      "基辅战役体现了德国战略目标的分裂：歼灭苏军、夺取资源和直取莫斯科之间难以同时满足。",
-    mapFocus: ["kiev", "kharkov", "moscow"]
-  },
-  {
     id: "leningrad-siege",
     date: "1941-09-08",
     title: "列宁格勒围困形成",
@@ -326,6 +312,20 @@ export const battleEvents: BattleEvent[] = [
     significance:
       "北线无法转化为快速政治胜利，苏军和城市居民的坚持把德国计划拖入持久战。",
     mapFocus: ["leningrad", "riga", "kaunas"]
+  },
+  {
+    id: "kiev-pocket",
+    date: "1941-09-26",
+    title: "基辅大合围结束",
+    location: "基辅",
+    coordinates: [30.5234, 50.4501],
+    phase: "南线包围",
+    summary: "德军在乌克兰完成大规模包围，夺取重要农业、工业与交通区域。",
+    detail:
+      "南方集团军群和从中央方向转来的装甲兵力夹击基辅地区。战果巨大，但也消耗了进攻莫斯科的季节窗口。",
+    significance:
+      "基辅战役体现了德国战略目标的分裂：歼灭苏军、夺取资源和直取莫斯科之间难以同时满足。",
+    mapFocus: ["kiev", "kharkov", "moscow"]
   },
   {
     id: "moscow-counteroffensive",

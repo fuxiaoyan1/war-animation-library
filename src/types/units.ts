@@ -11,4 +11,15 @@ export type UnitIconKind =
   | "ship"
   | "tank"
   | "tankKorean"
-  | "warship";
+  | "trafalgarBritishLine"
+  | "trafalgarBucentaure"
+  | "trafalgarFrenchLine"
+  | "trafalgarHmsVictory"
+  | "trafalgarRoyalSovereign"
+  | "trafalgarSantisimaTrinidad"
+  | "warship"
+  | "ww2AttackAircraft"
+  | "ww2Bomber"
+  | "ww2EscortShip"
+  | "ww2Fighter"
+  | "ww2TransportShip";

@@ -1,4 +1,127 @@
 import { expect, test, type Page } from "@playwright/test";
+import {
+  battleEvents as jutlandBattleEvents,
+  campaignEnd as jutlandCampaignEnd,
+  campaignStart as jutlandCampaignStart,
+  frontLines as jutlandFrontLines,
+  mapPoints as jutlandMapPoints
+} from "../src/data/jutlandBattle";
+import { createCampaignTimeline, toTime } from "../src/lib/campaignTimeline";
+import * as alexanderData from "../src/data/alexanderConquests";
+import * as battleOfFranceData from "../src/data/battleOfFrance";
+import * as battleOfBritainData from "../src/data/battleOfBritain";
+import * as bigWeekData from "../src/data/bigWeekAirBattle";
+import * as bismarckSeaData from "../src/data/bismarckSeaAirBattle";
+import * as caesarData from "../src/data/caesarWars";
+import * as crusadesData from "../src/data/crusades";
+import * as easternFrontData from "../src/data/easternFront";
+import * as guadalcanalData from "../src/data/guadalcanalNavalBattle";
+import * as gulfWarData from "../src/data/gulfWar1991";
+import * as jutlandData from "../src/data/jutlandBattle";
+import * as koreanWarData from "../src/data/koreanWar";
+import * as midwayData from "../src/data/midwayBattle";
+import * as mongolData from "../src/data/mongolEmpire";
+import * as napoleonicData from "../src/data/napoleonicWars";
+import * as pacificWarData from "../src/data/pacificWar";
+import * as punicData from "../src/data/punicWars";
+import * as qinData from "../src/data/qinUnification";
+import * as trafalgarData from "../src/data/trafalgarBattle";
+import * as tsushimaData from "../src/data/tsushimaBattle";
+
+const jutlandTimeline = createCampaignTimeline({
+  activeSpans: jutlandFrontLines.map(({ end, start }) => ({ end, start })),
+  campaignEnd: jutlandCampaignEnd,
+  campaignStart: jutlandCampaignStart,
+  events: jutlandBattleEvents,
+  points: jutlandMapPoints
+});
+
+type CampaignDataModule = {
+  battleEvents: Array<{
+    date: string;
+    detail?: string;
+    id: string;
+    phase?: string;
+    summary?: string;
+    title?: string;
+  }>;
+  campaignEnd: string;
+  campaignStart: string;
+  cueEventIds?: Set<string>;
+  frontLines?: Array<{
+    end: string;
+    formationUnits?: unknown[];
+    from: string;
+    hideUnit?: boolean;
+    id: string;
+    routeKind?: string;
+    start: string;
+    unitVisibleFrom?: string;
+    to: string;
+    unitVisibleUntil?: string;
+    visibleUntil?: string;
+  }>;
+  mapPoints?: Array<{
+    id: string;
+    revealAt?: string;
+  }>;
+};
+
+const genericCampaignData: Array<[string, CampaignDataModule]> = [
+  ["battleOfFrance", battleOfFranceData as CampaignDataModule],
+  ["battleOfBritain", battleOfBritainData as CampaignDataModule],
+  ["bigWeekAirBattle", bigWeekData as CampaignDataModule],
+  ["bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule],
+  ["easternFront", easternFrontData as CampaignDataModule],
+  ["napoleonicWars", napoleonicData as CampaignDataModule],
+  ["punicWars", punicData as CampaignDataModule],
+  ["crusades", crusadesData as CampaignDataModule],
+  ["mongolEmpire", mongolData as CampaignDataModule],
+  ["qinUnification", qinData as CampaignDataModule],
+  ["alexanderConquests", alexanderData as CampaignDataModule],
+  ["caesarWars", caesarData as CampaignDataModule],
+  ["pacificWar", pacificWarData as CampaignDataModule],
+  ["koreanWar", koreanWarData as CampaignDataModule],
+  ["gulfWar1991", gulfWarData as CampaignDataModule],
+  ["tsushimaBattle", tsushimaData as CampaignDataModule],
+  ["guadalcanalNavalBattle", guadalcanalData as CampaignDataModule],
+  ["jutlandBattle", jutlandData as CampaignDataModule],
+  ["trafalgarBattle", trafalgarData as CampaignDataModule]
+];
+
+const customCampaignData = [["midwayBattle", midwayData]] as const;
+
+const intentionalQuietCombatLikeEvents = new Set([
+  "desert-shield",
+  "fleet-contact",
+  "run-to-north",
+  "songs-of-chu",
+  "uxbridge-quiet-before-raid",
+  "farewell"
+]);
+
+function expectDateWithinRange(label: string, date: string, start: string, end: string) {
+  const value = toTime(date);
+  expect(value, `${label} should not be before campaign start`).toBeGreaterThanOrEqual(toTime(start));
+  expect(value, `${label} should not be after campaign end`).toBeLessThanOrEqual(toTime(end));
+}
+
+function expectEventsSortedByDate(campaignName: string, events: CampaignDataModule["battleEvents"]) {
+  for (let index = 1; index < events.length; index += 1) {
+    expect(
+      toTime(events[index].date),
+      `${campaignName} event order ${events[index - 1].id} -> ${events[index].id}`
+    ).toBeGreaterThanOrEqual(toTime(events[index - 1].date));
+  }
+}
+
+function eventLooksLikeCombat(event: CampaignDataModule["battleEvents"][number]) {
+  const text = [event.id, event.title, event.phase, event.summary, event.detail].filter(Boolean).join(" ");
+  const combatPattern = /会战|战役|战斗|攻势|反攻|突击|冲锋|合围|围攻|登陆|炮击|空袭|轰炸|雷击|命中|齐射|沉没|爆炸|巷战|决战|伏击|火控|突破|battle|strike/i;
+  const quietPattern = /结束|投降|死亡|诀别|楚歌|胜利日|战果|损失|接触|侦察|起飞|启动|形成|抵达|转向|部署/i;
+
+  return combatPattern.test(text) && !quietPattern.test(text);
+}
 
 function collectFailures(page: Page) {
   const apiFailures: string[] = [];
@@ -40,13 +163,16 @@ async function expectCurrentEventInsideMapCore(page: Page) {
 async function expectLowImpactTicker(page: Page) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const subtitleBox = await page.getByTestId("narration-subtitle").boundingBox();
+  const legendBox = await page.locator(".map-legend").boundingBox();
 
   expect(mapBox).not.toBeNull();
   expect(subtitleBox).not.toBeNull();
+  expect(legendBox).not.toBeNull();
   expect(subtitleBox?.height).toBeLessThan((mapBox?.height ?? 0) * 0.06);
   expect((subtitleBox?.y ?? 0) - (mapBox?.y ?? 0)).toBeGreaterThanOrEqual(0);
   expect((subtitleBox?.y ?? 0) - (mapBox?.y ?? 0)).toBeLessThan((mapBox?.height ?? 0) * 0.14);
   expect((subtitleBox?.x ?? 0) - (mapBox?.x ?? 0)).toBeGreaterThan((mapBox?.width ?? 0) * 0.32);
+  expect((legendBox?.y ?? 0) - ((subtitleBox?.y ?? 0) + (subtitleBox?.height ?? 0))).toBeGreaterThanOrEqual(4);
   await expect(page.getByTestId("narration-subtitle")).toHaveCSS("background-color", /rgba\(5, 12, 14, 0\.16\)/);
   await expect(page.getByTestId("narration-subtitle")).toHaveCSS("pointer-events", "none");
 }
@@ -227,7 +353,18 @@ async function expectRealisticUnitIcon(
     | "ship-marker"
     | "tank-korean-marker"
     | "tank-marker"
-    | "warship-marker",
+    | "trafalgar-british-line-marker"
+    | "trafalgar-bucentaure-marker"
+    | "trafalgar-french-line-marker"
+    | "trafalgar-hms-victory-marker"
+    | "trafalgar-royal-sovereign-marker"
+    | "trafalgar-santisima-trinidad-marker"
+    | "warship-marker"
+    | "ww2-attack-aircraft-marker"
+    | "ww2-bomber-marker"
+    | "ww2-escort-ship-marker"
+    | "ww2-fighter-marker"
+    | "ww2-transport-ship-marker",
   expectedAssetKind:
     | "cannon"
     | "carrier"
@@ -241,8 +378,19 @@ async function expectRealisticUnitIcon(
     | "ship"
     | "tank"
     | "tankKorean"
-    | "warship",
-  expectedAssetPath:
+    | "trafalgarBritishLine"
+    | "trafalgarBucentaure"
+    | "trafalgarFrenchLine"
+    | "trafalgarHmsVictory"
+    | "trafalgarRoyalSovereign"
+    | "trafalgarSantisimaTrinidad"
+    | "warship"
+    | "ww2AttackAircraft"
+    | "ww2Bomber"
+    | "ww2EscortShip"
+    | "ww2Fighter"
+    | "ww2TransportShip",
+  expectedAssetPath?:
     | "cannon"
     | "carrier"
     | "carrier-essex"
@@ -258,19 +406,93 @@ async function expectRealisticUnitIcon(
     | "tank"
     | "tank-korean"
     | "tankKorean"
-    | "warship" = expectedAssetKind
+    | "trafalgar-british-line"
+    | "trafalgar-bucentaure"
+    | "trafalgar-french-line"
+    | "trafalgar-hms-victory"
+    | "trafalgar-royal-sovereign"
+    | "trafalgar-santisima-trinidad"
+    | "warship"
+    | "ww2-attack-aircraft"
+    | "ww2-bomber"
+    | "ww2-escort-ship"
+    | "ww2-fighter"
+    | "ww2-transport-ship"
 ) {
+  const assetPath = expectedAssetPath ?? expectedAssetKind;
   const marker = page.getByTestId(markerTestId).first();
   await expect(marker).toBeVisible();
   const image = marker.locator(".unit-icon-image");
   await expect(image).toHaveAttribute("data-asset-kind", expectedAssetKind);
-  await expect(image).toHaveAttribute("href", `/assets/unit-icons/${expectedAssetPath}.webp`);
+  await expect(image).toHaveAttribute("href", `/assets/unit-icons/${assetPath}.webp`);
 
-  const assetResponse = await page.request.head(`/assets/unit-icons/${expectedAssetPath}.webp`);
+  const assetResponse = await page.request.head(`/assets/unit-icons/${assetPath}.webp`);
   expect(assetResponse.ok()).toBe(true);
   expect(assetResponse.headers()["content-type"]).toContain("image");
-  const minimumContentLength = expectedAssetKind === "infantry" ? 18_000 : expectedAssetKind === "infantryPva" ? 12_000 : 4_000;
+  const minimumContentLength = expectedAssetKind.startsWith("trafalgar")
+    ? 12_000
+    : expectedAssetKind === "ww2TransportShip" || expectedAssetKind === "ww2EscortShip"
+      ? 6_000
+    : expectedAssetKind === "infantry"
+      ? 18_000
+      : expectedAssetKind === "infantryPva"
+        ? 12_000
+        : 4_000;
   expect(Number(assetResponse.headers()["content-length"])).toBeGreaterThan(minimumContentLength);
+}
+
+async function expectTransparentTrafalgarShipAsset(page: Page, assetPath: string) {
+  const stats = await page.evaluate(async (path) => {
+    const image = new Image();
+    image.src = path;
+    await image.decode();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      throw new Error("2d canvas unavailable");
+    }
+
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let opaque = 0;
+    let minX = canvas.width;
+    let minY = canvas.height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+        if (alpha > 8) {
+          opaque += 1;
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+
+    return {
+      alphaRatio: opaque / (canvas.width * canvas.height),
+      bboxHeightRatio: (maxY - minY + 1) / canvas.height,
+      bboxWidthRatio: (maxX - minX + 1) / canvas.width,
+      height: canvas.height,
+      opaque,
+      width: canvas.width
+    };
+  }, assetPath);
+
+  expect(stats.width).toBe(900);
+  expect(stats.height).toBe(360);
+  expect(stats.opaque).toBeGreaterThan(65_000);
+  expect(stats.alphaRatio).toBeGreaterThan(0.18);
+  expect(stats.alphaRatio).toBeLessThan(0.31);
+  expect(stats.bboxWidthRatio).toBeGreaterThan(0.7);
+  expect(stats.bboxHeightRatio).toBeLessThan(0.72);
 }
 
 async function expectRouteBadgeLabels(page: Page, routeId: string, expectedLabels: string[]) {
@@ -401,6 +623,15 @@ async function formationUnitCenters(page: Page, routeId: string) {
   );
 }
 
+async function formationUnitRouteProgresses(page: Page, routeId: string) {
+  return page.locator(`.front-line[data-route-id="${routeId}"] .formation-unit`).evaluateAll((units) =>
+    units.map((unit) => ({
+      label: unit.getAttribute("data-ship-label") ?? "",
+      routeProgress: Number(unit.getAttribute("data-unit-route-progress") ?? Number.NaN)
+    }))
+  );
+}
+
 function expectLeadShipIsMostForward(
   units: Array<{ label: string; x: number; y: number }>,
   leadLabel: string,
@@ -422,6 +653,13 @@ function expectLeadShipIsMostForward(
 function expectFormationHasTravelSpread(units: Array<{ label: string; x: number; y: number }>, axis: "x" | "y", minimumSpread: number) {
   const positions = units.map((unit) => unit[axis]);
   expect(Math.max(...positions) - Math.min(...positions)).toBeGreaterThan(minimumSpread);
+}
+
+function expectFormationUsesColumnProgression(units: Array<{ label: string; routeProgress: number }>, minimumSpread: number) {
+  expect(units.length).toBeGreaterThan(1);
+  const progresses = units.map((unit) => unit.routeProgress);
+  expect(progresses.every((value) => Number.isFinite(value))).toBe(true);
+  expect(Math.max(...progresses) - Math.min(...progresses)).toBeGreaterThan(minimumSpread);
 }
 
 async function expectTsushimaRoutesStayOffLand(page: Page) {
@@ -510,12 +748,342 @@ async function expectActiveRoutePromptHasSmallPulse(page: Page, routeId: string)
   expect(animationName).toBe("breathe");
 }
 
+async function visibleFleetRouteIds(page: Page, shellSelector: string) {
+  return page
+    .locator(`${shellSelector} .front-line[data-unit-visible="true"]`)
+    .evaluateAll((routes) => routes.map((route) => route.getAttribute("data-route-id")).filter((routeId): routeId is string => Boolean(routeId)));
+}
+
+async function renderedRouteIds(page: Page, shellSelector: string) {
+  return page
+    .locator(`${shellSelector} .front-line`)
+    .evaluateAll((routes) => routes.map((route) => route.getAttribute("data-route-id")).filter((routeId): routeId is string => Boolean(routeId)));
+}
+
 async function expectVisibleTsushimaFleetRoutes(page: Page, expectedRouteIds: string[]) {
+  const visibleRoutes = await visibleFleetRouteIds(page, ".tsushima-battle");
+
+  expect(visibleRoutes).toEqual(expectedRouteIds);
+}
+
+async function expectNavalRoutesStayOffLand(page: Page, shellSelector: string) {
+  const routeHits = await page.evaluate((selector) => {
+    const landRegions = [...document.querySelectorAll(`${selector} .country-core`)].filter(
+      (element): element is SVGGeometryElement => element instanceof SVGGeometryElement
+    );
+
+    return [...document.querySelectorAll(`${selector} .front-line.route-sea`)].flatMap((line) => {
+      const route = line.querySelector(".front-route");
+      const routeId = line.getAttribute("data-route-id") ?? "unknown";
+      const hits: Array<{ kind: string; routeId: string; sample: number }> = [];
+
+      if (route instanceof SVGGeometryElement) {
+        const length = route.getTotalLength();
+        for (let index = 1; index < 48; index += 1) {
+          const point = route.getPointAtLength((length * index) / 48);
+          if (landRegions.some((region) => region.isPointInFill(new DOMPoint(point.x, point.y)))) {
+            hits.push({ kind: "route", routeId, sample: index });
+          }
+        }
+      }
+
+      [...line.querySelectorAll(".formation-unit")].forEach((unit, index) => {
+        const transform = unit.getAttribute("transform") ?? "";
+        const match = transform.match(/translate\((-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)\)/);
+        if (!match) {
+          return;
+        }
+
+        const point = new DOMPoint(Number(match[1]), Number(match[2]));
+        if (landRegions.some((region) => region.isPointInFill(point))) {
+          hits.push({ kind: "ship", routeId, sample: index });
+        }
+
+        const marker = unit.querySelector(".unit-marker");
+        if (marker instanceof SVGGraphicsElement) {
+          const box = marker.getBBox();
+          const matrix = marker.getCTM();
+          if (!matrix) {
+            return;
+          }
+
+          const samplePoints = [
+            [box.x, box.y],
+            [box.x + box.width, box.y],
+            [box.x, box.y + box.height],
+            [box.x + box.width, box.y + box.height],
+            [box.x + box.width / 2, box.y],
+            [box.x + box.width / 2, box.y + box.height],
+            [box.x, box.y + box.height / 2],
+            [box.x + box.width, box.y + box.height / 2]
+          ];
+          const touchesLand = samplePoints
+            .map(([x, y]) => new DOMPoint(x, y).matrixTransform(matrix))
+            .some((samplePoint) => landRegions.some((region) => region.isPointInFill(samplePoint)));
+          if (touchesLand) {
+            hits.push({ kind: "ship-bbox", routeId, sample: index });
+          }
+        }
+      });
+
+      return hits;
+    });
+  }, shellSelector);
+
+  expect(routeHits).toEqual([]);
+}
+
+async function expectWarshipScale(page: Page, shellSelector: string, expectedScale: number) {
+  const marker = page.locator(`${shellSelector} .warship-marker`).first();
+  await expect(marker).toBeVisible();
+
+  const transform = await marker.evaluate((element) => getComputedStyle(element).transform);
+  const matrix = transform.match(/matrix\(([^)]+)\)/);
+  expect(matrix).not.toBeNull();
+  const scaleX = Number(matrix![1].split(",")[0]);
+  expect(scaleX).toBeCloseTo(expectedScale, 2);
+
+  const markerBox = await marker.boundingBox();
+  expect(markerBox).not.toBeNull();
+  expect(markerBox?.width).toBeGreaterThan(42);
+  expect(markerBox?.width).toBeLessThan(108);
+}
+
+async function expectRouteHasPolylineComplexity(page: Page, shellSelector: string, routeId: string, minimumSegments: number) {
+  const segmentCount = await page
+    .locator(`${shellSelector} .front-line[data-route-id="${routeId}"]`)
+    .evaluate((route) => Number(route.getAttribute("data-route-point-count") ?? 0) - 1);
+
+  expect(segmentCount).toBeGreaterThanOrEqual(minimumSegments);
+}
+
+async function expectVisibleFleetRoutes(page: Page, shellSelector: string, expectedRouteIds: string[]) {
+  const visibleRoutes = await visibleFleetRouteIds(page, shellSelector);
+
+  expect(visibleRoutes).toEqual(expectedRouteIds);
+}
+
+async function expectVisibleFleetRoutesInclude(page: Page, shellSelector: string, expectedRouteIds: string[]) {
+  const visibleRoutes = await visibleFleetRouteIds(page, shellSelector);
+
+  for (const routeId of expectedRouteIds) {
+    expect(visibleRoutes).toContain(routeId);
+  }
+}
+
+async function expectRenderedRoutesInclude(page: Page, shellSelector: string, routeIds: string[]) {
+  const visibleRoutes = await renderedRouteIds(page, shellSelector);
+
+  for (const routeId of routeIds) {
+    expect(visibleRoutes).toContain(routeId);
+  }
+}
+
+async function expectRenderedRoutesExclude(page: Page, shellSelector: string, routeIds: string[]) {
+  const visibleRoutes = await renderedRouteIds(page, shellSelector);
+
+  for (const routeId of routeIds) {
+    expect(visibleRoutes).not.toContain(routeId);
+  }
+}
+
+async function expectJutlandFleetGroupsContinuous(page: Page) {
+  const missing = await page.locator(".jutland-battle .front-line").evaluateAll((routes) => {
+    const visibleByGroup = new Map<string, string[]>();
+    routes.forEach((route) => {
+      const routeId = route.getAttribute("data-route-id") ?? "";
+      const groupId =
+        routeId === "run-to-the-north" || routeId === "beatty-night-screen"
+          ? "beatty"
+          : routeId === "hipper-rejoins-main-fleet" || routeId === "battlecruiser-death-ride" || routeId === "hipper-night-retreat"
+            ? "hipper"
+            : routeId === "high-seas-fleet-north" || routeId === "scheer-battle-turn" || routeId === "german-main-night-retreat"
+              ? "german-main"
+              : routeId === "grand-fleet-approach" ||
+                  routeId === "grand-fleet-closing" ||
+                  routeId === "grand-fleet-deploys" ||
+                  routeId === "british-night-pursuit-route"
+                ? "grand-fleet"
+                : "";
+
+      if (!groupId || route.getAttribute("data-unit-visible") !== "true") {
+        return;
+      }
+
+      visibleByGroup.set(groupId, [...(visibleByGroup.get(groupId) ?? []), routeId]);
+    });
+
+    return ["beatty", "hipper", "german-main", "grand-fleet"].filter((groupId) => !visibleByGroup.has(groupId));
+  });
+
+  expect(missing).toEqual([]);
+}
+
+async function expectMapPointsHidden(page: Page, shellSelector: string, pointIds: string[]) {
+  for (const pointId of pointIds) {
+    await expect(page.locator(`${shellSelector} [data-testid="map-point-${pointId}"]`)).toHaveCount(0);
+  }
+}
+
+async function expectNoTerrainZones(page: Page, shellSelector: string) {
+  await expect(page.locator(`${shellSelector} .terrain-layer ellipse`)).toHaveCount(0);
+}
+
+async function expectAirRouteKeepsTrackButAircraftExit(page: Page, shellSelector: string, routeId: string) {
+  const route = page.locator(`${shellSelector} .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveClass(/route-air/);
+  await expect(route).toHaveAttribute("data-unit-visible", "false");
+  await expect(route.locator(".formation-unit")).toHaveCount(0);
+  await expect(route.locator(".front-route")).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-state", "is-complete");
+}
+
+function expectAirRoutesHaveShortUnitWindows(campaignName: string, data: CampaignDataModule, maxHours: number) {
+  for (const line of data.frontLines ?? []) {
+    if (line.routeKind !== "air" || line.hideUnit) {
+      continue;
+    }
+
+    expect(line.unitVisibleUntil, `${campaignName} air route ${line.id} should hide aircraft after its sortie`).toBeTruthy();
+    const unitStart = toTime(line.unitVisibleFrom ?? line.start);
+    const unitEnd = toTime(line.unitVisibleUntil!);
+    expect(unitEnd - unitStart, `${campaignName} air route ${line.id} aircraft should not loiter like land/sea units`).toBeLessThanOrEqual(
+      maxHours * 60 * 60 * 1000
+    );
+
+    if (line.visibleUntil) {
+      expect(
+        toTime(line.visibleUntil),
+        `${campaignName} air route ${line.id} should keep the sortie trail after aircraft leave`
+      ).toBeGreaterThanOrEqual(unitEnd);
+    }
+  }
+}
+
+function formationCenter(units: Array<{ label: string; x: number; y: number }>) {
+  expect(units.length).toBeGreaterThan(0);
+  return {
+    x: units.reduce((sum, unit) => sum + unit.x, 0) / units.length,
+    y: units.reduce((sum, unit) => sum + unit.y, 0) / units.length
+  };
+}
+
+function formationBounds(units: Array<{ label: string; x: number; y: number }>) {
+  expect(units.length).toBeGreaterThan(0);
+  return {
+    xMax: Math.max(...units.map((unit) => unit.x)),
+    xMin: Math.min(...units.map((unit) => unit.x)),
+    yMax: Math.max(...units.map((unit) => unit.y)),
+    yMin: Math.min(...units.map((unit) => unit.y))
+  };
+}
+
+function formationDistance(
+  first: Array<{ label: string; x: number; y: number }>,
+  second: Array<{ label: string; x: number; y: number }>
+) {
+  const firstCenter = formationCenter(first);
+  const secondCenter = formationCenter(second);
+  return Math.hypot(firstCenter.x - secondCenter.x, firstCenter.y - secondCenter.y);
+}
+
+async function setTimeline(page: Page, value: number) {
+  await page.getByTestId("timeline").fill(String(value));
+  await page.waitForTimeout(30);
+}
+
+async function setJutlandTimelineDate(page: Page, date: string, bias: "before" | "after" | "nearest" = "nearest") {
+  const rawValue = jutlandTimeline.dateToProgress(date) * 1000;
+  const value = bias === "before" ? Math.floor(rawValue) : bias === "after" ? Math.ceil(rawValue) + 1 : Math.round(rawValue);
+  await setTimeline(page, value);
+}
+
+async function expectTrafalgarRepresentativeFleetCount(page: Page, expectedCount: number) {
+  await expect(page.locator(".trafalgar-battle .formation-unit")).toHaveCount(expectedCount);
+}
+
+async function expectVisibleTrafalgarFleetRoutes(page: Page, expectedRouteIds: string[]) {
   const visibleRoutes = await page
-    .locator('.tsushima-battle .front-line[data-unit-visible="true"]')
+    .locator('.trafalgar-battle .front-line[data-unit-visible="true"]')
     .evaluateAll((routes) => routes.map((route) => route.getAttribute("data-route-id")).filter(Boolean));
 
   expect(visibleRoutes).toEqual(expectedRouteIds);
+}
+
+async function expectTrafalgarLegendIsOneLine(page: Page) {
+  const geometry = await page.locator(".trafalgar-battle .map-legend").evaluate((legend) => {
+    const legendBox = legend.getBoundingClientRect();
+    const itemTops = [...legend.querySelectorAll("span")].map((item) => Math.round(item.getBoundingClientRect().top));
+    return {
+      height: legendBox.height,
+      uniqueRows: new Set(itemTops).size
+    };
+  });
+
+  expect(geometry.height).toBeLessThan(34);
+  expect(geometry.uniqueRows).toBe(1);
+}
+
+async function expectTrafalgarShipsStayAtSea(page: Page) {
+  const landHits = await page.evaluate(() => {
+    const landRegions = [...document.querySelectorAll(".trafalgar-battle .country-core")].filter(
+      (element): element is SVGGeometryElement => element instanceof SVGGeometryElement
+    );
+
+    return [...document.querySelectorAll(".trafalgar-battle .formation-unit")]
+      .map((unit) => {
+        const transform = unit.getAttribute("transform") ?? "";
+        const match = transform.match(/translate\((-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)\)/);
+        if (!match) {
+          return null;
+        }
+
+        const point = new DOMPoint(Number(match[1]), Number(match[2]));
+        const isOnLand = landRegions.some((region) => region.isPointInFill(point));
+        return isOnLand ? unit.getAttribute("data-ship-label") : null;
+      })
+      .filter(Boolean);
+  });
+
+  expect(landHits).toEqual([]);
+}
+
+async function expectTrafalgarFleetUsesCloseBattleView(page: Page, minimumWidthRatio: number, minimumHeightRatio: number) {
+  const spread = await page.evaluate(() => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    const unitBoxes = [...document.querySelectorAll(".trafalgar-battle .formation-unit")]
+      .map((unit) => unit.getBoundingClientRect())
+      .filter((box) => box.width > 0 && box.height > 0);
+
+    if (!stage || unitBoxes.length === 0) {
+      return null;
+    }
+
+    const bounds = unitBoxes.reduce(
+      (accumulator, box) => ({
+        bottom: Math.max(accumulator.bottom, box.bottom),
+        left: Math.min(accumulator.left, box.left),
+        right: Math.max(accumulator.right, box.right),
+        top: Math.min(accumulator.top, box.top)
+      }),
+      {
+        bottom: Number.NEGATIVE_INFINITY,
+        left: Number.POSITIVE_INFINITY,
+        right: Number.NEGATIVE_INFINITY,
+        top: Number.POSITIVE_INFINITY
+      }
+    );
+
+    return {
+      heightRatio: (bounds.bottom - bounds.top) / stage.height,
+      widthRatio: (bounds.right - bounds.left) / stage.width
+    };
+  });
+
+  expect(spread).not.toBeNull();
+  expect(spread?.widthRatio).toBeGreaterThan(minimumWidthRatio);
+  expect(spread?.heightRatio).toBeGreaterThan(minimumHeightRatio);
 }
 
 async function midwayCarrierCenters(page: Page, carrierIds: string[]) {
@@ -659,6 +1227,18 @@ async function expectUnitIconFacesRoute(
   await expect(marker).toHaveAttribute("data-mirror-x", expectedMirrorX);
 }
 
+async function expectCompactAircraftMarkers(page: Page, markerTestId: "ww2-attack-aircraft-marker" | "ww2-bomber-marker" | "ww2-fighter-marker") {
+  const boxes = await page
+    .getByTestId(markerTestId)
+    .evaluateAll((markers) => markers.map((marker) => marker.getBoundingClientRect()).map((box) => ({ height: box.height, width: box.width })));
+
+  expect(boxes.length).toBeGreaterThan(0);
+  for (const box of boxes) {
+    expect(box.width).toBeLessThan(105);
+    expect(box.height).toBeLessThan(46);
+  }
+}
+
 async function eventRailPositionByTitle(page: Page, titlePattern: RegExp) {
   return page
     .getByTestId("event-rail")
@@ -753,14 +1333,22 @@ const campaignIds = [
   "crusades",
   "mongol",
   "napoleonic",
+  "trafalgar",
   "tsushima",
-  "midway",
+  "jutland",
   "france",
+  "britain-air",
   "eastern",
   "pacific",
+  "midway",
+  "bismarck-sea",
+  "guadalcanal",
+  "big-week",
   "korean",
   "gulf"
 ] as const;
+
+const temporarySharedMusicCampaignIds = new Set<(typeof campaignIds)[number]>(["big-week", "bismarck-sea", "britain-air"]);
 
 async function openCampaignFromHome(page: Page, campaignId: (typeof campaignIds)[number]) {
   await page.goto("/");
@@ -771,12 +1359,84 @@ async function collectCampaignMusicSources(page: Page) {
   const sources: string[] = [];
 
   for (const campaignId of campaignIds) {
+    if (temporarySharedMusicCampaignIds.has(campaignId)) {
+      continue;
+    }
+
     await openCampaignFromHome(page, campaignId);
     sources.push((await page.getByTestId("score-toggle").getAttribute("data-music-source")) ?? "");
   }
 
   return sources;
 }
+
+test("campaign data quality gates keep timelines routes and cues coherent", async () => {
+  for (const [campaignName, data] of genericCampaignData) {
+    const points = new Set((data.mapPoints ?? []).map((point) => point.id));
+
+    expect(toTime(data.campaignEnd), `${campaignName} campaign end should be after start`).toBeGreaterThan(toTime(data.campaignStart));
+    expectEventsSortedByDate(campaignName, data.battleEvents);
+
+    for (const event of data.battleEvents) {
+      expectDateWithinRange(`${campaignName} event ${event.id}`, event.date, data.campaignStart, data.campaignEnd);
+      if (eventLooksLikeCombat(event) && data.cueEventIds && !intentionalQuietCombatLikeEvents.has(event.id)) {
+        expect(data.cueEventIds.has(event.id), `${campaignName} combat event ${event.id} should have an audio cue`).toBe(true);
+      }
+    }
+
+    for (const point of data.mapPoints ?? []) {
+      if (point.revealAt) {
+        expectDateWithinRange(`${campaignName} point ${point.id} revealAt`, point.revealAt, data.campaignStart, data.campaignEnd);
+      }
+    }
+
+    for (const line of data.frontLines ?? []) {
+      expect(points.has(line.from), `${campaignName} route ${line.id} from point exists`).toBe(true);
+      expect(points.has(line.to), `${campaignName} route ${line.id} to point exists`).toBe(true);
+      expectDateWithinRange(`${campaignName} route ${line.id} start`, line.start, data.campaignStart, data.campaignEnd);
+      expectDateWithinRange(`${campaignName} route ${line.id} end`, line.end, data.campaignStart, data.campaignEnd);
+      expect(toTime(line.end), `${campaignName} route ${line.id} should not end before start`).toBeGreaterThanOrEqual(toTime(line.start));
+      if (line.visibleUntil) {
+        expect(toTime(line.visibleUntil), `${campaignName} route ${line.id} visibleUntil should not be before start`).toBeGreaterThanOrEqual(
+          toTime(line.start)
+        );
+      }
+      if (line.unitVisibleUntil) {
+        expect(toTime(line.unitVisibleUntil), `${campaignName} route ${line.id} unitVisibleUntil should not be before start`).toBeGreaterThanOrEqual(
+          toTime(line.start)
+        );
+      }
+      if (line.formationUnits && line.formationUnits.length > 1) {
+        expect(line.routeKind, `${campaignName} multi-unit route ${line.id} should declare routeKind`).toBeTruthy();
+      }
+    }
+
+    if (["battleOfBritain", "bigWeekAirBattle", "bismarckSeaAirBattle"].includes(campaignName)) {
+      expectAirRoutesHaveShortUnitWindows(campaignName, data, campaignName === "bigWeekAirBattle" ? 12 : 8);
+    }
+  }
+
+  for (const [campaignName, data] of customCampaignData) {
+    expect(toTime(data.campaignEnd), `${campaignName} campaign end should be after start`).toBeGreaterThan(toTime(data.campaignStart));
+    expectEventsSortedByDate(campaignName, data.battleEvents);
+    for (const event of data.battleEvents) {
+      expectDateWithinRange(`${campaignName} event ${event.id}`, event.date, data.campaignStart, data.campaignEnd);
+    }
+    for (const carrier of data.carriers) {
+      for (let index = 1; index < carrier.track.length; index += 1) {
+        expect(
+          toTime(carrier.track[index].date),
+          `${campaignName} carrier ${carrier.id} track order ${carrier.track[index - 1].date} -> ${carrier.track[index].date}`
+        ).toBeGreaterThanOrEqual(toTime(carrier.track[index - 1].date));
+      }
+    }
+    for (const wave of data.airWaves) {
+      expectDateWithinRange(`${campaignName} wave ${wave.id} start`, wave.start, data.campaignStart, data.campaignEnd);
+      expectDateWithinRange(`${campaignName} wave ${wave.id} end`, wave.end, data.campaignStart, data.campaignEnd);
+      expect(toTime(wave.end), `${campaignName} wave ${wave.id} should not end before start`).toBeGreaterThanOrEqual(toTime(wave.start));
+    }
+  }
+});
 
 test("war library home lists ancient and modern animations", async ({ page }) => {
   const { apiFailures, consoleErrors } = collectFailures(page);
@@ -826,11 +1486,17 @@ test("war library home lists ancient and modern animations", async ({ page }) =>
     .poll(() => page.locator(".war-shelf").nth(1).locator(".war-card strong").evaluateAll((cards) => cards.map((card) => card.textContent?.trim())))
     .toEqual([
       "拿破仑争战史",
+      "特拉法尔加大海战",
       "日俄对马海战",
-      "中途岛海空战",
+      "日德兰海战",
       "1940 德法战役",
+      "伦敦上空的鹰",
       "1941-1945 苏德战争全景",
       "日美太平洋战争战史",
+      "中途岛海空战",
+      "俾斯麦海海空战",
+      "第二次瓜岛海战",
+      "大周行动：欧洲昼间制空权争夺",
       "抗美援朝战争",
       "1991年第一次海湾战争"
     ]);
@@ -915,6 +1581,7 @@ test("soviet german panoramic animation uses five minute pacing", async ({ page 
   await expectRouteBadgeLabels(page, "army-group-north", ["德"]);
 
   await expectLowImpactTicker(page);
+  await expectCurrentEventInsideMapCore(page);
   await expectMapCanMoveUnderPointer(page);
   await expectMapCanMoveHorizontallyUnderPointer(page);
   await expectMapZoomButtonsWork(page);
@@ -1050,6 +1717,8 @@ test("crusades animation uses five minute pacing and low impact subtitles", asyn
 
   await expectScoreUsesMusic(page, "/audio/wikimedia-washington-post.ogg");
   await expect(page.getByTestId("event-list")).toContainText("克莱蒙号召");
+  await expect(page.getByTestId("active-event-card")).toContainText("克莱蒙号召");
+  await expectCurrentEventInsideMapCore(page);
 
   await page.getByTestId("event-list").getByRole("button", { name: /第四次十字军攻陷君士坦丁堡/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("第四次十字军攻陷君士坦丁堡");
@@ -1092,9 +1761,11 @@ test("mongol and qin animations load with ancient warfare pacing", async ({ page
   await expectUnitIconFacesRoute(page, "khwarezm-opening", "-1", "1");
   await expectRouteBadgeLabels(page, "khwarezm-opening", ["蒙"]);
   await expectNoUnitBadgeLabels(page, ["迦"]);
+  await expectCurrentEventInsideMapCore(page);
   await page.getByTestId("event-list").getByRole("button", { name: /崖山海战/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("崖山海战");
   await expectRealisticUnitIcon(page, "ship-marker", "ship");
+  await expectCurrentEventInsideMapCore(page);
 
   await openCampaignFromHome(page, "qin");
   await expect(page.getByTestId("qin-app")).toBeVisible();
@@ -1279,6 +1950,10 @@ test("alexander conquests animation follows the campaign east", async ({ page })
   await expectNoUnitBadgeLabels(page, ["罗", "迦"]);
   await expectCurrentEventInsideMapCore(page);
 
+  await page.getByTestId("event-list").getByRole("button", { name: /进入埃及并奠基亚历山大港/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("进入埃及并奠基亚历山大港");
+  await expectCurrentEventInsideMapCore(page);
+
   await page.getByTestId("event-list").getByRole("button", { name: /高加米拉决战/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("高加米拉决战");
   await expectRealisticUnitIcon(page, "cavalry-marker", "cavalry");
@@ -1349,6 +2024,10 @@ test("caesar wars animation covers gaul and the civil war", async ({ page }) => 
   await expect(page.getByTestId("melee-clash").first()).toBeVisible();
   await expectCurrentEventInsideMapCore(page);
 
+  await page.getByTestId("event-list").getByRole("button", { name: /伊莱尔达解除西班牙威胁/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("伊莱尔达解除西班牙威胁");
+  await expectCurrentEventInsideMapCore(page);
+
   await page.getByTestId("event-list").getByRole("button", { name: /法萨卢斯决战/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("法萨卢斯决战");
   await expectCurrentEventInsideMapCore(page);
@@ -1361,6 +2040,212 @@ test("caesar wars animation covers gaul and the civil war", async ({ page }) => 
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("三月十五日遇刺");
   await expectCurrentEventInsideMapCore(page);
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("battle of britain shows radar directed compact air formations", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+
+  await openCampaignFromHome(page, "britain-air");
+  await expect(page.getByTestId("battle-of-britain-app")).toBeVisible();
+  await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "伦敦上空的鹰" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "伦敦上空的鹰");
+  await expectScoreUsesMusic(page, "/audio/directory-audio-military-exercise.mp3");
+  await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 雷达报来袭");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expectMapCanMoveUnderPointer(page);
+  await expectMapCanMoveHorizontallyUnderPointer(page);
+  await expectMapZoomButtonsWork(page);
+  await expectNoTerrainZones(page, ".battle-of-britain");
+  await expectMapPointsHidden(page, ".battle-of-britain", ["brenchley", "south-london", "buckingham-palace", "victoria", "duxford", "southampton"]);
+  await page.getByTestId("event-list").getByRole("button", { name: /雷达报告：大编队越海/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("雷达报告");
+  await expect(page.locator('.front-line[data-route-id="morning-radar-plots"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "london");
+  await page.getByTestId("event-list").getByRole("button", { name: /11群连续下令升空/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
+  await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveClass(/route-air/);
+  await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
+  await expectRealisticUnitIcon(page, "ww2-fighter-marker", "ww2Fighter", "ww2-fighter");
+  await expectCompactAircraftMarkers(page, "ww2-bomber-marker");
+  await expectCompactAircraftMarkers(page, "ww2-fighter-marker");
+  await expectRouteBadgeLabels(page, "morning-raid-first-wave", ["德", "德", "德", "德", "德"]);
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /白金汉宫方向/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("白金汉宫方向");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="buckingham-palace-dornier"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="ray-holmes-intercept"]')).toHaveClass(/route-air/);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /下午高峰/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("下午高峰");
+  await expectCurrentEventInsideMapCore(page);
+  await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
+  await page.getByTestId("timeline").fill("1000");
+  await expect(page.getByTestId("active-event-card")).toContainText("傍晚：伦敦守住白昼");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "morning-raid-first-wave");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "eleven-group-morning-scramble");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "afternoon-raid-main-wave");
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("big week air battle shows bomber streams escorts and interceptors", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+
+  await openCampaignFromHome(page, "big-week");
+  await expect(page.getByTestId("big-week-app")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "大周行动：欧洲昼间制空权争夺" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "大周行动：欧洲昼间制空权争夺");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-holst-uranus.ogg");
+  await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 逼迫迎战");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expectMapCanMoveUnderPointer(page);
+  await expectMapCanMoveHorizontallyUnderPointer(page);
+  await expectMapZoomButtonsWork(page);
+  await expectNoTerrainZones(page, ".big-week-air-battle");
+  await expectMapPointsHidden(page, ".big-week-air-battle", [
+    "brunswick",
+    "leipzig",
+    "regensburg",
+    "schweinfurt",
+    "berlin",
+    "luftwaffe-intercept",
+    "fighter-rendezvous",
+    "bomber-loss-zone",
+    "damaged-return-lane",
+    "north-sea-return",
+    "berlin-return-lane"
+  ]);
+  await expect(page.locator('.front-line[data-route-id="argument-first-wave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="argument-first-wave"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expectRouteHasPolylineComplexity(page, ".big-week-air-battle", "argument-first-wave", 4);
+  await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
+  await expectCompactAircraftMarkers(page, "ww2-bomber-marker");
+  await expect(page.locator('.front-line[data-route-id="argument-first-wave"] .formation-unit')).toHaveCount(4);
+  await expect(page.getByTestId("outcome-panel")).toContainText("轰炸机流往返");
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /远程护航改变深袭生存率/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("受损轰炸机有返航机会");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="deep-escort-chain"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expect(page.locator('.front-line[data-route-id="schweinfurt-regensburg-lesson"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expectRouteBadgeLabels(page, "deep-escort-chain", ["美", "美", "美"]);
+  await page.getByTestId("timeline").fill("395");
+  await expect(page.locator('.front-line[data-route-id="damaged-bomber-return"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expectRouteHasPolylineComplexity(page, ".big-week-air-battle", "damaged-bomber-return", 4);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /德国截击机群被拖入消耗/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("截击机群");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="luftwaffe-rises"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="luftwaffe-rises"]')).toHaveAttribute("data-route-to", "brunswick");
+  await expect(page.locator('.front-line[data-route-id="escort-fighter-sweep"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="escort-fighter-sweep"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expectRealisticUnitIcon(page, "ww2-fighter-marker", "ww2Fighter", "ww2-fighter");
+  await expectCompactAircraftMarkers(page, "ww2-fighter-marker");
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
+  await expectRouteBadgeLabels(page, "escort-fighter-sweep", ["美", "美", "美", "美"]);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /航空工业目标遭连续打击/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("爆炸点必须落在工业目标");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("big-week-brunswick-bombing")).toBeVisible();
+  await expect(page.getByTestId("big-week-brunswick-bombing").locator(".salvo-impact")).toHaveCount(4);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
+
+  await page.getByTestId("timeline").fill("1000");
+  await expect(page.getByTestId("active-event-card")).toContainText("制空权天平倾斜");
+  await expectCurrentEventInsideMapCore(page);
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "argument-first-wave");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "deep-escort-chain");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "schweinfurt-regensburg-lesson");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "damaged-bomber-return");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "luftwaffe-rises");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "escort-fighter-sweep");
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("bismarck sea air battle shows skip bombing and convoy breakup", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await openCampaignFromHome(page, "bismarck-sea");
+  await expect(page.getByTestId("bismarck-sea-app")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "俾斯麦海海空战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "俾斯麦海海空战");
+  await expect(page.locator(".day-counter")).toContainText("小时");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-liberty-bell.ogg");
+  await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 海上运输线");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expectMapCanMoveUnderPointer(page);
+  await expectMapCanMoveHorizontallyUnderPointer(page);
+  await expectMapZoomButtonsWork(page);
+  await expectNoTerrainZones(page, ".bismarck-sea-air-battle");
+  await expectMapPointsHidden(page, ".bismarck-sea-air-battle", ["convoy-sighting", "skip-bombing-zone", "vitiaz-strait", "lae-approach"]);
+  await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveAttribute("data-route-from", "rabaul-roadstead");
+  await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveAttribute("data-route-to", "convoy-breakup-sea");
+  await expectRouteHasPolylineComplexity(page, ".bismarck-sea-air-battle", "japanese-convoy-rabaul-lae", 7);
+  await expectRealisticUnitIcon(page, "ww2-transport-ship-marker", "ww2TransportShip", "ww2-transport-ship");
+  await expectRealisticUnitIcon(page, "ww2-escort-ship-marker", "ww2EscortShip", "ww2-escort-ship");
+  await expectNavalRoutesStayOffLand(page, ".bismarck-sea-air-battle");
+  await page.getByTestId("event-list").getByRole("button", { name: /盟军侦察发现并跟踪船队/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("侦察发现");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="allied-search-shadow"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="allied-search-shadow"]')).toHaveAttribute("data-route-to", "dobodura");
+  await expectRouteHasPolylineComplexity(page, ".bismarck-sea-air-battle", "allied-search-shadow", 4);
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /高空轰炸与低空攻击协同展开/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("高空轰炸");
+  await expectCurrentEventInsideMapCore(page);
+  await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
+  await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveAttribute("data-route-to", "port-moresby");
+  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveAttribute("data-route-to", "dobodura");
+  await expect(page.getByTestId("bismarck-sea-skip-bombing")).toHaveCount(0);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /跳弹轰炸撕裂船队/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("跳弹轰炸");
+  await expectCurrentEventInsideMapCore(page);
+  await expectRealisticUnitIcon(page, "ww2-attack-aircraft-marker", "ww2AttackAircraft", "ww2-attack-aircraft");
+  await expectCompactAircraftMarkers(page, "ww2-attack-aircraft-marker");
+  await expect(page.getByTestId("bismarck-sea-skip-bombing")).toBeVisible();
+  await expect(page.getByTestId("bismarck-sea-skip-bombing").locator(".salvo-shell-trace")).toHaveCount(4);
+  await expect(page.getByTestId("bismarck-sea-skip-bombing").locator(".salvo-impact")).toHaveCount(4);
+  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="convoy-breakup"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="convoy-breakup"]')).toHaveAttribute("data-route-to", "lae-approach");
+  await expectNavalRoutesStayOffLand(page, ".bismarck-sea-air-battle");
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /后续追击终结运输企图/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("后续追击");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="mopping-up-strikes"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="mopping-up-strikes"]')).toHaveAttribute("data-route-to", "dobodura");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".bismarck-sea-air-battle", "high-level-bombing-wave");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".bismarck-sea-air-battle", "skip-bombing-attack");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".bismarck-sea-air-battle", "allied-search-shadow");
+  await expectNavalRoutesStayOffLand(page, ".bismarck-sea-air-battle");
 
   expect(apiFailures).toEqual([]);
   expect(consoleErrors).toEqual([]);
@@ -1574,6 +2459,13 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   await expect(page.locator('.front-line[data-route-id="russian-night-approach"]')).toBeVisible();
   await expect(page.locator('.front-line[data-route-id="russian-night-approach"]').getByTestId("warship-marker")).toHaveCount(4);
   await expect(page.locator('.front-line[data-route-id="japanese-sortie-sasebo"]')).toBeVisible();
+  await expectMapPointsHidden(page, ".tsushima-battle", [
+    "togo-turn",
+    "first-battle",
+    "second-battle",
+    "night-attack",
+    "takeshima"
+  ]);
   await expectVisibleTsushimaFleetRoutes(page, ["russian-night-approach", "japanese-sortie-sasebo"]);
   await expectTsushimaRoutesStayOffLand(page);
   await expectScoreUsesMusic(page, "/audio/wikimedia-hands-across-the-sea.ogg");
@@ -1616,6 +2508,10 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
     .locator('.front-line[data-route-id="russian-night-approach"] .formation-unit')
     .evaluateAll((units) => units.map((unit) => Number(unit.getAttribute("data-unit-offset-along"))));
   expect(initialRussianAlongOffsets).toEqual([0, 0, -62, -62]);
+  await setTimeline(page, 50);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "russian-night-approach"), 0.4);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "japanese-sortie-sasebo"), 0.3);
+  await setTimeline(page, 0);
   await expectUnitMarkersDoNotAnimate(page);
   await expect(page.getByTestId("event-list")).toContainText("东乡回头转向截断航路");
   await expect(page.getByTestId("event-list")).toContainText("第二合战：日军再横切北逃舰列");
@@ -1623,6 +2519,8 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   await page.getByTestId("event-list").getByRole("button", { name: /东乡回头转向截断航路/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("东乡回头转向截断航路");
   await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("map-point-togo-turn")).toBeVisible();
+  await expectMapPointsHidden(page, ".tsushima-battle", ["first-battle", "second-battle", "night-attack", "takeshima"]);
   const togoTurnGeometry = await page.evaluate(() => {
     const routePoint = (routeId: string) => {
       const transform = document
@@ -1655,7 +2553,12 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   await expect(page.locator('.front-line[data-route-id="crossing-the-t"]')).toHaveClass(/route-sea/);
   await expect(page.locator('.front-line[data-route-id="togo-loop-turn"]')).toHaveAttribute("data-route-to", "togo-turn");
   await expect(page.getByTestId("map-point-tsushima")).toBeVisible();
+  await expect(page.getByTestId("map-point-first-battle")).toBeVisible();
+  await expectMapPointsHidden(page, ".tsushima-battle", ["second-battle", "night-attack", "takeshima"]);
   await expect(page.locator(".region-labels")).toContainText("对马海峡");
+  await expect(page.getByTestId("tsushima-first-crossing-salvo")).toBeVisible();
+  await expect(page.getByTestId("tsushima-first-crossing-salvo").locator(".salvo-shell-trace")).toHaveCount(4);
+  await expect(page.getByTestId("tsushima-first-crossing-salvo").locator(".salvo-impact")).toHaveCount(4);
   await expectVisibleTsushimaFleetRoutes(page, ["crossing-the-t", "russian-flagship-chaos"]);
   await expectTsushimaRoutesStayOffLand(page);
   await expectUnitMarkersDoNotAnimate(page);
@@ -1672,6 +2575,7 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   expect(reorderedAlongOffsets).toEqual([0, -58, -116, -174]);
   await expect(page.locator(".tsushima-battle .formation-unit", { hasText: "苏沃洛夫" })).toHaveCount(0);
   await expect(page.locator(".tsushima-battle .formation-unit", { hasText: "奥斯利亚比亚" })).toHaveCount(0);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "russian-flagship-chaos"), 0.12);
   await expectVisibleTsushimaFleetRoutes(page, ["russian-flagship-chaos"]);
   await expectTsushimaRoutesStayOffLand(page);
   await expectUnitMarkersDoNotAnimate(page);
@@ -1680,8 +2584,17 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   await expect(page.getByTestId("active-event-card")).toContainText("第二合战：日军再横切北逃舰列");
   await expectCurrentEventInsideMapCore(page);
   await expectUnitIconFacesRoute(page, "japanese-second-turn", "-1", "-1");
+  await expect(page.getByTestId("tsushima-second-crossing-salvo")).toBeVisible();
+  await expect(page.getByTestId("tsushima-second-crossing-salvo").locator(".salvo-shell-trace")).toHaveCount(4);
+  await expect(page.getByTestId("tsushima-second-crossing-salvo").locator(".salvo-impact")).toHaveCount(4);
   await expectVisibleTsushimaFleetRoutes(page, ["japanese-second-turn", "russian-breakout-scatter"]);
   await expectTsushimaRoutesStayOffLand(page);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /夜战雷击与追击/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("夜战雷击与追击");
+  await expectVisibleTsushimaFleetRoutes(page, ["torpedo-night-attack"]);
+  await expectTsushimaRoutesStayOffLand(page);
+  await expectCurrentEventInsideMapCore(page);
 
   await page.getByTestId("event-list").getByRole("button", { name: /俄舰残部投降/ }).click();
   await expect(page.locator('.front-line[data-route-id="japanese-dawn-envelopment"]')).toBeVisible();
@@ -1707,6 +2620,506 @@ test("tsushima battle uses close strait viewport and hourly naval pacing", async
   expect(consoleErrors).toEqual([]);
 });
 
+test("guadalcanal naval battle emphasizes radar night action", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await openCampaignFromHome(page, "guadalcanal");
+  await expect(page.getByTestId("guadalcanal-naval-app")).toBeVisible();
+  await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "第二次瓜岛海战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "第二次瓜岛海战");
+  await expect(page.locator(".day-counter")).toContainText("小时");
+  await expect(page.getByTestId("current-date")).toContainText("1942年11月14日 22:30");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-anchors-aweigh-2009.oga");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expect(page.locator(".region-labels")).toContainText("铁底湾");
+  await expectMapPointsHidden(page, ".guadalcanal-naval-battle", [
+    "south-dakota-blackout",
+    "washington-radar-firing",
+    "kirishima-hit",
+    "american-west-sound",
+    "japanese-north-savo",
+    "japanese-retreat"
+  ]);
+  await expectVisibleFleetRoutes(page, ".guadalcanal-naval-battle", ["japanese-approach-slot", "american-battleships-enter"]);
+  await expectNavalRoutesStayOffLand(page, ".guadalcanal-naval-battle");
+  await expectWarshipScale(page, ".guadalcanal-naval-battle", 0.5);
+  await expectRouteHasPolylineComplexity(page, ".guadalcanal-naval-battle", "japanese-approach-slot", 3);
+  await expect(page.locator(".guadalcanal-naval-battle .formation-unit", { hasText: "华盛顿号" })).toBeVisible();
+  await expect(page.locator(".guadalcanal-naval-battle .formation-unit", { hasText: "雾岛号" })).toBeVisible();
+  await setTimeline(page, 140);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "japanese-approach-slot"), 0.5);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "american-battleships-enter"), 0.5);
+  await setTimeline(page, 0);
+  await expectUnitMarkersDoNotAnimate(page);
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /日军撤退，铁底湾夜战结束/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("撤退");
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /华盛顿号用雷达火控锁定雾岛号/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("雷达火控");
+  await expect(page.getByTestId("map-point-japanese-north-savo")).toBeVisible();
+  await expect(page.getByTestId("map-point-washington-radar-firing")).toBeVisible();
+  await expect(page.getByTestId("map-point-kirishima-hit")).toBeVisible();
+  await expect(page.getByTestId("guadalcanal-radar-salvo")).toBeVisible();
+  await expect(page.getByTestId("guadalcanal-radar-salvo").locator(".salvo-shell-trace")).toHaveCount(4);
+  await expect(page.getByTestId("guadalcanal-radar-salvo").locator(".salvo-impact")).toHaveCount(4);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(1);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+  await expectVisibleFleetRoutes(page, ".guadalcanal-naval-battle", ["south-dakota-exposed", "washington-radar-attack", "kirishima-disabled"]);
+  await expectNavalRoutesStayOffLand(page, ".guadalcanal-naval-battle");
+  await expectCurrentEventInsideMapCore(page);
+
+  const combatCueCount = await countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /日军撤退，铁底湾夜战结束/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("撤退");
+  await expect(page.getByTestId("map-point-japanese-retreat")).toBeVisible();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount);
+  await expectVisibleFleetRoutes(page, ".guadalcanal-naval-battle", ["japanese-withdrawal"]);
+  await expectNavalRoutesStayOffLand(page, ".guadalcanal-naval-battle");
+  await expectCurrentEventInsideMapCore(page);
+  await setTimeline(page, 520);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "japanese-withdrawal"), 0.12);
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("jutland battle shows fleet deployment and battle turns", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await openCampaignFromHome(page, "jutland");
+  await expect(page.getByTestId("jutland-app")).toBeVisible();
+  await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "日德兰海战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "日德兰海战");
+  await expect(page.locator(".day-counter")).toContainText("小时");
+  await expect(page.getByTestId("current-date")).toContainText("1916年5月31日 14:20");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-eternal-father-instrumental.ogg");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expect(page.locator(".region-labels")).toContainText("北海");
+  await expectMapPointsHidden(page, ".jutland-battle", [
+    "contact-zone",
+    "run-south-start",
+    "queen-mary-loss",
+    "run-north-turn",
+    "high-seas-offshore",
+    "grand-fleet-north-approach",
+    "grand-fleet-offshore",
+    "grand-fleet-deployment",
+    "crossing-t-zone",
+    "scheer-first-turn",
+    "death-ride",
+    "night-escape"
+  ]);
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "beatty-scouting-east",
+    "hipper-scouting-west",
+    "high-seas-fleet-north",
+    "grand-fleet-approach"
+  ]);
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expectWarshipScale(page, ".jutland-battle", 0.5);
+  await expectRouteHasPolylineComplexity(page, ".jutland-battle", "beatty-scouting-east", 4);
+  await expect(page.locator(".jutland-battle .formation-unit", { hasText: "狮号" })).toBeVisible();
+  await expect(page.locator(".jutland-battle .formation-unit", { hasText: "吕措夫号" })).toBeVisible();
+  await expect(page.locator(".jutland-battle .front-line[data-route-id='grand-fleet-approach'] .formation-unit", { hasText: "铁公爵号" })).toBeVisible();
+  await expectUnitMarkersDoNotAnimate(page);
+  const initialGrandFleet = await formationUnitCenters(page, "grand-fleet-approach");
+  const initialHipperScouts = await formationUnitCenters(page, "hipper-scouting-west");
+  const initialBeattyScouts = await formationUnitCenters(page, "beatty-scouting-east");
+  expect(formationDistance(initialGrandFleet, initialHipperScouts)).toBeGreaterThan(250);
+  expect(formationDistance(initialGrandFleet, initialBeattyScouts)).toBeGreaterThan(185);
+  await setJutlandTimelineDate(page, "1916-05-31T15:50");
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "run-to-the-south",
+    "beatty-south-pursuit",
+    "high-seas-fleet-north",
+    "grand-fleet-approach"
+  ]);
+  const focusTransitionOffsetScale = await page.getByTestId("camera-layer").getAttribute("data-formation-offset-scale");
+  expect(Number(focusTransitionOffsetScale)).toBeLessThan(0.82);
+  const beattyEnteringRunSouth = await formationUnitCenters(page, "beatty-south-pursuit");
+  expect(formationBounds(beattyEnteringRunSouth).yMax - formationBounds(beattyEnteringRunSouth).yMin).toBeLessThan(56);
+  await setJutlandTimelineDate(page, "1916-05-31T15:55");
+  const beattyEarlySouth = await formationUnitCenters(page, "beatty-south-pursuit");
+  const hipperEarlySouth = await formationUnitCenters(page, "run-to-the-south");
+  const beattyEarlySouthCenter = formationCenter(beattyEarlySouth);
+  const hipperEarlySouthCenter = formationCenter(hipperEarlySouth);
+  expect(beattyEarlySouthCenter.x).toBeGreaterThan(hipperEarlySouthCenter.x - 120);
+  expect(beattyEarlySouthCenter.y).toBeGreaterThan(hipperEarlySouthCenter.y - 65);
+  expect(formationDistance(beattyEarlySouth, hipperEarlySouth)).toBeLessThan(230);
+  expect(formationBounds(beattyEarlySouth).yMax - formationBounds(beattyEarlySouth).yMin).toBeLessThan(80);
+  await setJutlandTimelineDate(page, "1916-05-31T16:00", "before");
+  const grandFleetBeforeClosing = await formationUnitCenters(page, "grand-fleet-approach");
+  await setJutlandTimelineDate(page, "1916-05-31T16:00", "after");
+  const grandFleetAfterFirstHandoff = await formationUnitCenters(page, "grand-fleet-closing");
+  expect(formationDistance(grandFleetBeforeClosing, grandFleetAfterFirstHandoff)).toBeLessThan(90);
+  await setJutlandTimelineDate(page, "1916-05-31T18:15", "before");
+  const grandFleetBeforeDeploy = await formationUnitCenters(page, "grand-fleet-closing");
+  await setJutlandTimelineDate(page, "1916-05-31T18:15", "after");
+  const grandFleetAfterDeploy = await formationUnitCenters(page, "grand-fleet-deploys");
+  expect(formationDistance(grandFleetBeforeDeploy, grandFleetAfterDeploy)).toBeLessThan(90);
+  await setJutlandTimelineDate(page, "1916-05-31T16:40", "before");
+  const beattyBeforeNorthTurn = await formationUnitCenters(page, "beatty-south-pursuit");
+  await setJutlandTimelineDate(page, "1916-05-31T16:35", "before");
+  const hipperBeforeRejoin = await formationUnitCenters(page, "run-to-the-south");
+  await setJutlandTimelineDate(page, "1916-05-31T16:35", "after");
+  const hipperAfterRejoin = await formationUnitCenters(page, "hipper-rejoins-main-fleet");
+  expect(formationDistance(hipperBeforeRejoin, hipperAfterRejoin)).toBeLessThan(42);
+  await setJutlandTimelineDate(page, "1916-05-31T16:40", "after");
+  const beattyAfterNorthTurn = await formationUnitCenters(page, "run-to-the-north");
+  expect(formationDistance(beattyBeforeNorthTurn, beattyAfterNorthTurn)).toBeLessThan(95);
+  const hipperEarlyRejoin = await formationUnitCenters(page, "hipper-rejoins-main-fleet");
+  const highSeasEarlyNorth = await formationUnitCenters(page, "high-seas-fleet-north");
+  const hipperEarlyRejoinCenter = formationCenter(hipperEarlyRejoin);
+  const highSeasEarlyNorthCenter = formationCenter(highSeasEarlyNorth);
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "hipper-rejoins-main-fleet"), 0.14);
+  expect(formationDistance(hipperEarlyRejoin, highSeasEarlyNorth)).toBeGreaterThan(82);
+  expect(hipperEarlyRejoinCenter.x).toBeGreaterThan(highSeasEarlyNorthCenter.x + 58);
+  expect(hipperEarlyRejoinCenter.y).toBeLessThan(highSeasEarlyNorthCenter.y - 32);
+  await setTimeline(page, 0);
+  await expect(page.getByTestId("current-date")).toContainText("1916年5月31日 14:20");
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /玛丽女王号爆炸沉没/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("玛丽女王号");
+  await expect(page.getByTestId("map-point-queen-mary-loss")).toBeVisible();
+  await expect(page.getByTestId("map-point-contact-zone")).toBeVisible();
+  await expect(page.locator(".jutland-battle .formation-unit", { hasText: "玛丽女王号" })).toHaveCount(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(1);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(1);
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "run-to-the-south",
+    "beatty-south-pursuit",
+    "high-seas-fleet-north",
+    "grand-fleet-closing"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", ["beatty-scouting-east", "hipper-scouting-west", "grand-fleet-approach"]);
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="beatty-scouting-east"]')).toHaveAttribute("data-unit-visible", "false");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="hipper-scouting-west"]')).toHaveAttribute("data-unit-visible", "false");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="grand-fleet-approach"]')).toHaveAttribute("data-unit-visible", "false");
+  await expectMapPointsHidden(page, ".jutland-battle", ["grand-fleet-deployment", "crossing-t-zone", "scheer-first-turn", "death-ride"]);
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="high-seas-fleet-north"] .formation-unit')).toHaveCount(5);
+  await expectCurrentEventInsideMapCore(page);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /Jellicoe大舰队展开/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("展开");
+  await expect(page.getByTestId("map-point-grand-fleet-deployment")).toBeVisible();
+  await expectMapPointsHidden(page, ".jutland-battle", ["crossing-t-zone", "scheer-first-turn", "death-ride"]);
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "run-to-the-north",
+    "hipper-rejoins-main-fleet",
+    "high-seas-fleet-north",
+    "grand-fleet-deploys"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", ["run-to-the-south", "beatty-south-pursuit", "grand-fleet-closing"]);
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="run-to-the-south"]')).toHaveAttribute("data-unit-visible", "false");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="beatty-south-pursuit"]')).toHaveAttribute("data-unit-visible", "false");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="grand-fleet-closing"]')).toHaveAttribute("data-unit-visible", "false");
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expectRouteHasPolylineComplexity(page, ".jutland-battle", "grand-fleet-deploys", 5);
+  const grandFleetRouteLength = await page
+    .locator('.jutland-battle .front-line[data-route-id="grand-fleet-deploys"] .front-route')
+    .evaluate((route) => (route instanceof SVGGeometryElement ? route.getTotalLength() : 0));
+  expect(grandFleetRouteLength).toBeLessThan(520);
+  const grandFleetFormation = await formationUnitCenters(page, "grand-fleet-deploys");
+  const highSeasFleetBeforeTurn = await formationUnitCenters(page, "high-seas-fleet-north");
+  const beattyRunNorthFormation = await formationUnitCenters(page, "run-to-the-north");
+  const hipperRejoiningFormation = await formationUnitCenters(page, "hipper-rejoins-main-fleet");
+  expect(grandFleetFormation.map((unit) => unit.label)).toContain("铁公爵号");
+  expect(beattyRunNorthFormation.map((unit) => unit.label)).toEqual(["狮号", "皇家公主号", "虎号"]);
+  expect(hipperRejoiningFormation.map((unit) => unit.label)).toEqual(["吕措夫号", "德弗林格号", "塞德利茨号", "毛奇号"]);
+  expectFormationHasTravelSpread(grandFleetFormation, "x", 140);
+  expectFormationHasTravelSpread(highSeasFleetBeforeTurn, "y", 92);
+  const grandFleetCenter = formationCenter(grandFleetFormation);
+  const highSeasCenterBeforeTurn = formationCenter(highSeasFleetBeforeTurn);
+  const beattyRunNorthCenter = formationCenter(beattyRunNorthFormation);
+  const hipperRejoiningCenter = formationCenter(hipperRejoiningFormation);
+  expect(highSeasCenterBeforeTurn.y).toBeGreaterThan(grandFleetCenter.y + 32);
+  expect(beattyRunNorthCenter.y).toBeLessThan(hipperRejoiningCenter.y + 35);
+  expect(beattyRunNorthCenter.x).toBeLessThan(hipperRejoiningCenter.x + 60);
+  await expectCurrentEventInsideMapCore(page);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /Scheer全舰队转向/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("全舰队转向");
+  await expect(page.getByTestId("map-point-crossing-t-zone")).toBeVisible();
+  await expect(page.getByTestId("map-point-scheer-first-turn")).toBeVisible();
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "run-to-the-north",
+    "hipper-rejoins-main-fleet",
+    "grand-fleet-deploys",
+    "scheer-battle-turn"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", [
+    "beatty-scouting-east",
+    "hipper-scouting-west",
+    "grand-fleet-approach",
+    "grand-fleet-closing",
+    "run-to-the-south",
+    "beatty-south-pursuit"
+  ]);
+  await expectMapPointsHidden(page, ".jutland-battle", ["death-ride", "night-escape"]);
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expectRouteHasPolylineComplexity(page, ".jutland-battle", "scheer-battle-turn", 4);
+  await expect(page.getByTestId("jutland-crossing-salvo")).toBeVisible();
+  await expect(page.getByTestId("jutland-crossing-salvo").locator(".salvo-shell-trace")).toHaveCount(5);
+  await expect(page.getByTestId("jutland-crossing-salvo").locator(".salvo-impact")).toHaveCount(5);
+  const grandFleetCrossing = await formationUnitCenters(page, "grand-fleet-deploys");
+  const scheerTurning = await formationUnitCenters(page, "scheer-battle-turn");
+  await setJutlandTimelineDate(page, "1916-05-31T18:35", "before");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="high-seas-fleet-north"]')).toHaveAttribute("data-unit-visible", "true");
+  const highSeasFleetBeforeTurnHandoff = await formationUnitCenters(page, "high-seas-fleet-north");
+  await setJutlandTimelineDate(page, "1916-05-31T18:36", "after");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="scheer-battle-turn"]')).toHaveAttribute("data-unit-visible", "true");
+  const highSeasFleetAfterTurnHandoff = await formationUnitCenters(page, "scheer-battle-turn");
+  expect(formationDistance(highSeasFleetBeforeTurnHandoff, highSeasFleetAfterTurnHandoff)).toBeLessThan(120);
+  expectFormationHasTravelSpread(grandFleetCrossing, "x", 140);
+  expectFormationHasTravelSpread(scheerTurning, "y", 86);
+  await setJutlandTimelineDate(page, "1916-05-31T18:50");
+  expectFormationUsesColumnProgression(await formationUnitRouteProgresses(page, "scheer-battle-turn"), 0.08);
+  await setJutlandTimelineDate(page, "1916-05-31T18:36", "after");
+  const grandFleetCrossingCenter = formationCenter(grandFleetCrossing);
+  const scheerTurningCenter = formationCenter(scheerTurning);
+  const grandFleetCrossingBounds = formationBounds(grandFleetCrossing);
+  const scheerTurningBounds = formationBounds(scheerTurning);
+  expect(scheerTurningCenter.y).toBeGreaterThan(grandFleetCrossingCenter.y + 44);
+  expect(scheerTurningBounds.xMin).toBeGreaterThan(grandFleetCrossingBounds.xMin);
+  expect(scheerTurningBounds.xMin).toBeLessThan(grandFleetCrossingBounds.xMax + 8);
+  expect(grandFleetCrossingBounds.yMax).toBeLessThan(scheerTurningBounds.yMin - 90);
+  const impactToTurnDistance = await page.evaluate(() => {
+    const impact = document.querySelector('[data-testid="jutland-crossing-salvo"] .salvo-impact')?.parentElement;
+    const turnPointCircle = document.querySelector('[data-testid="map-point-scheer-first-turn"] circle');
+    return {
+      dx: Math.abs(Number(impact?.getAttribute("data-impact-x")) - Number(turnPointCircle?.getAttribute("cx"))),
+      dy: Math.abs(Number(impact?.getAttribute("data-impact-y")) - Number(turnPointCircle?.getAttribute("cy")))
+    };
+  });
+  expect(impactToTurnDistance.dx).toBeLessThan(80);
+  expect(impactToTurnDistance.dy).toBeLessThan(80);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(3);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(2);
+  await expectJutlandFleetGroupsContinuous(page);
+  await expectCurrentEventInsideMapCore(page);
+
+  const deathRideCueCount = await countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3");
+  const deathRideExplosionCount = await countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /战列巡洋舰与驱逐舰掩护主力脱离/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("掩护");
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "run-to-the-north",
+    "grand-fleet-deploys",
+    "scheer-battle-turn",
+    "battlecruiser-death-ride"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", [
+    "beatty-scouting-east",
+    "hipper-scouting-west",
+    "grand-fleet-approach",
+    "grand-fleet-closing",
+    "run-to-the-south",
+    "beatty-south-pursuit",
+    "high-seas-fleet-north"
+  ]);
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expectRouteHasPolylineComplexity(page, ".jutland-battle", "battlecruiser-death-ride", 2);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(deathRideCueCount + 1);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(deathRideExplosionCount + 1);
+  await setJutlandTimelineDate(page, "1916-05-31T19:18", "before");
+  const beattyBeforeNightScreen = await formationUnitCenters(page, "run-to-the-north");
+  const grandFleetBeforeNightSearch = await formationUnitCenters(page, "grand-fleet-deploys");
+  const hipperBeforeNightRetreat = await formationUnitCenters(page, "battlecruiser-death-ride");
+  await setJutlandTimelineDate(page, "1916-05-31T19:18", "after");
+  const beattyAfterNightScreen = await formationUnitCenters(page, "beatty-night-screen");
+  const grandFleetAfterNightSearch = await formationUnitCenters(page, "british-night-pursuit-route");
+  const hipperAfterNightRetreat = await formationUnitCenters(page, "hipper-night-retreat");
+  expect(formationDistance(beattyBeforeNightScreen, beattyAfterNightScreen)).toBeLessThan(65);
+  expect(formationDistance(grandFleetBeforeNightSearch, grandFleetAfterNightSearch)).toBeLessThan(80);
+  expect(formationDistance(hipperBeforeNightRetreat, hipperAfterNightRetreat)).toBeLessThan(65);
+  await expectJutlandFleetGroupsContinuous(page);
+  await expectCurrentEventInsideMapCore(page);
+
+  const combatCueCount = await countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3");
+  const explosionCueCount = await countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /夜间接触混乱/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("夜间");
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount + 1);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(explosionCueCount);
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "hipper-night-retreat",
+    "beatty-night-screen",
+    "british-night-pursuit-route",
+    "german-main-night-retreat",
+    "night-escape-route"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", [
+    "beatty-scouting-east",
+    "hipper-scouting-west",
+    "grand-fleet-approach",
+    "run-to-the-south",
+    "beatty-south-pursuit",
+    "run-to-the-north",
+    "hipper-rejoins-main-fleet",
+    "high-seas-fleet-north",
+    "grand-fleet-closing",
+    "grand-fleet-deploys"
+  ]);
+  await expectRenderedRoutesInclude(page, ".jutland-battle", [
+    "run-to-the-north",
+    "grand-fleet-deploys",
+    "scheer-battle-turn",
+    "battlecruiser-death-ride"
+  ]);
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="beatty-night-screen"]')).toHaveAttribute("data-route-state", "is-active");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="british-night-pursuit-route"]')).toHaveAttribute("data-route-state", "is-active");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="german-main-night-retreat"]')).toHaveAttribute("data-route-state", "is-active");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="hipper-night-retreat"]')).toHaveAttribute("data-route-state", "is-active");
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="beatty-night-screen"]')).toHaveAttribute(
+    "data-route-from",
+    "grand-fleet-deployment"
+  );
+  await expect(page.locator('.jutland-battle .front-line[data-route-id="british-night-pursuit-route"]')).toHaveAttribute(
+    "data-route-from",
+    "crossing-t-zone"
+  );
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+  await expectCurrentEventInsideMapCore(page);
+
+  await page.getByTestId("timeline").fill("1000");
+  await expectVisibleFleetRoutes(page, ".jutland-battle", [
+    "hipper-night-retreat",
+    "beatty-night-screen",
+    "british-night-pursuit-route",
+    "german-main-night-retreat",
+    "night-escape-route"
+  ]);
+  await expectNavalRoutesStayOffLand(page, ".jutland-battle");
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("trafalgar battle shows dense age-of-sail fleet maneuvers and losses", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await openCampaignFromHome(page, "trafalgar");
+  await expect(page.getByTestId("trafalgar-app")).toBeVisible();
+  await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "特拉法尔加大海战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "特拉法尔加大海战");
+  await expect(page.locator(".day-counter")).toContainText("小时");
+  await expect(page.getByTestId("current-date")).toContainText("1805年10月21日 11:30");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-rule-britannia.ogg");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expectTrafalgarLegendIsOneLine(page);
+
+  await expect(page.getByTestId("trafalgar-wind")).toBeVisible();
+  await expect(page.getByTestId("trafalgar-wind")).toContainText("轻风 / 西北偏西");
+  await expect(page.getByTestId("nelson-shot-marker")).toHaveCount(0);
+  await expect(page.getByTestId("map-point-redoutable-victory")).toHaveCount(0);
+  await expect(page.getByTestId("map-point-nelson-fall")).toHaveCount(0);
+  await expect(page.getByTestId("map-point-melee-center")).toHaveCount(0);
+  await expect(page.getByTestId("map-point-captured-line")).toHaveCount(0);
+  await expect(page.locator(".trafalgar-battle .event-pin")).toHaveCount(1);
+  await expect(page.getByTestId("outcome-panel")).toContainText("449亡 / 1241伤");
+  await expect(page.getByTestId("outcome-panel")).toContainText("约4400亡 / 2500伤");
+  await expect(page.getByTestId("outcome-panel")).toContainText("约7000人");
+  await expect(page.getByTestId("outcome-panel")).toContainText("英0艘 / 法西约18艘");
+
+  await expect(page.locator('.front-line[data-route-id="nelson-weather-column"]')).toBeVisible();
+  await expect(page.locator('.front-line[data-route-id="collingwood-lee-column"]')).toBeVisible();
+  await expect(page.locator('.front-line[data-route-id="nelson-weather-column"] .formation-unit')).toHaveCount(7);
+  await expect(page.locator('.front-line[data-route-id="collingwood-lee-column"] .formation-unit')).toHaveCount(7);
+  await expect(page.locator('.front-line[data-route-id="allied-line-before-turn"] .formation-unit')).toHaveCount(9);
+  await expect(page.locator('.front-line[data-route-id="allied-rear-disorder"] .formation-unit')).toHaveCount(6);
+  await expectTrafalgarRepresentativeFleetCount(page, 29);
+  await expectTrafalgarShipsStayAtSea(page);
+  await expectRouteBadgeLabels(page, "nelson-weather-column", ["英", "英", "英", "英", "英", "英", "英"]);
+  await expectRouteBadgeLabels(page, "collingwood-lee-column", ["英", "英", "英", "英", "英", "英", "英"]);
+  await expectRouteBadgeLabels(page, "allied-line-before-turn", ["法", "西", "法", "法", "法", "西", "法", "法", "西"]);
+  await expectRouteBadgeLabels(page, "allied-rear-disorder", ["法", "西", "法", "西", "法", "法"]);
+
+  for (const shipName of ["胜利号", "皇家主权号", "布桑托尔号", "可畏号", "圣三位一体号", "圣安娜号"] as const) {
+    await expect(page.locator(".trafalgar-battle .formation-unit-label", { hasText: shipName }).first()).toBeVisible();
+  }
+
+  await expectRealisticUnitIcon(page, "trafalgar-hms-victory-marker", "trafalgarHmsVictory", "trafalgar-hms-victory");
+  await expectRealisticUnitIcon(page, "trafalgar-british-line-marker", "trafalgarBritishLine", "trafalgar-british-line");
+  await expectRealisticUnitIcon(page, "trafalgar-french-line-marker", "trafalgarFrenchLine", "trafalgar-french-line");
+  await expectRealisticUnitIcon(page, "trafalgar-bucentaure-marker", "trafalgarBucentaure", "trafalgar-bucentaure");
+  await expectRealisticUnitIcon(page, "trafalgar-santisima-trinidad-marker", "trafalgarSantisimaTrinidad", "trafalgar-santisima-trinidad");
+  await expectRealisticUnitIcon(page, "trafalgar-royal-sovereign-marker", "trafalgarRoyalSovereign", "trafalgar-royal-sovereign");
+  for (const asset of [
+    "trafalgar-hms-victory",
+    "trafalgar-royal-sovereign",
+    "trafalgar-bucentaure",
+    "trafalgar-santisima-trinidad",
+    "trafalgar-british-line",
+    "trafalgar-french-line"
+  ] as const) {
+    await expectTransparentTrafalgarShipAsset(page, `/assets/unit-icons/${asset}.webp`);
+  }
+
+  await installAudioSpy(page);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /纳尔逊在胜利号上中弹/ }).click();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(1);
+  await page.waitForTimeout(550);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+  await expectTrafalgarRepresentativeFleetCount(page, 29);
+  await expectTrafalgarShipsStayAtSea(page);
+  await expectTrafalgarFleetUsesCloseBattleView(page, 0.3, 0.5);
+  await expect(page.locator('.front-line[data-route-id="victory-redoutable-melee"] .formation-unit')).toHaveCount(15);
+  await expect(page.locator('.front-line[data-route-id="british-central-melee"] .formation-unit')).toHaveCount(14);
+  await expect(page.getByTestId("nelson-shot-marker")).toBeVisible();
+  await expect(page.getByTestId("map-point-redoutable-victory")).toBeVisible();
+  await expect(page.getByTestId("map-point-nelson-fall")).toBeVisible();
+  await expect(page.getByTestId("map-point-melee-center")).toHaveCount(0);
+  await expect(page.getByTestId("nelson-shot-marker")).toContainText("纳尔逊中弹");
+  await expect(page.getByTestId("active-event-card")).toContainText("这里标注的是中弹位置，不是死亡时间");
+  await expect(page.getByTestId("current-date")).toContainText("1805年10月21日 13:15");
+  await expectCurrentEventInsideMapCore(page);
+
+  const combatCueCount = await countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /纳尔逊确认胜利后死亡/ }).click();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+  await expectTrafalgarRepresentativeFleetCount(page, 41);
+  await expectTrafalgarShipsStayAtSea(page);
+  await expectTrafalgarFleetUsesCloseBattleView(page, 0.54, 0.62);
+  await expect(page.locator('.front-line[data-route-id="captured-hulks-drift"] .formation-unit')).toHaveCount(7);
+  await expect(page.locator('.front-line[data-route-id="allied-retreat-cadiz"] .formation-unit')).toHaveCount(5);
+  await expect(page.getByTestId("active-event-card")).toContainText("16:30");
+  await expect(page.getByTestId("active-event-card")).toContainText("去世");
+  await expect(page.getByTestId("current-date")).toContainText("1805年10月21日 16:30");
+  await expectCurrentEventInsideMapCore(page);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /战果与损失/ }).click();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+  await expectTrafalgarRepresentativeFleetCount(page, 12);
+  await expectTrafalgarShipsStayAtSea(page);
+  await expectTrafalgarFleetUsesCloseBattleView(page, 0.4, 0.66);
+  await expectVisibleTrafalgarFleetRoutes(page, ["captured-hulks-drift", "allied-retreat-cadiz"]);
+  await expect(page.locator('.front-line[data-route-id="captured-hulks-drift"] .formation-unit')).toHaveCount(7);
+  await expect(page.locator('.front-line[data-route-id="allied-retreat-cadiz"] .formation-unit')).toHaveCount(5);
+  await expect(page.getByTestId("active-event-card")).toContainText("英军无战列舰损失");
+  await expect(page.getByTestId("outcome-panel")).toContainText("英0艘 / 法西约18艘");
+  await expect(page.getByTestId("map-point-melee-center")).toBeVisible();
+  await expect(page.getByTestId("map-point-captured-line")).toBeVisible();
+  await expectCurrentEventInsideMapCore(page);
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("midway battle uses named carrier icons waves and sinking points", async ({ page }) => {
   const { apiFailures, consoleErrors } = collectFailures(page);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -1726,6 +3139,8 @@ test("midway battle uses named carrier icons waves and sinking points", async ({
   const midwayMapBox = await page.getByTestId("map-stage").boundingBox();
   expect(midwayMapBox?.width).toBeGreaterThan(1300);
   expect(midwayMapBox?.height).toBeGreaterThan(800);
+  await expect(page.getByTestId("midway-point-yorktown-sink")).toHaveCount(0);
+  await expect(page.getByTestId("midway-point-akagi-hit")).toHaveCount(0);
 
   for (const carrier of ["enterprise", "hornet", "yorktown", "akagi", "kaga", "soryu", "hiryu"] as const) {
     await expect(page.getByTestId(`midway-carrier-${carrier}`).first()).toBeVisible();
@@ -1784,6 +3199,10 @@ test("midway battle uses named carrier icons waves and sinking points", async ({
   await expect(page.getByTestId("midway-wave-yorktown-vt3").getByText("VT-3 / 约克城号")).toBeVisible();
 
   await page.getByTestId("event-list").getByRole("button", { name: /赤城、加贺、苍龙被重创/ }).click();
+  await expect(page.getByTestId("midway-point-akagi-hit")).toBeVisible();
+  await expect(page.getByTestId("midway-point-kaga-hit")).toBeVisible();
+  await expect(page.getByTestId("midway-point-soryu-hit")).toBeVisible();
+  await expect(page.getByTestId("midway-point-yorktown-sink")).toHaveCount(0);
   await expect(page.getByTestId("midway-wave-enterprise-vb6-vs6")).toBeVisible();
   await expect(page.getByTestId("midway-wave-yorktown-vb3")).toBeVisible();
   await expect(page.getByTestId("midway-wave-enterprise-vb6-vs6").getByText("VB-6/VS-6 → 加贺/赤城")).toBeVisible();
@@ -1812,6 +3231,7 @@ test("midway battle uses named carrier icons waves and sinking points", async ({
 
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("约克城号沉没，战役结束");
+  await expect(page.getByTestId("midway-point-yorktown-sink")).toBeVisible();
   const retainedWaveStates = await page
     .locator(".midway-air-wave")
     .evaluateAll((waves) => waves.map((wave) => wave.getAttribute("data-route-state")));

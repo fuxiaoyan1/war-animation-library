@@ -37,6 +37,14 @@ const eventPoints = battleEvents.map((event) => ({
   kind: "front" as const
 }));
 
+const pointRevealDates: Partial<Record<string, string>> = {
+  "akagi-hit": "1942-06-04T10:26",
+  "kaga-hit": "1942-06-04T10:26",
+  "soryu-hit": "1942-06-04T10:26",
+  "hiryu-hit": "1942-06-04T17:03",
+  "yorktown-sink": "1942-06-07T06:00"
+};
+
 const timeline = createCampaignTimeline({
   activeSpans: [
     { start: "1942-06-04T04:30", end: "1942-06-04T17:03" },
@@ -714,6 +722,10 @@ export function MidwayBattleAnimation() {
                   const eventProgress = timeline.eventProgress(event.date, progress);
                   const passed = timeline.dateToProgress(event.date) <= progress;
                   const isCurrent = event.id === activeEvent.id;
+                  if (!passed && !isCurrent) {
+                    return null;
+                  }
+
                   const [x, y] = projectPoint(projection, event.coordinates);
                   return (
                     <g key={event.id} className={`event-pin ${passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
@@ -730,16 +742,24 @@ export function MidwayBattleAnimation() {
               </g>
 
               <g className="midway-points">
-                {projectedPoints.map((point) => (
-                  <g key={point.id} className={`map-point point-${point.kind}`} data-testid={`midway-point-${point.id}`}>
-                    <circle cx={point.xy[0]} cy={point.xy[1]} r={point.kind === "base" ? 5.6 : 3.2} />
-                    {point.kind !== "damage" && (
-                      <text x={point.xy[0] + 8} y={point.xy[1] + 4}>
-                        {point.label}
-                      </text>
-                    )}
-                  </g>
-                ))}
+                {projectedPoints.map((point) => {
+                  const revealDate = pointRevealDates[point.id];
+
+                  if (revealDate && progress < timeline.dateToProgress(revealDate)) {
+                    return null;
+                  }
+
+                  return (
+                    <g key={point.id} className={`map-point point-${point.kind}`} data-testid={`midway-point-${point.id}`}>
+                      <circle cx={point.xy[0]} cy={point.xy[1]} r={point.kind === "base" ? 5.6 : 3.2} />
+                      {point.kind !== "damage" && (
+                        <text x={point.xy[0] + 8} y={point.xy[1] + 4}>
+                          {point.label}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
               </g>
             </g>
 

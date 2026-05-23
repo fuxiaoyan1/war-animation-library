@@ -21,10 +21,58 @@ type FocusStep = {
   focus: string;
 };
 
+type FocusTransitionState = {
+  fromFocus: string;
+  focus: string;
+  ratio: number;
+};
+
 type GeoLine = {
   id: string;
   label: string;
   points: Array<[number, number]>;
+};
+
+export type MapOverlayElement =
+  | {
+      className?: string;
+      id: string;
+      label: string;
+      revealAt?: string;
+      testId?: string;
+      type: "wind";
+      from: [number, number];
+      to: [number, number];
+    }
+  | {
+      className?: string;
+      id: string;
+      label: string;
+      revealAt?: string;
+      subtitle?: string;
+      testId?: string;
+      type: "marker";
+      coordinates: [number, number];
+    };
+
+export type BattleEffectElement = {
+  className?: string;
+  end: string;
+  from: [number, number];
+  id: string;
+  impactOffsets?: Array<[number, number]>;
+  label?: string;
+  shellOffsets?: Array<[number, number]>;
+  start: string;
+  testId?: string;
+  to: [number, number];
+  type: "salvo";
+};
+
+export type OutcomeStat = {
+  className?: string;
+  label: string;
+  value: string;
 };
 
 export type NarrationCue = {
@@ -42,15 +90,18 @@ type CampaignMapAnimationProps = {
   }>;
   ariaLabel: string;
   battleEvents: BattleEvent[];
+  battleEffects?: BattleEffectElement[];
   campaignEnd: string;
   campaignStart: string;
   countries: CountryFeature[];
   countryClassName: (country: CountryFeature) => string;
   cueEvents: Set<string>;
+  cueEventKinds?: Partial<Record<string, BattleCueKind>>;
   diveCueEvents?: Set<string>;
   eyebrow: string;
   frontLines: FrontLine[];
   focusSteps: FocusStep[];
+  focusTransitionProgress?: number;
   gapScale?: number;
   gapOverrides?: Array<{
     displayDays: number;
@@ -63,12 +114,15 @@ type CampaignMapAnimationProps = {
   legendPrimary?: string;
   legendSecondary?: string;
   mapPoints: MapPoint[];
+  mapOverlays?: MapOverlayElement[];
   maxGapDays?: number;
   musicSource?: string;
   cinematicMode?: boolean;
   narrationCues?: NarrationCue[];
+  outcomeStats?: OutcomeStat[];
   playbackDurationSeconds: number;
   regionLabels: Array<{ label: string; coordinates: [number, number] }>;
+  retainSeaUnitsAfterRouteEnd?: boolean;
   rivers?: GeoLine[];
   shellClassName?: string;
   sfxProfile?: "ancient" | "gunpowder" | "ww2";
@@ -93,6 +147,7 @@ type CampaignMapAnimationProps = {
 
 const mapWidth = 1180;
 const mapHeight = 704;
+const cuePulseThreshold = 0.82;
 
 const cinematicSpecks = Array.from({ length: 34 }, (_, index) => ({
   delay: `${(index % 9) * 0.34}s`,
@@ -120,11 +175,71 @@ function factionClass(faction: string) {
     return "faction-germany faction-carthage";
   }
 
+  if (faction === "spain") {
+    return "faction-germany faction-spain";
+  }
+
   return `faction-${faction}`;
 }
 
 function buildRoutePath(from: [number, number], to: [number, number]) {
   return buildCurvedPath([from, to]);
+}
+
+function smoothStep(value: number) {
+  const clamped = Math.min(1, Math.max(0, value));
+  return clamped * clamped * (3 - 2 * clamped);
+}
+
+function focusTransitionState(
+  focusSteps: FocusStep[],
+  progress: number,
+  transitionProgress: number
+): FocusTransitionState {
+  const sortedSteps = [...focusSteps].sort((a, b) => a.fromProgress - b.fromProgress);
+  let activeIndex = 0;
+  sortedSteps.forEach((step, index) => {
+    if (progress >= step.fromProgress) {
+      activeIndex = index;
+    }
+  });
+  const activeStep = sortedSteps[activeIndex] ?? sortedSteps[0] ?? { focus: "north", fromProgress: 0 };
+  const previousStep = sortedSteps[activeIndex - 1] ?? activeStep;
+  const rawRatio =
+    transitionProgress > 0 && previousStep.focus !== activeStep.focus
+      ? (progress - activeStep.fromProgress) / transitionProgress
+      : 1;
+
+  return {
+    focus: activeStep.focus,
+    fromFocus: rawRatio < 1 ? previousStep.focus : activeStep.focus,
+    ratio: smoothStep(rawRatio)
+  };
+}
+
+function createFocusProjection(width: number, height: number, state: FocusTransitionState) {
+  const targetProjection = createCampaignProjection(width, height, state.focus);
+  if (state.ratio >= 0.999 || state.fromFocus === state.focus) {
+    return targetProjection;
+  }
+
+  const sourceProjection = createCampaignProjection(width, height, state.fromFocus);
+  const sourceRotate = sourceProjection.rotate();
+  const targetRotate = targetProjection.rotate();
+  const sameRotation = sourceRotate.every((value, index) => Math.abs(value - targetRotate[index]) < 0.001);
+  if (!sameRotation) {
+    return targetProjection;
+  }
+
+  const ratio = state.ratio;
+  const sourceTranslate = sourceProjection.translate();
+  const targetTranslate = targetProjection.translate();
+  return targetProjection
+    .scale(sourceProjection.scale() + (targetProjection.scale() - sourceProjection.scale()) * ratio)
+    .translate([
+      sourceTranslate[0] + (targetTranslate[0] - sourceTranslate[0]) * ratio,
+      sourceTranslate[1] + (targetTranslate[1] - sourceTranslate[1]) * ratio
+    ]);
 }
 
 function buildCurvedPath(points: Array<[number, number]>) {
@@ -202,23 +317,27 @@ function routeLength(points: Array<[number, number]>) {
 function formationUnitPlacement(
   points: Array<[number, number]>,
   progress: number,
-  offset: [number, number]
+  offset: [number, number],
+  offsetScale = 1
 ) {
   const totalLength = Math.max(routeLength(points), 1);
   const [along, cross] = offset;
-  const rawProgress = progress + along / totalLength;
+  const scaledAlong = along * offsetScale;
+  const scaledCross = cross * offsetScale;
+  const rawProgress = progress + scaledAlong / totalLength;
   const unitProgress = Math.min(1, Math.max(0, rawProgress));
   const pointOnRoute = interpolateRoute(points, unitProgress);
   const directionAnchor = interpolateRoute(points, Math.max(0, unitProgress - 0.018));
   const fallbackPoint = interpolateRoute(points, Math.min(1, unitProgress + 0.018));
   const direction = routeDirectionVector(directionAnchor, pointOnRoute, fallbackPoint);
   const clampedAlongOverflow = rawProgress < 0 ? rawProgress * totalLength : rawProgress > 1 ? (rawProgress - 1) * totalLength : 0;
-  const markerPoint = routeLocalOffset(pointOnRoute, direction, [clampedAlongOverflow, cross]);
+  const markerPoint = routeLocalOffset(pointOnRoute, direction, [clampedAlongOverflow, scaledCross]);
 
   return {
     direction,
     facingX: routeFacingX(directionAnchor, pointOnRoute, fallbackPoint),
-    point: markerPoint
+    point: markerPoint,
+    routeProgress: unitProgress
   };
 }
 
@@ -321,6 +440,72 @@ function ActiveEventEffect({
   );
 }
 
+function SalvoBattleEffect({
+  effect,
+  progress,
+  project
+}: {
+  effect: BattleEffectElement;
+  progress: number;
+  project: (coordinates: [number, number]) => [number, number];
+}) {
+  const shellOffsets = effect.shellOffsets ?? [
+    [-8, -16],
+    [10, -6],
+    [-14, 10],
+    [16, 16]
+  ];
+  const impactOffsets = effect.impactOffsets ?? [
+    [-14, -10],
+    [8, -16],
+    [18, 2],
+    [-6, 12],
+    [10, 18]
+  ];
+  const from = project(effect.from);
+  const to = project(effect.to);
+  const easedProgress = smoothStep(progress);
+
+  return (
+    <g
+      className={`battle-effect battle-salvo-effect ${effect.className ?? ""}`}
+      data-effect-progress={progress.toFixed(3)}
+      data-testid={effect.testId ?? `battle-effect-${effect.id}`}
+    >
+      {shellOffsets.map((offset, index) => {
+        const start: [number, number] = [from[0] + offset[0], from[1] + offset[1]];
+        const end: [number, number] = [to[0] + offset[0] * 0.22, to[1] + offset[1] * 0.18];
+        const shellX = start[0] + (end[0] - start[0]) * easedProgress;
+        const shellY = start[1] + (end[1] - start[1]) * easedProgress;
+        return (
+          <g key={`${effect.id}-shell-${index}`} className="salvo-shell">
+            <path className="salvo-shell-trace" d={`M ${start[0]} ${start[1]} L ${end[0]} ${end[1]}`} />
+            <circle className="salvo-shell-head" cx={shellX} cy={shellY} r={2.7} />
+          </g>
+        );
+      })}
+      {impactOffsets.map((offset, index) => (
+        <g
+          key={`${effect.id}-impact-${index}`}
+          data-impact-x={(to[0] + offset[0]).toFixed(1)}
+          data-impact-y={(to[1] + offset[1]).toFixed(1)}
+          transform={`translate(${to[0] + offset[0]} ${to[1] + offset[1]})`}
+        >
+          <g className="salvo-impact" style={{ animationDelay: `${index * 0.14}s` }}>
+            <circle r={7 + index * 1.6} />
+            <path d="M 0 -15 L 4 -4 L 16 -3 L 6 3 L 10 14 L 0 7 L -10 14 L -6 3 L -16 -3 L -4 -4 Z" />
+          </g>
+        </g>
+      ))}
+      {effect.label && (
+        <text className="salvo-label" x={to[0] + 22} y={to[1] - 24}>
+          {effect.label}
+        </text>
+      )}
+    </g>
+  );
+}
+
 function StaticEventIcon({
   kind,
   x,
@@ -351,16 +536,19 @@ export function CampaignMapAnimation({
   activeSpans,
   ariaLabel,
   battleEvents,
+  battleEffects = [],
   campaignEnd,
   campaignStart,
   cinematicMode = false,
   countries,
   countryClassName,
   cueEvents,
+  cueEventKinds = {},
   diveCueEvents = new Set(),
   eyebrow,
   frontLines,
   focusSteps,
+  focusTransitionProgress = 0,
   gapScale,
   gapOverrides,
   historicalRegions = [],
@@ -369,11 +557,14 @@ export function CampaignMapAnimation({
   legendPrimary = "主攻推进",
   legendSecondary = "反击/联军行动",
   mapPoints,
+  mapOverlays = [],
   maxGapDays,
   musicSource,
   narrationCues = [],
+  outcomeStats = [],
   playbackDurationSeconds,
   regionLabels,
+  retainSeaUnitsAfterRouteEnd = false,
   rivers = [],
   shellClassName = "",
   sfxProfile = "ww2",
@@ -435,7 +626,11 @@ export function CampaignMapAnimation({
       : timeCounterLabel === "天"
         ? Math.max(1, Math.round(elapsedDisplayDays) + 1)
         : Math.max(1, Math.round(elapsedDisplayDays / 7) + 1);
-  const mapFocus = [...focusSteps].sort((a, b) => b.fromProgress - a.fromProgress).find((step) => progress >= step.fromProgress)?.focus ?? focusSteps[0]?.focus ?? "north";
+  const focusState = useMemo(
+    () => focusTransitionState(focusSteps, progress, focusTransitionProgress),
+    [focusSteps, focusTransitionProgress, progress]
+  );
+  const mapFocus = focusState.focus;
   const {
     canZoomIn,
     canZoomOut,
@@ -448,7 +643,17 @@ export function CampaignMapAnimation({
     zoomIn,
     zoomOut
   } = useMapInteraction(mapWidth, mapHeight, mapFocus);
-  const projection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus]);
+  const projection = useMemo(() => createFocusProjection(mapWidth, mapHeight, focusState), [focusState]);
+  const targetFocusProjection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus]);
+  const formationOffsetScale = useMemo(() => {
+    const targetScale = targetFocusProjection.scale();
+    const currentScale = projection.scale();
+    if (!Number.isFinite(targetScale) || !Number.isFinite(currentScale) || targetScale <= 0) {
+      return 1;
+    }
+
+    return Math.min(1.35, Math.max(0.35, currentScale / targetScale));
+  }, [projection, targetFocusProjection]);
   const countryPath = useMemo(() => countryPathFactory(projection), [projection]);
 
   useEffect(() => {
@@ -492,13 +697,20 @@ export function CampaignMapAnimation({
   }, [isPlaying, playbackSpeed, timeline]);
 
   useEffect(() => {
-    if (!isPlaying || !isScoreEnabled || lastCueEventRef.current === activeEvent.id || !cueEvents.has(activeEvent.id)) {
+    const isCueInWindow = timeline.eventProgress(activeEvent.date, progress) >= cuePulseThreshold;
+    if (
+      !isPlaying ||
+      !isScoreEnabled ||
+      !isCueInWindow ||
+      lastCueEventRef.current === activeEvent.id ||
+      !cueEvents.has(activeEvent.id)
+    ) {
       return;
     }
 
     lastCueEventRef.current = activeEvent.id;
     void scoreRef.current?.playBattleCue(battleCueForEvent(activeEvent.id));
-  }, [activeEvent.id, cueEvents, diveCueEvents, isPlaying, isScoreEnabled, sfxProfile]);
+  }, [activeEvent.date, activeEvent.id, cueEvents, diveCueEvents, isPlaying, isScoreEnabled, progress, sfxProfile, timeline]);
 
   const visibleEvents = useMemo(
     () =>
@@ -524,7 +736,64 @@ export function CampaignMapAnimation({
     [projection, visibleEvents]
   );
 
+  const visibleBattleEffects = useMemo(
+    () =>
+      battleEffects
+        .map((effect) => {
+          const start = timeline.dateToProgress(effect.start);
+          const end = timeline.dateToProgress(effect.end);
+          if (progress < start || progress > end) {
+            return null;
+          }
+
+          const effectProgress = end > start ? (progress - start) / (end - start) : 1;
+          return {
+            ...effect,
+            progress: Math.min(1, Math.max(0, effectProgress))
+          };
+        })
+        .filter((effect): effect is BattleEffectElement & { progress: number } => Boolean(effect)),
+    [battleEffects, progress, timeline]
+  );
+
   const activeEventPoint = useMemo(() => projectPoint(projection, activeEvent.coordinates), [activeEvent.coordinates, projection]);
+  const visibleRetainedSeaUnitGroups = useMemo(() => {
+    if (!retainSeaUnitsAfterRouteEnd) {
+      return new Set<string>();
+    }
+
+    const groups = new Map<
+      string,
+      {
+        id: string;
+        lineStart: number;
+      }
+    >();
+
+    frontLines.forEach((line) => {
+      if (line.routeKind !== "sea" || line.hideUnit || !line.unitGroupId || !line.retainUnitAfterRouteEnd) {
+        return;
+      }
+
+      const lineStart = timeline.dateToProgress(line.start);
+      const unitStart = line.unitVisibleFrom ? timeline.dateToProgress(line.unitVisibleFrom) : lineStart;
+      const unitEnd = line.unitVisibleUntil ? timeline.dateToProgress(line.unitVisibleUntil) : Number.POSITIVE_INFINITY;
+      if (progress < lineStart || progress < unitStart || progress > unitEnd) {
+        return;
+      }
+
+      const groupId = line.unitGroupId;
+      const existing = groups.get(groupId);
+      if (!existing || lineStart >= existing.lineStart) {
+        groups.set(groupId, {
+          id: line.id,
+          lineStart
+        });
+      }
+    });
+
+    return new Set([...groups.values()].map((group) => group.id));
+  }, [frontLines, progress, retainSeaUnitsAfterRouteEnd, timeline]);
 
   const activeNarrationCue = useMemo(() => {
     if (narrationCues.length === 0) {
@@ -546,6 +815,11 @@ export function CampaignMapAnimation({
       .join(" ");
 
   const battleCueForEvent = (eventId: string): BattleCueKind => {
+    const configuredKind = cueEventKinds[eventId];
+    if (configuredKind) {
+      return configuredKind;
+    }
+
     if (sfxProfile === "ancient") {
       return "melee";
     }
@@ -733,6 +1007,11 @@ export function CampaignMapAnimation({
                 <stop offset="55%" stopColor="#4aa3d8" />
                 <stop offset="100%" stopColor="#1f5f9d" />
               </linearGradient>
+              <linearGradient id="frontBritainGradient" x1="0" x2="1">
+                <stop offset="0%" stopColor="#fff1ad" />
+                <stop offset="56%" stopColor="#d9a943" />
+                <stop offset="100%" stopColor="#8f6b24" />
+              </linearGradient>
               <radialGradient id="blast" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#ffef9a" stopOpacity="0.95" />
                 <stop offset="65%" stopColor="#d34532" stopOpacity="0.45" />
@@ -770,11 +1049,22 @@ export function CampaignMapAnimation({
               <marker id="arrow-allies" markerHeight="8" markerWidth="10" orient="auto" refX="9" refY="4">
                 <path d="M0 0L10 4L0 8L2 4Z" fill="#4aa3d8" />
               </marker>
+              <marker id="arrow-wind" markerHeight="12" markerWidth="16" orient="auto" refX="14" refY="6">
+                <path d="M0 0L16 6L0 12L4 6Z" fill="#f3d27a" />
+              </marker>
             </defs>
 
             <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
             <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
-            <g className="camera-layer" data-testid="camera-layer" transform={mapTransform}>
+            <g
+              className="camera-layer"
+              data-focus-from={focusState.fromFocus}
+              data-formation-offset-scale={formationOffsetScale.toFixed(3)}
+              data-focus-transition-ratio={focusState.ratio.toFixed(3)}
+              data-map-focus={mapFocus}
+              data-testid="camera-layer"
+              transform={mapTransform}
+            >
               {historicalRegions.length === 0 && (
                 <image
                   className="ancient-map-ornaments"
@@ -866,6 +1156,54 @@ export function CampaignMapAnimation({
                 })}
               </g>
 
+              {mapOverlays.length > 0 && (
+                <g className="map-overlay-elements" data-testid="map-overlay-elements">
+                  {mapOverlays.map((overlay) => {
+                    if (overlay.revealAt && progress < timeline.dateToProgress(overlay.revealAt)) {
+                      return null;
+                    }
+
+                    if (overlay.type === "wind") {
+                      const [x1, y1] = projectPoint(projection, overlay.from);
+                      const [x2, y2] = projectPoint(projection, overlay.to);
+                      return (
+                        <g
+                          key={overlay.id}
+                          className={`wind-overlay ${overlay.className ?? ""}`}
+                          data-testid={overlay.testId ?? `wind-overlay-${overlay.id}`}
+                        >
+                          <path d={`M ${x1} ${y1} L ${x2} ${y2}`} markerEnd="url(#arrow-wind)" />
+                          <text x={(x1 + x2) / 2 + 12} y={(y1 + y2) / 2 - 10}>
+                            {overlay.label}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    const [x, y] = projectPoint(projection, overlay.coordinates);
+                    return (
+                      <g
+                        key={overlay.id}
+                        className={`annotation-marker ${overlay.className ?? ""}`}
+                        data-testid={overlay.testId ?? `annotation-marker-${overlay.id}`}
+                        transform={`translate(${x} ${y})`}
+                      >
+                        <circle r="8" />
+                        <path d="M -12 -12 L 12 12 M 12 -12 L -12 12" />
+                        <text x="16" y="-4">
+                          {overlay.label}
+                        </text>
+                        {overlay.subtitle && (
+                          <text className="annotation-subtitle" x="16" y="14">
+                            {overlay.subtitle}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+              )}
+
               {frontLines.map((line) => {
                 const startPoint = projectedPoints.get(line.from) ?? projectPoint(projection, timeline.findPoint(line.from).coordinates);
                 const endPoint = projectedPoints.get(line.to) ?? projectPoint(projection, timeline.findPoint(line.to).coordinates);
@@ -874,7 +1212,18 @@ export function CampaignMapAnimation({
                   ...(line.waypoints ?? []).map((coordinates) => projectPoint(projection, coordinates)),
                   endPoint
                 ];
+                const formationRoutePoints = [
+                  ...(line.formationPrelude ?? []).map((coordinates) => projectPoint(projection, coordinates)),
+                  ...projectedRoutePoints
+                ];
+                const formationPreludeLength = line.formationPrelude
+                  ? routeLength((line.formationPrelude ?? []).map((coordinates) => projectPoint(projection, coordinates)).concat([startPoint]))
+                  : 0;
+                const formationRouteTotalLength = Math.max(routeLength(formationRoutePoints), 1);
+                const projectedRouteLength = routeLength(projectedRoutePoints);
                 const segmentProgress = timeline.lineProgress(line.start, line.end, progress);
+                const formationSegmentProgress =
+                  (formationPreludeLength + projectedRouteLength * segmentProgress) / formationRouteTotalLength;
                 const lineStartProgress = timeline.dateToProgress(line.start);
                 const lineEndProgress = timeline.dateToProgress(line.end);
                 const isComplete = progress >= lineEndProgress;
@@ -884,12 +1233,22 @@ export function CampaignMapAnimation({
                 const currentPoint = tacticalRouteRetention && isComplete ? (visibleRoutePoints.at(-1) ?? startPoint) : movingPoint;
                 const isActive = segmentProgress > 0 && segmentProgress < 1;
                 const routeState = isActive ? "is-active" : isComplete ? "is-complete" : "is-forming";
-                const isVisible =
-                  progress >= lineStartProgress &&
-                  ((tacticalRouteRetention && isComplete) || !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil));
+                const hasRouteStarted = progress >= lineStartProgress;
+                const isWithinRouteVisibleWindow = !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil);
+                const isVisible = hasRouteStarted && (tacticalRouteRetention || isWithinRouteVisibleWindow);
+                const participatesInRetainedSeaGroup =
+                  retainSeaUnitsAfterRouteEnd &&
+                  line.routeKind === "sea" &&
+                  line.retainUnitAfterRouteEnd &&
+                  Boolean(line.unitGroupId);
+                const retainsSeaUnit =
+                  participatesInRetainedSeaGroup && visibleRetainedSeaUnitGroups.has(line.id);
                 const isUnitVisible =
-                  progress >= lineStartProgress &&
-                  (!line.unitVisibleUntil || progress <= timeline.dateToProgress(line.unitVisibleUntil));
+                  !line.hideUnit &&
+                  hasRouteStarted &&
+                  (!line.unitVisibleFrom || progress >= timeline.dateToProgress(line.unitVisibleFrom)) &&
+                  (!participatesInRetainedSeaGroup || retainsSeaUnit) &&
+                  (retainsSeaUnit || !line.unitVisibleUntil || progress <= timeline.dateToProgress(line.unitVisibleUntil));
                 const routePath = buildCurvedPath(visibleRoutePoints);
                 const directionAnchorPoint = interpolateRoute(projectedRoutePoints, Math.max(0, segmentProgress - 0.018));
                 const labelPoint =
@@ -923,8 +1282,13 @@ export function CampaignMapAnimation({
                     data-route-from={line.from}
                     data-route-id={line.id}
                     data-route-label={line.label}
+                    data-route-point-count={projectedRoutePoints.length}
                     data-route-state={routeState}
+                    data-route-end={line.end}
+                    data-route-start={line.start}
                     data-route-to={line.to}
+                    data-route-visible-until={line.visibleUntil ?? ""}
+                    data-unit-visible-until={line.unitVisibleUntil ?? ""}
                     data-unit-visible={isUnitVisible}
                   >
                     <path className="front-halo" d={routePath} strokeWidth={frontStrokeWidth(line.faction) + 7} />
@@ -932,17 +1296,21 @@ export function CampaignMapAnimation({
                       className="front-route"
                       d={routePath}
                       strokeWidth={frontStrokeWidth(line.faction)}
-                      markerEnd={["germany", "carthage"].includes(line.faction) ? undefined : "url(#arrow-allies)"}
                     />
                     <path className="front-direction" d={routePath} strokeWidth={1.4} />
                     <circle cx={currentPoint[0]} cy={currentPoint[1]} r={isActive ? 4.6 : 3.2} />
                     {isUnitVisible && (
                       <g className="formation-units">
                         {formationUnits.map((formationUnit) => {
+                          if (formationUnit.hiddenFrom && progress >= timeline.dateToProgress(formationUnit.hiddenFrom)) {
+                            return null;
+                          }
+
                           const placement = formationUnitPlacement(
-                            projectedRoutePoints,
-                            segmentProgress,
-                            formationUnit.offset ?? [0, 0]
+                            formationRoutePoints,
+                            formationSegmentProgress,
+                            formationUnit.offset ?? [0, 0],
+                            formationOffsetScale
                           );
                           const [markerX, markerY] = placement.point;
                           const markerFaction = formationUnit.faction ?? line.faction;
@@ -955,6 +1323,7 @@ export function CampaignMapAnimation({
                               data-facing-x={placement.facingX}
                               data-ship-label={formationUnit.label}
                               data-route-progress={segmentProgress.toFixed(4)}
+                              data-unit-route-progress={placement.routeProgress.toFixed(4)}
                               data-unit-offset-along={(formationUnit.offset?.[0] ?? 0).toString()}
                               data-testid={`formation-unit-${line.id}-${formationUnit.id}`}
                               transform={`translate(${markerX} ${markerY})`}
@@ -985,13 +1354,31 @@ export function CampaignMapAnimation({
                 );
               })}
 
+              {visibleBattleEffects.length > 0 && (
+                <g className="battle-effect-layer" data-testid="battle-effect-layer">
+                  {visibleBattleEffects.map((effect) => (
+                    <SalvoBattleEffect
+                      key={effect.id}
+                      effect={effect}
+                      progress={effect.progress}
+                      project={(coordinates) => projectPoint(projection, coordinates)}
+                    />
+                  ))}
+                </g>
+              )}
+
               {projectedBattleEvents.map((event) => {
                 const [x, y] = event.xy;
                 const pulse = event.weight;
                 const isCurrent = event.id === activeEvent.id;
+                const isCurrentCuePulse = isCurrent && cueEvents.has(event.id) && pulse >= cuePulseThreshold;
+                if (!event.passed && !isCurrent) {
+                  return null;
+                }
+
                 return (
                   <g key={event.id} className={`event-pin ${event.passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
-                    {isCurrent && <ActiveEventEffect kind={sfxProfile} pulse={pulse} x={x} y={y} />}
+                    {isCurrentCuePulse && <ActiveEventEffect kind={sfxProfile} pulse={pulse} x={x} y={y} />}
                     {!isCurrent && event.passed && <StaticEventIcon kind={sfxProfile} x={x} y={y} />}
                     <circle cx={x} cy={y} r={isCurrent ? 7 : 4.4} />
                     {isCurrent && (
@@ -1004,6 +1391,10 @@ export function CampaignMapAnimation({
               })}
 
               {mapPoints.map((point) => {
+                if (point.revealAt && progress < timeline.dateToProgress(point.revealAt)) {
+                  return null;
+                }
+
                 const [x, y] = projectedPoints.get(point.id) ?? projectPoint(projection, point.coordinates);
                 const isFocused = activeEvent.mapFocus.includes(point.id);
                 return (
@@ -1066,6 +1457,17 @@ export function CampaignMapAnimation({
             <span className="legend-evacuation">{legendAxis}</span>
             <span className="legend-event">关键事件</span>
           </div>
+
+          {outcomeStats.length > 0 && (
+            <div className="outcome-panel" data-testid="outcome-panel">
+              {outcomeStats.map((stat) => (
+                <span key={stat.label} className={stat.className}>
+                  <strong>{stat.value}</strong>
+                  {stat.label}
+                </span>
+              ))}
+            </div>
+          )}
         </article>
 
         <aside className="story-panel">

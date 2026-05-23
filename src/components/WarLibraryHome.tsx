@@ -66,6 +66,13 @@ const wars: WarEntry[] = [
     description: "从意大利战役到埃及、中欧、俄国、莱比锡与滑铁卢。"
   },
   {
+    id: "trafalgar",
+    title: "特拉法尔加大海战",
+    era: "现代战争",
+    period: "1805",
+    description: "纳尔逊两纵队突破、法西舰列崩解、旗舰混战与最终损失。"
+  },
+  {
     id: "tsushima",
     title: "日俄对马海战",
     era: "现代战争",
@@ -73,11 +80,11 @@ const wars: WarEntry[] = [
     description: "对马海峡内俄舰北上、东乡转向、T字炮战、夜战与残部投降。"
   },
   {
-    id: "midway",
-    title: "中途岛海空战",
+    id: "jutland",
+    title: "日德兰海战",
     era: "现代战争",
-    period: "1942",
-    description: "中途岛、南云机动部队、三艘美航母、鱼雷机和俯冲轰炸波次。"
+    period: "1916",
+    description: "侦察接触、南向追逐、北向引诱、主力展开、全舰队转向与夜间撤离。"
   },
   {
     id: "france",
@@ -85,6 +92,13 @@ const wars: WarEntry[] = [
     era: "现代战争",
     period: "1940",
     description: "阿登突击、色当突破、敦刻尔克撤离与法国陷落。"
+  },
+  {
+    id: "britain-air",
+    title: "伦敦上空的鹰",
+    era: "现代战争",
+    period: "1940-09-15",
+    description: "伦敦方向两次昼间大空袭、11群升空、12群增援与回程追击。"
   },
   {
     id: "eastern",
@@ -99,6 +113,34 @@ const wars: WarEntry[] = [
     era: "现代战争",
     period: "1941-1945",
     description: "珍珠港、中途岛、瓜岛、马里亚纳、莱特湾到东京湾。"
+  },
+  {
+    id: "midway",
+    title: "中途岛海空战",
+    era: "现代战争",
+    period: "1942",
+    description: "中途岛、南云机动部队、三艘美航母、鱼雷机和俯冲轰炸波次。"
+  },
+  {
+    id: "bismarck-sea",
+    title: "俾斯麦海海空战",
+    era: "现代战争",
+    period: "1943",
+    description: "侦察跟踪、高空轰炸、低空扫射、跳弹轰炸与船队瓦解。"
+  },
+  {
+    id: "guadalcanal",
+    title: "第二次瓜岛海战",
+    era: "现代战争",
+    period: "1942",
+    description: "铁底湾夜战、南达科他号失电、华盛顿号雷达火控与雾岛号失能。"
+  },
+  {
+    id: "big-week",
+    title: "大周行动：欧洲昼间制空权争夺",
+    era: "现代战争",
+    period: "1944",
+    description: "轰炸机流、远程护航、德机截击、航空工业目标与制空权消耗。"
   },
   {
     id: "korean",

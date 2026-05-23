@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { AlexanderConquestsAnimation } from "./components/AlexanderConquestsAnimation";
+import { BattleOfBritainAnimation } from "./components/BattleOfBritainAnimation";
 import { BattleFranceAnimation } from "./components/BattleFranceAnimation";
+import { BigWeekAirBattleAnimation } from "./components/BigWeekAirBattleAnimation";
+import { BismarckSeaAirBattleAnimation } from "./components/BismarckSeaAirBattleAnimation";
 import { CaesarWarsAnimation } from "./components/CaesarWarsAnimation";
 import { CrusadesAnimation } from "./components/CrusadesAnimation";
 import { EasternFrontAnimation } from "./components/EasternFrontAnimation";
 import { GulfWarAnimation } from "./components/GulfWarAnimation";
 import { GaixiaAmbushAnimation } from "./components/GaixiaAmbushAnimation";
+import { GuadalcanalNavalBattleAnimation } from "./components/GuadalcanalNavalBattleAnimation";
+import { JutlandBattleAnimation } from "./components/JutlandBattleAnimation";
 import { KoreanWarAnimation } from "./components/KoreanWarAnimation";
 import { MidwayBattleAnimation } from "./components/MidwayBattleAnimation";
 import { MongolEmpireAnimation } from "./components/MongolEmpireAnimation";
@@ -13,6 +18,7 @@ import { NapoleonicWarsAnimation } from "./components/NapoleonicWarsAnimation";
 import { PacificWarAnimation } from "./components/PacificWarAnimation";
 import { PunicWarsAnimation } from "./components/PunicWarsAnimation";
 import { QinUnificationAnimation } from "./components/QinUnificationAnimation";
+import { TrafalgarBattleAnimation } from "./components/TrafalgarBattleAnimation";
 import { TsushimaBattleAnimation } from "./components/TsushimaBattleAnimation";
 import { WarLibraryHome } from "./components/WarLibraryHome";
 import "./styles.css";
@@ -29,8 +35,14 @@ export type CampaignKey =
   | "qin"
   | "alexander"
   | "caesar"
+  | "britain-air"
+  | "big-week"
+  | "bismarck-sea"
+  | "trafalgar"
   | "tsushima"
+  | "jutland"
   | "midway"
+  | "guadalcanal"
   | "pacific"
   | "gulf"
   | "gaixia";
@@ -122,12 +134,17 @@ function App() {
       <SunziMottoBanner isHome={campaign === "home"} onReturnHome={() => setCampaign("home")} />
       {campaign === "home" && <WarLibraryHome onOpen={setCampaign} />}
       {campaign === "alexander" && <AlexanderConquestsAnimation />}
+      {campaign === "britain-air" && <BattleOfBritainAnimation />}
+      {campaign === "big-week" && <BigWeekAirBattleAnimation />}
+      {campaign === "bismarck-sea" && <BismarckSeaAirBattleAnimation />}
       {campaign === "caesar" && <CaesarWarsAnimation />}
       {campaign === "crusades" && <CrusadesAnimation />}
       {campaign === "eastern" && <EasternFrontAnimation />}
       {campaign === "france" && <BattleFranceAnimation />}
       {campaign === "gulf" && <GulfWarAnimation />}
       {campaign === "gaixia" && <GaixiaAmbushAnimation />}
+      {campaign === "guadalcanal" && <GuadalcanalNavalBattleAnimation />}
+      {campaign === "jutland" && <JutlandBattleAnimation />}
       {campaign === "korean" && <KoreanWarAnimation />}
       {campaign === "midway" && <MidwayBattleAnimation />}
       {campaign === "mongol" && <MongolEmpireAnimation />}
@@ -135,6 +152,7 @@ function App() {
       {campaign === "pacific" && <PacificWarAnimation />}
       {campaign === "punic" && <PunicWarsAnimation />}
       {campaign === "qin" && <QinUnificationAnimation />}
+      {campaign === "trafalgar" && <TrafalgarBattleAnimation />}
       {campaign === "tsushima" && <TsushimaBattleAnimation />}
     </>
   );

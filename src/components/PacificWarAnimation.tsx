@@ -84,7 +84,7 @@ export function PacificWarAnimation() {
         { fromProgress: timeline.dateToProgress("1942-06-03"), focus: "pacificCentral" },
         { fromProgress: timeline.dateToProgress("1942-08-07"), focus: "pacificSouth" },
         { fromProgress: timeline.dateToProgress("1943-11-20"), focus: "pacificGilberts" },
-        { fromProgress: timeline.dateToProgress("1944-06-15"), focus: "pacificMarianas" },
+        { fromProgress: timeline.dateToProgress("1944-07-09"), focus: "pacificMarianas" },
         { fromProgress: timeline.dateToProgress("1944-10-20"), focus: "pacificPhilippines" },
         { fromProgress: timeline.dateToProgress("1945-02-19"), focus: "pacificIwo" },
         { fromProgress: timeline.dateToProgress("1945-04-01"), focus: "pacificRyukyus" },

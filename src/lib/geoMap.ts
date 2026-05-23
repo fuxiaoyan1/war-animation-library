@@ -54,6 +54,38 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [10.0, 45.0],
     [42.0, 59.5]
   ],
+  britainAirWide: [
+    [-2.6, 49.4],
+    [2.6, 52.2]
+  ],
+  britainAirLondon: [
+    [-0.9, 50.9],
+    [1.25, 51.9]
+  ],
+  britainAirLondonClose: [
+    [-0.62, 51.18],
+    [0.88, 51.78]
+  ],
+  bigWeekWide: [
+    [-1.5, 48.4],
+    [14.8, 53.6]
+  ],
+  bigWeekGermany: [
+    [4.8, 48.6],
+    [14.9, 53.3]
+  ],
+  bismarckSeaWide: [
+    [145.2, -10.2],
+    [154.1, -1.45]
+  ],
+  bismarckSeaBattle: [
+    [146.3, -7.35],
+    [149.7, -5.1]
+  ],
+  bismarckSeaLae: [
+    [146.1, -7.45],
+    [148.35, -5.65]
+  ],
   mediterranean: [
     [-8.0, 30.0],
     [31.0, 47.0]
@@ -69,6 +101,10 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
   easternMediterranean: [
     [22.0, 29.0],
     [44.5, 43.5]
+  ],
+  crusadesFirstCall: [
+    [-5.0, 35.0],
+    [35.0, 48.0]
   ],
   levant: [
     [29.0, 30.0],
@@ -89,6 +125,10 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
   caesarItaly: [
     [5.0, 39.0],
     [16.0, 47.5]
+  ],
+  caesarWesternMediterranean: [
+    [-7.5, 35.0],
+    [12.5, 44.8]
   ],
   caesarGreece: [
     [13.0, 35.0],
@@ -113,6 +153,10 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
   alexanderLevantEgypt: [
     [27.0, 25.0],
     [42.0, 37.5]
+  ],
+  alexanderEgypt: [
+    [24.5, 26.0],
+    [36.5, 33.5]
   ],
   alexanderMesopotamia: [
     [35.0, 28.0],
@@ -191,8 +235,68 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [130.48, 35.48]
   ],
   tsushimaNorth: [
-    [129.32, 35.0],
-    [131.08, 36.28]
+    [129.12, 34.82],
+    [131.32, 36.48]
+  ],
+  trafalgarApproach: [
+    [-7.12, 35.72],
+    [-6.28, 36.36]
+  ],
+  trafalgarBattle: [
+    [-6.94, 35.88],
+    [-6.46, 36.18]
+  ],
+  trafalgarBreakthrough: [
+    [-6.89, 35.905],
+    [-6.47, 36.185]
+  ],
+  trafalgarMelee: [
+    [-6.82, 35.98],
+    [-6.55, 36.11]
+  ],
+  trafalgarDecision: [
+    [-6.79, 36.01],
+    [-6.54, 36.13]
+  ],
+  trafalgarAftermath: [
+    [-6.76, 36.0],
+    [-6.45, 36.17]
+  ],
+  guadalcanalIronbottom: [
+    [159.28, -9.76],
+    [160.42, -8.72]
+  ],
+  guadalcanalSavoNight: [
+    [159.66, -9.48],
+    [160.18, -8.98]
+  ],
+  guadalcanalRadarAction: [
+    [159.58, -9.34],
+    [159.96, -8.96]
+  ],
+  guadalcanalWithdrawal: [
+    [159.28, -9.5],
+    [160.16, -8.68]
+  ],
+  jutlandWide: [
+    [-3.8, 55.35],
+    [8.9, 59.2]
+  ],
+  jutlandRunSouth: [
+    [4.8, 55.56],
+    [6.35, 56.72]
+  ],
+  jutlandRunNorth: [
+    [5.05, 55.82],
+    [6.45, 56.86]
+  ],
+  jutlandMainBattle: [
+    [5.35, 55.82],
+    [6.55, 56.86]
+  ],
+  jutlandNightEscape: [
+    [5.72, 55.62],
+    [7.05, 56.42]
   ],
   midwayTactical: [
     [177.85, 29.72],
@@ -207,8 +311,12 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [98.0, 52.0]
   ],
   mongolChina: [
-    [95.0, 20.0],
+    [95.0, 18.0],
     [126.0, 47.0]
+  ],
+  mongolSouthChina: [
+    [104.0, 18.0],
+    [123.0, 33.5]
   ],
   mongolWest: [
     [30.0, 32.0],
@@ -251,8 +359,8 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [205.0, 35.0]
   ],
   pacificGilberts: [
-    [162.0, -8.0],
-    [190.0, 16.0]
+    [158.0, -10.0],
+    [194.0, 20.0]
   ],
   pacificSouth: [
     [145.0, -24.0],
@@ -517,6 +625,12 @@ const gulfCampaignCountryNames = new Set([
 
 const koreanWarCampaignCountryNames = new Set(["China", "Japan", "North Korea", "Russia", "South Korea"]);
 const tsushimaCampaignCountryNames = new Set(["Japan", "North Korea", "Russia", "South Korea"]);
+const trafalgarCampaignCountryNames = new Set(["Portugal", "Spain", "Morocco"]);
+const guadalcanalCampaignCountryNames = new Set(["Papua New Guinea", "Solomon Is."]);
+const jutlandCampaignCountryNames = new Set(["Denmark", "Germany", "Netherlands", "Norway", "United Kingdom"]);
+const battleOfBritainCampaignCountryNames = new Set(["Belgium", "France", "Germany", "Netherlands", "United Kingdom"]);
+const bigWeekCampaignCountryNames = new Set(["Belgium", "Czechia", "Denmark", "France", "Germany", "Netherlands", "Poland", "United Kingdom"]);
+const bismarckSeaCampaignCountryNames = new Set(["Papua New Guinea", "Solomon Is."]);
 
 const mongolCoreCountryNames = new Set(["Mongolia", "China", "Kazakhstan", "Uzbekistan", "Iran", "Russia"]);
 const qinCoreCountryNames = new Set(["China"]);
@@ -524,6 +638,12 @@ const pacificCoreCountryNames = new Set(["Japan", "United States of America", "P
 const gulfCoreCountryNames = new Set(["Iraq", "Kuwait", "Saudi Arabia"]);
 const koreanWarCoreCountryNames = new Set(["China", "North Korea", "South Korea"]);
 const tsushimaCoreCountryNames = new Set(["Japan", "South Korea"]);
+const trafalgarCoreCountryNames = new Set(["Spain"]);
+const guadalcanalCoreCountryNames = new Set(["Solomon Is."]);
+const jutlandCoreCountryNames = new Set(["Denmark", "Germany", "United Kingdom"]);
+const battleOfBritainCoreCountryNames = new Set(["France", "United Kingdom"]);
+const bigWeekCoreCountryNames = new Set(["Germany", "United Kingdom"]);
+const bismarckSeaCoreCountryNames = new Set(["Papua New Guinea"]);
 
 export const westernEuropeCountries = countryCollection.features.filter((country) =>
   focusCountryNames.has(country.properties?.name ?? "")
@@ -575,6 +695,30 @@ export const koreanWarCampaignCountries = countryCollection.features.filter((cou
 
 export const tsushimaCampaignCountries = countryCollection.features.filter((country) =>
   tsushimaCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const trafalgarCampaignCountries = countryCollection.features.filter((country) =>
+  trafalgarCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const guadalcanalCampaignCountries = countryCollection.features.filter((country) =>
+  guadalcanalCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const jutlandCampaignCountries = countryCollection.features.filter((country) =>
+  jutlandCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const battleOfBritainCampaignCountries = countryCollection.features.filter((country) =>
+  battleOfBritainCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const bigWeekCampaignCountries = countryCollection.features.filter((country) =>
+  bigWeekCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const bismarckSeaCampaignCountries = countryCollection.features.filter((country) =>
+  bismarckSeaCampaignCountryNames.has(country.properties?.name ?? "")
 ) as CountryFeature[];
 
 export function createCampaignProjection(width: number, height: number, focus: keyof typeof viewports = "north") {
@@ -683,4 +827,40 @@ export function tsushimaCountryClassName(country: CountryFeature) {
   const name = country.properties?.name ?? "unknown";
   const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
   return `country country-${normalized} ${tsushimaCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function trafalgarCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${trafalgarCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function guadalcanalCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${guadalcanalCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function jutlandCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${jutlandCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function battleOfBritainCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${battleOfBritainCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function bigWeekCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${bigWeekCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function bismarckSeaCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${bismarckSeaCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
 }

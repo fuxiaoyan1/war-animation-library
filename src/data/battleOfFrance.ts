@@ -9,7 +9,8 @@ export type Faction =
   | "carthage"
   | "rome"
   | "communist"
-  | "un";
+  | "un"
+  | "spain";
 
 export type FrontLine = {
   id: string;
@@ -19,11 +20,17 @@ export type FrontLine = {
   to: string;
   start: string;
   end: string;
+  hideUnit?: boolean;
+  retainUnitAfterRouteEnd?: boolean;
+  unitVisibleFrom?: string;
   visibleUntil?: string;
   unitVisibleUntil?: string;
   routeKind?: "air" | "land" | "sea";
   unitBadgeLabel?: string;
+  unitGroupId?: string;
   unitIcon?: UnitIconKind;
+  /** Extra route points before `from`, used only to keep multi-unit formations continuous through route handoffs. */
+  formationPrelude?: Array<[number, number]>;
   waypoints?: Array<[number, number]>;
   width?: number;
   intensity?: number;
@@ -34,6 +41,7 @@ export type FormationUnit = {
   badgeLabel?: string;
   className?: string;
   faction?: Faction;
+  hiddenFrom?: string;
   icon?: UnitIconKind;
   id: string;
   label: string;
@@ -59,6 +67,7 @@ export type MapPoint = {
   label: string;
   coordinates: [number, number];
   kind: "city" | "front" | "objective" | "port" | "forest" | "capital";
+  revealAt?: string;
 };
 
 export const mapPoints: MapPoint[] = [

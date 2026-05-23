@@ -78,7 +78,8 @@ export function MongolEmpireAnimation() {
         { fromProgress: 0, focus: "mongolWide" },
         { fromProgress: timeline.dateToProgress("1219-09-01"), focus: "mongolCentralAsia" },
         { fromProgress: timeline.dateToProgress("1223-05-31"), focus: "mongolWest" },
-        { fromProgress: timeline.dateToProgress("1234-02-09"), focus: "mongolChina" }
+        { fromProgress: timeline.dateToProgress("1234-02-09"), focus: "mongolChina" },
+        { fromProgress: timeline.dateToProgress("1268-01-01"), focus: "mongolSouthChina" }
       ]}
       frontLines={semanticFrontLines}
       gapScale={0.025}

@@ -43,16 +43,63 @@ export const mapPoints: MapPoint[] = [
   { id: "russian-column", label: "俄纵队北上", coordinates: [129.1, 34.26], kind: "front" },
   { id: "russian-pre-turn", label: "俄前导未越线", coordinates: [129.18, 34.48], kind: "front" },
   { id: "togo-approach", label: "联合舰队东侧接近", coordinates: [130.3, 34.72], kind: "front" },
-  { id: "togo-turn", label: "东乡回头转向", coordinates: [129.86, 34.74], kind: "front" },
-  { id: "oslyabya-suvorov", label: "俄前导舰受创", coordinates: [129.48, 34.8], kind: "front" },
-  { id: "first-battle", label: "第一合战区", coordinates: [129.56, 35.02], kind: "front" },
-  { id: "second-battle", label: "第二合战区", coordinates: [129.82, 35.28], kind: "front" },
-  { id: "russian-breakup", label: "俄舰队分散", coordinates: [130.1, 35.5], kind: "front" },
-  { id: "night-attack", label: "夜战雷击区", coordinates: [130.42, 35.78], kind: "front" },
-  { id: "takeshima", label: "残部投降海域", coordinates: [130.78, 36.08], kind: "front" },
+  { id: "togo-turn", label: "东乡回头转向", coordinates: [129.86, 34.74], kind: "front", revealAt: "1905-05-27T14:05" },
+  { id: "oslyabya-suvorov", label: "俄前导舰受创", coordinates: [129.48, 34.8], kind: "front", revealAt: "1905-05-27T14:20" },
+  { id: "first-battle", label: "第一合战区", coordinates: [129.56, 35.02], kind: "front", revealAt: "1905-05-27T14:20" },
+  { id: "second-battle", label: "第二合战区", coordinates: [129.82, 35.28], kind: "front", revealAt: "1905-05-27T17:30" },
+  { id: "russian-breakup", label: "俄舰队分散", coordinates: [130.1, 35.5], kind: "front", revealAt: "1905-05-27T17:30" },
+  { id: "night-attack", label: "夜战雷击区", coordinates: [130.42, 35.78], kind: "front", revealAt: "1905-05-27T19:30" },
+  { id: "takeshima", label: "残部投降海域", coordinates: [130.78, 36.08], kind: "front", revealAt: "1905-05-28T10:30" },
   { id: "sasebo", label: "佐世保", coordinates: [129.72, 33.16], kind: "port" },
   { id: "sasebo-offshore", label: "佐世保外海", coordinates: [129.32, 33.2], kind: "front" },
   { id: "mokpo", label: "木浦外海", coordinates: [126.38, 34.78], kind: "port" }
+];
+
+export const crossingSalvoEffects = [
+  {
+    id: "tsushima-first-crossing-salvo",
+    type: "salvo" as const,
+    start: "1905-05-27T14:18",
+    end: "1905-05-27T14:36",
+    from: [129.62, 34.84] as [number, number],
+    to: [129.48, 34.8] as [number, number],
+    label: "第一合战齐射",
+    testId: "tsushima-first-crossing-salvo",
+    shellOffsets: [
+      [-22, -12],
+      [-6, -6],
+      [10, 2],
+      [26, 8]
+    ] as Array<[number, number]>,
+    impactOffsets: [
+      [-12, -8],
+      [2, -12],
+      [12, -2],
+      [-4, 10]
+    ] as Array<[number, number]>
+  },
+  {
+    id: "tsushima-second-crossing-salvo",
+    type: "salvo" as const,
+    start: "1905-05-27T17:28",
+    end: "1905-05-27T17:46",
+    from: [130.02, 35.24] as [number, number],
+    to: [129.92, 35.26] as [number, number],
+    label: "再横切齐射",
+    testId: "tsushima-second-crossing-salvo",
+    shellOffsets: [
+      [-18, -10],
+      [-4, -4],
+      [12, 4],
+      [28, 10]
+    ] as Array<[number, number]>,
+    impactOffsets: [
+      [-10, -8],
+      [4, -10],
+      [14, 0],
+      [-2, 10]
+    ] as Array<[number, number]>
+  }
 ];
 
 export const frontLines: FrontLine[] = [
@@ -67,6 +114,7 @@ export const frontLines: FrontLine[] = [
     end: "1905-05-27T13:15",
     visibleUntil: "1905-05-28T12:00",
     unitVisibleUntil: "1905-05-27T13:14",
+    unitGroupId: "russian-main-fleet",
     unitIcon: "warship",
     formationUnits: russianMainBattleLine,
     width: 10,
@@ -83,6 +131,7 @@ export const frontLines: FrontLine[] = [
     end: "1905-05-27T14:10",
     visibleUntil: "1905-05-28T05:00",
     unitVisibleUntil: "1905-05-27T14:09",
+    unitGroupId: "russian-main-fleet",
     unitIcon: "warship",
     formationUnits: russianMainBattleLine,
     waypoints: [[129.04, 34.3]],
@@ -99,6 +148,7 @@ export const frontLines: FrontLine[] = [
     start: "1905-05-27T12:00",
     end: "1905-05-27T13:45",
     unitVisibleUntil: "1905-05-27T13:44",
+    unitGroupId: "japanese-main-fleet",
     unitIcon: "warship",
     formationUnits: japaneseMainBattleLine,
     waypoints: [
@@ -119,6 +169,7 @@ export const frontLines: FrontLine[] = [
     start: "1905-05-27T13:45",
     end: "1905-05-27T14:10",
     unitVisibleUntil: "1905-05-27T14:09",
+    unitGroupId: "japanese-main-fleet",
     unitIcon: "warship",
     formationUnits: japaneseMainBattleLine,
     waypoints: [
@@ -138,6 +189,7 @@ export const frontLines: FrontLine[] = [
     start: "1905-05-27T14:10",
     end: "1905-05-27T14:55",
     unitVisibleUntil: "1905-05-27T14:59",
+    unitGroupId: "japanese-main-fleet",
     unitIcon: "warship",
     formationUnits: japaneseMainBattleLine,
     waypoints: [
@@ -158,6 +210,7 @@ export const frontLines: FrontLine[] = [
     end: "1905-05-27T15:20",
     visibleUntil: "1905-05-28T05:00",
     unitVisibleUntil: "1905-05-27T15:19",
+    unitGroupId: "russian-main-fleet",
     unitIcon: "warship",
     formationUnits: russianReorderedBattleLine,
     waypoints: [
@@ -177,6 +230,7 @@ export const frontLines: FrontLine[] = [
     start: "1905-05-27T15:20",
     end: "1905-05-27T17:30",
     unitVisibleUntil: "1905-05-27T17:59",
+    unitGroupId: "japanese-main-fleet",
     unitIcon: "warship",
     formationUnits: japaneseMainBattleLine,
     waypoints: [
@@ -197,6 +251,7 @@ export const frontLines: FrontLine[] = [
     end: "1905-05-27T18:30",
     visibleUntil: "1905-05-28T10:30",
     unitVisibleUntil: "1905-05-27T18:29",
+    unitGroupId: "russian-main-fleet",
     unitIcon: "warship",
     formationUnits: russianScatteredLine,
     waypoints: [
@@ -216,6 +271,7 @@ export const frontLines: FrontLine[] = [
     start: "1905-05-27T19:30",
     end: "1905-05-28T03:00",
     unitVisibleUntil: "1905-05-28T03:00",
+    unitGroupId: "japanese-screen",
     unitIcon: "warship",
     formationUnits: japaneseTorpedoLine,
     waypoints: [
@@ -234,6 +290,8 @@ export const frontLines: FrontLine[] = [
     routeKind: "sea",
     start: "1905-05-28T05:00",
     end: "1905-05-28T10:00",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "japanese-main-fleet",
     unitIcon: "warship",
     formationUnits: japaneseMainBattleLine,
     waypoints: [[130.9, 35.92]],
@@ -251,6 +309,7 @@ export const frontLines: FrontLine[] = [
     end: "1905-05-28T10:30",
     visibleUntil: "1905-05-28T12:00",
     unitVisibleUntil: "1905-05-28T09:59",
+    unitGroupId: "russian-main-fleet",
     unitIcon: "warship",
     formationUnits: russianScatteredLine,
     width: 7,

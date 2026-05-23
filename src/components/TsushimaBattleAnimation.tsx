@@ -2,6 +2,7 @@ import {
   battleEvents,
   campaignEnd,
   campaignStart,
+  crossingSalvoEffects,
   cueEventIds,
   frontLines,
   mapPoints
@@ -62,6 +63,7 @@ export function TsushimaBattleAnimation() {
       activeSpans={frontLines.map(({ end, start }) => ({ end, start }))}
       ariaLabel="日俄对马海战动态地图"
       battleEvents={battleEvents}
+      battleEffects={crossingSalvoEffects}
       campaignEnd={campaignEnd}
       campaignStart={campaignStart}
       cinematicMode
@@ -72,7 +74,7 @@ export function TsushimaBattleAnimation() {
       focusSteps={[
         { fromProgress: 0, focus: "tsushimaStrait" },
         { fromProgress: timeline.dateToProgress("1905-05-27T13:40"), focus: "tsushimaBattle" },
-        { fromProgress: timeline.dateToProgress("1905-05-28T05:00"), focus: "tsushimaNorth" }
+        { fromProgress: timeline.dateToProgress("1905-05-27T19:30"), focus: "tsushimaNorth" }
       ]}
       frontLines={tacticalFrontLines}
       legendAxis="舰队战术航迹"
@@ -87,6 +89,7 @@ export function TsushimaBattleAnimation() {
         { label: "对马海峡", coordinates: [129.55, 34.45] },
         { label: "九州", coordinates: [130.42, 33.55] }
       ]}
+      retainSeaUnitsAfterRouteEnd
       shellClassName="tsushima-battle modern-war naval-war"
       sfxProfile="gunpowder"
       subtitle="全片按5分钟播放设计：短战争改用小时级时间轴，镜头收紧在对马海峡，突出侦察接触、东乡回头转向、两轮横切炮战、夜战和残部投降。"

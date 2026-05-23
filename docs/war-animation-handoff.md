@@ -1,38 +1,559 @@
 # 战争动画库工作交接文档
 
-交接基线：`f1cc03c Expand war animation library and visuals`
+交接时间：2026-05-23 CST
 
-交接时间：2026-05-17 08:07 CST
+项目路径：`/Users/asukarei/Desktop/war-animation-lab-oss`
 
-项目路径：本仓库根目录。
+上一份提交基线：`f1cc03c Expand war animation library and visuals`
 
-## 1. 当前状态
+当前接手状态：仓库已经在上一轮持续开发中进入大量未提交变更状态。接手者必须先看 `git status --short`，不要把当前工作树当成干净基线，不要回滚自己没有做的变更。
 
-这是一个 Vite + React + TypeScript 的本地战争动画库。入口是“战争动画藏书馆”，所有动画都挂在同一页面内，通过顶部按钮或主页卡片切换。
+## 0. 项目定位：主任务是动画制作
+
+接手者必须先记住：本项目不是普通前端组件库，也不是历史资料整理库，主任务始终是**制作可观看、可交互、可复盘、可验证的战争动画作品**。所有代码、素材、音频、测试、来源文档和智能体经验沉淀，都只是服务于动画生产质量。
+
+判断一项工作是否真的完成，不看“代码是否能跑”这一条，而看它是否让一部动画更接近可交付：
+
+- 观众是否能看懂战役阶段、战术态势和双方行动关系。
+- 时间轴、路线、镜头、字幕、音效是否和事件节奏对齐。
+- 舰队、航空队、陆上部队是否按其战争形态自然运动，而不是套用同一种箭头动画。
+- 战史关键点是否有来源，且不把尚未发生的位置提前展示成剧透。
+- Playwright/DOM/数据断言是否能防止用户已经指出过的问题回归。
+- 新经验是否写回本文件、`animation-assistant` skill 或 mempalace，避免下一个会话重新踩坑。
+
+后续如果接手者只能做一件事，优先做“动画质量闭环”：选定一部动画，核实资料和时间轴，修正数据/路线/镜头/音效，补来源，补测试，跑验证，再更新交接。不要为了工程洁癖把时间花在与动画观感无关的重构上。
+
+本项目当前最重要的动画制作方向：
+
+- 继续提升已有战争动画，而不是只堆新增条目。用户已经明确要求以日德兰经验和制作水准，对所有动画逐一全面提升。
+- 海战要重点展示舰队连续航行、T 字横切、齐射、战损和撤退追击，不能有舰队突然消失、开上陆地、航迹丢失或整列图片式平移。
+- 空战要按短时出击波次、密集航迹、拦截/护航/轰炸关系来建模，不能照搬陆战/海战“单位长期驻留地图”的表现方式。
+- 音效是动画制作的一部分，不是附属品。爆炸、炮击、飞机、扫射等 SFX 必须与战斗事件和点击事件对齐。
+- 视觉验证可以本机截图/浏览器查看，但不要在会话中展示图片或截图，避免会话再次变重。
+
+## 1. 接手硬约束
+
+这些要求优先级最高，后续所有实现、验证和交接都要遵守：
+
+- 全程中文沟通。
+- 不要在会话中展示、嵌入、引用本地图片、截图、视频帧或生成的视觉素材。用户明确反馈过会话因大量图片崩溃。需要视觉验证时，用 Playwright/DOM/数值断言、日志和文字结论，不要把图片贴回会话。
+- 用户的视觉反馈视为验收事实。尤其是舰队消失、剧透标注、舰船上陆、幕间跳变、航迹不连续、T 字横切态势不清、爆炸音效错位等问题，不能用“数据大概合理”搪塞。
+- 修改动画时优先改结构化数据、路线、时间轴、镜头、测试，除非通用渲染器能力确实不足。
+- 任何新增战役、战术节点、音频、图标素材，都必须同步补 `docs/sources/*.md` 或现有来源文档。
+- 使用 `animation-assistant` 工作法：先读项目，再建数据模型，再实现，再自动化验证，再沉淀经验。
+- 可看图片文件、可用浏览器或 Playwright 验证，但不要在聊天中展示图片产物。
+- 不要把本项目误导成“修代码优先”。代码修复必须能解释它解决了哪一个动画叙事、动画运动、动画音效、动画验证或动画资料问题。
+
+## 2. 当前产品状态
+
+这是一个 Vite + React + TypeScript 的本地战争动画库。入口是“战争动画藏书馆”，所有动画在同一个 React 应用内通过首页卡片进入。全局只保留题铭和返回首页，不再堆叠大量顶栏/底栏战争入口。
+
+动画生产链路如下：
+
+- `docs/sources/*.md`：先记录战史资料、来源、争议和素材/音频许可。
+- `src/data/*.ts`：把战役拆成事件、地图点、路线、编队、时间轴、旁白和音效 cue。
+- `src/components/*Animation.tsx`：给具体动画选择通用渲染器参数、镜头阶段、配乐、音效类型和战斗特效。
+- `src/components/CampaignMapAnimation.tsx`：通用播放、地图、路线、单位、字幕、音频和交互层。只有共性能力不足时才改。
+- `src/components/UnitIcon.tsx` 与 `src/types/units.ts`：时代匹配的写实单位图标，不允许退回抽象占位符。
+- `public/audio` 与 `public/assets/unit-icons`：运行时素材。新增或替换必须同步说明来源和许可。
+- `tests/battle-france-smoke.spec.ts`：当前集中承载动画回归门禁，覆盖首页、地图交互、音频、航迹、反剧透、海路不上陆、空战短波次等问题。
+
+核心入口：
+
+- `src/App.tsx`：注册动画 key、组件切换、进入新动画时 `window.scrollTo({ left: 0, top: 0 })`。
+- `src/components/WarLibraryHome.tsx`：首页卡片，按“古代战争 / 现代战争”分架。
+- `src/components/CampaignMapAnimation.tsx`：通用地图动画渲染器。
+- `src/data/*.ts`：各战役数据。
+- `tests/battle-france-smoke.spec.ts`：当前所有 smoke/e2e 仍集中在这个文件。
 
 已注册动画：
 
-- 古代战争：亚历山大大帝征服史、三次布匿战争、大秦统一中国、凯撒大帝战争史、十字军东征、蒙古帝国征服史。
-- 现代战争：拿破仑争战史、1940 德法战役、苏德战争全景、日美太平洋战争、抗美援朝、1991 年第一次海湾战争。
+古代战争：
 
-最近一次交付已经完成：
+- 亚历山大大帝征服史
+- 罗马与迦太基：三次布匿战争史
+- 大秦统一中国战史
+- 韩信十面埋伏：垓下之战
+- 凯撒大帝战争史
+- 十字军东征
+- 蒙古帝国征服史
 
-- 新增并接入多部战争动画。
-- 抽出通用 `CampaignMapAnimation` 渲染器。
-- 增加可拖拽、可滚轮平移、可按钮缩放、双击复位的地图交互。
-- 引入写实单位图标，包括坦克、韩战坦克、航母、埃塞克斯级航母、飞机、F-86、步兵、志愿军步兵、骑兵、战车、大炮、战船。
-- 修复字幕遮挡与拦截交互问题，旁白采用低高度半透明横向 ticker。
-- 加强音频层：每部动画独立配乐，战役事件触发时代匹配 SFX。
-- 增加 Playwright 回归测试，覆盖主页排序、地图交互、字幕、图标、音频、时间压缩和关键镜头可见性。
+现代战争：
 
-当前工作树在提交后是干净的。若接手时不是干净状态，先运行：
+- 拿破仑争战史
+- 特拉法尔加大海战
+- 日俄对马海战
+- 日德兰海战
+- 1940 德法战役
+- 伦敦上空的鹰
+- 1941-1945 苏德战争全景
+- 日美太平洋战争战史
+- 中途岛海空战
+- 俾斯麦海海空战
+- 第二次瓜岛海战
+- 大周行动：欧洲昼间制空权争夺
+- 抗美援朝战争
+- 1991 年第一次海湾战争
 
-```bash
-git status --short
-git log --oneline -5
+## 3. 最近交付范围
+
+2026-05-20 到 2026-05-23 这一轮主要把海战和空战能力补齐，并把用户连续反馈的问题纳入回归。
+
+新增或重做的重点动画：
+
+- 特拉法尔加大海战：风帆时代两纵队突破、舰名编队、专用风帆舰图标。
+- 第二次瓜岛海战：铁底湾夜战、华盛顿号雷达火控、南达科他号失电、雾岛号失能、夜间撤退。
+- 日德兰海战：侦察接触、南向追逐、北向引诱、主力展开、T 字横切、Scheer 全舰队转向、夜间撤离。
+- 伦敦上空的鹰：聚焦 1940-09-15 伦敦方向两次昼间大空袭，雷达预警、扇区指挥、RAF 拦截、城市上空混战和回程追击。
+- 大周行动：欧洲昼间制空权争夺：轰炸机流、远程护航、德机截击、制空权消耗。
+- 俾斯麦海海空战：海上运输线、侦察跟踪、高空轰炸、低空扫射、跳弹轰炸、船队瓦解。
+
+同时改进了旧动画和通用层：
+
+- 对马海战经验被继续固化：短海战使用小时级时间轴、紧战区视窗、舰队连续航行、舰船不上陆、T 字横切齐射效果。
+- `CampaignMapAnimation` 支持 `BattleEffectElement`，用于齐射弹道、弹着点、跳弹轰炸等视觉效果。
+- `FormationUnit` 与路线局部 offset 支持多单位编队，不再只用一个泛型图标。
+- `unitVisibleUntil`、`visibleUntil`、`formationPrelude`、`unitGroupId`、`retainUnitAfterRouteEnd` 用于解决旧单位退场、路线保留、舰队交接和连续运动问题。
+- `MapPoint.revealAt` 用于防止关键位置点提前出现造成剧透。
+- 新空战默认禁用 `terrainZones`，避免黑色椭圆遮挡和剧透。
+- 舰船图标在近代海战中压缩到更合适比例，避免过大遮挡战场。
+- 测试新增海路不上陆、舰船 bbox 不压陆地、空战短波次、航迹保留、关键点延迟揭示、齐射效果、SFX 触发等断言。
+
+## 4. 最近涉及文件
+
+新增或重点涉及的数据文件：
+
+- `src/data/battleOfBritain.ts`
+- `src/data/bigWeekAirBattle.ts`
+- `src/data/bismarckSeaAirBattle.ts`
+- `src/data/guadalcanalNavalBattle.ts`
+- `src/data/jutlandBattle.ts`
+- `src/data/trafalgarBattle.ts`
+- `src/data/tsushimaBattle.ts`
+
+新增或重点涉及的组件：
+
+- `src/components/BattleOfBritainAnimation.tsx`
+- `src/components/BigWeekAirBattleAnimation.tsx`
+- `src/components/BismarckSeaAirBattleAnimation.tsx`
+- `src/components/GuadalcanalNavalBattleAnimation.tsx`
+- `src/components/JutlandBattleAnimation.tsx`
+- `src/components/TrafalgarBattleAnimation.tsx`
+- `src/components/TsushimaBattleAnimation.tsx`
+- `src/components/CampaignMapAnimation.tsx`
+- `src/components/UnitIcon.tsx`
+- `src/components/WarLibraryHome.tsx`
+
+新增或重点涉及的资源与脚本：
+
+- `scripts/generate-trafalgar-ship-assets.mjs`
+- `scripts/generate-ww2-air-assets.mjs`
+- `scripts/generate-ww2-ship-assets.mjs`
+- `public/assets/unit-icons/trafalgar-*.webp`
+- `public/assets/unit-icons/ww2-fighter.webp`
+- `public/assets/unit-icons/ww2-bomber.webp`
+- `public/assets/unit-icons/ww2-attack-aircraft.webp`
+- `public/assets/unit-icons/ww2-transport-ship.webp`
+- `public/assets/unit-icons/ww2-escort-ship.webp`
+- `public/audio/wikimedia-anchors-aweigh-2009.oga`
+- `public/audio/wikimedia-eternal-father-instrumental.ogg`
+- `public/audio/wikimedia-rule-britannia.ogg`
+
+新增或重点涉及的来源文档：
+
+- `docs/sources/trafalgar-battle.md`
+- `docs/sources/guadalcanal-naval-battle.md`
+- `docs/sources/jutland-battle.md`
+- `docs/sources/battle-of-britain.md`
+- `docs/sources/big-week-air-battle.md`
+- `docs/sources/bismarck-sea-air-battle.md`
+- `docs/sources/audio.md`
+- `docs/sources/unit-icons.md`
+
+## 5. 数据模型要点
+
+主要类型仍来自 `src/data/battleOfFrance.ts`，各动画复用这些结构：
+
+- `MapPoint`：地图点，含 `id`、`label`、经纬度、类型和可选 `revealAt`。
+- `BattleEvent`：事件，含时间、标题、地点、阶段、摘要、详情、意义和 `mapFocus`。
+- `FrontLine`：路线/态势线，含起止点、时间、阵营、路线类型、单位图标、编队、可见窗口、路径点。
+- `FormationUnit`：编队内单个单位，含标签、徽标、图标和路线局部 offset。
+- `BattleEffectElement`：战斗效果，当前用于齐射、弹着点、跳弹轰炸等。
+
+`FrontLine` 当前关键字段：
+
+- `routeKind`: `"land" | "sea" | "air"`。海战和空战必须显式声明。
+- `waypoints`：路线中间点。海路必须用它绕开陆地，空战用它表达航线和交战区。
+- `formationUnits`：多单位编队。大规模空战、舰队行动不要只用单个图标。
+- `formationPrelude`：只用于编队连续交接，让单位在新路线段开始时从上一段末位自然进入。
+- `visibleUntil`：路线保留到某个时间。空战常用于“飞机离场但航迹保留”。
+- `unitVisibleUntil`：单位图标消失时间。空战必须短，战损舰只可按历史时间消失。
+- `unitVisibleFrom`：单位延迟出现时间。
+- `unitGroupId`：同一舰队跨路线段的身份。
+- `retainUnitAfterRouteEnd`：配合 `unitGroupId`，使同一舰队在段间连续保留，不让它突然消失。
+
+`MapPoint.revealAt` 是反剧透字段。所有“击中点、T 字横切位、转向点、雷达射击位、跳弹轰炸区、瓦解海域”等事件性位置，默认都应该延迟到事件发生时出现。
+
+## 6. 通用渲染器职责
+
+`CampaignMapAnimation` 负责：
+
+- 播放、暂停、回放。
+- 时间轴拖拽和事件跳转。
+- 当前事件、下一事件、右侧故事面板。
+- 地图、国家边界、河流、历史区域、标签、事件点。
+- 路线绘制、进度插值、路线保留。
+- 单位图标沿路线移动，多单位编队按路线局部 offset 布置。
+- 单位保持水平，只按左右方向镜像，不随路线角度旋转。
+- 战斗效果：爆炸、炮击、齐射弹道、弹着点。
+- 音频：背景配乐、事件 SFX、事件点击 SFX。
+- 字幕 ticker、控制区、地图交互。
+
+新增动画优先写数据和 wrapper，不要复制一套新渲染器。只有当通用层无法表达“连续舰队交接、空战短波次、齐射弹着、反剧透揭示”等共性能力时，才改 `CampaignMapAnimation`。
+
+## 7. 空战建模规则
+
+用户已经明确指出：空战不能把陆战、海战模型简单搬过来。飞机不是长期驻留地图的单位，空战是小时级出击波次和密集航迹。
+
+必须遵守：
+
+- 空中路线必须 `routeKind: "air"`。
+- 飞机图标用二战专用资产：`ww2Fighter`、`ww2Bomber`、`ww2AttackAircraft`。
+- 图标要小而清楚，不能像陆海单位那样大面积遮挡。
+- 每条空中路线的 `start/end` 应是具体小时级时间。
+- 每条非隐藏空中路线都要设置 `unitVisibleUntil`，通常在出击结束后数小时内关闭飞机图标。
+- 可用 `visibleUntil` 把航迹保留到战役末尾，形成空战的航迹密度。
+- 空战后期测试应看到：`.front-line.route-air` 仍可见，`.formation-unit` 数量为 0，`data-unit-visible="false"`。
+- `formationUnits` 表达数量比例和角色关系，例如轰炸机流、护航战斗机、截击机、攻击机。
+- 不要让飞机从海上突然消失。路线要到达拦截区、目标区或返航/离场逻辑清楚的位置。
+- 空战不是陆海战“单位常驻地图”的套皮。侦察、轰炸、护航、截击、攻击机波次都必须有任务生命周期：出击、接触/攻击、返航或返场；任务结束后只退飞机图标，航迹继续保留。
+- 对轰炸机流这类目标航线，不能只画到目标城市。必须画返航或受损离场，否则观众看不到深袭代价和空战结果。
+- 护航深袭的代价要可视化：用受损返航线、掉队机、损失带、返航集合等结构表达，不只写在事件卡里。
+- 不要使用通用 `terrainZones` 椭圆表示空域，除非有明确样式和测试。三部二战空战当前都传 `terrainZones={[]}`。
+- 空战关键点要设置 `revealAt`，不要提前展示目标或战斗位置。
+- 空战 SFX 要用飞机飞行、扫射、俯冲、爆炸等二战音效，且事件点击也要触发。轰炸事件必须有爆炸音，空战/扫射事件必须有飞机和机枪/俯冲音。
+- 高空轰炸、低空跳弹、扫射、空战混战不能共用一条错位射击线。战斗效果只在对应事件窗口出现，弹着点落在目标区、船队或合理的交战点。
+
+三部空战当前模式：
+
+- 伦敦上空的鹰：聚焦 1940-09-15 伦敦昼间空战，德机越岸、伦敦上空混战、回程追击和傍晚结果都保留航迹。
+- 大周行动：按每天的轰炸、护航、截击、受损返航波次建模，工业目标爆炸和深袭代价都可见，不让飞机长期留场。
+- 俾斯麦海：侦察接触后返航，高空轰炸后返航，低空攻击/跳弹后返航，后续追击后返航；高空段不画跳弹射击线。
+
+对应测试：
+
+- `expectAirRoutesHaveShortUnitWindows`
+- `expectAirRouteKeepsTrackButAircraftExit`
+- `expectNoTerrainZones`
+- `expectMapPointsHidden`
+- `expectCompactAircraftMarkers`
+
+## 8. 海战与海空战规则
+
+用户多轮反馈集中在舰队连续性、航迹真实性和幕间切换自然性。后续所有海战都要按这些规则处理：
+
+- 舰队一旦出现，除非战损、沉没、失能或历史上脱离战场，否则不要突然消失。
+- 不要用旧路线整体退场来制造“舰队凭空跳到下一幕”的效果。跨幕应该是同一舰队从上一幕位置自然航行到下一幕位置。
+- 如果同一舰队需要换路线段，用 `unitGroupId`、`retainUnitAfterRouteEnd`、`formationPrelude`、`unitVisibleFrom/unitVisibleUntil` 做连续交接。
+- 已完成航迹线应尽量保留，尤其是战术复盘型海战。用户明确指出航迹线要一直保留。
+- 旧单位标记可以退场，但退场必须对应新路线单位自然接上，不能让舰队动作断裂。
+- 舰队不能像一张图片一样整列平移或瞬间旋转。多舰编队要通过路线局部 offset、沿线插值和连续航向变化表现鱼贯运动。
+- 幕间切换不能先变队形再缩放地图，或先缩放地图再导致舰队看起来竖起来。镜头变化、队列变化和航路推进要同一时间轴下自然过渡。
+- 开场不要让重要舰队凭空出现在交战区附近。若历史上主力早已在远处航行，应一开始就进入画面，并持续向预定位置移动。
+- 侦察、发现、诱敌和主力接近的空间关系要合理。日德兰中英大舰队初始位置不能近到让德侦察舰先发现大舰队而不是分舰队。
+- T 字横切要体现横切者相对敌方舰列方向的战术态势，不只是文字说明。
+- T 字横切、雷达齐射、近距离炮击等节点应有 `BattleEffectElement`，弹着点要落在转向点、被射击舰列或历史上合理的目标海域。
+- 爆炸音和齐射效果必须对齐战斗时间点。不能战斗点无声，也不能无战斗时乱响。
+- 海路不能从陆地出发、穿陆、贴陆或开上岸。港口叙事要用离岸锚地/外海点和 `waypoints`。
+- 视觉上舰船图标要压缩到合适比例，当前海战测试用 `expectWarshipScale(page, selector, 0.5)` 覆盖。
+
+海路不上陆测试已经覆盖：
+
+- route line 采样点是否落入 `.country-core`
+- `.formation-unit` 中心点是否落陆
+- 舰船图标 bbox 的多个采样点是否压陆
+
+对应测试：
+
+- `expectNavalRoutesStayOffLand`
+- `expectVisibleFleetRoutes`
+- `expectRenderedRoutesInclude`
+- `expectJutlandFleetGroupsContinuous`
+- `expectWarshipScale`
+- `expectRouteHasPolylineComplexity`
+
+## 9. 重点战役接手说明
+
+### 日德兰海战
+
+文件：
+
+- `src/data/jutlandBattle.ts`
+- `src/components/JutlandBattleAnimation.tsx`
+- `docs/sources/jutland-battle.md`
+
+当前叙事阶段：
+
+- 侦察舰接触
+- 南向追逐
+- 玛丽女王号爆炸
+- Beatty 北转引诱
+- 大舰队接近和展开
+- Jellicoe 横切 T 字位
+- Scheer 第一次全舰队转向
+- 战列巡洋舰掩护冲锋
+- 第二次转向
+- 夜间追击与德军撤离
+
+最容易回归的问题：
+
+- 舰队跨幕突然消失。
+- 上部大舰队凭空出现或离交战区太近。
+- 德军主力舰没有从开场持续进入画面。
+- T 字横切速度过快、方向不对、态势看不出。
+- Beatty 或 Hipper 分舰队转向不自然。
+- 德舰在 T 字横切下折返时像整张图片平移，不像鱼贯转向。
+- 末段双方停住不动。夜间阶段应有德军撤退、英军追击/搜索和分队撤离。
+
+接手时优先看这些路线：
+
+- `beatty-scouting-east`
+- `hipper-scouting-west`
+- `grand-fleet-approach`
+- `grand-fleet-closing`
+- `grand-fleet-deploys`
+- `high-seas-fleet-north`
+- `scheer-battle-turn`
+- `battlecruiser-death-ride`
+- `german-main-night-retreat`
+- `british-night-pursuit-route`
+
+### 第二次瓜岛海战
+
+文件：
+
+- `src/data/guadalcanalNavalBattle.ts`
+- `src/components/GuadalcanalNavalBattleAnimation.tsx`
+- `docs/sources/guadalcanal-naval-battle.md`
+
+当前重点：
+
+- 开场两舰队已经在铁底湾行动，不能让侦察/铺垫占掉开头。
+- `mapPoints` 里的南达科他号失电、华盛顿号雷达射击位、雾岛号重创等关键点都有 `revealAt`，不要提前剧透。
+- 华盛顿号雷达火控齐射用 `guadalcanal-radar-salvo`。
+- 舰船不能从岛上、港口陆地点或海岸线上开过。
+
+最容易回归的问题：
+
+- 关键位置点提前出现。
+- 舰船开上瓜岛、萨沃岛或海岸。
+- 夜战路线太简化，导致舰队从不合理方向穿越。
+- 通用齐射漏掉音效或弹着点。
+
+### 俾斯麦海海空战
+
+文件：
+
+- `src/data/bismarckSeaAirBattle.ts`
+- `src/components/BismarckSeaAirBattleAnimation.tsx`
+- `docs/sources/bismarck-sea-air-battle.md`
+
+当前重点：
+
+- 船队起点是 `rabaul-roadstead`，不是拉包尔陆地点。
+- 船队终点和瓦解点使用 `convoy-breakup-sea`、`lae-approach` 等离岸点。
+- 水面 `waypoints` 绕开新不列颠岛和新几内亚北岸。
+- 船图标使用 `ww2TransportShip`、`ww2EscortShip`，不是通用 `ship`。
+- 攻击机使用 `ww2AttackAircraft`，轰炸机使用 `ww2Bomber`。
+- 跳弹轰炸用 `bismarck-sea-skip-bombing` battle effect，只在低空攻击/跳弹事件窗口出现；高空轰炸阶段不能提前显示。
+
+最容易回归的问题：
+
+- 船队从陆地开出或开到陆地。
+- 黑色椭圆/terrainZones 重新出现。
+- 航空队长期留在地图上，像陆军一样驻留。
+- 航迹保留丢失，导致空战密度不够。
+
+### 伦敦上空的鹰
+
+文件：
+
+- `src/data/battleOfBritain.ts`
+- `src/components/BattleOfBritainAnimation.tsx`
+- `docs/sources/battle-of-britain.md`
+
+当前重点：
+
+- 片名已从“不列颠空战”改为“伦敦上空的鹰”，不再做 1940-07-10 至 1940-09-15 的全景压缩，而是聚焦 1940-09-15 伦敦方向两次昼间大空袭。
+- 初期德机路线飞越肯特海岸并进入伦敦方向，RAF 有 11 群升空、12 群增援、城市上空拦截和回程追击线。
+- 布伦奇利空域、白金汉宫方向、维多利亚站、达克斯福德、南安普敦等点按 `revealAt` 延迟出现。
+- 编队使用 `ww2Bomber` 和 `ww2Fighter`，尺寸较小。
+
+最容易回归的问题：
+
+- 德机没飞到英国，半路在海上没了。
+- 雷达/机场关键点提前出现。
+- 飞机图标过大、过卡通。
+
+### 大周行动
+
+文件：
+
+- `src/data/bigWeekAirBattle.ts`
+- `src/components/BigWeekAirBattleAnimation.tsx`
+- `docs/sources/big-week-air-battle.md`
+
+当前重点：
+
+- 每天的空袭、护航、截击、受损返航以短时波次表达。
+- 轰炸机流、护航战斗机、德军截击机有数量比例，且都有返航/返场路线。
+- 目标点如不伦瑞克、莱比锡、雷根斯堡、柏林、截击区、损失带、返航集合点按 `revealAt` 出现。
+- `big-week-industrial-bombing` 和 `big-week-brunswick-bombing` 只服务于工业目标轰炸，不用于空中混战。
+- “无护航深袭的代价”要通过 `schweinfurt-regensburg-lesson`、`damaged-bomber-return` 等返航航迹表现。
+
+最容易回归的问题：
+
+- 飞机长期留场。
+- 航迹线消失。
+- 护航与截击关系看不出，只剩几条简单直线。
+- 轰炸没有爆炸音，或爆炸点没有落在目标区。
+- 受损返航/深袭代价只写文字，画面上看不出来。
+
+### 特拉法尔加与对马
+
+文件：
+
+- `src/data/trafalgarBattle.ts`
+- `src/components/TrafalgarBattleAnimation.tsx`
+- `docs/sources/trafalgar-battle.md`
+- `src/data/tsushimaBattle.ts`
+- `src/components/TsushimaBattleAnimation.tsx`
+- `docs/sources/tsushima-battle.md`
+
+保留经验：
+
+- 短战术海战要收紧到战场视窗，不要放成大区域地图。
+- 风帆舰和近代战舰要用宽幅、水平、可识别的写实图标。
+- T 字横切、旗舰失能、夜战追击、残部投降都要拆成路线段，而不是一个“追击箭头”。
+- 清晨侦察可作为旁白和事件，但不能让播放开头长时间空地图。
+
+## 10. 图标与素材规则
+
+图标类型定义在 `src/types/units.ts`，具体配置在 `src/components/UnitIcon.tsx`。
+
+当前可用图标：
+
+- 古代/冷兵器：`cavalry`、`chariot`、`ship`
+- 火炮/近代：`cannon`
+- 装甲/陆战：`tank`、`tankKorean`
+- 航母/海战：`carrier`、`carrierEssex`、`warship`
+- 步兵：`infantry`、`infantryPva`
+- 现代/韩战航空：`fighter`、`sabre`
+- 特拉法尔加专用风帆舰：`trafalgarBritishLine`、`trafalgarBucentaure`、`trafalgarFrenchLine`、`trafalgarHmsVictory`、`trafalgarRoyalSovereign`、`trafalgarSantisimaTrinidad`
+- 二战空战：`ww2Fighter`、`ww2Bomber`、`ww2AttackAircraft`
+- 二战海空战舰船：`ww2TransportShip`、`ww2EscortShip`
+
+硬规则：
+
+- 不要退回抽象简笔图标。
+- 二战飞机图标必须是经典机型加工出的低饱和剪影风格，不要动画式图标。
+- 俾斯麦海的运输船和护航舰必须用二战船图标，不要通用 `ship`。
+- 近代战舰图标不要用俯视图、蓝图或三视图，优先用航行态侧视。
+- 图标保持水平，只按当前路线段左右方向镜像。
+- 宽主体要按实际比例配置 `width/height`，不要压进正方形。
+- 舰船图标在战术海战中通常要缩小，防止遮挡字幕、图例和航迹。
+
+素材授权风险：
+
+- 详见 `docs/sources/unit-icons.md`。
+- PNGIMG 等来源可能是 CC BY-NC 4.0 或存在非商业限制。当前项目适合作本地 demo，若公开商业发布，必须替换有风险的派生图标。
+
+## 11. 音频规则
+
+音频控制在 `src/lib/warScore.ts`，来源记录在 `docs/sources/audio.md`。
+
+必须遵守：
+
+- 每部动画优先使用不同背景配乐，并在 `score-toggle` 暴露 `data-music-source`。
+- 古代战斗用冷兵器/近战音效。
+- 拿破仑、风帆舰、近代海战用炮声或火炮类音效。
+- 二战空战/海空战用飞机、扫射、俯冲、爆炸等音效。
+- 事件点击必须在用户手势内触发 SFX，不能只靠自动播放时的 `activeEvent` 变化。
+- `cueEvents` 应覆盖战斗、围城、登陆、强攻、空袭、舰炮交战等军事事件，政治/条约/结果节点可静音。
+- 爆炸音效要和战斗时间对齐。用户已经多次指出“战斗点没有爆炸音效”和“爆炸背景音跟战斗时间没对上”。
+
+当前注意点：
+
+- `tests/battle-france-smoke.spec.ts` 里仍有 `temporarySharedMusicCampaignIds`，当前把 `big-week`、`bismarck-sea`、`britain-air` 从全局配乐唯一性测试中临时排除。不要把这理解为“这三部不需要配乐唯一性”，后续应补齐来源和测试后移除临时排除。
+- 海战齐射不一定使用“爆炸”声，风帆/近代舰炮更适合 `gunpowder` 配置；二战空袭和跳弹轰炸才更偏 `ww2`。
+
+## 12. 时间轴与节奏规则
+
+默认新战争动画控制在 5 分钟：
+
+```tsx
+playbackDurationSeconds={300}
 ```
 
-## 2. 运行与验证
+长跨度战争：
+
+- 使用 `timingMode="compressed"`、`activeSpans`、`inactiveGapDisplayDays`、`gapOverrides` 压缩非作战空档。
+- 多线并进且强依赖同一日历关系的战争，例如苏德战争，可保留 `timingMode="calendar"`。
+- 启用压缩时间轴时，事件跳转、路线推进、镜头切换和事件轨道位置必须使用同一映射。
+
+短战术战斗：
+
+- 使用小时级 `YYYY-MM-DDTHH:mm`。
+- 设置 `timeStepDays={1 / 24}` 和 `timeCounterLabel="小时"`。
+- 使用紧战区视窗展示战术走位。
+- 不要让侦察或背景铺垫消耗开场播放时间。第一帧应已有关键舰队/航空队行动。
+
+空战：
+
+- 飞机单位是小时级短波次。
+- 航迹可以保留，飞机图标不能长期驻留。
+
+海战：
+
+- 舰队可以跨阶段持续存在。
+- 航迹线应保留用于战术复盘。
+- 舰队路线段交接要连续，不能幕间位移。
+
+## 13. 地图、镜头和字幕规则
+
+地图视窗定义在 `src/lib/geoMap.ts`，wrapper 通过 `focusSteps` 控制阶段镜头。
+
+规则：
+
+- 多战区动画必须按事件所在战区切镜头，不能只用一个宽视图。
+- 临时切到旁支战区后必须显式切回主战区。
+- 跨日期线战区使用太平洋中心投影策略，新增太平洋岛链事件要检查经度口径。
+- 手动平移/缩放在 `mapFocus` 改变时会复位，避免旧偏移污染新镜头。
+- 幕间镜头切换不能突然，尤其海战中不要让舰队先完成队列变换，再让地图缩放。
+- 上部图例、标题、字幕不能互相遮挡。用户曾指出“上边的图例挡住字幕”。
+- 字幕必须是低高度、半透明、横向 ticker，`pointer-events: none`。
+- 底部控制区不能 sticky 覆盖地图。
+
+地图交互仍是通用硬要求：
+
+- 普通滚轮只纵向平移。
+- Shift + 滚轮或横向滚轮只横向平移。
+- 拖拽可横纵向平移。
+- 有显式 `+`、`-`、复位按钮。
+- 双击地图复位。
+- 默认缩放 `scale=1` 时也允许基础横向/纵向平移。
+
+## 14. 反剧透规则
+
+用户多次指出“瓜岛还在剧透”。后续统一处理：
+
+- 事件性位置点默认不要提前显示。
+- 关键伏击点、转向点、射击位、弹着点、失能位置、瓦解海域、目标区，必须加 `revealAt`。
+- 测试用 `expectMapPointsHidden(page, selector, pointIds)` 覆盖首屏或事件前状态。
+- 需要提前存在的基础地理点可以常显，例如伦敦、多佛、拉包尔外海锚地、铁底湾等。
+- 不要用提前出现的标注解释后续战术，这会破坏动画叙事。
+
+## 15. 测试与验证
 
 常用命令：
 
@@ -40,339 +561,124 @@ git log --oneline -5
 npm install
 npm run dev
 npm run build
+npm run preview
 npm run test:smoke
+git diff --check
+node /Users/asukarei/.codex/skills/animation-assistant/scripts/check-animation-project.mjs /Users/asukarei/Desktop/war-animation-lab-oss
 ```
 
-`package.json` 中脚本：
+定向跑本轮海空战相关 smoke：
 
-- `npm run dev`：启动 Vite 开发服务，host 为 `127.0.0.1`。
-- `npm run build`：先 `tsc -b`，再 `vite build`。
-- `npm run preview`：预览生产构建。
-- `npm run test:smoke`：运行 Playwright 烟测。
+```bash
+npx playwright test tests/battle-france-smoke.spec.ts -g "campaign data quality gates|battle of britain|big week air battle|bismarck sea air battle|guadalcanal naval battle|jutland battle|trafalgar battle|tsushima battle" --reporter=line
+```
 
-最近一次提交前验证结果：
+上一轮实现后的已知验证结果：
 
 - `npm run build` 通过。
-- `npm run test:smoke` 通过，`11 passed`。
-- 第一次烟测曾因为本机缺少 Playwright Chromium headless shell 失败，已通过 `npx playwright install chromium` 修复。
-
-如 Playwright 报 `Executable doesn't exist at ... chromium_headless_shell`，先补浏览器缓存：
-
-```bash
-npx playwright install chromium
-```
-
-## 3. 目录结构
-
-核心目录：
-
-- `src/App.tsx`：动画路由与顶部切换按钮。
-- `src/components/WarLibraryHome.tsx`：战争藏书馆主页与古代/现代分类。
-- `src/components/*Animation.tsx`：每部动画的 wrapper，负责给通用渲染器传入数据、镜头、配乐、音效配置。
-- `src/components/CampaignMapAnimation.tsx`：通用地图动画渲染器。
-- `src/components/UnitIcon.tsx`：写实单位图标组件与图标尺寸/默认朝向配置。
-- `src/data/*.ts`：每部动画的结构化历史数据。
-- `src/lib/campaignTimeline.ts`：日历时间轴、BCE 日期、压缩时间轴。
-- `src/lib/geoMap.ts`：地图投影、国家边界、视窗配置。
-- `src/lib/useMapInteraction.ts`：地图滚轮、拖拽、缩放、复位交互。
-- `src/lib/warScore.ts`：配乐与战役音效控制。
-- `src/types/units.ts`：单位图标类型。
-- `src/types/maps.ts`：历史区域类型。
-- `src/styles.css`：全局视觉、地图、字幕、图标、控制区样式。
-- `tests/battle-france-smoke.spec.ts`：当前全部烟测集中在这个文件。
-- `docs/sources/*.md`：历史资料、音频、图标来源记录。
-- `public/audio`：配乐与 SFX 资源。
-- `public/assets/unit-icons`：处理后的单位图标。原始素材源目录未包含在开源导出中，来源和授权不确定性见 `docs/sources/unit-icons.md`。
-- `public/assets/maps/qin-warring-states-map.svg`：大秦七国边界参考/叠层资产。
-
-注意：`dist/`、`test-results/`、`artifacts/` 是运行或预览产物，不应纳入常规提交。
-
-## 4. 数据模型
-
-各动画数据基本复用 `src/data/battleOfFrance.ts` 中的类型。
-
-关键类型：
-
-- `MapPoint`：地图节点，包含 `id`、中文标签、经纬度、节点类型。
-- `BattleEvent`：战役事件，包含日期、标题、地点、经纬度、阶段、摘要、详细说明、意义和 `mapFocus`。
-- `FrontLine`：态势线，包含起止节点、起止日期、阵营、路线类型、单位图标、可见窗口和路径点。
-
-`FrontLine` 的关键字段：
-
-- `routeKind`: `"land" | "sea" | "air"`，用于区分陆上、海上、空中路线。
-- `unitIcon`：覆盖默认单位图标，例如海湾战争空袭用 `fighter`，抗美援朝空战用 `sabre`。
-- `waypoints`：给海路、远距离跨区路线添加中间点，避免路线穿陆地或穿过不合理区域。
-- `visibleUntil`：整条旧态势线在某日期后消失，用于避免历史上已被反攻打断的旧箭头仍留在图上。
-- `unitVisibleUntil`：仅移动单位图标提前消失，路线可短暂保留为背景。用于“失败方已被突破，不应继续站在突破点”的场景。
-
-日期规则：
-
-- 公元后使用 `YYYY-MM-DD`。
-- 短战争/短会战可使用小时级 `YYYY-MM-DDTHH:mm`，例如对马海战用小时锚点展示 1905-05-27 到 1905-05-28 的舰队走位。
-- 公元前使用 `BCE-YYYY-MM-DD`，不要用 JavaScript 原生负年份。
-- 显示格式由 `src/lib/campaignTimeline.ts` 处理。
-
-## 5. 通用渲染器职责
-
-`CampaignMapAnimation` 负责：
-
-- 播放、暂停、回放。
-- 进度条拖拽和事件跳转。
-- 当前事件、下一事件、右侧故事面板。
-- 地图绘制、国家边界、历史区域、河流、地形、城市标签。
-- 态势线进度插值。
-- 单位图标沿路线推进。
-- 战役效果：古代刀剑交锋、近现代爆炸/炮火。
-- 战役音效：播放推进触发和事件点击触发。
-- 背景配乐开关。
-- 旁白字幕 ticker。
-- 地图交互控件。
-
-保持这个原则：新增动画优先写数据和 wrapper，不要复制一套渲染器。
-
-## 6. 镜头和地图规则
-
-镜头视窗定义在 `src/lib/geoMap.ts` 的 `viewports`。每个 wrapper 通过 `focusSteps` 传入进度到视窗的切换点。
-
-常见视窗：
-
-- 苏德战争：`easternOpening`、`easternVolga`、`easternSouth`、`easternStalingrad`、`easternCentral`、`easternBerlin`。
-- 太平洋战争：`pacificWide`、`pacificPearl`、`pacificCentral`、`pacificSouth`、`pacificMarianas`、`pacificPhilippines`、`pacificJapan` 等。
-- 抗美援朝：`koreaPeninsula`、`koreaSouth`、`koreaWestCoast`、`koreaNorth`、`koreaYalu`、`koreaCentral`、`koreaAirSea`。
-- 大秦：`chinaWarringStates`、`chinaGuanzhong`、`chinaEast`。
-
-重要规则：
-
-- 多战区动画必须按事件所在战区切镜头，不能只用一个宽视图。
-- 跨日期线战区，例如太平洋，使用太平洋中心投影策略，测试关键事件点是否落在地图核心区域。
-- 临时切到旁支战区后必须显式切回主战区。例如凯撒从高卢切不列颠后，要给后续高卢事件单独回到高卢的镜头阶段。
-- 手动平移/缩放在 `mapFocus` 改变时会自动复位，避免旧偏移污染后续自动镜头。
-
-## 7. 地图交互规则
-
-交互实现位于 `src/lib/useMapInteraction.ts`。
-
-当前行为：
-
-- 普通滚轮：只纵向平移地图。
-- Shift + 滚轮或横向滚轮：只横向平移地图。
-- 拖拽：横纵向平移地图。
-- `+`、`-`、复位按钮：显式缩放和复位。
-- Ctrl/⌘ + 滚轮：保留为可选缩放快捷方式，但不是主入口。
-- 双击地图：复位视图。
-- 默认缩放 `scale=1` 时也允许横向和纵向基础平移。
-
-不要回退这些行为。之前用户明确反馈过：
-
-- 苏德战争不是“切细节不够”，而是地图不能动，导致镜头跟不上。
-- 普通滚轮不应导致横向移动。
-- `Ctrl/⌘+滚轮只缩放` 不好用，必须有显式按钮。
-- 所有地图必须支持左右移动，不能只上下移动。
-
-回归测试中已有：
-
-- `expectMapCanMoveUnderPointer`
-- `expectMapCanMoveHorizontallyUnderPointer`
-- `expectMapZoomButtonsWork`
-- `expectTickerDoesNotBlockMapWheel`
-
-## 8. 字幕与界面遮挡规则
-
-用户明确要求旁白不能遮挡画面。当前规则：
-
-- 字幕是地图底部低高度、半透明、横向 ticker。
-- 字幕节点 `data-testid="narration-subtitle"`。
-- CSS 必须保持 `pointer-events: none`，不能拦截滚轮、拖拽或点击。
-- 底部控制区不能 sticky 覆盖地图。
-- 详细叙事放右侧故事面板，地图上只保留短情报卡和短字幕。
-
-修改字幕或控制区时必须跑：
-
-```bash
-npm run build
-npm run test:smoke
-```
-
-## 9. 单位图标规则
-
-图标类型定义在 `src/types/units.ts`，具体配置在 `src/components/UnitIcon.tsx`。
-
-当前可用图标：
-
-- `tank`：现代坦克。
-- `tankKorean`：韩战时代坦克。
-- `carrier`：现代/二战大型航空母舰，太平洋战争使用。
-- `carrierEssex`：韩战时代埃塞克斯级航母。
-- `fighter`：F-16 风格现代飞机，海湾战争空袭使用。
-- `sabre`：F-86 Sabre 风格喷气机，抗美援朝空战使用。
-- `infantry`：联合国军/钢盔步兵。
-- `infantryPva`：志愿军棉服步兵。
-- `cavalry`：骑兵。
-- `chariot`：战车。
-- `cannon`：大炮。
-- `ship`：古代/中世纪战船。
-
-硬性规则：
-
-- 战车、战马、大炮、战船、航母、坦克、步兵都必须使用写实图标，不能退回抽象简笔画。
-- 如果双方同兵种但形象差异明显，应使用阵营专属图标。抗美援朝中志愿军使用 `infantryPva`，联合国军使用 `infantry`。
-- 图标必须保持水平，不随路线角度旋转。
-- 图标只根据当前路线段左右方向镜像，方向应和态势线箭头一致。
-- 宽主体不能压进正方形 marker，要在 `UnitIcon` 中设置合适的 `width` 和 `height`。
-- 失败方被突破后可用 `unitVisibleUntil` 提前隐藏移动图标，避免画面上失败方仍站在被突破点。
-
-素材来源和授权风险见 `docs/sources/unit-icons.md`。PNGIMG 来源为 CC BY-NC 4.0，仅适合当前本地非商业 demo。若要公开商业发布，必须替换 PNGIMG 派生图标。
-
-## 10. 音频规则
-
-音频控制在 `src/lib/warScore.ts`，音频来源在 `docs/sources/audio.md`。
-
-规则：
-
-- 每部动画应使用不同背景配乐，不能所有动画复用同一首。
-- `musicSource` 必须暴露在可测试属性上，Playwright 会检查配乐不重复。
-- 古代战斗用刀剑/冷兵器音效。
-- 拿破仑时代用炮声。
-- 现代战争用爆炸、炮火、飞机俯冲等。
-- 空袭路线必须有飞机图标和航空音效，不能出现“天上飞坦克”。
-- 事件点击也必须触发 SFX，不能只在自动播放时触发。
-- `cueEvents` 应覆盖所有战斗、围城、登陆、强攻、渡河等军事事件；政治、继位、死亡、条约节点可静音。
-
-音频素材注意：
-
-- FiftySounds 曲目需要署名。
-- 公版/CC0/Wikimedia 曲目需要保留来源、时长、码率或文件大小说明。
-- 不要交付低质、单声道、留声机感强的配乐，除非用户明确要求档案感。
-
-## 11. 时间轴与节奏规则
-
-用户要求后续战争动画默认压缩到 5 分钟。wrapper 中设置：
-
-```tsx
-playbackDurationSeconds={300}
-```
-
-长跨度战争不能简单按完整日历比例播放，否则会出现大量空余时间。当前可用策略在 `createCampaignTimeline`：
-
-- `timingMode="calendar"`：保留统一日历轴。适合苏德战争这类多线并进、多战场同时发生的战争。
-- `timingMode="compressed"`：压缩非作战间歇。适合太平洋战争、布匿战争、拿破仑战争、海湾战争这类长跨度或节点稀疏动画。
-- `activeSpans`：定义有效作战段。
-- `inactiveGapDisplayDays`：非作战空档固定显示天数。
-- `gapOverrides`：显式压缩某些谈判、停战或集结空档。
-- `maxGapDays` 和 `gapScale`：长空档比例压缩。
-
-特别注意：
-
-- 太平洋战争瓜岛之后如果节奏拖、镜头不跟，通常要同时检查 `activeSpans`、`focusSteps` 和事件轨道间距。
-- 海湾战争集结阶段不能停留过久，空袭阶段必须快速进入且使用飞机图标。
-- 抗美援朝要严格按时间排序，避免联合国军还在向鸭绿江推进时志愿军已经到平壤这种时序冲突。
-
-## 12. 大秦地图规则
-
-用户对大秦地图多次反馈，重点不是“做成古风背景”，而是准确和统一：
-
-- 不要用装饰墙纸或重复山纹替代历史地图。
-- 保持系列通用地图/投影风格。
-- 补的是战国七国边界和控制区域，不是另起一套孤立风格。
-- 七国边界应像拼图一样共享边界，不要半透明区域互相重叠。
-- 统一路线起点必须从秦国控制范围内出发，特别是咸阳。
-- 如做更精确版本，应找可靠历史地图作参考，再重绘成同投影数据层。
-
-当前相关文件：
-
-- `src/data/qinUnification.ts`
-- `src/components/QinUnificationAnimation.tsx`
-- `public/assets/maps/qin-warring-states-map.svg`
-- `docs/sources/qin-unification.md`
-
-## 13. 新增动画流程
-
-建议步骤：
-
-1. 先查资料并写 `docs/sources/<campaign>.md`。
-2. 新建 `src/data/<campaign>.ts`，包含 `mapPoints`、`frontLines`、`battleEvents`、`narrationCues`、必要的 `activeSpans`。
-3. 若需要新视窗，在 `src/lib/geoMap.ts` 增加 viewport。
-4. 新建 `src/components/<Campaign>Animation.tsx`，复用 `CampaignMapAnimation`。
-5. 设置 `playbackDurationSeconds={300}`，除非用户明确要求不同片长。
-6. 选择未被其他动画使用的高质量 `musicSource`，记录到 `docs/sources/audio.md`。
-7. 按时代设置 `sfxProfile`、`unitIcon`、单条路线 `unitIcon` 和 `routeKind`。
-8. 在 `src/App.tsx` 注册 `CampaignKey`、按钮标签和组件。
-9. 在 `src/components/WarLibraryHome.tsx` 增加卡片，并按战争开始时间排序。
-10. 在 `tests/battle-france-smoke.spec.ts` 增加或扩展 smoke，至少覆盖页面加载、5 分钟片长、关键镜头、图标、配乐唯一性和代表性事件音效。
-11. 运行 `npm run build` 和 `npm run test:smoke`。
-
-## 14. 测试覆盖重点
-
-当前 smoke 不是只测德法战役，已覆盖整个战争库。主要覆盖：
-
-- 主页古代/现代战争分类和顺序。
-- 每部动画可加载。
-- 片长或播放速度符合 5 分钟要求。
-- 地图关键事件位于核心区域。
-- 普通滚轮、横向滚轮/Shift、拖拽、缩放按钮、复位按钮有效。
+- `npx playwright test tests/battle-france-smoke.spec.ts -g "campaign data quality gates|battle of britain|big week air battle|bismarck sea air battle" --reporter=line` 通过，4 passed。
+- `npm run test:smoke -- --reporter=line` 通过，21 passed。
+- `git diff --check` 通过。
+- `node /Users/asukarei/.codex/skills/animation-assistant/scripts/check-animation-project.mjs /Users/asukarei/Desktop/war-animation-lab-oss` 通过。
+- 手动 preview 进程已清理，4177 端口无残留。
+
+接手者注意：
+
+- 如果用 `vite preview` 跑浏览器测试，源码改完必须先 `npm run build`，否则会测到旧 `dist`。
+- 只改文档时至少跑 `git diff --check`。
+- 涉及动画代码、数据、样式、音频或素材时，必须跑 `npm run build` 和相关 Playwright smoke。
+
+## 16. 当前测试覆盖重点
+
+`tests/battle-france-smoke.spec.ts` 已覆盖：
+
+- 首页古代/现代分类和卡片顺序。
+- 所有注册动画可从首页进入。
+- 5 分钟片长和时间计数。
+- 地图首屏、中期、后期关键事件可见性。
+- 普通滚轮、横向滚轮、拖拽、缩放按钮、复位按钮。
 - 字幕低高度、不拦截交互。
-- 真实图标资源存在、路径正确、content-length 合理。
-- 韩战飞机/航母/坦克/步兵时代匹配。
-- 志愿军和联合国军步兵图标区分。
-- 空袭使用飞机而非坦克。
-- 背景配乐不重复。
-- 事件点击触发对应音效。
-- 压缩时间轴下后半段不出现大段死时间。
+- 背景配乐来源属性。
+- 图标资产路径、尺寸、类型。
+- 事件点击触发 SFX。
+- 空战短波次、飞机离场、航迹保留。
+- 新空战没有 `terrainZones` 黑椭圆。
+- mapPoints 延迟揭示。
+- 海路和舰船 bbox 不上陆。
+- 舰船尺寸压缩。
+- 战术路线复杂度。
+- 日德兰舰队组连续存在。
+- 瓜岛、日德兰、对马、俾斯麦海的齐射/弹着效果。
 
-改动后不要只手动看页面，必须跑自动化。若只改文档可不跑 Playwright，但提交前至少确认 `git diff --check`。
+后续建议拆分测试文件：
 
-## 15. 已知风险与债务
+- `tests/home.spec.ts`
+- `tests/map-interaction.spec.ts`
+- `tests/audio.spec.ts`
+- `tests/campaigns/naval.spec.ts`
+- `tests/campaigns/air.spec.ts`
 
-素材授权：
+当前不必为拆分而暂停交付，除非测试文件继续显著膨胀。
 
-- 部分图标来自 PNGIMG，许可为 CC BY-NC 4.0，只适合本地非商业 demo。
-- 若要公开发布或商业化，优先替换 PNGIMG 派生素材。
+## 17. 常见失败模式
 
-包体大小：
+这些问题已经反复出现，接手者要主动排查：
 
-- 音频和源图较多，仓库体积会上升。
-- 当前没有做按动画懒加载，Vite 构建会有大 chunk 警告。若后续动画继续增多，应考虑 `React.lazy` 或路由级 code splitting。
+- 会话中展示图片或截图，导致上下文/会话崩溃风险。
+- 只看源码不跑浏览器，错过字幕遮挡、图例遮挡、地图上陆、舰队跳变。
+- 在 `vite preview` 下忘记先 build，测到旧产物。
+- 舰队跨幕突然消失。
+- 航迹线被 `visibleUntil` 过早隐藏。
+- 旧单位标记退场后，新路线单位没有自然接上，形成位置跳变。
+- 编队像整张图片平移，而不是沿路线鱼贯行驶。
+- T 字横切没有相对敌方舰列方向，只有一个文字标签。
+- 飞机像陆军一样长期驻留地图。
+- 空战图标过大或卡通化。
+- 黑色 `terrainZones` 椭圆遮挡地图。
+- 关键位置点提前出现，造成剧透。
+- 海路连接港口中心，导致路线穿陆。
+- 舰船 bbox 即使中心在海上，边角仍压到陆地。
+- 上部图例压住字幕。
+- SFX 只在自动播放触发，点击事件无声。
+- 爆炸音效和事件时间不一致。
+- 新动画忘记注册首页卡片或忘记滚动回顶部。
+- 新资源来源没有写入 `docs/sources`。
 
-测试组织：
+## 18. 新增动画标准流程
 
-- 所有 smoke 目前集中在 `tests/battle-france-smoke.spec.ts`，文件较长。
-- 后续可拆成 `home.spec.ts`、`map-interaction.spec.ts`、`audio.spec.ts`、`campaigns/*.spec.ts`。
+1. 阅读本交接文档和 `animation-assistant` skill。
+2. 查资料，写 `docs/sources/<campaign>.md`。
+3. 新建或修改 `src/data/<campaign>.ts`，先定 `mapPoints`、`battleEvents`、`frontLines`、`narrationCues`、`cueEventIds`。
+4. 短战术战斗使用小时级时间，长战争使用压缩时间轴。
+5. 需要新视窗时改 `src/lib/geoMap.ts`。
+6. 新建 wrapper，复用 `CampaignMapAnimation`。
+7. 设置 `playbackDurationSeconds={300}`，除非用户明确要求不同片长。
+8. 按时代选择 `sfxProfile`、`cueEventKinds`、`unitIcon`、`routeKind`。
+9. 若要新图标，优先写生成脚本并记录来源。
+10. 在 `src/App.tsx` 注册 key 和组件。
+11. 在 `src/components/WarLibraryHome.tsx` 加卡片，并按历史时间排序。
+12. 在 Playwright 中补 smoke，至少覆盖加载、关键镜头、路线类型、图标、音频、反剧透、航迹/单位可见窗口。
+13. 跑 `npm run build` 和定向 smoke。
+14. 更新本交接文档或相关来源文档。
+15. 把可复用经验沉淀到 mempalace。
 
-地图精度：
+## 19. Mempalace 已沉淀经验
 
-- 大秦七国边界仍有继续精修空间。后续如用户继续要求精确，应基于可靠历史地图重新校准边界点。
-- 太平洋跨日期线投影已处理，但任何新增太平洋岛链事件都要检查经度是否使用一致的 0-360 表示。
+已记录的 durable rules 包括：
 
-历史严谨性：
+- 空战要用短时波次，飞机离场但航迹保留。
+- 新空战不要使用无必要黑椭圆，事件性 `mapPoints` 要延迟揭示。
+- 海空战舰船要用离岸航路和 bbox 不上陆测试。
+- 海战使用战术舰队中心线、路线局部编队 offset、水平舰船图标、海路采样验证。
+- 短战术海战用小时/分钟锚点和紧战区视窗，不让铺垫消耗开场。
+- 瓜岛第一帧应显示双方舰队已在铁底湾行动。
+- 日德兰拆成侦察、南向追逐、北向引诱、大舰队展开、Scheer 转向、夜间逃脱等阶段。
 
-- 当前是教学演示级，不是史学数据库。
-- 新增或修改事件时必须同步补来源文档，避免“画面做完但出处不可追溯”。
+如果后续有新的稳定经验，继续写入 `war-animation-lab-oss` 或 `animation-assistant` 对应 wing/room。
 
-## 16. 不要回退的用户偏好
+## 20. 提交前清单
 
-这些是用户多轮明确反馈后的稳定要求：
-
-- 不要让字幕遮挡画面；使用半透明横向滚动字幕。
-- 地图必须能滚轮上下移动、横向移动、拖拽移动，并有显式缩放按钮。
-- 不要把缩放主要绑定到 Ctrl/⌘ + 滚轮。
-- 图标要写实，不要抽象简笔画。
-- 图标要根据路线方向智能左右镜像，并保持水平，不能侧立或倒立。
-- 空袭必须用飞机图标。
-- 太平洋战争要分段镜头，瓜岛后不能大段空转。
-- 大秦地图要统一系列风格，但要补准确七国边界，不要特殊丑背景。
-- 所有新战争动画默认 5 分钟。
-- 短战争仍默认 5 分钟，但不要按周跑；用小时/天粒度和近景战场视窗，确保战术走位而不是大范围地理被看清。
-- 同一系列中每部动画应使用不同战争配乐。
-- 战役音效要覆盖代表性战斗事件，不能有的战役有声、有的无声。
-- 失败方被突破后，其移动单位图标可以消失，避免画面混乱。
-- 对马海战经验：战术复杂的海峡会战应把视窗收紧到主战场，以近代 `warship` 写实图标表达舰队航向；俄舰队主力受创和残部投降后用 `unitVisibleUntil` 隐藏失败单位。路线不要简化成“日军尾随俄军追击”，而要按资料拆成侦察接触、东乡回头转向、第一合战、俄前导/旗舰失控、第二合战、夜间鱼雷攻击、拂晓包围投降等战术段。短海战开场必须立即有舰队行动，清晨侦察背景不要占据实际播放空窗；东乡转向时俄舰队不得已经越过日舰航线。
-- 近代海战图标经验：`warship` 不要用设计舰船俯视图或技术蓝图，优先用航行态侧视战舰图，保持宽幅比例，作为水平地图标记只左右镜像。
-- 首页入口经验：战争数量增加后，全局顶/底部不要继续堆战争导航；首页卡片承担入口，全局区域可改成固定题铭。卡片进入动画后要 `scrollTo(0,0)`，否则从首页下部入口打开会保留滚动位置，导致地图在视口上方、鼠标滚轮/拖拽命中失败。
-- 装饰图层经验：新增 SVG 装饰区必须配套 scoped CSS。`terrainZones` 这类椭圆如果只给 class 不写样式，会按 SVG 默认黑色填充，形成遮挡地图的大黑块；需要显式设置 `fill/stroke/opacity` 或直接移除。
-
-## 17. 提交建议
-
-常规提交前：
+提交前执行：
 
 ```bash
 git status --short
@@ -381,26 +687,125 @@ npm run build
 npm run test:smoke
 ```
 
+只改文档时：
+
+```bash
+git diff --check
+```
+
 如果新增大资源：
 
-- 检查是否误加 `artifacts/`、`dist/`、`test-results/`。
-- 用 `file` 检查下载的图片源文件，避免把 403/404 HTML 页面伪装成 `.png` 提交。
-- 确认来源写进 `docs/sources/`。
+- 不要误提交 `dist/`、`test-results/`、`artifacts/`。
+- 检查 `logs/` 是否只是本地运行产物，通常不应提交。
+- 用 `file` 或资源测试确认图片/音频不是 403/404 HTML。
+- 确认来源、许可、用途写入 `docs/sources/`。
 
 推荐提交粒度：
 
 - 新增一部动画：数据、wrapper、来源、测试、必要资源放同一提交。
-- 通用渲染器改动：单独提交，测试覆盖所有已注册动画。
-- 纯素材替换：说明来源、许可和替换原因。
+- 通用渲染器能力：单独提交，并跑全量 smoke。
+- 纯素材替换：单独提交，说明来源、许可和替换原因。
 
-## 18. 快速接手清单
+## 21. 快速接手步骤
 
-接手者先做这几件事：
+1. 运行 `git status --short`，确认当前未提交变更范围。
+2. 读本文件、`docs/animation-assistant-agent.md` 和目标动画的 `docs/sources/*.md`。
+3. 若任务涉及视觉问题，用 Playwright/DOM 断言验证，不在会话展示图片。
+4. 先看目标动画 `src/data/*.ts`，判断是否能通过数据修复。
+5. 需要改通用层时，再读 `src/components/CampaignMapAnimation.tsx`、`src/components/UnitIcon.tsx`、`src/lib/geoMap.ts`、`src/lib/useMapInteraction.ts`。
+6. 增加或更新测试，优先复用现有 helper。
+7. 跑 build 和 smoke。
+8. 更新来源文档、交接文档和 mempalace。
 
-1. 运行 `git status --short`，确认工作树是否干净。
-2. 运行 `npm run build`，确认 TypeScript 和生产构建通过。
-3. 运行 `npm run test:smoke`，确认浏览器环境可用。
-4. 阅读 `src/components/CampaignMapAnimation.tsx`、`src/lib/useMapInteraction.ts`、`src/components/UnitIcon.tsx`。
-5. 阅读要改动画对应的 `src/data/*.ts` 和 `docs/sources/*.md`。
-6. 修改数据优先，除非确实是通用渲染能力不足。
-7. 修改后补测试，再提交。
+## 22. 接手第一天建议路线
+
+如果新会话刚接手，不要立刻开始大范围重构。建议按以下顺序恢复生产节奏：
+
+1. 先确认工作树：`git status --short`。当前仓库存在大量未提交动画开发成果，不能回滚。
+2. 只读本文件、`README.md`、`docs/animation-assistant-agent.md`、目标动画数据和目标来源文档。不要读取旧 Codex rollout 作为上下文来源。
+3. 跑一次只读体检：`node agents/skills/animation-assistant/scripts/check-animation-project.mjs .`。
+4. 如果要改动画，先选一个目标，不要同时开多部。优先从用户最近反馈最强的海战/空战开始。
+5. 对目标动画先列“事件时间轴 - 路线段 - 单位可见窗口 - 镜头阶段 - 音效 cue - revealAt 点”六列检查表。
+6. 先修数据：`src/data/<campaign>.ts`。多数问题是路线、时间、单位窗口、关键点提前显示或编队交接不对。
+7. 再修 wrapper：`src/components/<Campaign>Animation.tsx`。重点是 `focusSteps`、`activeSpans`、`musicSource`、`sfxProfile`、`battleEffects`、`terrainZones`。
+8. 只有通用能力缺失时才改 `CampaignMapAnimation`、`UnitIcon`、`geoMap` 或 `useMapInteraction`。
+9. 改完必须补或更新 smoke helper。用户指出过的问题，不接受只靠人工说“看起来好了”。
+10. 最后更新 `docs/sources`、本交接文档和 mempalace。
+
+第一天不要做的事：
+
+- 不要把所有动画一起重排。
+- 不要把测试拆文件作为第一优先级，除非它阻碍本次动画验证。
+- 不要新增大量素材却不验证显示比例、授权和资源可访问性。
+- 不要在会话中贴截图、贴图片、贴 base64 或大段日志。
+- 不要把旧会话内容当作事实来源；事实来源应是仓库文档、代码、测试、mempalace 和公开资料。
+
+## 23. 逐部动画升级标准
+
+用户已经要求“以日德兰的经验和制作水准，对所有动画逐一全面提升”。这不是一次性全仓库重构，而是逐部动画做质量闭环。每部动画升级时按以下标准验收：
+
+### 23.1 资料和时间轴
+
+- 战役节点来自可靠资料，来源写入 `docs/sources/<campaign>.md`。
+- 长战争按作战段压缩，短战斗用小时级锚点。
+- 事件顺序、路线起止、战斗效果、音效 cue 使用同一时间轴。
+- 空档不能拖慢 5 分钟播放节奏；但多线并进战争要保留必要的同时性。
+
+### 23.2 地图和镜头
+
+- 地图第一屏就是动画主体验，不做营销页式铺垫。
+- 视窗跟随实际战区；侧支战区结束后显式切回主战区。
+- 镜头切换不能让单位先跳位、先变队形或突然竖起来。
+- 字幕、图例、标题、控制区不能遮挡关键路线、事件点或彼此重叠。
+
+### 23.3 单位和运动
+
+- 陆战单位、舰船、飞机、古代骑兵/战车必须时代匹配。
+- 海战舰队出现后必须持续存在，除非战损、沉没、失能或历史脱离。
+- 空战飞机必须短时出击、离场；航迹可以保留，飞机不能长期驻留。
+- 多单位协同行动必须像编队沿路线运动，不能像整张图片平移或整体旋转。
+- 舰船和飞机图标要小而清楚，不能遮挡战术几何。
+
+### 23.4 路线和反剧透
+
+- 海路不得穿陆、贴陆或让舰船 bbox 压陆。
+- 空中路线必须到达目标区、拦截区或返航/离场点，不能半路消失。
+- 战术海战航迹应尽量保留，用于复盘。
+- 关键伏击点、转向点、弹着点、雷达射击位、瓦解海域必须用 `revealAt` 延迟出现。
+
+### 23.5 音频和战斗效果
+
+- 每部动画背景配乐尽量唯一且适配战役气质。
+- 战斗事件自动播放和手动点击都要触发时代匹配 SFX。
+- 齐射、爆炸、跳弹轰炸、扫射、舰炮交战等效果必须与事件时间点对齐；空战轰炸事件要能听到爆炸音，攻击/扫射/混战事件要能听到飞机与机枪/俯冲音。
+- 不要把爆炸声当作通用背景噪声；没有战斗的时段不应乱响。
+
+### 23.6 验证
+
+- 至少跑 `npm run build` 和目标 smoke。
+- 若改通用渲染器，跑全量 `npm run test:smoke`。
+- 文档改动至少跑 `git diff --check`。
+- 不在会话展示截图；如需要截图，只保存本地证据并文字说明结论。
+
+## 24. 当前最高风险和下一步候选
+
+当前最高风险不是“缺少动画数量”，而是已有动画质量不均、工作树未提交、测试集中且变更面大。下一任应优先把当前未提交开发成果收敛成可验证提交，再继续逐部升级。
+
+建议优先级：
+
+1. 收敛当前海战/空战大改：确认 `npm run build`、定向 smoke、`npm run test:smoke` 和 `git diff --check` 当前是否仍通过。
+2. 检查 `logs/` 是否为本地运行产物，通常不要提交。
+3. 检查新增 `public/assets/unit-icons` 和 `public/audio` 的来源文档是否完整。
+4. 确认 `docs/sources/audio.md` 中配乐唯一性临时豁免是否仍需要。
+5. 以日德兰为标杆，逐部复查对马、瓜岛、俾斯麦海、伦敦上空的鹰、大周行动、中途岛、太平洋战争。
+6. 再回到陆战和古代战役，重点看镜头、压缩时间轴、图标写实度、地图交互和音效 cue 覆盖。
+
+## 25. 会话健康和上下文纪律
+
+本项目很容易因为图片、截图、素材和长日志把会话拖死。后续必须遵守：
+
+- 不在聊天中展示图片、截图、视频帧或本地素材。
+- 不把旧 rollout、HTML、base64、完整日志或大段测试输出贴进会话。
+- 大量经验沉淀到 mempalace，具体交接写到仓库文档。
+- 视觉验证用 Playwright、DOM 数值、资源状态和本地人工查看，最终回复只写结论和路径。
+- 每完成一轮动画规则修正，都更新本文件或 `agents/skills/animation-assistant/SKILL.md`，避免新会话重新问一遍。

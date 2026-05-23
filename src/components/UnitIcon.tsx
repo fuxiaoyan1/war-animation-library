@@ -111,6 +111,54 @@ const iconConfig: Record<
     testId: "tank-korean-marker",
     width: 96
   },
+  trafalgarBritishLine: {
+    className: "trafalgar-ship-marker trafalgar-british-line-marker",
+    defaultFacingX: 1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-british-line.webp"),
+    testId: "trafalgar-british-line-marker",
+    width: 180
+  },
+  trafalgarBucentaure: {
+    className: "trafalgar-ship-marker trafalgar-bucentaure-marker",
+    defaultFacingX: 1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-bucentaure.webp"),
+    testId: "trafalgar-bucentaure-marker",
+    width: 180
+  },
+  trafalgarFrenchLine: {
+    className: "trafalgar-ship-marker trafalgar-french-line-marker",
+    defaultFacingX: -1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-french-line.webp"),
+    testId: "trafalgar-french-line-marker",
+    width: 180
+  },
+  trafalgarHmsVictory: {
+    className: "trafalgar-ship-marker trafalgar-hms-victory-marker",
+    defaultFacingX: 1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-hms-victory.webp"),
+    testId: "trafalgar-hms-victory-marker",
+    width: 180
+  },
+  trafalgarRoyalSovereign: {
+    className: "trafalgar-ship-marker trafalgar-royal-sovereign-marker",
+    defaultFacingX: 1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-royal-sovereign.webp"),
+    testId: "trafalgar-royal-sovereign-marker",
+    width: 180
+  },
+  trafalgarSantisimaTrinidad: {
+    className: "trafalgar-ship-marker trafalgar-santisima-trinidad-marker",
+    defaultFacingX: 1,
+    height: 72,
+    href: publicPath("/assets/unit-icons/trafalgar-santisima-trinidad.webp"),
+    testId: "trafalgar-santisima-trinidad-marker",
+    width: 180
+  },
   warship: {
     className: "warship-marker",
     defaultFacingX: 1,
@@ -118,6 +166,46 @@ const iconConfig: Record<
     href: publicPath("/assets/unit-icons/warship.webp"),
     testId: "warship-marker",
     width: 168
+  },
+  ww2AttackAircraft: {
+    className: "ww2-aircraft-marker ww2-attack-aircraft-marker",
+    defaultFacingX: 1,
+    height: 32,
+    href: publicPath("/assets/unit-icons/ww2-attack-aircraft.webp"),
+    testId: "ww2-attack-aircraft-marker",
+    width: 82
+  },
+  ww2Bomber: {
+    className: "ww2-aircraft-marker ww2-bomber-marker",
+    defaultFacingX: 1,
+    height: 34,
+    href: publicPath("/assets/unit-icons/ww2-bomber.webp"),
+    testId: "ww2-bomber-marker",
+    width: 88
+  },
+  ww2EscortShip: {
+    className: "ww2-ship-marker ww2-escort-ship-marker",
+    defaultFacingX: 1,
+    height: 34,
+    href: publicPath("/assets/unit-icons/ww2-escort-ship.webp"),
+    testId: "ww2-escort-ship-marker",
+    width: 92
+  },
+  ww2Fighter: {
+    className: "ww2-aircraft-marker ww2-fighter-marker",
+    defaultFacingX: 1,
+    height: 30,
+    href: publicPath("/assets/unit-icons/ww2-fighter.webp"),
+    testId: "ww2-fighter-marker",
+    width: 78
+  },
+  ww2TransportShip: {
+    className: "ww2-ship-marker ww2-transport-ship-marker",
+    defaultFacingX: 1,
+    height: 38,
+    href: publicPath("/assets/unit-icons/ww2-transport-ship.webp"),
+    testId: "ww2-transport-ship-marker",
+    width: 104
   }
 };
 
@@ -134,6 +222,7 @@ function factionBadgeLabel(faction: string) {
     france: "法",
     germany: "德",
     rome: "罗",
+    spain: "西",
     un: "UN"
   };
 
