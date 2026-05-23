@@ -363,9 +363,11 @@
 - 船队起点是 `rabaul-roadstead`，不是拉包尔陆地点。
 - 船队终点和瓦解点使用 `convoy-breakup-sea`、`lae-approach` 等离岸点。
 - 水面 `waypoints` 绕开新不列颠岛和新几内亚北岸。
+- 船队航线要覆盖侦察、3月3日上午攻击和瓦解窗口；侦察机返航后，目标船队仍要继续移动，不能让侦察接触看起来早于运输船到达海域。
 - 船图标使用 `ww2TransportShip`、`ww2EscortShip`，不是通用 `ship`。
 - 攻击机使用 `ww2AttackAircraft`，轰炸机使用 `ww2Bomber`。
 - 跳弹轰炸用 `bismarck-sea-skip-bombing` battle effect，只在低空攻击/跳弹事件窗口出现；高空轰炸阶段不能提前显示。
+- 末段追击拆为 `mopping-up-strikes` 与 `mopping-up-return`，避免飞机单位超过短时任务窗口，同时保留15:00后返航动作。
 
 最容易回归的问题：
 
@@ -386,6 +388,7 @@
 
 - 片名已从“不列颠空战”改为“伦敦上空的鹰”，不再做 1940-07-10 至 1940-09-15 的全景压缩，而是聚焦 1940-09-15 伦敦方向两次昼间大空袭。
 - 初期德机路线飞越肯特海岸并进入伦敦方向，RAF 有 11 群升空、12 群增援、城市上空拦截和回程追击线。
+- 12:45-14:05 有 `midday-raf-refuel-patrol` 衔接上午追击和13:45第二轮预警，避免空白期过长。
 - 布伦奇利空域、白金汉宫方向、维多利亚站、达克斯福德、南安普敦等点按 `revealAt` 延迟出现。
 - 编队使用 `ww2Bomber` 和 `ww2Fighter`，尺寸较小。
 
@@ -406,7 +409,10 @@
 当前重点：
 
 - 每天的空袭、护航、截击、受损返航以短时波次表达。
+- 组件必须使用 `timingMode="compressed"`，避免跨天夜间空白拖慢五分钟动画；不要只改数据文件却忘了组件时间线参数。
 - 轰炸机流、护航战斗机、德军截击机有数量比例，且都有返航/返场路线。
+- 2月20日拆成出动集结和目标区攻击；`argument-sortie-begins` 不触发爆炸音，`operation-argument-start` 才对应目标区轰炸。
+- 2月24日工业目标节点必须有 `feb-24-industrial-strike`、`feb-24-escort-cover`、`feb-24-luftwaffe-defense` 同窗活动。
 - 目标点如不伦瑞克、莱比锡、雷根斯堡、柏林、截击区、损失带、返航集合点按 `revealAt` 出现。
 - `big-week-industrial-bombing` 和 `big-week-brunswick-bombing` 只服务于工业目标轰炸，不用于空中混战。
 - “无护航深袭的代价”要通过 `schweinfurt-regensburg-lesson`、`damaged-bomber-return` 等返航航迹表现。

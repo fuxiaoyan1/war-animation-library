@@ -23,51 +23,52 @@ export const mapPoints: MapPoint[] = [
 
 const bomberStream: FormationUnit[] = [
   { id: "bomber-a", label: "B-17 盒形编队", badgeLabel: "美", icon: "ww2Bomber", offset: [0, 0] },
-  { id: "bomber-b", label: "第二大队", badgeLabel: "美", icon: "ww2Bomber", offset: [-34, -14] },
-  { id: "bomber-c", label: "第三大队", badgeLabel: "美", icon: "ww2Bomber", offset: [-68, 16] },
-  { id: "bomber-d", label: "后续梯队", badgeLabel: "美", icon: "ww2Bomber", offset: [-102, 0] }
+  { id: "bomber-b", label: "第二大队", badgeLabel: "美", icon: "ww2Bomber", offset: [-22, -10] },
+  { id: "bomber-c", label: "第三大队", badgeLabel: "美", icon: "ww2Bomber", offset: [-44, 12] },
+  { id: "bomber-d", label: "后续梯队", badgeLabel: "美", icon: "ww2Bomber", offset: [-66, 0] }
 ];
 
 const escortFighters: FormationUnit[] = [
-  { id: "p51-a", label: "P-51 护航", badgeLabel: "美", icon: "ww2Fighter", offset: [10, -28] },
-  { id: "p47-a", label: "P-47 护航", badgeLabel: "美", icon: "ww2Fighter", offset: [-28, 28] },
-  { id: "p51-b", label: "远程接力", badgeLabel: "美", icon: "ww2Fighter", offset: [-66, -26] }
+  { id: "p51-a", label: "P-51 护航", badgeLabel: "美", icon: "ww2Fighter", offset: [8, -20] },
+  { id: "p47-a", label: "P-47 护航", badgeLabel: "美", icon: "ww2Fighter", offset: [-18, 20] },
+  { id: "p51-b", label: "远程接力", badgeLabel: "美", icon: "ww2Fighter", offset: [-42, -18] }
 ];
 
 const germanInterceptors: FormationUnit[] = [
   { id: "fw190-a", label: "Fw 190", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 0] },
-  { id: "bf109-a", label: "Bf 109", badgeLabel: "德", icon: "ww2Fighter", offset: [-30, -18] },
-  { id: "fw190-b", label: "后续截击", badgeLabel: "德", icon: "ww2Fighter", offset: [-64, 20] }
+  { id: "bf109-a", label: "Bf 109", badgeLabel: "德", icon: "ww2Fighter", offset: [-20, -13] },
+  { id: "fw190-b", label: "后续截击", badgeLabel: "德", icon: "ww2Fighter", offset: [-42, 14] }
 ];
 
 const damagedBomberStream: FormationUnit[] = [
   { id: "damaged-bomber-a", label: "掉队B-17", badgeLabel: "美", icon: "ww2Bomber", offset: [0, 0] },
-  { id: "damaged-bomber-b", label: "受损返航", badgeLabel: "美", icon: "ww2Bomber", offset: [-38, 18] },
-  { id: "straggler-cover", label: "零散火力", badgeLabel: "美", icon: "ww2Bomber", offset: [-76, -16] }
+  { id: "damaged-bomber-b", label: "受损返航", badgeLabel: "美", icon: "ww2Bomber", offset: [-24, 13] },
+  { id: "straggler-cover", label: "零散火力", badgeLabel: "美", icon: "ww2Bomber", offset: [-48, -12] }
 ];
 
 export const frontLines: FrontLine[] = [
   {
     id: "argument-first-wave",
     faction: "allies",
-    label: "第八航空队轰炸机流",
+    label: "2月20日轰炸机流往返",
     from: "east-anglia",
     to: "east-anglia",
     routeKind: "air",
     start: "1944-02-20T06:00",
-    end: "1944-02-20T17:00",
+    end: "1944-02-20T18:00",
     unitIcon: "ww2Bomber",
     formationUnits: bomberStream,
     waypoints: [
       [2.2, 51.2],
       [6.6, 51.55],
+      [12.3731, 51.3397],
       [10.2, 51.45],
       [7.1, 51.7],
       [3.0, 52.35]
     ],
     visibleUntil: "1944-02-25T18:00",
     unitVisibleFrom: "1944-02-20T06:00",
-    unitVisibleUntil: "1944-02-20T17:45"
+    unitVisibleUntil: "1944-02-20T18:00"
   },
   {
     id: "deep-escort-chain",
@@ -124,7 +125,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Bomber",
     formationUnits: [
       ...bomberStream,
-      { id: "empty-slot-a", label: "空位", badgeLabel: "损", icon: "ww2Bomber", offset: [-136, 24], hiddenFrom: "1944-02-21T12:45" }
+      { id: "empty-slot-a", label: "空位", badgeLabel: "损", icon: "ww2Bomber", offset: [-88, 17], hiddenFrom: "1944-02-21T12:45" }
     ],
     waypoints: [
       [1.8, 50.8],
@@ -171,7 +172,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Fighter",
     formationUnits: [
       ...escortFighters,
-      { id: "p51-c", label: "自由猎歼", badgeLabel: "美", icon: "ww2Fighter", offset: [-96, 10] }
+      { id: "p51-c", label: "自由猎歼", badgeLabel: "美", icon: "ww2Fighter", offset: [-62, 8] }
     ],
     waypoints: [
       [3.2, 52.15],
@@ -184,6 +185,73 @@ export const frontLines: FrontLine[] = [
     visibleUntil: "1944-02-25T18:00",
     unitVisibleFrom: "1944-02-22T09:20",
     unitVisibleUntil: "1944-02-22T16:00"
+  },
+  {
+    id: "feb-24-industrial-strike",
+    faction: "allies",
+    label: "2月24日工业目标空袭",
+    from: "east-anglia",
+    to: "east-anglia",
+    routeKind: "air",
+    start: "1944-02-24T06:40",
+    end: "1944-02-24T18:00",
+    unitIcon: "ww2Bomber",
+    formationUnits: bomberStream,
+    waypoints: [
+      [2.4, 51.3],
+      [5.9, 51.55],
+      [10.5268, 52.2689],
+      [12.1016, 49.0134],
+      [8.1, 50.9],
+      [3.0, 52.3]
+    ],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-24T06:40",
+    unitVisibleUntil: "1944-02-24T18:00"
+  },
+  {
+    id: "feb-24-escort-cover",
+    faction: "allies",
+    label: "2月24日护航扫荡",
+    from: "east-anglia",
+    to: "east-anglia",
+    routeKind: "air",
+    start: "1944-02-24T07:20",
+    end: "1944-02-24T16:50",
+    unitIcon: "ww2Fighter",
+    formationUnits: escortFighters,
+    waypoints: [
+      [2.8, 52.05],
+      [5.8, 51.35],
+      [8.0, 51.75],
+      [10.3, 52.25],
+      [6.0, 52.0],
+      [2.7, 52.22]
+    ],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-24T07:20",
+    unitVisibleUntil: "1944-02-24T17:05"
+  },
+  {
+    id: "feb-24-luftwaffe-defense",
+    faction: "germany",
+    label: "2月24日德国本土防空",
+    from: "brunswick",
+    to: "brunswick",
+    routeKind: "air",
+    start: "1944-02-24T08:20",
+    end: "1944-02-24T13:50",
+    unitIcon: "ww2Fighter",
+    formationUnits: germanInterceptors,
+    waypoints: [
+      [10.0, 52.1],
+      [8.0, 51.75],
+      [10.5268, 52.2689],
+      [9.1, 52.0]
+    ],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-24T08:20",
+    unitVisibleUntil: "1944-02-24T14:20"
   },
   {
     id: "berlin-feint-and-return",
@@ -212,14 +280,26 @@ export const frontLines: FrontLine[] = [
 
 export const battleEvents: BattleEvent[] = [
   {
+    id: "argument-sortie-begins",
+    date: "1944-02-20T06:00",
+    title: "大周行动起飞：轰炸机流出海",
+    location: "英国东部机场群",
+    coordinates: [0.7, 52.35],
+    phase: "出击集结",
+    summary: "轰炸机从英国东部机场群出动，先形成出海航迹，尚未进入目标区。",
+    detail: "开场只表现出动和集结，不播放目标区音效，也不显示目标区齐射线。等轰炸机流抵达莱比锡方向后，目标区爆炸和战斗音效才出现。",
+    significance: "把起飞、越海、目标区攻击和返航拆开，避免飞机没到而攻击效果先出现。",
+    mapFocus: ["east-anglia", "channel", "coastal-radar"]
+  },
+  {
     id: "operation-argument-start",
-    date: "1944-02-20T06:30",
-    title: "大周行动开始：轰炸与护航同时推进",
-    location: "英国东部至德国北部",
-    coordinates: [8.2, 51.6],
+    date: "1944-02-20T11:35",
+    title: "首日轰炸机流抵达目标区",
+    location: "莱比锡方向",
+    coordinates: [12.3731, 51.3397],
     phase: "制空权攻势",
-    summary: "盟军轰炸机流当天越过北海后继续返航，行动目标是逼迫德国昼间战斗机升空迎战。",
-    detail: "大周行动不是把飞机画到目标点就结束。去程轰炸、目标区爆炸、返航集合和德机截击共同构成空中战役链条，动画保留整条航迹说明轰炸机必须飞完整个往返航程。",
+    summary: "盟军轰炸机流越过北海并压到德国航空工业目标上空，随后继续组织返航。",
+    detail: "大周行动不是把飞机画到目标点就结束。去程、目标区爆炸、返航集合和德机截击共同构成空中战役链条，动画保留整条航迹说明轰炸机必须飞完整个往返航程。",
     significance: "这让战略轰炸从目标摧毁转向制空权争夺，是欧洲空战节奏变化的关键节点。",
     mapFocus: ["east-anglia", "leipzig", "luftwaffe-intercept"]
   },
@@ -249,13 +329,13 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "aircraft-industry-targets",
-    date: "1944-02-24T08:00",
+    date: "1944-02-24T10:50",
     title: "航空工业目标遭连续打击",
     location: "不伦瑞克、莱比锡、雷根斯堡方向",
     coordinates: [10.5268, 52.2689],
     phase: "工业与制空",
     summary: "盟军连续攻击德国飞机制造和相关工业目标，爆炸点必须落在工业目标而不是空中航线外侧。",
-    detail: "大周行动的目标体系覆盖飞机制造、零部件、轴承和装配链。动画用目标区爆炸和多条返航线表现：轰炸有实际落点，攻击后机群继续返航，而不是抵达目标后消失。",
+    detail: "大周行动的目标体系覆盖飞机制造、零部件、轴承和装配链。动画用2月24日轰炸机流、护航扫荡、德机本土防空和目标区爆炸表现：轰炸有实际落点，攻击后机群继续返航，而不是抵达目标后消失。",
     significance: "工业打击与空中消耗叠加，形成战役级制空权效果。",
     mapFocus: ["brunswick", "leipzig", "regensburg"]
   },
@@ -274,7 +354,6 @@ export const battleEvents: BattleEvent[] = [
 ];
 
 export const cueEventIds = new Set([
-  "operation-argument-start",
   "deep-escort-lesson",
   "luftwaffe-attrition",
   "aircraft-industry-targets",

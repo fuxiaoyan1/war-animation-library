@@ -79,12 +79,12 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [154.1, -1.45]
   ],
   bismarckSeaBattle: [
-    [146.3, -7.35],
-    [149.7, -5.1]
+    [146.0, -7.65],
+    [149.9, -4.85]
   ],
   bismarckSeaLae: [
-    [146.1, -7.45],
-    [148.35, -5.65]
+    [145.95, -7.55],
+    [148.6, -4.9]
   ],
   mediterranean: [
     [-8.0, 30.0],

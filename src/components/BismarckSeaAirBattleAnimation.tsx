@@ -25,7 +25,11 @@ const timeline = createCampaignTimeline({
   campaignEnd,
   campaignStart,
   events: battleEvents,
-  points: mapPoints
+  gapScale: 0.04,
+  inactiveGapDisplayDays: 0.04,
+  maxGapDays: 1,
+  points: mapPoints,
+  timingMode: "compressed"
 });
 
 const narrationCues: NarrationCue[] = [
@@ -41,7 +45,7 @@ const narrationCues: NarrationCue[] = [
     start: "1943-03-03T10:30",
     end: "1943-03-03T18:00",
     title: "第二幕 / 高低空协同",
-    text: "高空轰炸迫使船队机动，B-25 与 A-20 低空进入，以扫射和跳弹轰炸撕裂队形。"
+    text: "高空轰炸先迫使船队机动，随后 B-25 与 A-20 低空进入，以扫射和跳弹轰炸撕裂队形。"
   },
   {
     id: "pursuit",
@@ -56,8 +60,8 @@ const battleEffects: BattleEffectElement[] = [
   {
     id: "skip-bombing",
     type: "salvo",
-    start: "1943-03-03T11:30",
-    end: "1943-03-03T12:40",
+    start: "1943-03-03T11:45",
+    end: "1943-03-03T12:25",
     from: [147.4, -6.6],
     to: [147.05, -5.2],
     label: "低空跳弹命中区",
@@ -99,10 +103,13 @@ export function BismarckSeaAirBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1943-03-04T08:00"), focus: "bismarckSeaLae" }
       ]}
       frontLines={semanticFrontLines}
+      gapScale={0.04}
+      inactiveGapDisplayDays={0.04}
       legendAxis="侦察 / 高空轰炸 / 低空攻击"
       legendPrimary="日军船队"
       legendSecondary="盟军航空兵"
       mapPoints={mapPoints}
+      maxGapDays={1}
       musicSource={publicPath("/audio/wikimedia-liberty-bell.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
@@ -119,6 +126,7 @@ export function BismarckSeaAirBattleAnimation() {
       testId="bismarck-sea-app"
       timeCounterLabel="小时"
       timeStepDays={1 / 24}
+      timingMode="compressed"
       timelineTitle="俾斯麦海：空中力量截断海上运输"
       title="俾斯麦海海空战"
       unitIcon="ww2AttackAircraft"

@@ -29,31 +29,31 @@ export const mapPoints: MapPoint[] = [
 
 const luftwaffeBomberBox: FormationUnit[] = [
   { id: "do17-a", label: "Do 17 轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [0, 0] },
-  { id: "he111-a", label: "He 111 轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [-30, -14] },
-  { id: "do17-b", label: "后续梯队", badgeLabel: "德", icon: "ww2Bomber", offset: [-60, 16] },
-  { id: "bf109-cover", label: "Bf 109 护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-18, 26] },
-  { id: "bf110-cover", label: "Bf 110 掩护", badgeLabel: "德", icon: "ww2Fighter", offset: [-78, -26] }
+  { id: "he111-a", label: "He 111 轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [-18, -10] },
+  { id: "do17-b", label: "后续梯队", badgeLabel: "德", icon: "ww2Bomber", offset: [-36, 12] },
+  { id: "bf109-cover", label: "Bf 109 护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-12, 19] },
+  { id: "bf110-cover", label: "Bf 110 掩护", badgeLabel: "德", icon: "ww2Fighter", offset: [-50, -18] }
 ];
 
 const luftwaffeFollowWave: FormationUnit[] = [
   { id: "do17-second-a", label: "第二波轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [0, 0] },
-  { id: "he111-second-a", label: "第二波梯队", badgeLabel: "德", icon: "ww2Bomber", offset: [-28, 16] },
-  { id: "bf109-second-a", label: "贴身护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-18, -26] },
-  { id: "bf109-second-b", label: "高空护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-64, 30] }
+  { id: "he111-second-a", label: "第二波梯队", badgeLabel: "德", icon: "ww2Bomber", offset: [-18, 12] },
+  { id: "bf109-second-a", label: "贴身护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-12, -18] },
+  { id: "bf109-second-b", label: "高空护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-44, 21] }
 ];
 
 const rafElevenGroup: FormationUnit[] = [
   { id: "spitfire-72", label: "72中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
-  { id: "hurricane-303", label: "303中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-26, -18] },
-  { id: "hurricane-501", label: "501中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-54, 18] },
-  { id: "spitfire-92", label: "92中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [-82, -4] }
+  { id: "hurricane-303", label: "303中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-18, -12] },
+  { id: "hurricane-501", label: "501中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-36, 13] },
+  { id: "spitfire-92", label: "92中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [-55, -3] }
 ];
 
 const rafReinforcementWing: FormationUnit[] = [
   { id: "spitfire-19", label: "19中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
-  { id: "hurricane-242", label: "242中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-32, 18] },
-  { id: "hurricane-302", label: "302中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-64, -16] },
-  { id: "spitfire-611", label: "611中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [-96, 8] }
+  { id: "hurricane-242", label: "242中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-20, 13] },
+  { id: "hurricane-302", label: "302中队飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-42, -12] },
+  { id: "spitfire-611", label: "611中队喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [-62, 6] }
 ];
 
 export const frontLines: FrontLine[] = [
@@ -202,6 +202,24 @@ export const frontLines: FrontLine[] = [
     visibleUntil: "1940-09-15T18:00"
   },
   {
+    id: "midday-raf-refuel-patrol",
+    faction: "britain",
+    label: "午间中队整补巡逻",
+    from: "biggin-hill",
+    to: "dover",
+    routeKind: "air",
+    start: "1940-09-15T12:45",
+    end: "1940-09-15T14:05",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "patrol-spitfire", label: "巡逻喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
+      { id: "patrol-hurricane", label: "整补飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-22, 14] }
+    ],
+    waypoints: [[0.24, 51.32], [0.55, 51.21], [0.84, 51.1]],
+    visibleUntil: "1940-09-15T18:00",
+    unitVisibleUntil: "1940-09-15T14:10"
+  },
+  {
     id: "afternoon-raid-main-wave",
     faction: "germany",
     label: "下午第一波：150机越岸",
@@ -254,7 +272,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Fighter",
     formationUnits: [
       ...rafElevenGroup,
-      { id: "hurricane-249", label: "249中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-110, 24] }
+      { id: "hurricane-249", label: "249中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-75, 17] }
     ],
     waypoints: [[-0.02, 51.34], [0.16, 51.4]],
     visibleUntil: "1940-09-15T18:00",
@@ -272,7 +290,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Fighter",
     formationUnits: [
       ...rafReinforcementWing,
-      { id: "hurricane-310", label: "310中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-122, -18] }
+      { id: "hurricane-310", label: "310中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-80, -13] }
     ],
     waypoints: [[0.18, 51.82], [0.44, 51.64], [0.62, 51.48]],
     visibleUntil: "1940-09-15T18:00",
@@ -290,7 +308,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Bomber",
     formationUnits: [
       { id: "damaged-bomber-a", label: "受损轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [0, 0] },
-      { id: "escort-return-a", label: "残余护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-34, 22] }
+      { id: "escort-return-a", label: "残余护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-24, 16] }
     ],
     waypoints: [[0.18, 51.34], [0.62, 51.16], [0.92, 50.98]],
     visibleUntil: "1940-09-15T18:00",
@@ -308,8 +326,8 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "late-pursuit-spitfire", label: "喷火追击", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
-      { id: "late-pursuit-hurricane", label: "飓风补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-38, -20] },
-      { id: "late-pursuit-polish", label: "波兰中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-74, 18] }
+      { id: "late-pursuit-hurricane", label: "飓风补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-24, -14] },
+      { id: "late-pursuit-polish", label: "波兰中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-48, 13] }
     ],
     waypoints: [[0.12, 51.32], [0.48, 51.18], [0.92, 51.08]],
     visibleUntil: "1940-09-15T18:00",
@@ -327,7 +345,7 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "bf110-diversion-a", label: "Bf 110牵制", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 0] },
-      { id: "bf110-diversion-b", label: "后续小队", badgeLabel: "德", icon: "ww2Fighter", offset: [-36, 18] }
+      { id: "bf110-diversion-b", label: "后续小队", badgeLabel: "德", icon: "ww2Fighter", offset: [-24, 13] }
     ],
     waypoints: [[0.8, 50.62], [-0.18, 50.72], [-0.95, 50.82]],
     visibleUntil: "1940-09-15T18:00",
@@ -415,10 +433,10 @@ export const battleEvents: BattleEvent[] = [
     location: "肯特海岸方向",
     coordinates: [1.05, 51.0],
     phase: "再度发现",
-    summary: "午后不久，第二次大规模来袭报告传入，RAF 准备再次投入伦敦防空。",
-    detail: "RAF Museum 记录13:45后不久出现第二次大攻击报告，随后约150架敌机和后续约100架敌机在14:14-14:20间越岸。",
+    summary: "午后，第二次大规模来袭报告传入；南部中队在整补与巡逻后准备再次拦截。",
+    detail: "RAF Museum 记录13:45后不久出现第二次大攻击报告，随后约150架敌机和后续约100架敌机在14:14-14:20间越岸。动画在12:45-14:05保留RAF整补巡逻线，避免上午追击结束后画面空白。",
     significance: "这解释了为什么动画要表现两轮高峰，而不是把9月15日画成一条单一来袭线。",
-    mapFocus: ["chain-home-kent", "dover", "uxbridge"]
+    mapFocus: ["chain-home-kent", "dover", "biggin-hill"]
   },
   {
     id: "afternoon-all-squadrons-engaged",

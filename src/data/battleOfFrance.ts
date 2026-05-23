@@ -42,6 +42,7 @@ export type FormationUnit = {
   className?: string;
   faction?: Faction;
   hiddenFrom?: string;
+  hiddenUntil?: string;
   icon?: UnitIconKind;
   id: string;
   label: string;

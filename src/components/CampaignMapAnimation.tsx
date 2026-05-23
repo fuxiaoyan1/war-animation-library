@@ -1302,6 +1302,10 @@ export function CampaignMapAnimation({
                     {isUnitVisible && (
                       <g className="formation-units">
                         {formationUnits.map((formationUnit) => {
+                          if (formationUnit.hiddenUntil && progress < timeline.dateToProgress(formationUnit.hiddenUntil)) {
+                            return null;
+                          }
+
                           if (formationUnit.hiddenFrom && progress >= timeline.dateToProgress(formationUnit.hiddenFrom)) {
                             return null;
                           }

@@ -8,10 +8,10 @@ export const mapPoints: MapPoint[] = [
   { id: "rabaul-roadstead", label: "拉包尔外海锚地", coordinates: [153.35, -1.9], kind: "port" },
   { id: "cape-gloucester", label: "格洛斯特角", coordinates: [148.42, -5.45], kind: "front" },
   { id: "bismarck-sea", label: "俾斯麦海", coordinates: [148.4, -6.1], kind: "front" },
-  { id: "vitiaz-strait", label: "维蒂亚兹海峡", coordinates: [146.85, -5.25], kind: "front", revealAt: "1943-03-03T12:30" },
+  { id: "vitiaz-strait", label: "维蒂亚兹海峡", coordinates: [146.85, -5.25], kind: "front", revealAt: "1943-03-03T11:50" },
   { id: "lae", label: "莱城", coordinates: [146.99, -6.73], kind: "port" },
-  { id: "lae-approach", label: "莱城外海", coordinates: [146.55, -5.3], kind: "front", revealAt: "1943-03-03T12:30" },
-  { id: "convoy-breakup-sea", label: "船队瓦解海域", coordinates: [147.05, -5.15], kind: "front", revealAt: "1943-03-03T12:30" },
+  { id: "lae-approach", label: "莱城外海", coordinates: [146.55, -5.3], kind: "front", revealAt: "1943-03-03T11:50" },
+  { id: "convoy-breakup-sea", label: "船队瓦解海域", coordinates: [147.05, -5.15], kind: "front", revealAt: "1943-03-03T11:50" },
   { id: "finschhafen", label: "芬什港", coordinates: [147.86, -6.6], kind: "port" },
   { id: "port-moresby", label: "莫尔兹比港", coordinates: [147.18, -9.44], kind: "port" },
   { id: "dobodura", label: "多博杜拉机场群", coordinates: [148.38, -8.75], kind: "front" },
@@ -21,20 +21,20 @@ export const mapPoints: MapPoint[] = [
 
 const japaneseConvoy: FormationUnit[] = [
   { id: "transport-1", label: "运输船队", badgeLabel: "日", icon: "ww2TransportShip", offset: [-8, 0] },
-  { id: "escort-1", label: "护航舰", badgeLabel: "日", icon: "ww2EscortShip", offset: [-36, 0] },
-  { id: "transport-2", label: "后队", badgeLabel: "日", icon: "ww2TransportShip", offset: [-64, 0] }
+  { id: "escort-1", label: "护航舰", badgeLabel: "日", icon: "ww2EscortShip", offset: [-25, 0] },
+  { id: "transport-2", label: "后队", badgeLabel: "日", icon: "ww2TransportShip", offset: [-44, 0] }
 ];
 
 const alliedAttackWave: FormationUnit[] = [
   { id: "b25-a", label: "B-25 低空", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [0, 0] },
-  { id: "b25-b", label: "扫射压制", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [-30, -14] },
-  { id: "a20-a", label: "A-20 攻击", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [-60, 18] },
-  { id: "fighter-cover", label: "战斗机掩护", badgeLabel: "盟", icon: "ww2Fighter", offset: [-88, -28] }
+  { id: "b25-b", label: "扫射压制", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [-20, -10] },
+  { id: "a20-a", label: "A-20 攻击", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [-40, 13] },
+  { id: "fighter-cover", label: "战斗机掩护", badgeLabel: "盟", icon: "ww2Fighter", offset: [-60, -19] }
 ];
 
 const highBomberWave: FormationUnit[] = [
   { id: "b17-a", label: "高空轰炸", badgeLabel: "盟", icon: "ww2Bomber", offset: [0, 0] },
-  { id: "b17-b", label: "延迟投弹", badgeLabel: "盟", icon: "ww2Bomber", offset: [-58, 24] }
+  { id: "b17-b", label: "延迟投弹", badgeLabel: "盟", icon: "ww2Bomber", offset: [-35, 16] }
 ];
 
 export const frontLines: FrontLine[] = [
@@ -46,15 +46,15 @@ export const frontLines: FrontLine[] = [
     to: "convoy-breakup-sea",
     routeKind: "sea",
     start: "1943-03-01T08:00",
-    end: "1943-03-03T10:00",
+    end: "1943-03-03T18:00",
     unitIcon: "ww2TransportShip",
     formationUnits: japaneseConvoy,
     waypoints: [
       [152.4, -1.55],
       [150.8, -1.55],
-      [149.35, -2.35],
-      [148.7, -3.85],
-      [148.2, -4.75],
+      [150.25, -3.55],
+      [149.35, -5.55],
+      [148.65, -5.35],
       [147.05, -5.15]
     ],
     visibleUntil: "1943-03-04T18:00",
@@ -67,12 +67,12 @@ export const frontLines: FrontLine[] = [
     from: "dobodura",
     to: "dobodura",
     routeKind: "air",
-    start: "1943-03-02T08:00",
-    end: "1943-03-02T18:00",
+    start: "1943-03-02T08:30",
+    end: "1943-03-02T16:30",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "recon-a", label: "侦察", badgeLabel: "盟", icon: "ww2Fighter", offset: [0, 0] },
-      { id: "recon-b", label: "跟踪", badgeLabel: "盟", icon: "ww2Fighter", offset: [-48, 20] }
+      { id: "recon-b", label: "跟踪", badgeLabel: "盟", icon: "ww2Fighter", offset: [-30, 14], hiddenUntil: "1943-03-02T12:00" }
     ],
     waypoints: [
       [148.9, -6.8],
@@ -82,7 +82,7 @@ export const frontLines: FrontLine[] = [
       [148.38, -8.75]
     ],
     visibleUntil: "1943-03-04T18:00",
-    unitVisibleUntil: "1943-03-02T16:00"
+    unitVisibleUntil: "1943-03-02T16:30"
   },
   {
     id: "high-level-bombing-wave",
@@ -92,13 +92,13 @@ export const frontLines: FrontLine[] = [
     to: "port-moresby",
     routeKind: "air",
     start: "1943-03-03T09:00",
-    end: "1943-03-03T10:30",
+    end: "1943-03-03T11:20",
     unitIcon: "ww2Bomber",
     formationUnits: highBomberWave,
     waypoints: [
       [147.8, -8.1],
       [148.2, -6.8],
-      [148.4, -6.1],
+      [147.75, -5.45],
       [147.8, -7.8],
       [147.18, -9.44]
     ],
@@ -113,12 +113,13 @@ export const frontLines: FrontLine[] = [
     to: "dobodura",
     routeKind: "air",
     start: "1943-03-03T10:30",
-    end: "1943-03-03T12:30",
+    end: "1943-03-03T13:10",
     unitIcon: "ww2AttackAircraft",
     formationUnits: alliedAttackWave,
     waypoints: [
       [148.1, -7.9],
       [147.4, -6.6],
+      [147.3, -5.65],
       [147.05, -5.2],
       [147.55, -6.8],
       [148.38, -8.75]
@@ -133,12 +134,12 @@ export const frontLines: FrontLine[] = [
     from: "convoy-breakup-sea",
     to: "lae-approach",
     routeKind: "sea",
-    start: "1943-03-03T12:30",
-    end: "1943-03-03T18:00",
+    start: "1943-03-03T11:50",
+    end: "1943-03-04T08:00",
     unitIcon: "ww2TransportShip",
     formationUnits: [
       { id: "scatter-1", label: "残存船只", badgeLabel: "日", icon: "ww2TransportShip", offset: [-8, 0] },
-      { id: "scatter-2", label: "失序转向", badgeLabel: "日", icon: "ww2EscortShip", offset: [-54, 0] }
+      { id: "scatter-2", label: "失序转向", badgeLabel: "日", icon: "ww2EscortShip", offset: [-34, 0] }
     ],
     waypoints: [
       [146.9, -5.1],
@@ -168,7 +169,30 @@ export const frontLines: FrontLine[] = [
       [148.38, -8.75]
     ],
     visibleUntil: "1943-03-04T18:00",
-    unitVisibleUntil: "1943-03-04T16:00"
+    unitVisibleUntil: "1943-03-04T15:45"
+  },
+  {
+    id: "mopping-up-return",
+    faction: "allies",
+    label: "追击机群返航收束",
+    from: "lae-approach",
+    to: "dobodura",
+    routeKind: "air",
+    start: "1943-03-04T15:00",
+    end: "1943-03-04T18:00",
+    unitIcon: "ww2AttackAircraft",
+    formationUnits: [
+      { id: "return-b25", label: "低空返航", badgeLabel: "盟", icon: "ww2AttackAircraft", offset: [0, 0] },
+      { id: "return-fighter", label: "掩护返航", badgeLabel: "盟", icon: "ww2Fighter", offset: [-24, -14] }
+    ],
+    waypoints: [
+      [147.15, -5.75],
+      [147.72, -6.85],
+      [148.0, -7.8]
+    ],
+    visibleUntil: "1943-03-04T18:00",
+    unitVisibleFrom: "1943-03-04T15:00",
+    unitVisibleUntil: "1943-03-04T18:00"
   }
 ];
 
@@ -198,23 +222,35 @@ export const battleEvents: BattleEvent[] = [
     mapFocus: ["dobodura", "convoy-sighting", "bismarck-sea"]
   },
   {
+    id: "convoy-shadowing-continues",
+    date: "1943-03-02T18:00",
+    title: "船队继续南下，攻击波待命",
+    location: "俾斯麦海北部",
+    coordinates: [149.35, -5.55],
+    phase: "跟踪与待机",
+    summary: "侦察机返航后，船队仍沿海上航线南下；盟军机场准备次日攻击波。",
+    detail: "这一节点不把飞机长期留场，而是让侦察航迹保留、船队继续移动。这样能解释为什么侦察机返航后目标没有消失，次日攻击波可以按船队新位置展开。",
+    significance: "空战动画不能靠飞机常驻填满画面，目标运动和已保留航迹同样要支撑战役连续性。",
+    mapFocus: ["convoy-sighting", "bismarck-sea", "dobodura"]
+  },
+  {
     id: "coordinated-air-attack",
-    date: "1943-03-03T10:30",
-    title: "高空轰炸与低空攻击协同展开",
+    date: "1943-03-03T10:05",
+    title: "高空轰炸先压迫船队",
     location: "俾斯麦海",
-    coordinates: [148.4, -6.1],
+    coordinates: [147.75, -5.45],
     phase: "协同攻击",
-    summary: "盟军以高空轰炸迫使船队机动，再用低空攻击机贴海扫射和投弹。",
-    detail: "这一段应展示空战与反舰攻击的层次：高空轰炸压迫编队，低空 B-25/A-20 沿海面突入，扫射压制甲板火力，跳弹轰炸攻击船体。",
+    summary: "盟军先以高空轰炸迫使船队机动，低空攻击波随后进入。",
+    detail: "这一段只显示高空轰炸和船队机动，不提前显示跳弹/集火线。低空 B-25/A-20 沿海面突入、扫射压制和跳弹轰炸放到下一节点。",
     significance: "俾斯麦海海战成为空中力量摧毁海上运输的经典案例，也体现战术创新与训练准备的价值。",
     mapFocus: ["bismarck-sea", "skip-bombing-zone", "dobodura"]
   },
   {
     id: "skip-bombing-breakup",
-    date: "1943-03-03T12:30",
+    date: "1943-03-03T11:50",
     title: "跳弹轰炸撕裂船队",
     location: "维蒂亚兹海峡方向",
-    coordinates: [147.95, -6.22],
+    coordinates: [147.05, -5.2],
     phase: "船队瓦解",
     summary: "低空攻击使运输船队失去队形，残存舰船分散转向。",
     detail: "这里要重点表现集群撕裂：日军船队从连续航迹变成几条短分散路线，盟军攻击波从不同高度和方向交错进入。",
@@ -226,7 +262,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1943-03-04T15:00",
     title: "后续追击终结运输企图",
     location: "莱城外海",
-    coordinates: [147.32, -6.08],
+    coordinates: [146.55, -5.3],
     phase: "追击收束",
     summary: "盟军继续攻击残余船只和落水救援目标，日军向莱城增援的海上企图失败。",
     detail: "末段不应让双方停在地图上。残余船队继续向西南分散，盟军攻击波从机场再度出击，航迹保留显示连续压力。",

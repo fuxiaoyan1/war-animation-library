@@ -38,9 +38,11 @@ const jutlandTimeline = createCampaignTimeline({
 
 type CampaignDataModule = {
   battleEvents: Array<{
+    coordinates?: [number, number];
     date: string;
     detail?: string;
     id: string;
+    mapFocus?: string[];
     phase?: string;
     summary?: string;
     title?: string;
@@ -60,8 +62,10 @@ type CampaignDataModule = {
     to: string;
     unitVisibleUntil?: string;
     visibleUntil?: string;
+    waypoints?: Array<[number, number]>;
   }>;
   mapPoints?: Array<{
+    coordinates?: [number, number];
     id: string;
     revealAt?: string;
   }>;
@@ -961,6 +965,90 @@ function expectAirRoutesHaveShortUnitWindows(campaignName: string, data: Campaig
   }
 }
 
+function pointCoordinatesById(data: CampaignDataModule) {
+  return new Map(
+    (data.mapPoints ?? [])
+      .filter((point): point is { id: string; coordinates: [number, number]; revealAt?: string } => Boolean(point.coordinates))
+      .map((point) => [point.id, point.coordinates])
+  );
+}
+
+function routeCoordinates(data: CampaignDataModule, line: NonNullable<CampaignDataModule["frontLines"]>[number]) {
+  const points = pointCoordinatesById(data);
+  const from = points.get(line.from);
+  const to = points.get(line.to);
+  expect(from, `route ${line.id} from coordinate exists`).toBeTruthy();
+  expect(to, `route ${line.id} to coordinate exists`).toBeTruthy();
+  return [from!, ...(line.waypoints ?? []), to!];
+}
+
+function routeDistance(points: Array<[number, number]>) {
+  return points.slice(0, -1).reduce((sum, point, index) => {
+    const next = points[index + 1];
+    return sum + Math.hypot(next[0] - point[0], next[1] - point[1]);
+  }, 0);
+}
+
+function routePointAtProgress(points: Array<[number, number]>, progress: number) {
+  const clamped = Math.min(1, Math.max(0, progress));
+  const total = routeDistance(points);
+  let remaining = total * clamped;
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const point = points[index];
+    const next = points[index + 1];
+    const segmentLength = Math.hypot(next[0] - point[0], next[1] - point[1]);
+    if (remaining <= segmentLength || index === points.length - 2) {
+      const ratio = segmentLength === 0 ? 0 : remaining / segmentLength;
+      return [point[0] + (next[0] - point[0]) * ratio, point[1] + (next[1] - point[1]) * ratio] as [number, number];
+    }
+    remaining -= segmentLength;
+  }
+
+  return points.at(-1)!;
+}
+
+function routeProgressAtDate(line: NonNullable<CampaignDataModule["frontLines"]>[number], date: string) {
+  const start = toTime(line.start);
+  const end = toTime(line.end);
+  return Math.min(1, Math.max(0, (toTime(date) - start) / Math.max(1, end - start)));
+}
+
+function expectEventHasActiveRoute(campaignName: string, data: CampaignDataModule, eventId: string, expectedRouteIds: string[]) {
+  const event = data.battleEvents.find((item) => item.id === eventId);
+  expect(event, `${campaignName} event ${eventId} exists`).toBeTruthy();
+  const eventTime = toTime(event!.date);
+  const activeRouteIds = (data.frontLines ?? [])
+    .filter((line) => eventTime >= toTime(line.start) && eventTime <= toTime(line.end))
+    .map((line) => line.id);
+
+  for (const routeId of expectedRouteIds) {
+    expect(activeRouteIds, `${campaignName} event ${eventId} should have active route ${routeId}`).toContain(routeId);
+  }
+}
+
+function expectRouteNearEvent(
+  campaignName: string,
+  data: CampaignDataModule,
+  eventId: string,
+  routeId: string,
+  maxDistanceDegrees: number,
+  minProgress = 0.05
+) {
+  const event = data.battleEvents.find((item) => item.id === eventId);
+  const line = (data.frontLines ?? []).find((item) => item.id === routeId);
+  expect(event?.coordinates, `${campaignName} event ${eventId} has coordinates`).toBeTruthy();
+  expect(line, `${campaignName} route ${routeId} exists`).toBeTruthy();
+
+  const progress = routeProgressAtDate(line!, event!.date);
+  expect(progress, `${campaignName} route ${routeId} should have started before ${eventId}`).toBeGreaterThan(minProgress);
+  expect(progress, `${campaignName} route ${routeId} should not have completed long before ${eventId}`).toBeLessThanOrEqual(1);
+
+  const point = routePointAtProgress(routeCoordinates(data, line!), progress);
+  const distance = Math.hypot(point[0] - event!.coordinates![0], point[1] - event!.coordinates![1]);
+  expect(distance, `${campaignName} route ${routeId} should be near event ${eventId}`).toBeLessThanOrEqual(maxDistanceDegrees);
+}
+
 function formationCenter(units: Array<{ label: string; x: number; y: number }>) {
   expect(units.length).toBeGreaterThan(0);
   return {
@@ -1415,6 +1503,30 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
       expectAirRoutesHaveShortUnitWindows(campaignName, data, campaignName === "bigWeekAirBattle" ? 12 : 8);
     }
   }
+
+  expectEventHasActiveRoute("battleOfBritain", battleOfBritainData as CampaignDataModule, "afternoon-warning", [
+    "midday-raf-refuel-patrol",
+    "afternoon-radar-warning"
+  ]);
+  expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", ["argument-first-wave"]);
+  expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "aircraft-industry-targets", [
+    "feb-24-industrial-strike",
+    "feb-24-escort-cover",
+    "feb-24-luftwaffe-defense"
+  ]);
+  expectEventHasActiveRoute("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "recon-contact", [
+    "japanese-convoy-rabaul-lae",
+    "allied-search-shadow"
+  ]);
+  expectEventHasActiveRoute("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "skip-bombing-breakup", [
+    "skip-bombing-attack",
+    "convoy-breakup"
+  ]);
+  expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", "argument-first-wave", 1.2, 0.35);
+  expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "aircraft-industry-targets", "feb-24-industrial-strike", 1.4, 0.25);
+  expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "recon-contact", "allied-search-shadow", 1.0, 0.25);
+  expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "coordinated-air-attack", "high-level-bombing-wave", 0.9, 0.25);
+  expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "skip-bombing-breakup", "skip-bombing-attack", 0.9, 0.35);
 
   for (const [campaignName, data] of customCampaignData) {
     expect(toTime(data.campaignEnd), `${campaignName} campaign end should be after start`).toBeGreaterThan(toTime(data.campaignStart));
@@ -2213,14 +2325,13 @@ test("bismarck sea air battle shows skip bombing and convoy breakup", async ({ p
   await expectRouteHasPolylineComplexity(page, ".bismarck-sea-air-battle", "allied-search-shadow", 4);
 
   await installAudioSpy(page);
-  await page.getByTestId("event-list").getByRole("button", { name: /高空轰炸与低空攻击协同展开/ }).click();
+  await page.getByTestId("event-list").getByRole("button", { name: /高空轰炸先压迫船队/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("高空轰炸");
   await expectCurrentEventInsideMapCore(page);
   await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
   await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveAttribute("data-route-to", "port-moresby");
-  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveClass(/route-air/);
-  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveAttribute("data-route-to", "dobodura");
+  await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveCount(0);
   await expect(page.getByTestId("bismarck-sea-skip-bombing")).toHaveCount(0);
 
   await page.getByTestId("event-list").getByRole("button", { name: /跳弹轰炸撕裂船队/ }).click();
