@@ -55,7 +55,7 @@ export type MapOverlayElement =
       coordinates: [number, number];
     };
 
-export type BattleEffectElement = {
+type SalvoBattleEffectElement = {
   className?: string;
   end: string;
   from: [number, number];
@@ -68,6 +68,21 @@ export type BattleEffectElement = {
   to: [number, number];
   type: "salvo";
 };
+
+type DogfightBattleEffectElement = {
+  center: [number, number];
+  className?: string;
+  end: string;
+  id: string;
+  intensity?: number;
+  label?: string;
+  radius?: number;
+  start: string;
+  testId?: string;
+  type: "dogfight";
+};
+
+export type BattleEffectElement = SalvoBattleEffectElement | DogfightBattleEffectElement;
 
 export type OutcomeStat = {
   className?: string;
@@ -411,11 +426,37 @@ function ActiveEventEffect({
   x,
   y
 }: {
-  kind: "ancient" | "gunpowder" | "ww2";
+  kind: "airCombat" | "aircraft" | "ancient" | "gunpowder" | "ww2";
   pulse: number;
   x: number;
   y: number;
 }) {
+  if (kind === "airCombat") {
+    const rotation = pulse * 92;
+    return (
+      <g className="dogfight-clash" data-testid="dogfight-clash" transform={`translate(${x} ${y}) rotate(${rotation})`}>
+        <circle r={18 + pulse * 12} />
+        <circle r={31 + pulse * 10} />
+        <path className="dogfight-turn-arc" d="M -34 -8 C -18 -34 20 -33 36 -6" />
+        <path className="dogfight-turn-arc dogfight-turn-arc-alt" d="M 32 10 C 12 34 -24 29 -37 4" />
+        <path className="dogfight-tracer" d="M -26 -18 l 18 6" />
+        <path className="dogfight-tracer dogfight-tracer-alt" d="M 18 18 l -19 -5" />
+        <path className="dogfight-flash" d="M 0 -10 L 4 -2 L 13 -1 L 5 4 L 8 13 L 0 8 L -8 13 L -5 4 L -13 -1 L -4 -2 Z" />
+      </g>
+    );
+  }
+
+  if (kind === "aircraft") {
+    return (
+      <g className="aircraft-contact-pulse" data-testid="aircraft-contact-pulse" transform={`translate(${x} ${y})`}>
+        <circle r={16 + pulse * 12} />
+        <circle r={28 + pulse * 10} />
+        <path d="M -24 2 C -8 -11 10 -11 24 2" />
+        <path d="M -12 -9 L 0 -18 L 12 -9" />
+      </g>
+    );
+  }
+
   if (kind === "ancient") {
     return (
       <g className="melee-clash" data-testid="melee-clash">
@@ -445,7 +486,7 @@ function SalvoBattleEffect({
   progress,
   project
 }: {
-  effect: BattleEffectElement;
+  effect: SalvoBattleEffectElement;
   progress: number;
   project: (coordinates: [number, number]) => [number, number];
 }) {
@@ -499,6 +540,62 @@ function SalvoBattleEffect({
       ))}
       {effect.label && (
         <text className="salvo-label" x={to[0] + 22} y={to[1] - 24}>
+          {effect.label}
+        </text>
+      )}
+    </g>
+  );
+}
+
+function DogfightBattleEffect({
+  effect,
+  progress,
+  project
+}: {
+  effect: DogfightBattleEffectElement;
+  progress: number;
+  project: (coordinates: [number, number]) => [number, number];
+}) {
+  const [x, y] = project(effect.center);
+  const radius = effect.radius ?? 42;
+  const intensity = effect.intensity ?? 1;
+  const rotation = progress * 118;
+  const arcs = [
+    { className: "dogfight-effect-arc", d: `M ${-radius} ${-radius * 0.15} C ${-radius * 0.45} ${-radius * 0.75} ${radius * 0.45} ${-radius * 0.72} ${radius} ${-radius * 0.12}` },
+    { className: "dogfight-effect-arc dogfight-effect-arc-secondary", d: `M ${radius * 0.82} ${radius * 0.26} C ${radius * 0.18} ${radius * 0.82} ${-radius * 0.6} ${radius * 0.65} ${-radius * 0.98} ${radius * 0.05}` },
+    { className: "dogfight-effect-arc dogfight-effect-arc-tertiary", d: `M ${-radius * 0.2} ${radius * 0.92} C ${radius * 0.2} ${radius * 0.3} ${radius * 0.16} ${-radius * 0.28} ${-radius * 0.18} ${-radius * 0.9}` }
+  ];
+  const flashes = [
+    [-0.42, -0.28],
+    [0.28, 0.12],
+    [0.04, -0.54],
+    [-0.16, 0.42]
+  ];
+
+  return (
+    <g
+      className={`battle-effect battle-dogfight-effect ${effect.className ?? ""}`}
+      data-effect-progress={progress.toFixed(3)}
+      data-testid={effect.testId ?? `battle-effect-${effect.id}`}
+      transform={`translate(${x} ${y}) rotate(${rotation})`}
+    >
+      <circle className="dogfight-effect-zone" r={radius * (0.72 + intensity * 0.16)} />
+      {arcs.map((arc, index) => (
+        <path key={`${effect.id}-arc-${index}`} className={arc.className} d={arc.d} style={{ animationDelay: `${index * 0.14}s` }} />
+      ))}
+      {flashes.map(([offsetX, offsetY], index) => (
+        <g
+          key={`${effect.id}-flash-${index}`}
+          className="dogfight-effect-flash"
+          style={{ animationDelay: `${index * 0.18}s` }}
+          transform={`translate(${offsetX * radius} ${offsetY * radius}) rotate(${-rotation + index * 22})`}
+        >
+          <path className="dogfight-effect-tracer" d={`M ${-12 - index * 2} ${-4 + index} l ${19 + index * 2} ${5 - index}`} />
+          <path className="dogfight-effect-hit" d="M 0 -7 L 3 -2 L 9 -1 L 4 3 L 6 9 L 0 5 L -6 9 L -4 3 L -9 -1 L -3 -2 Z" />
+        </g>
+      ))}
+      {effect.label && (
+        <text className="dogfight-effect-label" x={radius + 12} y={-radius * 0.58} transform={`rotate(${-rotation})`}>
           {effect.label}
         </text>
       )}
@@ -829,6 +926,19 @@ export function CampaignMapAnimation({
     }
 
     return diveCueEvents.has(eventId) ? "dive" : "combined";
+  };
+
+  const visualEffectKindForEvent = (eventId: string): "airCombat" | "aircraft" | "ancient" | "gunpowder" | "ww2" => {
+    const cueKind = battleCueForEvent(eventId);
+    if (cueKind === "airCombat" || cueKind === "strafing") {
+      return "airCombat";
+    }
+
+    if (cueKind === "aircraft") {
+      return "aircraft";
+    }
+
+    return sfxProfile;
   };
 
   const playEventCue = (eventId: string) => {
@@ -1360,14 +1470,23 @@ export function CampaignMapAnimation({
 
               {visibleBattleEffects.length > 0 && (
                 <g className="battle-effect-layer" data-testid="battle-effect-layer">
-                  {visibleBattleEffects.map((effect) => (
-                    <SalvoBattleEffect
-                      key={effect.id}
-                      effect={effect}
-                      progress={effect.progress}
-                      project={(coordinates) => projectPoint(projection, coordinates)}
-                    />
-                  ))}
+                  {visibleBattleEffects.map((effect) =>
+                    effect.type === "salvo" ? (
+                      <SalvoBattleEffect
+                        key={effect.id}
+                        effect={effect}
+                        progress={effect.progress}
+                        project={(coordinates) => projectPoint(projection, coordinates)}
+                      />
+                    ) : (
+                      <DogfightBattleEffect
+                        key={effect.id}
+                        effect={effect}
+                        progress={effect.progress}
+                        project={(coordinates) => projectPoint(projection, coordinates)}
+                      />
+                    )
+                  )}
                 </g>
               )}
 
@@ -1382,7 +1501,7 @@ export function CampaignMapAnimation({
 
                 return (
                   <g key={event.id} className={`event-pin ${event.passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
-                    {isCurrentCuePulse && <ActiveEventEffect kind={sfxProfile} pulse={pulse} x={x} y={y} />}
+                    {isCurrentCuePulse && <ActiveEventEffect kind={visualEffectKindForEvent(event.id)} pulse={pulse} x={x} y={y} />}
                     {!isCurrent && event.passed && <StaticEventIcon kind={sfxProfile} x={x} y={y} />}
                     <circle cx={x} cy={y} r={isCurrent ? 7 : 4.4} />
                     {isCurrent && (

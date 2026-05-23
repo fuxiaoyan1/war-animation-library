@@ -4,6 +4,7 @@ import {
   campaignStart,
   cueEventIds,
   diveCueEventIds,
+  dogfightEffects,
   frontLines,
   mapPoints
 } from "../data/battleOfBritain";
@@ -61,6 +62,7 @@ export function BattleOfBritainAnimation() {
       activeSpans={activeSpans}
       ariaLabel="伦敦上空的鹰动态地图"
       battleEvents={battleEvents}
+      battleEffects={dogfightEffects}
       campaignEnd={campaignEnd}
       campaignStart={campaignStart}
       cinematicMode

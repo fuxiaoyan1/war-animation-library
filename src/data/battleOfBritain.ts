@@ -148,6 +148,45 @@ export const frontLines: FrontLine[] = [
     unitVisibleUntil: "1940-09-15T13:05"
   },
   {
+    id: "morning-raf-dogfight-weave",
+    faction: "britain",
+    label: "上午RAF缠斗圈",
+    from: "brenchley",
+    to: "south-london",
+    routeKind: "air",
+    start: "1940-09-15T11:24",
+    end: "1940-09-15T12:08",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "morning-weave-spitfire", label: "喷火缠斗", badgeLabel: "英", icon: "ww2Fighter", offset: [0, -20] },
+      { id: "morning-weave-hurricane", label: "飓风咬尾", badgeLabel: "英", icon: "ww2Fighter", offset: [-28, 18] },
+      { id: "morning-weave-cover", label: "侧后补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-56, -10] }
+    ],
+    waypoints: [[0.28, 51.38], [0.08, 51.47], [0.2, 51.32], [0.46, 51.2], [0.18, 51.36]],
+    visibleUntil: "1940-09-15T18:00",
+    unitVisibleFrom: "1940-09-15T11:24",
+    unitVisibleUntil: "1940-09-15T12:20"
+  },
+  {
+    id: "morning-luftwaffe-cover-break",
+    faction: "germany",
+    label: "上午德军护航纠缠",
+    from: "thames-estuary",
+    to: "dungeness",
+    routeKind: "air",
+    start: "1940-09-15T11:22",
+    end: "1940-09-15T12:12",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "morning-bf109-cover-a", label: "Bf 109护航", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 16] },
+      { id: "morning-bf109-cover-b", label: "护航脱节", badgeLabel: "德", icon: "ww2Fighter", offset: [-28, -16] }
+    ],
+    waypoints: [[0.48, 51.38], [0.18, 51.36], [0.34, 51.24], [0.72, 51.06]],
+    visibleUntil: "1940-09-15T18:00",
+    unitVisibleFrom: "1940-09-15T11:22",
+    unitVisibleUntil: "1940-09-15T12:18"
+  },
+  {
     id: "buckingham-palace-dornier",
     faction: "germany",
     label: "脱队Do 17冲向宫殿区",
@@ -331,6 +370,45 @@ export const frontLines: FrontLine[] = [
     unitVisibleUntil: "1940-09-15T17:20"
   },
   {
+    id: "afternoon-raf-dogfight-weave",
+    faction: "britain",
+    label: "下午伦敦东南缠斗圈",
+    from: "south-london",
+    to: "thames-estuary",
+    routeKind: "air",
+    start: "1940-09-15T14:34",
+    end: "1940-09-15T15:45",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "afternoon-weave-spitfire", label: "喷火高空压制", badgeLabel: "英", icon: "ww2Fighter", offset: [0, -18] },
+      { id: "afternoon-weave-hurricane", label: "飓风近距攻击", badgeLabel: "英", icon: "ww2Fighter", offset: [-30, 18] },
+      { id: "afternoon-weave-polish", label: "波兰中队咬尾", badgeLabel: "英", icon: "ww2Fighter", offset: [-60, 0] }
+    ],
+    waypoints: [[0.28, 51.42], [0.04, 51.52], [0.36, 51.24], [0.16, 51.36], [0.62, 51.18]],
+    visibleUntil: "1940-09-15T18:00",
+    unitVisibleFrom: "1940-09-15T14:34",
+    unitVisibleUntil: "1940-09-15T16:00"
+  },
+  {
+    id: "afternoon-luftwaffe-cover-split",
+    faction: "germany",
+    label: "下午德军护航被拉散",
+    from: "thames-estuary",
+    to: "dungeness",
+    routeKind: "air",
+    start: "1940-09-15T14:32",
+    end: "1940-09-15T15:48",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "afternoon-bf109-cover-a", label: "Bf 109护航", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 17] },
+      { id: "afternoon-bf110-cover-a", label: "Bf 110失速缠斗", badgeLabel: "德", icon: "ww2Fighter", offset: [-34, -17] }
+    ],
+    waypoints: [[0.46, 51.42], [0.18, 51.34], [0.34, 51.2], [0.72, 51.08]],
+    visibleUntil: "1940-09-15T18:00",
+    unitVisibleFrom: "1940-09-15T14:32",
+    unitVisibleUntil: "1940-09-15T16:05"
+  },
+  {
     id: "late-pursuit-over-channel",
     faction: "britain",
     label: "海峡上空追击收束",
@@ -366,6 +444,53 @@ export const frontLines: FrontLine[] = [
     waypoints: [[0.8, 50.62], [-0.18, 50.72], [-0.95, 50.82]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T18:00"
+  }
+];
+
+export const dogfightEffects = [
+  {
+    id: "morning-london-dogfight",
+    type: "dogfight" as const,
+    start: "1940-09-15T11:27",
+    end: "1940-09-15T11:52",
+    center: [0.18, 51.36] as [number, number],
+    radius: 46,
+    intensity: 1.05,
+    label: "侧前拦截",
+    testId: "britain-morning-dogfight"
+  },
+  {
+    id: "morning-return-dogfight",
+    type: "dogfight" as const,
+    start: "1940-09-15T11:56",
+    end: "1940-09-15T12:18",
+    center: [0.18, 51.36] as [number, number],
+    radius: 38,
+    intensity: 0.9,
+    label: "回程追击",
+    testId: "britain-morning-return-dogfight"
+  },
+  {
+    id: "afternoon-london-dogfight",
+    type: "dogfight" as const,
+    start: "1940-09-15T14:40",
+    end: "1940-09-15T15:18",
+    center: [0.24, 51.36] as [number, number],
+    radius: 54,
+    intensity: 1.18,
+    label: "伦敦上空混战",
+    testId: "britain-afternoon-dogfight"
+  },
+  {
+    id: "afternoon-return-dogfight",
+    type: "dogfight" as const,
+    start: "1940-09-15T15:12",
+    end: "1940-09-15T16:05",
+    center: [0.48, 51.18] as [number, number],
+    radius: 46,
+    intensity: 1,
+    label: "破阵后追击",
+    testId: "britain-afternoon-return-dogfight"
   }
 ];
 

@@ -52,6 +52,13 @@ type CampaignDataModule = {
   cueEventIds?: Set<string>;
   cueEventKinds?: Partial<Record<string, string>>;
   diveCueEventIds?: Set<string>;
+  dogfightEffects?: Array<{
+    end: string;
+    id: string;
+    start: string;
+    testId?: string;
+    type: string;
+  }>;
   frontLines?: Array<{
     end: string;
     formationUnits?: unknown[];
@@ -1536,6 +1543,22 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "midday-raf-refuel-patrol",
     "afternoon-radar-warning"
   ]);
+  expectEventHasActiveRoute("battleOfBritain", battleOfBritainData as CampaignDataModule, "morning-dogfight-london", [
+    "morning-raid-first-wave",
+    "morning-raid-second-wave",
+    "eleven-group-morning-scramble",
+    "twelve-group-morning-wing",
+    "morning-raf-dogfight-weave",
+    "morning-luftwaffe-cover-break"
+  ]);
+  expectEventHasActiveRoute("battleOfBritain", battleOfBritainData as CampaignDataModule, "afternoon-all-squadrons-engaged", [
+    "afternoon-raid-main-wave",
+    "afternoon-raid-follow-wave",
+    "eleven-group-afternoon-all-in",
+    "big-wing-afternoon-commitment",
+    "afternoon-raf-dogfight-weave",
+    "afternoon-luftwaffe-cover-split"
+  ]);
   expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", ["argument-first-wave"]);
   expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", [
     "deep-escort-chain",
@@ -1612,6 +1635,14 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectRoutesNearEachOtherAtEvent(
     "battleOfBritain",
     battleOfBritainData as CampaignDataModule,
+    "morning-dogfight-london",
+    "morning-raf-dogfight-weave",
+    "morning-luftwaffe-cover-break",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
     "morning-return-fire",
     "morning-raid-first-wave",
     "morning-return-pursuit",
@@ -1623,6 +1654,14 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "afternoon-all-squadrons-engaged",
     "afternoon-raid-main-wave",
     "eleven-group-afternoon-all-in",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "afternoon-all-squadrons-engaged",
+    "afternoon-raf-dogfight-weave",
+    "afternoon-luftwaffe-cover-split",
     0.25
   );
   expectRoutesNearEachOtherAtEvent(
@@ -1648,6 +1687,14 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     ["bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule]
   ] as const) {
     expect(data.diveCueEventIds?.size ?? 0, `${campaignName} air war should not use generic dive cues after explicit cue kinds`).toBe(0);
+  }
+
+  for (const effect of (battleOfBritainData as CampaignDataModule).dogfightEffects ?? []) {
+    expect(effect.type, `battleOfBritain effect ${effect.id} should use air dogfight visuals`).toBe("dogfight");
+    expect(effect.testId, `battleOfBritain effect ${effect.id} should expose a stable smoke selector`).toBeTruthy();
+    expectDateWithinRange(`battleOfBritain dogfight effect ${effect.id} start`, effect.start, battleOfBritainData.campaignStart, battleOfBritainData.campaignEnd);
+    expectDateWithinRange(`battleOfBritain dogfight effect ${effect.id} end`, effect.end, battleOfBritainData.campaignStart, battleOfBritainData.campaignEnd);
+    expect(toTime(effect.end), `battleOfBritain dogfight effect ${effect.id} should not end before start`).toBeGreaterThan(toTime(effect.start));
   }
 
   for (const [campaignName, data] of customCampaignData) {
@@ -2284,6 +2331,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
 
   await openCampaignFromHome(page, "britain-air");
   await expect(page.getByTestId("battle-of-britain-app")).toBeVisible();
+  await installAudioSpy(page);
   await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "伦敦上空的鹰" })).toBeVisible();
   await expectOnlyWarNameInMapTitle(page, "伦敦上空的鹰");
   await expectScoreUsesMusic(page, "/audio/wikimedia-rule-britannia.ogg");
@@ -2310,7 +2358,22 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectCompactAircraftMarkers(page, "ww2-fighter-marker");
   await expectRouteBadgeLabels(page, "morning-raid-first-wave", ["德", "德", "德", "德", "德"]);
 
-  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /伦敦南侧空域混战/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("伦敦南侧空域混战");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("britain-morning-dogfight")).toBeVisible();
+  await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
+  await expect(page.locator('.front-line[data-route-id="morning-raf-dogfight-weave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="morning-luftwaffe-cover-break"]')).toHaveClass(/route-air/);
+  await expect(page.getByTestId("dogfight-clash")).toBeVisible();
+
+  await page.waitForTimeout(900);
+  await page.evaluate(() => {
+    const win = window as typeof window & { __playedAudioSources?: string[] };
+    if (win.__playedAudioSources) {
+      win.__playedAudioSources.length = 0;
+    }
+  });
   await page.getByTestId("event-list").getByRole("button", { name: /13:45 第二次大空袭预警/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("第二次大空袭预警");
   await expectCurrentEventInsideMapCore(page);
@@ -2329,6 +2392,10 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await page.getByTestId("event-list").getByRole("button", { name: /下午高峰/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("下午高峰");
   await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("britain-afternoon-dogfight")).toBeVisible();
+  await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
+  await expect(page.locator('.front-line[data-route-id="afternoon-raf-dogfight-weave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="afternoon-luftwaffe-cover-split"]')).toHaveClass(/route-air/);
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("傍晚：伦敦守住白昼");

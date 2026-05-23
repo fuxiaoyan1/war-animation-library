@@ -1313,6 +1313,83 @@ h1 {
   stroke-width: 4px;
 }
 
+.battle-dogfight-effect {
+  opacity: 0.96;
+}
+
+.dogfight-effect-zone,
+.dogfight-clash circle,
+.aircraft-contact-pulse circle {
+  fill: none;
+  stroke: rgba(179, 230, 255, 0.48);
+  stroke-width: 2.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 8px rgba(115, 198, 255, 0.4));
+}
+
+.dogfight-effect-zone {
+  stroke-dasharray: 3 8;
+  animation: dogfightZonePulse 1.25s ease-out infinite;
+}
+
+.dogfight-effect-arc,
+.dogfight-turn-arc,
+.aircraft-contact-pulse path {
+  fill: none;
+  stroke: rgba(207, 240, 255, 0.9);
+  stroke-dasharray: 15 10;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 8px rgba(136, 210, 255, 0.6));
+  animation: dogfightArcPulse 1.05s ease-in-out infinite alternate;
+}
+
+.dogfight-effect-arc-secondary,
+.dogfight-turn-arc-alt {
+  stroke: rgba(255, 229, 150, 0.82);
+}
+
+.dogfight-effect-arc-tertiary {
+  stroke: rgba(255, 160, 126, 0.78);
+}
+
+.dogfight-effect-tracer,
+.dogfight-tracer {
+  fill: none;
+  stroke: rgba(255, 230, 151, 0.92);
+  stroke-linecap: round;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 7px rgba(255, 201, 91, 0.6));
+  animation: dogfightTracerPulse 0.68s steps(2, end) infinite;
+}
+
+.dogfight-tracer-alt {
+  stroke: rgba(255, 169, 134, 0.9);
+}
+
+.dogfight-effect-hit,
+.dogfight-flash {
+  fill: #ffe6a2;
+  stroke: #f06a42;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 10px rgba(255, 196, 92, 0.7));
+  animation: dogfightFlashPulse 0.72s ease-out infinite;
+}
+
+.dogfight-effect-label {
+  fill: #dff6ff;
+  font-size: 11px;
+  font-weight: 900;
+  paint-order: stroke;
+  stroke: rgba(11, 22, 29, 0.88);
+  stroke-width: 3px;
+}
+
 .tsushima-battle .front-line.is-complete .front-halo {
   stroke-opacity: 0.12;
 }
@@ -3088,6 +3165,65 @@ h1 {
   100% {
     opacity: 0.18;
     transform: scale(1.42);
+  }
+}
+
+@keyframes dogfightZonePulse {
+  0% {
+    opacity: 0.22;
+    transform: scale(0.82);
+  }
+
+  45% {
+    opacity: 0.62;
+  }
+
+  100% {
+    opacity: 0.14;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes dogfightArcPulse {
+  0% {
+    opacity: 0.46;
+    stroke-dashoffset: 0;
+  }
+
+  100% {
+    opacity: 0.96;
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes dogfightTracerPulse {
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.18;
+  }
+}
+
+@keyframes dogfightFlashPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.42);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
   }
 }
 
