@@ -64,11 +64,11 @@ export const frontLines: FrontLine[] = [
     from: "chain-home-kent",
     to: "uxbridge",
     routeKind: "air",
-    start: "1940-09-15T10:45",
+    start: "1940-09-15T10:30",
     end: "1940-09-15T11:05",
     hideUnit: true,
     unitIcon: "ww2Fighter",
-    waypoints: [[0.92, 51.32], [0.25, 51.52]],
+    waypoints: [[1.1, 51.2], [0.55, 51.36], [0.12, 51.52]],
     visibleUntil: "1940-09-15T18:00"
   },
   {
@@ -85,7 +85,10 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [1.2, 51.04],
       [0.58, 51.28],
-      [0.12, 51.42]
+      [0.12, 51.42],
+      [0.02, 51.48],
+      [0.18, 51.34],
+      [0.72, 51.1]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:50"
@@ -104,7 +107,10 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [1.02, 50.98],
       [0.42, 51.22],
-      [0.06, 51.36]
+      [0.06, 51.36],
+      [-0.02, 51.42],
+      [0.24, 51.28],
+      [0.86, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:55"
@@ -120,7 +126,7 @@ export const frontLines: FrontLine[] = [
     end: "1940-09-15T11:45",
     unitIcon: "ww2Fighter",
     formationUnits: rafElevenGroup,
-    waypoints: [[0.16, 51.32], [0.32, 51.24]],
+    waypoints: [[0.16, 51.32], [0.28, 51.32], [0.36, 51.24], [0.18, 51.36], [0.52, 51.16]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:55"
   },
@@ -135,7 +141,7 @@ export const frontLines: FrontLine[] = [
     end: "1940-09-15T12:20",
     unitIcon: "ww2Fighter",
     formationUnits: rafReinforcementWing,
-    waypoints: [[0.18, 51.84], [0.52, 51.62]],
+    waypoints: [[0.18, 51.84], [0.32, 51.66], [0.52, 51.52], [0.48, 51.34]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T13:05"
   },
@@ -236,7 +242,10 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [1.12, 51.05],
       [0.68, 51.26],
-      [0.28, 51.42]
+      [0.28, 51.42],
+      [0.0, 51.48],
+      [0.2, 51.34],
+      [0.82, 51.02]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:25"
@@ -255,7 +264,10 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [1.05, 50.98],
       [0.56, 51.18],
-      [0.08, 51.36]
+      [0.08, 51.36],
+      [-0.02, 51.42],
+      [0.3, 51.2],
+      [0.92, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:35"
@@ -274,7 +286,7 @@ export const frontLines: FrontLine[] = [
       ...rafElevenGroup,
       { id: "hurricane-249", label: "249中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-75, 17] }
     ],
-    waypoints: [[-0.02, 51.34], [0.16, 51.4]],
+    waypoints: [[-0.02, 51.34], [0.08, 51.4], [0.22, 51.36], [0.48, 51.22]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:30"
   },
@@ -292,7 +304,7 @@ export const frontLines: FrontLine[] = [
       ...rafReinforcementWing,
       { id: "hurricane-310", label: "310中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-80, -13] }
     ],
-    waypoints: [[0.18, 51.82], [0.44, 51.64], [0.62, 51.48]],
+    waypoints: [[0.18, 51.82], [0.38, 51.66], [0.58, 51.5], [0.38, 51.36]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:40"
   },
@@ -431,7 +443,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1940-09-15T13:45",
     title: "13:45 第二次大空袭预警",
     location: "肯特海岸方向",
-    coordinates: [1.05, 51.0],
+    coordinates: [0.62, 51.2],
     phase: "再度发现",
     summary: "午后，第二次大规模来袭报告传入；南部中队在整补与巡逻后准备再次拦截。",
     detail: "RAF Museum 记录13:45后不久出现第二次大攻击报告，随后约150架敌机和后续约100架敌机在14:14-14:20间越岸。动画在12:45-14:05保留RAF整补巡逻线，避免上午追击结束后画面空白。",
@@ -494,17 +506,9 @@ export const cueEventIds = new Set([
   "morning-dogfight-london",
   "buckingham-palace-intercept",
   "morning-return-fire",
-  "afternoon-warning",
-  "afternoon-all-squadrons-engaged",
-  "afternoon-bombers-broken",
-  "channel-pursuit-closes",
-  "evening-result"
-]);
-
-export const diveCueEventIds = new Set([
-  "morning-dogfight-london",
-  "buckingham-palace-intercept",
   "afternoon-all-squadrons-engaged",
   "afternoon-bombers-broken",
   "channel-pursuit-closes"
 ]);
+
+export const diveCueEventIds = new Set<string>();

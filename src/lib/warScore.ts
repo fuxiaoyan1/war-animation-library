@@ -1,6 +1,6 @@
 import { publicPath } from "./publicPath";
 
-export type BattleCueKind = "cannon" | "dive" | "melee" | "strafing" | "combined";
+export type BattleCueKind = "airCombat" | "aircraft" | "bombing" | "cannon" | "dive" | "melee" | "strafing" | "combined";
 
 type SfxKey = "cannon" | "explosion" | "aircraft" | "melee" | "strafing";
 
@@ -97,13 +97,20 @@ export class WarScore {
       }
     }
 
-    if (kind === "dive" || kind === "combined") {
+    if (kind === "bombing") {
+      void this.playClip("explosion");
+      window.setTimeout(() => {
+        void this.playClip("aircraft");
+      }, 180);
+    }
+
+    if (kind === "aircraft" || kind === "dive" || kind === "airCombat" || kind === "combined") {
       window.setTimeout(() => {
         void this.playClip("aircraft");
       }, 140);
     }
 
-    if (kind === "strafing" || kind === "combined") {
+    if (kind === "airCombat" || kind === "strafing" || kind === "combined") {
       window.setTimeout(() => {
         void this.playClip("strafing");
       }, 760);

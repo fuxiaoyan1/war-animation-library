@@ -52,9 +52,9 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [152.4, -1.55],
       [150.8, -1.55],
-      [150.25, -3.55],
-      [149.35, -5.55],
-      [148.65, -5.35],
+      [149.2, -2.4],
+      [148.7, -5.25],
+      [147.95, -5.1],
       [147.05, -5.15]
     ],
     visibleUntil: "1943-03-04T18:00",
@@ -98,6 +98,7 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [147.8, -8.1],
       [148.2, -6.8],
+      [148.1, -5.28],
       [147.75, -5.45],
       [147.8, -7.8],
       [147.18, -9.44]
@@ -120,6 +121,7 @@ export const frontLines: FrontLine[] = [
       [148.1, -7.9],
       [147.4, -6.6],
       [147.3, -5.65],
+      [148.0, -5.27],
       [147.05, -5.2],
       [147.55, -6.8],
       [148.38, -8.75]
@@ -241,7 +243,7 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [147.75, -5.45],
     phase: "协同攻击",
     summary: "盟军先以高空轰炸迫使船队机动，低空攻击波随后进入。",
-    detail: "这一段只显示高空轰炸和船队机动，不提前显示跳弹/集火线。低空 B-25/A-20 沿海面突入、扫射压制和跳弹轰炸放到下一节点。",
+    detail: "这一段只显示高空轰炸和船队机动，不提前显示跳弹/集火线。高空机群先从船队上空压过，低空 B-25/A-20 沿海面突入、扫射压制和跳弹轰炸放到下一节点。",
     significance: "俾斯麦海海战成为空中力量摧毁海上运输的经典案例，也体现战术创新与训练准备的价值。",
     mapFocus: ["bismarck-sea", "skip-bombing-zone", "dobodura"]
   },
@@ -253,7 +255,7 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [147.05, -5.2],
     phase: "船队瓦解",
     summary: "低空攻击使运输船队失去队形，残存舰船分散转向。",
-    detail: "这里要重点表现集群撕裂：日军船队从连续航迹变成几条短分散路线，盟军攻击波从不同高度和方向交错进入。",
+    detail: "这里要重点表现集群撕裂：日军船队从连续航迹变成几条短分散路线，盟军攻击波从不同高度和方向交错进入。空战不使用舰炮式集火线，跳弹轰炸以机群贴近船队、扫射音效和船队瓦解路线表达。",
     significance: "它把空中自由度转化为海上结果，说明空军可通过攻击节奏和角度控制敌方队形。",
     mapFocus: ["skip-bombing-zone", "vitiaz-strait", "lae-approach"]
   },
@@ -273,8 +275,8 @@ export const battleEvents: BattleEvent[] = [
 
 export const cueEventIds = new Set(["coordinated-air-attack", "skip-bombing-breakup", "mopping-up"]);
 export const cueEventKinds = {
-  "coordinated-air-attack": "combined",
+  "coordinated-air-attack": "bombing",
   "skip-bombing-breakup": "strafing",
-  "mopping-up": "dive"
+  "mopping-up": "airCombat"
 } as const;
-export const diveCueEventIds = new Set(["coordinated-air-attack", "mopping-up"]);
+export const diveCueEventIds = new Set<string>();

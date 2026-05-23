@@ -59,12 +59,12 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [2.6, 52.2]
   ],
   britainAirLondon: [
-    [-0.9, 50.9],
-    [1.25, 51.9]
+    [-0.65, 50.98],
+    [1.05, 51.78]
   ],
   britainAirLondonClose: [
-    [-0.62, 51.18],
-    [0.88, 51.78]
+    [-0.52, 51.18],
+    [0.78, 51.72]
   ],
   bigWeekWide: [
     [-1.5, 48.4],

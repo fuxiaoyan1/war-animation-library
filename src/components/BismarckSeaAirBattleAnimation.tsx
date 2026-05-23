@@ -12,7 +12,7 @@ import { bismarckSeaCampaignCountries, bismarckSeaCountryClassName } from "../li
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
 import { publicPath } from "../lib/publicPath";
-import { CampaignMapAnimation, type BattleEffectElement, type NarrationCue } from "./CampaignMapAnimation";
+import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
 const semanticFrontLines = withUnitBadgeLabels(frontLines, {
@@ -56,37 +56,11 @@ const narrationCues: NarrationCue[] = [
   }
 ];
 
-const battleEffects: BattleEffectElement[] = [
-  {
-    id: "skip-bombing",
-    type: "salvo",
-    start: "1943-03-03T11:45",
-    end: "1943-03-03T12:25",
-    from: [147.4, -6.6],
-    to: [147.05, -5.2],
-    label: "低空跳弹命中区",
-    testId: "bismarck-sea-skip-bombing",
-    shellOffsets: [
-      [-20, 10],
-      [10, -12],
-      [24, 16],
-      [-4, -24]
-    ],
-    impactOffsets: [
-      [-18, -8],
-      [10, -14],
-      [22, 3],
-      [-4, 14]
-    ]
-  }
-];
-
 export function BismarckSeaAirBattleAnimation() {
   return (
     <CampaignMapAnimation
       activeSpans={activeSpans}
       ariaLabel="俾斯麦海海空战动态地图"
-      battleEffects={battleEffects}
       battleEvents={battleEvents}
       campaignEnd={campaignEnd}
       campaignStart={campaignStart}

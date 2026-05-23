@@ -366,7 +366,8 @@
 - 船队航线要覆盖侦察、3月3日上午攻击和瓦解窗口；侦察机返航后，目标船队仍要继续移动，不能让侦察接触看起来早于运输船到达海域。
 - 船图标使用 `ww2TransportShip`、`ww2EscortShip`，不是通用 `ship`。
 - 攻击机使用 `ww2AttackAircraft`，轰炸机使用 `ww2Bomber`。
-- 跳弹轰炸用 `bismarck-sea-skip-bombing` battle effect，只在低空攻击/跳弹事件窗口出现；高空轰炸阶段不能提前显示。
+- 空战不再使用舰炮式 `salvo` / 集火线。跳弹轰炸要靠低空机群贴近船队、扫射/轰炸音效和船队瓦解路线表达；高空轰炸与低空跳弹都不能提前显示攻击线。
+- 船队、高空轰炸、低空跳弹必须在事件窗口同位，测试里用敌我路线距离断言防止“两军态势线没对上”回归。
 - 末段追击拆为 `mopping-up-strikes` 与 `mopping-up-return`，避免飞机单位超过短时任务窗口，同时保留15:00后返航动作。
 
 最容易回归的问题：
@@ -391,10 +392,13 @@
 - 12:45-14:05 有 `midday-raf-refuel-patrol` 衔接上午追击和13:45第二轮预警，避免空白期过长。
 - 布伦奇利空域、白金汉宫方向、维多利亚站、达克斯福德、南安普敦等点按 `revealAt` 延迟出现。
 - 编队使用 `ww2Bomber` 和 `ww2Fighter`，尺寸较小。
+- 伦敦参照大周的表现口径：地图视窗收紧，德军来袭线补足去程、伦敦附近接触和返航段，RAF 航线补足侧前拦截、增援加入和追击段。
+- 10:30 开场已有雷达航迹，13:45 预警和18:00结果节点静音；实际拦截/混战/追击才播放飞机或扫射音效。
 
 最容易回归的问题：
 
 - 德机没飞到英国，半路在海上没了。
+- 地图比例过大、长时间无飞机却有爆炸音。
 - 雷达/机场关键点提前出现。
 - 飞机图标过大、过卡通。
 
@@ -414,8 +418,9 @@
 - 2月20日拆成出动集结和目标区攻击；`argument-sortie-begins` 不触发爆炸音，`operation-argument-start` 才对应目标区轰炸。
 - 2月24日工业目标节点必须有 `feb-24-industrial-strike`、`feb-24-escort-cover`、`feb-24-luftwaffe-defense` 同窗活动。
 - 目标点如不伦瑞克、莱比锡、雷根斯堡、柏林、截击区、损失带、返航集合点按 `revealAt` 出现。
-- `big-week-industrial-bombing` 和 `big-week-brunswick-bombing` 只服务于工业目标轰炸，不用于空中混战。
-- “无护航深袭的代价”要通过 `schweinfurt-regensburg-lesson`、`damaged-bomber-return` 等返航航迹表现。
+- 空战不使用 `big-week-industrial-bombing` / `big-week-brunswick-bombing` 这类舰炮式 `salvo` 特效；工业目标轰炸只通过 `bombing` 事件音效和目标区同窗航迹表达。
+- “无护航深袭的代价”要通过 `schweinfurt-regensburg-lesson`、`loss-belt-luftwaffe-intercept`、`ruhr-flak-belt-fire`、`damaged-bomber-return` 等同窗航迹表现，必须明确损失来自德机截击和高炮带。
+- 2月25日终幕是纵深返航分散，不是新一轮不明轰炸；航线不能飞到柏林边缘却不解释，也不能在收束节点播放爆炸音。
 
 最容易回归的问题：
 
@@ -483,14 +488,14 @@
 - 每部动画优先使用不同背景配乐，并在 `score-toggle` 暴露 `data-music-source`。
 - 古代战斗用冷兵器/近战音效。
 - 拿破仑、风帆舰、近代海战用炮声或火炮类音效。
-- 二战空战/海空战用飞机、扫射、俯冲、爆炸等音效。
+- 二战空战/海空战用细分音效：`aircraft` 只给升空/接近，`airCombat` 给拦截/追击并播放飞机+扫射，`bombing` 只给明确轰炸目标并播放爆炸+飞机；预警、结果、返航收束节点静音。
 - 事件点击必须在用户手势内触发 SFX，不能只靠自动播放时的 `activeEvent` 变化。
 - `cueEvents` 应覆盖战斗、围城、登陆、强攻、空袭、舰炮交战等军事事件，政治/条约/结果节点可静音。
 - 爆炸音效要和战斗时间对齐。用户已经多次指出“战斗点没有爆炸音效”和“爆炸背景音跟战斗时间没对上”。
 
 当前注意点：
 
-- `tests/battle-france-smoke.spec.ts` 里仍有 `temporarySharedMusicCampaignIds`，当前把 `big-week`、`bismarck-sea`、`britain-air` 从全局配乐唯一性测试中临时排除。不要把这理解为“这三部不需要配乐唯一性”，后续应补齐来源和测试后移除临时排除。
+- `tests/battle-france-smoke.spec.ts` 里仍有 `temporarySharedMusicCampaignIds`，当前把 `big-week`、`bismarck-sea`、`britain-air` 从全局配乐唯一性测试中临时排除。不要把这理解为“这三部不需要配乐唯一性”；伦敦已从德法战役曲换到 `Rule, Britannia!` 作为临时修复，但仍与特拉法尔加复用，后续应补独立空战配乐后移除豁免。
 - 海战齐射不一定使用“爆炸”声，风帆/近代舰炮更适合 `gunpowder` 配置；二战空袭和跳弹轰炸才更偏 `ww2`。
 
 ## 12. 时间轴与节奏规则

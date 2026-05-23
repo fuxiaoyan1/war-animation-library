@@ -11,7 +11,7 @@ import { bigWeekCampaignCountries, bigWeekCountryClassName } from "../lib/geoMap
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
 import { publicPath } from "../lib/publicPath";
-import { CampaignMapAnimation, type BattleEffectElement, type NarrationCue } from "./CampaignMapAnimation";
+import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
 const semanticFrontLines = withUnitBadgeLabels(frontLines, {
@@ -55,59 +55,11 @@ const narrationCues: NarrationCue[] = [
   }
 ];
 
-const battleEffects: BattleEffectElement[] = [
-  {
-    id: "leipzig-industrial-bombing",
-    type: "salvo",
-    start: "1944-02-20T11:25",
-    end: "1944-02-20T12:20",
-    from: [10.15, 51.55],
-    to: [12.3731, 51.3397],
-    label: "航空工业目标爆炸",
-    testId: "big-week-industrial-bombing",
-    shellOffsets: [
-      [-18, -12],
-      [12, -18],
-      [24, 10],
-      [-6, 18]
-    ],
-    impactOffsets: [
-      [-16, -12],
-      [10, -16],
-      [18, 2],
-      [-4, 14]
-    ]
-  },
-  {
-    id: "brunswick-industrial-bombing",
-    type: "salvo",
-    start: "1944-02-24T10:35",
-    end: "1944-02-24T11:35",
-    from: [9.4, 52.05],
-    to: [10.5268, 52.2689],
-    label: "不伦瑞克目标区",
-    testId: "big-week-brunswick-bombing",
-    shellOffsets: [
-      [-14, -18],
-      [14, -10],
-      [24, 14],
-      [-8, 18]
-    ],
-    impactOffsets: [
-      [-18, -8],
-      [8, -14],
-      [22, 4],
-      [-6, 16]
-    ]
-  }
-];
-
 export function BigWeekAirBattleAnimation() {
   return (
     <CampaignMapAnimation
       activeSpans={activeSpans}
       ariaLabel="大周行动动态地图"
-      battleEffects={battleEffects}
       battleEvents={battleEvents}
       campaignEnd={campaignEnd}
       campaignStart={campaignStart}
@@ -116,16 +68,15 @@ export function BigWeekAirBattleAnimation() {
       countryClassName={bigWeekCountryClassName}
       cueEvents={cueEventIds}
       cueEventKinds={{
-        "aircraft-industry-targets": "combined",
-        "argument-outcome": "combined",
-        "deep-escort-lesson": "dive",
-        "luftwaffe-attrition": "combined"
+        "aircraft-industry-targets": "bombing",
+        "deep-escort-lesson": "airCombat",
+        "luftwaffe-attrition": "airCombat"
       }}
       diveCueEvents={diveCueEventIds}
       eyebrow="战争动画藏书馆 / 二战空战"
       focusSteps={[
         { fromProgress: 0, focus: "bigWeekWide" },
-        { fromProgress: timeline.dateToProgress("1944-02-22T10:00"), focus: "bigWeekGermany" },
+        { fromProgress: timeline.dateToProgress("1944-02-21T08:30"), focus: "bigWeekGermany" },
         { fromProgress: timeline.dateToProgress("1944-02-25T15:30"), focus: "bigWeekWide" }
       ]}
       frontLines={semanticFrontLines}

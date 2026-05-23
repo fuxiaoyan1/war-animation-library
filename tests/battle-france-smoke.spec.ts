@@ -50,6 +50,7 @@ type CampaignDataModule = {
   campaignEnd: string;
   campaignStart: string;
   cueEventIds?: Set<string>;
+  diveCueEventIds?: Set<string>;
   frontLines?: Array<{
     end: string;
     formationUnits?: unknown[];
@@ -97,6 +98,9 @@ const customCampaignData = [["midwayBattle", midwayData]] as const;
 
 const intentionalQuietCombatLikeEvents = new Set([
   "desert-shield",
+  "argument-outcome",
+  "afternoon-warning",
+  "evening-result",
   "fleet-contact",
   "run-to-north",
   "songs-of-chu",
@@ -1049,6 +1053,29 @@ function expectRouteNearEvent(
   expect(distance, `${campaignName} route ${routeId} should be near event ${eventId}`).toBeLessThanOrEqual(maxDistanceDegrees);
 }
 
+function expectRoutesNearEachOtherAtEvent(
+  campaignName: string,
+  data: CampaignDataModule,
+  eventId: string,
+  firstRouteId: string,
+  secondRouteId: string,
+  maxDistanceDegrees: number
+) {
+  const event = data.battleEvents.find((item) => item.id === eventId);
+  const firstLine = (data.frontLines ?? []).find((item) => item.id === firstRouteId);
+  const secondLine = (data.frontLines ?? []).find((item) => item.id === secondRouteId);
+  expect(event, `${campaignName} event ${eventId} exists`).toBeTruthy();
+  expect(firstLine, `${campaignName} route ${firstRouteId} exists`).toBeTruthy();
+  expect(secondLine, `${campaignName} route ${secondRouteId} exists`).toBeTruthy();
+
+  const firstPoint = routePointAtProgress(routeCoordinates(data, firstLine!), routeProgressAtDate(firstLine!, event!.date));
+  const secondPoint = routePointAtProgress(routeCoordinates(data, secondLine!), routeProgressAtDate(secondLine!, event!.date));
+  const distance = Math.hypot(firstPoint[0] - secondPoint[0], firstPoint[1] - secondPoint[1]);
+  expect(distance, `${campaignName} routes ${firstRouteId} and ${secondRouteId} should align at ${eventId}`).toBeLessThanOrEqual(
+    maxDistanceDegrees
+  );
+}
+
 function formationCenter(units: Array<{ label: string; x: number; y: number }>) {
   expect(units.length).toBeGreaterThan(0);
   return {
@@ -1509,6 +1536,13 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "afternoon-radar-warning"
   ]);
   expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", ["argument-first-wave"]);
+  expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", [
+    "deep-escort-chain",
+    "schweinfurt-regensburg-lesson",
+    "loss-belt-luftwaffe-intercept",
+    "ruhr-flak-belt-fire",
+    "damaged-bomber-return"
+  ]);
   expectEventHasActiveRoute("bigWeekAirBattle", bigWeekData as CampaignDataModule, "aircraft-industry-targets", [
     "feb-24-industrial-strike",
     "feb-24-escort-cover",
@@ -1519,14 +1553,42 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "allied-search-shadow"
   ]);
   expectEventHasActiveRoute("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "skip-bombing-breakup", [
+    "japanese-convoy-rabaul-lae",
     "skip-bombing-attack",
     "convoy-breakup"
   ]);
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", "argument-first-wave", 1.2, 0.35);
+  expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "schweinfurt-regensburg-lesson", 0.8, 0.2);
+  expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "loss-belt-luftwaffe-intercept", 0.9, 0.25);
+  expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "ruhr-flak-belt-fire", 0.9, 0.25);
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "aircraft-industry-targets", "feb-24-industrial-strike", 1.4, 0.25);
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "recon-contact", "allied-search-shadow", 1.0, 0.25);
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "coordinated-air-attack", "high-level-bombing-wave", 0.9, 0.25);
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "skip-bombing-breakup", "skip-bombing-attack", 0.9, 0.35);
+  expectRoutesNearEachOtherAtEvent(
+    "bismarckSeaAirBattle",
+    bismarckSeaData as CampaignDataModule,
+    "coordinated-air-attack",
+    "japanese-convoy-rabaul-lae",
+    "high-level-bombing-wave",
+    0.5
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "bismarckSeaAirBattle",
+    bismarckSeaData as CampaignDataModule,
+    "skip-bombing-breakup",
+    "japanese-convoy-rabaul-lae",
+    "skip-bombing-attack",
+    0.55
+  );
+
+  for (const [campaignName, data] of [
+    ["battleOfBritain", battleOfBritainData as CampaignDataModule],
+    ["bigWeekAirBattle", bigWeekData as CampaignDataModule],
+    ["bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule]
+  ] as const) {
+    expect(data.diveCueEventIds?.size ?? 0, `${campaignName} air war should not use generic dive cues after explicit cue kinds`).toBe(0);
+  }
 
   for (const [campaignName, data] of customCampaignData) {
     expect(toTime(data.campaignEnd), `${campaignName} campaign end should be after start`).toBeGreaterThan(toTime(data.campaignStart));
@@ -2164,7 +2226,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.getByTestId("battle-of-britain-app")).toBeVisible();
   await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "伦敦上空的鹰" })).toBeVisible();
   await expectOnlyWarNameInMapTitle(page, "伦敦上空的鹰");
-  await expectScoreUsesMusic(page, "/audio/directory-audio-military-exercise.mp3");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-rule-britannia.ogg");
   await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 雷达报来袭");
   await expectMapFirstLayout(page);
   await expectLowImpactTicker(page);
@@ -2178,6 +2240,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.front-line[data-route-id="morning-radar-plots"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "london");
+  await expectRouteHasPolylineComplexity(page, ".battle-of-britain", "morning-raid-first-wave", 5);
   await page.getByTestId("event-list").getByRole("button", { name: /11群连续下令升空/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveClass(/route-air/);
@@ -2188,6 +2251,12 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectRouteBadgeLabels(page, "morning-raid-first-wave", ["德", "德", "德", "德", "德"]);
 
   await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /13:45 第二次大空袭预警/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("第二次大空袭预警");
+  await expectCurrentEventInsideMapCore(page);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBe(0);
+
   await page.getByTestId("event-list").getByRole("button", { name: /白金汉宫方向/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("白金汉宫方向");
   await expectCurrentEventInsideMapCore(page);
@@ -2195,6 +2264,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.front-line[data-route-id="ray-holmes-intercept"]')).toHaveClass(/route-air/);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
 
   await page.getByTestId("event-list").getByRole("button", { name: /下午高峰/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("下午高峰");
@@ -2202,6 +2272,13 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("傍晚：伦敦守住白昼");
+  const londonAirCueCount = await countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3");
+  const londonGunCueCount = await countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3");
+  const londonExplosionCueCount = await countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /傍晚：伦敦守住白昼/ }).click();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBe(londonAirCueCount);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBe(londonGunCueCount);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(londonExplosionCueCount);
   await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "morning-raid-first-wave");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "eleven-group-morning-scramble");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".battle-of-britain", "afternoon-raid-main-wave");
@@ -2234,6 +2311,9 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
     "luftwaffe-intercept",
     "fighter-rendezvous",
     "bomber-loss-zone",
+    "ruhr-flak-belt",
+    "western-flak-belt",
+    "mainz-flak-belt",
     "damaged-return-lane",
     "north-sea-return",
     "berlin-return-lane"
@@ -2252,7 +2332,13 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
   await expectCurrentEventInsideMapCore(page);
   await expect(page.locator('.front-line[data-route-id="deep-escort-chain"]')).toHaveAttribute("data-route-to", "east-anglia");
   await expect(page.locator('.front-line[data-route-id="schweinfurt-regensburg-lesson"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expect(page.locator('.front-line[data-route-id="loss-belt-luftwaffe-intercept"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="ruhr-flak-belt-fire"]')).toHaveClass(/route-air/);
+  await expect(page.getByTestId("map-point-ruhr-flak-belt")).toBeVisible();
+  await expect(page.getByTestId("map-point-western-flak-belt")).toBeVisible();
+  await expect(page.getByTestId("map-point-mainz-flak-belt")).toBeVisible();
   await expectRouteBadgeLabels(page, "deep-escort-chain", ["美", "美", "美"]);
+  await expectRouteBadgeLabels(page, "loss-belt-luftwaffe-intercept", ["德", "德", "德"]);
   await page.getByTestId("timeline").fill("395");
   await expect(page.locator('.front-line[data-route-id="damaged-bomber-return"]')).toHaveAttribute("data-route-to", "east-anglia");
   await expectRouteHasPolylineComplexity(page, ".big-week-air-battle", "damaged-bomber-return", 4);
@@ -2274,19 +2360,25 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
   await page.getByTestId("event-list").getByRole("button", { name: /航空工业目标遭连续打击/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("爆炸点必须落在工业目标");
   await expectCurrentEventInsideMapCore(page);
-  await expect(page.getByTestId("big-week-brunswick-bombing")).toBeVisible();
-  await expect(page.getByTestId("big-week-brunswick-bombing").locator(".salvo-impact")).toHaveCount(4);
+  await expect(page.locator(".big-week-air-battle .battle-salvo-effect")).toHaveCount(0);
+  await expect(page.locator(".big-week-air-battle .salvo-impact")).toHaveCount(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
 
   await page.getByTestId("timeline").fill("1000");
-  await expect(page.getByTestId("active-event-card")).toContainText("制空权天平倾斜");
+  await expect(page.getByTestId("active-event-card")).toContainText("远程返航分散");
   await expectCurrentEventInsideMapCore(page);
+  const bigWeekExplosionCueCount = await countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3");
+  await page.getByTestId("event-list").getByRole("button", { name: /大周行动收束/ }).click();
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(bigWeekExplosionCueCount);
+  await expect(page.getByTestId("active-event-card")).toContainText("纵深航线不到柏林投弹");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "argument-first-wave");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "deep-escort-chain");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "schweinfurt-regensburg-lesson");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "damaged-bomber-return");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "luftwaffe-rises");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "escort-fighter-sweep");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".big-week-air-battle", "loss-belt-luftwaffe-intercept");
+  await expect(page.locator('.front-line[data-route-id="berlin-feint-and-return"]')).toHaveAttribute("data-route-to", "east-anglia");
 
   expect(apiFailures).toEqual([]);
   expect(consoleErrors).toEqual([]);
@@ -2313,7 +2405,7 @@ test("bismarck sea air battle shows skip bombing and convoy breakup", async ({ p
   await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveClass(/route-sea/);
   await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveAttribute("data-route-from", "rabaul-roadstead");
   await expect(page.locator('.front-line[data-route-id="japanese-convoy-rabaul-lae"]')).toHaveAttribute("data-route-to", "convoy-breakup-sea");
-  await expectRouteHasPolylineComplexity(page, ".bismarck-sea-air-battle", "japanese-convoy-rabaul-lae", 7);
+  await expectRouteHasPolylineComplexity(page, ".bismarck-sea-air-battle", "japanese-convoy-rabaul-lae", 6);
   await expectRealisticUnitIcon(page, "ww2-transport-ship-marker", "ww2TransportShip", "ww2-transport-ship");
   await expectRealisticUnitIcon(page, "ww2-escort-ship-marker", "ww2EscortShip", "ww2-escort-ship");
   await expectNavalRoutesStayOffLand(page, ".bismarck-sea-air-battle");
@@ -2332,16 +2424,17 @@ test("bismarck sea air battle shows skip bombing and convoy breakup", async ({ p
   await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="high-level-bombing-wave"]')).toHaveAttribute("data-route-to", "port-moresby");
   await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveCount(0);
-  await expect(page.getByTestId("bismarck-sea-skip-bombing")).toHaveCount(0);
+  await expect(page.locator(".bismarck-sea-air-battle .battle-salvo-effect")).toHaveCount(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
 
   await page.getByTestId("event-list").getByRole("button", { name: /跳弹轰炸撕裂船队/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("跳弹轰炸");
   await expectCurrentEventInsideMapCore(page);
   await expectRealisticUnitIcon(page, "ww2-attack-aircraft-marker", "ww2AttackAircraft", "ww2-attack-aircraft");
   await expectCompactAircraftMarkers(page, "ww2-attack-aircraft-marker");
-  await expect(page.getByTestId("bismarck-sea-skip-bombing")).toBeVisible();
-  await expect(page.getByTestId("bismarck-sea-skip-bombing").locator(".salvo-shell-trace")).toHaveCount(4);
-  await expect(page.getByTestId("bismarck-sea-skip-bombing").locator(".salvo-impact")).toHaveCount(4);
+  await expect(page.locator(".bismarck-sea-air-battle .battle-salvo-effect")).toHaveCount(0);
+  await expect(page.locator(".bismarck-sea-air-battle .salvo-shell-trace")).toHaveCount(0);
+  await expect(page.locator(".bismarck-sea-air-battle .salvo-impact")).toHaveCount(0);
   await expect(page.locator('.front-line[data-route-id="skip-bombing-attack"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="convoy-breakup"]')).toHaveClass(/route-sea/);
   await expect(page.locator('.front-line[data-route-id="convoy-breakup"]')).toHaveAttribute("data-route-to", "lae-approach");

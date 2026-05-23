@@ -170,18 +170,18 @@ const iconConfig: Record<
   ww2AttackAircraft: {
     className: "ww2-aircraft-marker ww2-attack-aircraft-marker",
     defaultFacingX: 1,
-    height: 32,
+    height: 27,
     href: publicPath("/assets/unit-icons/ww2-attack-aircraft.webp"),
     testId: "ww2-attack-aircraft-marker",
-    width: 82
+    width: 70
   },
   ww2Bomber: {
     className: "ww2-aircraft-marker ww2-bomber-marker",
     defaultFacingX: 1,
-    height: 34,
+    height: 29,
     href: publicPath("/assets/unit-icons/ww2-bomber.webp"),
     testId: "ww2-bomber-marker",
-    width: 88
+    width: 75
   },
   ww2EscortShip: {
     className: "ww2-ship-marker ww2-escort-ship-marker",
@@ -194,10 +194,10 @@ const iconConfig: Record<
   ww2Fighter: {
     className: "ww2-aircraft-marker ww2-fighter-marker",
     defaultFacingX: 1,
-    height: 30,
+    height: 25,
     href: publicPath("/assets/unit-icons/ww2-fighter.webp"),
     testId: "ww2-fighter-marker",
-    width: 78
+    width: 66
   },
   ww2TransportShip: {
     className: "ww2-ship-marker ww2-transport-ship-marker",

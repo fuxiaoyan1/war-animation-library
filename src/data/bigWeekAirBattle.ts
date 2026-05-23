@@ -16,6 +16,9 @@ export const mapPoints: MapPoint[] = [
   { id: "luftwaffe-intercept", label: "德机截击区", coordinates: [7.8, 51.45], kind: "front", revealAt: "1944-02-22T10:00" },
   { id: "fighter-rendezvous", label: "远程护航交接", coordinates: [5.8, 51.35], kind: "front", revealAt: "1944-02-21T08:30" },
   { id: "bomber-loss-zone", label: "轰炸机损失带", coordinates: [7.35, 50.6], kind: "front", revealAt: "1944-02-21T11:00" },
+  { id: "ruhr-flak-belt", label: "鲁尔高炮带", coordinates: [7.15, 51.08], kind: "front", revealAt: "1944-02-21T10:30" },
+  { id: "western-flak-belt", label: "西部高炮阵地", coordinates: [6.75, 50.75], kind: "front", revealAt: "1944-02-21T10:30" },
+  { id: "mainz-flak-belt", label: "美因茨高炮阵地", coordinates: [8.25, 50.15], kind: "front", revealAt: "1944-02-21T10:30" },
   { id: "damaged-return-lane", label: "受损返航航路", coordinates: [3.2, 50.95], kind: "front", revealAt: "1944-02-21T12:30" },
   { id: "north-sea-return", label: "北海返航集合", coordinates: [3.1, 52.5], kind: "front", revealAt: "1944-02-22T13:00" },
   { id: "berlin-return-lane", label: "柏林方向返航线", coordinates: [7.6, 52.25], kind: "front", revealAt: "1944-02-25T12:30" }
@@ -138,6 +141,41 @@ export const frontLines: FrontLine[] = [
     visibleUntil: "1944-02-25T18:00",
     unitVisibleFrom: "1944-02-21T07:30",
     unitVisibleUntil: "1944-02-21T18:00"
+  },
+  {
+    id: "loss-belt-luftwaffe-intercept",
+    faction: "germany",
+    label: "德机截击造成掉队",
+    from: "brunswick",
+    to: "brunswick",
+    routeKind: "air",
+    start: "1944-02-21T10:15",
+    end: "1944-02-21T13:20",
+    unitIcon: "ww2Fighter",
+    formationUnits: germanInterceptors,
+    waypoints: [
+      [9.3, 51.65],
+      [7.35, 50.6],
+      [6.5, 50.95],
+      [8.6, 51.55]
+    ],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-21T10:15",
+    unitVisibleUntil: "1944-02-21T13:45"
+  },
+  {
+    id: "ruhr-flak-belt-fire",
+    faction: "germany",
+    label: "高炮带覆盖深袭航路",
+    from: "western-flak-belt",
+    to: "mainz-flak-belt",
+    routeKind: "air",
+    start: "1944-02-21T10:30",
+    end: "1944-02-21T13:00",
+    hideUnit: true,
+    unitIcon: "ww2Fighter",
+    waypoints: [[7.15, 51.08], [7.35, 50.6]],
+    visibleUntil: "1944-02-25T18:00"
   },
   {
     id: "damaged-bomber-return",
@@ -267,8 +305,8 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [2.4, 51.25],
       [7.0, 52.0],
-      [11.0, 52.35],
-      [13.0, 52.48],
+      [10.8, 52.2],
+      [11.85, 52.35],
       [7.6, 52.25],
       [3.1, 52.5]
     ],
@@ -305,15 +343,15 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "deep-escort-lesson",
-    date: "1944-02-21T08:30",
+    date: "1944-02-21T12:00",
     title: "远程护航改变深袭生存率",
     location: "德国西部空域",
-    coordinates: [5.8, 51.35],
+    coordinates: [7.35, 50.6],
     phase: "护航接力",
     summary: "P-47、P-38 与 P-51 等护航力量把保护范围延伸到德国纵深，同时让受损轰炸机有返航机会。",
-    detail: "1943年施韦因富特-雷根斯堡等深袭暴露了无护航轰炸的高代价。动画把教训表现为轰炸机流穿过损失带、掉队机沿低速航路返航，再与1944年远程护航线对照。",
+    detail: "1943年施韦因富特-雷根斯堡等深袭暴露了无护航轰炸的高代价。动画把教训表现为轰炸机流穿过损失带，同时遭遇德机截击和鲁尔/莱茵方向高炮带，掉队机沿低速航路返航，再与1944年远程护航线对照。",
     significance: "远程护航的意义不是好看的一条伴飞线，而是降低深袭代价，并把德机拖入 escort 与 intercept 的连续对抗。",
-    mapFocus: ["fighter-rendezvous", "bomber-loss-zone", "damaged-return-lane"]
+    mapFocus: ["fighter-rendezvous", "bomber-loss-zone", "ruhr-flak-belt"]
   },
   {
     id: "luftwaffe-attrition",
@@ -342,12 +380,12 @@ export const battleEvents: BattleEvent[] = [
   {
     id: "argument-outcome",
     date: "1944-02-25T15:30",
-    title: "大周行动收束：制空权天平倾斜",
+    title: "大周行动收束：远程返航分散",
     location: "西欧空域",
     coordinates: [7.2, 51.8],
     phase: "攻势结果",
-    summary: "连续空袭、护航战斗和返航损耗共同削弱德国昼间战斗机力量，盟军为诺曼底前的空中优势奠基。",
-    detail: "结果不能只看工厂炸毁，还要看德国战斗机部队被迫在不利条件下连续出战。动画收束时保留轰炸、护航、截击和返航航迹，让观众看到空战结果来自往返航程上的累积消耗。",
+    summary: "最后阶段不再制造新的爆炸点，而是显示轰炸机流向德国纵深佯动后折返；纵深航线不到柏林投弹，护航和截击航迹共同留在地图上。",
+    detail: "结果不能只看工厂炸毁，还要看德国战斗机部队被迫在不利条件下连续出战。动画收束时保留轰炸、护航、截击和返航航迹，纵深航线不到柏林投弹，避免用不明爆炸代替战役结果。",
     significance: "大周行动常被视作盟军夺取欧洲昼间制空权过程中的关键阶段。",
     mapFocus: ["east-anglia", "luftwaffe-intercept", "berlin-return-lane"]
   }
@@ -356,7 +394,6 @@ export const battleEvents: BattleEvent[] = [
 export const cueEventIds = new Set([
   "deep-escort-lesson",
   "luftwaffe-attrition",
-  "aircraft-industry-targets",
-  "argument-outcome"
+  "aircraft-industry-targets"
 ]);
-export const diveCueEventIds = new Set(["luftwaffe-attrition", "argument-outcome"]);
+export const diveCueEventIds = new Set<string>();

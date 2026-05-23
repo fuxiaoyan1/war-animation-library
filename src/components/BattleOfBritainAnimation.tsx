@@ -68,23 +68,21 @@ export function BattleOfBritainAnimation() {
       countryClassName={battleOfBritainCountryClassName}
       cueEvents={cueEventIds}
       cueEventKinds={{
-        "afternoon-all-squadrons-engaged": "combined",
-        "afternoon-bombers-broken": "combined",
-        "afternoon-warning": "dive",
-        "buckingham-palace-intercept": "combined",
-        "channel-pursuit-closes": "dive",
-        "eleven-group-scramble": "dive",
-        "evening-result": "dive",
-        "morning-dogfight-london": "combined",
-        "morning-radar-contact": "dive",
-        "morning-return-fire": "combined"
+        "afternoon-all-squadrons-engaged": "airCombat",
+        "afternoon-bombers-broken": "airCombat",
+        "buckingham-palace-intercept": "airCombat",
+        "channel-pursuit-closes": "airCombat",
+        "eleven-group-scramble": "aircraft",
+        "morning-dogfight-london": "airCombat",
+        "morning-radar-contact": "aircraft",
+        "morning-return-fire": "airCombat"
       }}
       diveCueEvents={diveCueEventIds}
       eyebrow="战争动画藏书馆 / 二战空战"
       focusSteps={[
         { fromProgress: 0, focus: "britainAirLondon" },
-        { fromProgress: timeline.dateToProgress("1940-09-15T11:25"), focus: "britainAirLondonClose" },
-        { fromProgress: timeline.dateToProgress("1940-09-15T15:30"), focus: "britainAirLondon" }
+        { fromProgress: timeline.dateToProgress("1940-09-15T11:25"), focus: "britainAirLondon" },
+        { fromProgress: timeline.dateToProgress("1940-09-15T16:30"), focus: "britainAirLondon" }
       ]}
       frontLines={semanticFrontLines}
       gapScale={0.04}
@@ -94,7 +92,7 @@ export function BattleOfBritainAnimation() {
       legendSecondary="RAF 多批拦截"
       mapPoints={mapPoints}
       maxGapDays={3}
-      musicSource={publicPath("/audio/directory-audio-military-exercise.mp3")}
+      musicSource={publicPath("/audio/wikimedia-rule-britannia.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[
