@@ -3,6 +3,7 @@ import {
   campaignEnd,
   campaignStart,
   cueEventIds,
+  cueEventKinds,
   diveCueEventIds,
   frontLines,
   mapPoints
@@ -67,11 +68,7 @@ export function BigWeekAirBattleAnimation() {
       countries={bigWeekCampaignCountries}
       countryClassName={bigWeekCountryClassName}
       cueEvents={cueEventIds}
-      cueEventKinds={{
-        "aircraft-industry-targets": "bombing",
-        "deep-escort-lesson": "airCombat",
-        "luftwaffe-attrition": "airCombat"
-      }}
+      cueEventKinds={cueEventKinds}
       diveCueEvents={diveCueEventIds}
       eyebrow="战争动画藏书馆 / 二战空战"
       focusSteps={[

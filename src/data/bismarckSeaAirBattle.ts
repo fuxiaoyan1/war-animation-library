@@ -15,8 +15,8 @@ export const mapPoints: MapPoint[] = [
   { id: "finschhafen", label: "芬什港", coordinates: [147.86, -6.6], kind: "port" },
   { id: "port-moresby", label: "莫尔兹比港", coordinates: [147.18, -9.44], kind: "port" },
   { id: "dobodura", label: "多博杜拉机场群", coordinates: [148.38, -8.75], kind: "front" },
-  { id: "convoy-sighting", label: "侦察接触区", coordinates: [149.35, -5.55], kind: "front", revealAt: "1943-03-02T12:00" },
-  { id: "skip-bombing-zone", label: "跳弹轰炸区", coordinates: [147.05, -5.2], kind: "front", revealAt: "1943-03-03T10:30" }
+  { id: "convoy-sighting", label: "侦察接触区", coordinates: [149.2769, -2.3591], kind: "front", revealAt: "1943-03-02T12:00" },
+  { id: "skip-bombing-zone", label: "跳弹轰炸区", coordinates: [148.0028, -5.1106], kind: "front", revealAt: "1943-03-03T10:30" }
 ];
 
 const japaneseConvoy: FormationUnit[] = [
@@ -52,9 +52,10 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [152.4, -1.55],
       [150.8, -1.55],
-      [149.2, -2.4],
-      [148.7, -5.25],
-      [147.95, -5.1],
+      [149.2769, -2.3591],
+      [148.7, -4.9],
+      [148.2686, -5.1637],
+      [148.0028, -5.1106],
       [147.05, -5.15]
     ],
     visibleUntil: "1943-03-04T18:00",
@@ -68,21 +69,20 @@ export const frontLines: FrontLine[] = [
     to: "dobodura",
     routeKind: "air",
     start: "1943-03-02T08:30",
-    end: "1943-03-02T16:30",
+    end: "1943-03-02T15:30",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "recon-a", label: "侦察", badgeLabel: "盟", icon: "ww2Fighter", offset: [0, 0] },
       { id: "recon-b", label: "跟踪", badgeLabel: "盟", icon: "ww2Fighter", offset: [-30, 14], hiddenUntil: "1943-03-02T12:00" }
     ],
     waypoints: [
-      [148.9, -6.8],
-      [149.35, -5.55],
-      [149.05, -6.35],
-      [148.7, -7.3],
+      [149.2769, -2.3591],
+      [149.1, -4.2],
+      [148.75, -6.6],
       [148.38, -8.75]
     ],
     visibleUntil: "1943-03-04T18:00",
-    unitVisibleUntil: "1943-03-02T16:30"
+    unitVisibleUntil: "1943-03-02T15:30"
   },
   {
     id: "high-level-bombing-wave",
@@ -97,9 +97,9 @@ export const frontLines: FrontLine[] = [
     formationUnits: highBomberWave,
     waypoints: [
       [147.8, -8.1],
-      [148.2, -6.8],
-      [148.1, -5.28],
-      [147.75, -5.45],
+      [148.2, -6.9],
+      [148.2686, -5.1637],
+      [147.95, -5.35],
       [147.8, -7.8],
       [147.18, -9.44]
     ],
@@ -121,8 +121,8 @@ export const frontLines: FrontLine[] = [
       [148.1, -7.9],
       [147.4, -6.6],
       [147.3, -5.65],
-      [148.0, -5.27],
-      [147.05, -5.2],
+      [148.0028, -5.1106],
+      [147.25, -5.8],
       [147.55, -6.8],
       [148.38, -8.75]
     ],
@@ -163,11 +163,10 @@ export const frontLines: FrontLine[] = [
     unitIcon: "ww2AttackAircraft",
     formationUnits: alliedAttackWave,
     waypoints: [
-      [148.0, -7.8],
-      [147.75, -6.35],
-      [147.1, -5.2],
+      [147.95, -7.55],
+      [147.45, -6.2],
       [146.55, -5.3],
-      [147.72, -6.85],
+      [147.2, -6.2],
       [148.38, -8.75]
     ],
     visibleUntil: "1943-03-04T18:00",
@@ -216,7 +215,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1943-03-02T12:00",
     title: "盟军侦察发现并跟踪船队",
     location: "俾斯麦海北部",
-    coordinates: [149.35, -5.55],
+    coordinates: [149.2769, -2.3591],
     phase: "发现与跟踪",
     summary: "盟军侦察机发现船队，并为后续打击组织提供航向和位置。",
     detail: "大规模空袭不是凭空出现。侦察接触让攻击波次能在正确时间压到船队上空，动画中保留侦察航迹作为后续攻击的引导线。",
@@ -228,7 +227,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1943-03-02T18:00",
     title: "船队继续南下，攻击波待命",
     location: "俾斯麦海北部",
-    coordinates: [149.35, -5.55],
+    coordinates: [149.2769, -2.3591],
     phase: "跟踪与待机",
     summary: "侦察机返航后，船队仍沿海上航线南下；盟军机场准备次日攻击波。",
     detail: "这一节点不把飞机长期留场，而是让侦察航迹保留、船队继续移动。这样能解释为什么侦察机返航后目标没有消失，次日攻击波可以按船队新位置展开。",
@@ -240,7 +239,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1943-03-03T10:05",
     title: "高空轰炸先压迫船队",
     location: "俾斯麦海",
-    coordinates: [147.75, -5.45],
+    coordinates: [148.2686, -5.1637],
     phase: "协同攻击",
     summary: "盟军先以高空轰炸迫使船队机动，低空攻击波随后进入。",
     detail: "这一段只显示高空轰炸和船队机动，不提前显示跳弹/集火线。高空机群先从船队上空压过，低空 B-25/A-20 沿海面突入、扫射压制和跳弹轰炸放到下一节点。",
@@ -252,7 +251,7 @@ export const battleEvents: BattleEvent[] = [
     date: "1943-03-03T11:50",
     title: "跳弹轰炸撕裂船队",
     location: "维蒂亚兹海峡方向",
-    coordinates: [147.05, -5.2],
+    coordinates: [148.0028, -5.1106],
     phase: "船队瓦解",
     summary: "低空攻击使运输船队失去队形，残存舰船分散转向。",
     detail: "这里要重点表现集群撕裂：日军船队从连续航迹变成几条短分散路线，盟军攻击波从不同高度和方向交错进入。空战不使用舰炮式集火线，跳弹轰炸以机群贴近船队、扫射音效和船队瓦解路线表达。",
@@ -261,13 +260,13 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "mopping-up",
-    date: "1943-03-04T15:00",
+    date: "1943-03-04T11:30",
     title: "后续追击终结运输企图",
     location: "莱城外海",
     coordinates: [146.55, -5.3],
     phase: "追击收束",
     summary: "盟军继续攻击残余船只和落水救援目标，日军向莱城增援的海上企图失败。",
-    detail: "末段不应让双方停在地图上。残余船队继续向西南分散，盟军攻击波从机场再度出击，航迹保留显示连续压力。",
+    detail: "末段不应让双方停在地图上。残余船队继续向莱城外海分散，盟军攻击波先压到残余船只上空，再沿新几内亚机场方向返航，航迹保留显示连续压力。",
     significance: "日本在新几内亚方向的海上补给受到重创，盟军航空兵证明了对海上交通线的决定性威胁。",
     mapFocus: ["vitiaz-strait", "lae-approach", "dobodura"]
   }

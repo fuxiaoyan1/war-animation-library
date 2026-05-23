@@ -88,7 +88,8 @@ export const frontLines: FrontLine[] = [
       [0.12, 51.42],
       [0.02, 51.48],
       [0.18, 51.34],
-      [0.72, 51.1]
+      [0.72, 51.1],
+      [0.97, 50.91]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:50"
@@ -110,7 +111,8 @@ export const frontLines: FrontLine[] = [
       [0.06, 51.36],
       [-0.02, 51.42],
       [0.24, 51.28],
-      [0.86, 50.98]
+      [0.86, 50.98],
+      [0.97, 50.91]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:55"
@@ -182,14 +184,14 @@ export const frontLines: FrontLine[] = [
     from: "south-london",
     to: "dungeness",
     routeKind: "air",
-    start: "1940-09-15T12:05",
+    start: "1940-09-15T11:58",
     end: "1940-09-15T13:10",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "pursuit-a", label: "追击中队", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
       { id: "pursuit-b", label: "侧后攻击", badgeLabel: "英", icon: "ww2Fighter", offset: [-34, 20] }
     ],
-    waypoints: [[0.18, 51.28], [0.52, 51.12], [0.82, 50.98]],
+    waypoints: [[0.18, 51.28], [0.48, 51.18], [0.82, 50.98]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T13:35"
   },
@@ -245,7 +247,8 @@ export const frontLines: FrontLine[] = [
       [0.28, 51.42],
       [0.0, 51.48],
       [0.2, 51.34],
-      [0.82, 51.02]
+      [0.82, 51.02],
+      [0.97, 50.91]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:25"
@@ -267,7 +270,8 @@ export const frontLines: FrontLine[] = [
       [0.08, 51.36],
       [-0.02, 51.42],
       [0.3, 51.2],
-      [0.92, 50.98]
+      [0.92, 50.98],
+      [0.97, 50.91]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:35"
@@ -315,7 +319,7 @@ export const frontLines: FrontLine[] = [
     from: "london",
     to: "dungeness",
     routeKind: "air",
-    start: "1940-09-15T15:15",
+    start: "1940-09-15T15:10",
     end: "1940-09-15T16:45",
     unitIcon: "ww2Bomber",
     formationUnits: [
@@ -333,7 +337,7 @@ export const frontLines: FrontLine[] = [
     from: "south-london",
     to: "dover",
     routeKind: "air",
-    start: "1940-09-15T15:35",
+    start: "1940-09-15T15:10",
     end: "1940-09-15T17:20",
     unitIcon: "ww2Fighter",
     formationUnits: [
@@ -341,7 +345,7 @@ export const frontLines: FrontLine[] = [
       { id: "late-pursuit-hurricane", label: "飓风补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-24, -14] },
       { id: "late-pursuit-polish", label: "波兰中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-48, 13] }
     ],
-    waypoints: [[0.12, 51.32], [0.48, 51.18], [0.92, 51.08]],
+    waypoints: [[0.12, 51.32], [0.18, 51.34], [0.48, 51.18], [0.92, 51.08]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T18:00"
   },
@@ -428,10 +432,10 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "morning-return-fire",
-    date: "1940-09-15T12:15",
+    date: "1940-09-15T12:00",
     title: "回程仍遭攻击",
     location: "南伦敦至肯特海岸",
-    coordinates: [0.48, 51.18],
+    coordinates: [0.12, 51.36],
     phase: "回程追击",
     summary: "约百架轰炸机进入伦敦投弹后，返航途中继续遭到 RAF 攻击。",
     detail: "资料记录上午交战约持续到12:45。动画保留回程追击航迹，避免飞机抵达目标后凭空消失。",
@@ -452,7 +456,7 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "afternoon-all-squadrons-engaged",
-    date: "1940-09-15T14:20",
+    date: "1940-09-15T14:45",
     title: "下午高峰：多数中队投入",
     location: "伦敦东南空域",
     coordinates: [0.28, 51.42],
@@ -464,7 +468,7 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "afternoon-bombers-broken",
-    date: "1940-09-15T15:15",
+    date: "1940-09-15T15:10",
     title: "轰炸队形被撕开",
     location: "伦敦上空至肯特海岸",
     coordinates: [0.18, 51.34],

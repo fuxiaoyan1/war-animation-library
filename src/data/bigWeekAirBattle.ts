@@ -331,7 +331,7 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "operation-argument-start",
-    date: "1944-02-20T11:35",
+    date: "1944-02-20T12:05",
     title: "首日轰炸机流抵达目标区",
     location: "莱比锡方向",
     coordinates: [12.3731, 51.3397],
@@ -392,8 +392,15 @@ export const battleEvents: BattleEvent[] = [
 ];
 
 export const cueEventIds = new Set([
+  "operation-argument-start",
   "deep-escort-lesson",
   "luftwaffe-attrition",
   "aircraft-industry-targets"
 ]);
+export const cueEventKinds = {
+  "operation-argument-start": "bombing",
+  "aircraft-industry-targets": "bombing",
+  "deep-escort-lesson": "airCombat",
+  "luftwaffe-attrition": "airCombat"
+} as const;
 export const diveCueEventIds = new Set<string>();

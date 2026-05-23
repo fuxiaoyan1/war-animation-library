@@ -50,6 +50,7 @@ type CampaignDataModule = {
   campaignEnd: string;
   campaignStart: string;
   cueEventIds?: Set<string>;
+  cueEventKinds?: Partial<Record<string, string>>;
   diveCueEventIds?: Set<string>;
   frontLines?: Array<{
     end: string;
@@ -1558,6 +1559,8 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "convoy-breakup"
   ]);
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", "argument-first-wave", 1.2, 0.35);
+  expect((bigWeekData as CampaignDataModule).cueEventIds?.has("operation-argument-start")).toBe(true);
+  expect((bigWeekData as CampaignDataModule).cueEventKinds?.["operation-argument-start"]).toBe("bombing");
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "schweinfurt-regensburg-lesson", 0.8, 0.2);
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "loss-belt-luftwaffe-intercept", 0.9, 0.25);
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "deep-escort-lesson", "ruhr-flak-belt-fire", 0.9, 0.25);
@@ -1565,6 +1568,15 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "recon-contact", "allied-search-shadow", 1.0, 0.25);
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "coordinated-air-attack", "high-level-bombing-wave", 0.9, 0.25);
   expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "skip-bombing-breakup", "skip-bombing-attack", 0.9, 0.35);
+  expectRouteNearEvent("bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule, "mopping-up", "mopping-up-strikes", 0.5, 0.3);
+  expectRoutesNearEachOtherAtEvent(
+    "bismarckSeaAirBattle",
+    bismarckSeaData as CampaignDataModule,
+    "recon-contact",
+    "japanese-convoy-rabaul-lae",
+    "allied-search-shadow",
+    0.25
+  );
   expectRoutesNearEachOtherAtEvent(
     "bismarckSeaAirBattle",
     bismarckSeaData as CampaignDataModule,
@@ -1580,6 +1592,54 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "japanese-convoy-rabaul-lae",
     "skip-bombing-attack",
     0.55
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "bismarckSeaAirBattle",
+    bismarckSeaData as CampaignDataModule,
+    "mopping-up",
+    "convoy-breakup",
+    "mopping-up-strikes",
+    0.45
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "morning-dogfight-london",
+    "morning-raid-first-wave",
+    "eleven-group-morning-scramble",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "morning-return-fire",
+    "morning-raid-first-wave",
+    "morning-return-pursuit",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "afternoon-all-squadrons-engaged",
+    "afternoon-raid-main-wave",
+    "eleven-group-afternoon-all-in",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "afternoon-bombers-broken",
+    "afternoon-return-broken-raid",
+    "late-pursuit-over-channel",
+    0.25
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "battleOfBritain",
+    battleOfBritainData as CampaignDataModule,
+    "channel-pursuit-closes",
+    "afternoon-return-broken-raid",
+    "late-pursuit-over-channel",
+    0.25
   );
 
   for (const [campaignName, data] of [
@@ -2327,6 +2387,11 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
   await expect(page.getByTestId("outcome-panel")).toContainText("轰炸机流往返");
 
   await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /首日轰炸机流抵达目标区/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("首日轰炸机流抵达目标区");
+  await expectCurrentEventInsideMapCore(page);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
+
   await page.getByTestId("event-list").getByRole("button", { name: /远程护航改变深袭生存率/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("受损轰炸机有返航机会");
   await expectCurrentEventInsideMapCore(page);

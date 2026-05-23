@@ -67,20 +67,20 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [0.78, 51.72]
   ],
   bigWeekWide: [
-    [-1.5, 48.4],
-    [14.8, 53.6]
+    [-1.0, 48.2],
+    [16.0, 53.8]
   ],
   bigWeekGermany: [
     [4.8, 48.6],
     [14.9, 53.3]
   ],
   bismarckSeaWide: [
-    [145.2, -10.2],
-    [154.1, -1.45]
+    [145.2, -10.6],
+    [154.1, -0.8]
   ],
   bismarckSeaBattle: [
-    [146.0, -7.65],
-    [149.9, -4.85]
+    [146.0, -7.8],
+    [149.9, -4.6]
   ],
   bismarckSeaLae: [
     [145.95, -7.55],
