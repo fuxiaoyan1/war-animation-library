@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlexanderConquestsAnimation } from "./components/AlexanderConquestsAnimation";
+import { AtlanticConvoyBattleAnimation } from "./components/AtlanticConvoyBattleAnimation";
 import { BattleOfBritainAnimation } from "./components/BattleOfBritainAnimation";
 import { BattleFranceAnimation } from "./components/BattleFranceAnimation";
 import { BigWeekAirBattleAnimation } from "./components/BigWeekAirBattleAnimation";
@@ -36,6 +37,7 @@ export type CampaignKey =
   | "alexander"
   | "caesar"
   | "britain-air"
+  | "atlantic-convoy"
   | "big-week"
   | "bismarck-sea"
   | "trafalgar"
@@ -137,6 +139,7 @@ function App() {
       {campaign === "britain-air" && <BattleOfBritainAnimation />}
       {campaign === "big-week" && <BigWeekAirBattleAnimation />}
       {campaign === "bismarck-sea" && <BismarckSeaAirBattleAnimation />}
+      {campaign === "atlantic-convoy" && <AtlanticConvoyBattleAnimation />}
       {campaign === "caesar" && <CaesarWarsAnimation />}
       {campaign === "crusades" && <CrusadesAnimation />}
       {campaign === "eastern" && <EasternFrontAnimation />}

@@ -22,4 +22,5 @@ export type UnitIconKind =
   | "ww2Bomber"
   | "ww2EscortShip"
   | "ww2Fighter"
+  | "ww2Submarine"
   | "ww2TransportShip";

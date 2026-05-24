@@ -199,6 +199,14 @@ const iconConfig: Record<
     testId: "ww2-fighter-marker",
     width: 66
   },
+  ww2Submarine: {
+    className: "ww2-ship-marker ww2-submarine-marker",
+    defaultFacingX: 1,
+    height: 30,
+    href: publicPath("/assets/unit-icons/ww2-submarine.webp"),
+    testId: "ww2-submarine-marker",
+    width: 102
+  },
   ww2TransportShip: {
     className: "ww2-ship-marker ww2-transport-ship-marker",
     defaultFacingX: 1,

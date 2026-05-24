@@ -152,6 +152,17 @@
 - 本地校验：文件大小 `2,873,457 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `63.583s`，约 `357kbps`。
 - 使用位置：`日德兰海战`。该曲未被其他战争动画使用，满足系列配乐不重复规则。
 
+### Heart of Oak
+
+- 文件：`public/audio/wikimedia-heart-of-oak.ogg`
+- 曲目：`Heart of Oak`。
+- 来源标注：Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Heart_of_Oak.ogg>
+- OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/Heart_of_Oak.ogg>
+- 版权状态：Wikimedia Commons 文件页标注需后续复核；当前项目在本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `1,598,822 bytes`，Ogg Vorbis，Monaural，44100Hz，`afinfo` 估算时长约 `142.002s`。
+- 使用位置：`HX 229 / SC 122：大西洋狼群战`。该曲未被其他战争动画使用，满足当前系列配乐不重复规则。
+
 ### 拉德茨基进行曲
 
 - 文件：`public/audio/radetzky-march.mp3`

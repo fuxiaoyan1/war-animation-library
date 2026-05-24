@@ -129,6 +129,13 @@ const wars: WarEntry[] = [
     description: "侦察跟踪、高空轰炸、低空扫射、跳弹轰炸与船队瓦解。"
   },
   {
+    id: "atlantic-convoy",
+    title: "HX 229 / SC 122：大西洋狼群战",
+    era: "现代战争",
+    period: "1943-03",
+    description: "中大西洋空隙、双船队、三狼群、鱼雷夜袭、护航反潜与远程巡逻机。"
+  },
+  {
     id: "guadalcanal",
     title: "第二次瓜岛海战",
     era: "现代战争",

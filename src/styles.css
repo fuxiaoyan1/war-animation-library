@@ -1692,6 +1692,47 @@ h1 {
   transform: scale(0.38);
 }
 
+.atlantic-convoy-battle .ww2-ship-marker {
+  transform: scale(0.34);
+}
+
+.atlantic-convoy-battle .ww2-submarine-marker {
+  transform: scale(0.32);
+}
+
+.atlantic-convoy-battle .route-sea.faction-germany .front-route {
+  stroke-dasharray: 4 8;
+  stroke-opacity: 0.82;
+}
+
+.atlantic-convoy-battle .route-sea.faction-germany .front-halo {
+  stroke-opacity: 0.16;
+}
+
+.atlantic-convoy-battle .route-sea.faction-germany.is-complete .front-route {
+  stroke-opacity: 0.5;
+}
+
+.atlantic-convoy-battle .line-label,
+.atlantic-convoy-battle .active-event-label {
+  font-size: 11px;
+  stroke-width: 3.5px;
+}
+
+.atlantic-convoy-battle .formation-unit-label {
+  font-size: 8px;
+  stroke-width: 2.5px;
+}
+
+.atlantic-convoy-battle .unit-faction-badge circle {
+  r: 7;
+}
+
+.atlantic-convoy-battle .unit-faction-badge text {
+  font-size: 7px;
+  letter-spacing: 0;
+}
+
 .infantry-marker {
   transform: scale(1.04);
 }
@@ -1814,6 +1855,7 @@ h1 {
 .sabre-marker.is-active,
 .ww2-aircraft-marker.is-active,
 .ww2-ship-marker.is-active,
+.ww2-submarine-marker.is-active,
 .infantry-marker.is-active,
 .infantry-pva-marker.is-active,
 .tank-korean-marker.is-active {

@@ -8,6 +8,7 @@ import {
 } from "../src/data/jutlandBattle";
 import { createCampaignTimeline, toTime } from "../src/lib/campaignTimeline";
 import * as alexanderData from "../src/data/alexanderConquests";
+import * as atlanticConvoyData from "../src/data/atlanticConvoyBattle";
 import * as battleOfFranceData from "../src/data/battleOfFrance";
 import * as battleOfBritainData from "../src/data/battleOfBritain";
 import * as bigWeekData from "../src/data/bigWeekAirBattle";
@@ -84,6 +85,7 @@ type CampaignDataModule = {
 
 const genericCampaignData: Array<[string, CampaignDataModule]> = [
   ["battleOfFrance", battleOfFranceData as CampaignDataModule],
+  ["atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule],
   ["battleOfBritain", battleOfBritainData as CampaignDataModule],
   ["bigWeekAirBattle", bigWeekData as CampaignDataModule],
   ["bismarckSeaAirBattle", bismarckSeaData as CampaignDataModule],
@@ -112,6 +114,8 @@ const intentionalQuietCombatLikeEvents = new Set([
   "afternoon-warning",
   "evening-result",
   "fleet-contact",
+  "sc122-first-contact",
+  "wolfpacks-converge",
   "run-to-north",
   "songs-of-chu",
   "uxbridge-quiet-before-raid",
@@ -382,6 +386,7 @@ async function expectRealisticUnitIcon(
     | "ww2-bomber-marker"
     | "ww2-escort-ship-marker"
     | "ww2-fighter-marker"
+    | "ww2-submarine-marker"
     | "ww2-transport-ship-marker",
   expectedAssetKind:
     | "cannon"
@@ -407,6 +412,7 @@ async function expectRealisticUnitIcon(
     | "ww2Bomber"
     | "ww2EscortShip"
     | "ww2Fighter"
+    | "ww2Submarine"
     | "ww2TransportShip",
   expectedAssetPath?:
     | "cannon"
@@ -435,6 +441,7 @@ async function expectRealisticUnitIcon(
     | "ww2-bomber"
     | "ww2-escort-ship"
     | "ww2-fighter"
+    | "ww2-submarine"
     | "ww2-transport-ship"
 ) {
   const assetPath = expectedAssetPath ?? expectedAssetKind;
@@ -449,7 +456,7 @@ async function expectRealisticUnitIcon(
   expect(assetResponse.headers()["content-type"]).toContain("image");
   const minimumContentLength = expectedAssetKind.startsWith("trafalgar")
     ? 12_000
-    : expectedAssetKind === "ww2TransportShip" || expectedAssetKind === "ww2EscortShip"
+    : expectedAssetKind === "ww2TransportShip" || expectedAssetKind === "ww2EscortShip" || expectedAssetKind === "ww2Submarine"
       ? 6_000
     : expectedAssetKind === "infantry"
       ? 18_000
@@ -1524,6 +1531,7 @@ const campaignIds = [
   "pacific",
   "midway",
   "bismarck-sea",
+  "atlantic-convoy",
   "guadalcanal",
   "big-week",
   "korean",
@@ -1595,6 +1603,11 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
 
     if (["battleOfBritain", "bigWeekAirBattle", "bismarckSeaAirBattle"].includes(campaignName)) {
       expectAirRoutesHaveShortUnitWindows(campaignName, data, campaignName === "bigWeekAirBattle" ? 12 : 8);
+    }
+
+    if (campaignName === "atlanticConvoyBattle") {
+      expectAirRoutesHaveShortUnitWindows(campaignName, data, 12);
+      expectAirRouteUnitsMoveUntilExit(campaignName, data);
     }
   }
 
@@ -1685,6 +1698,60 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "mopping-up-strikes",
     0.45
   );
+  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "hx229-first-contact", [
+    "hx229-convoy-track",
+    "raubgraf-hx229-contact"
+  ]);
+  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "night-torpedo-attacks", [
+    "hx229-convoy-track",
+    "sc122-convoy-track",
+    "raubgraf-hx229-contact",
+    "sturmer-sc122-attack",
+    "escort-counterattack-screen"
+  ]);
+  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", [
+    "hx229-convoy-track",
+    "sc122-convoy-track",
+    "second-night-submarine-screen",
+    "escort-counterattack-screen"
+  ]);
+  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", ["u384-hunt-by-air"]);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "sc122-first-contact", "sturmer-sc122-attack", 0.8, 0.3);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "night-torpedo-attacks", "raubgraf-hx229-contact", 0.8, 0.4);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "second-night-submarine-screen", 0.2, 0.95);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", "u384-hunt-by-air", 0.25, 0.45);
+  expectRoutesNearEachOtherAtEvent(
+    "atlanticConvoyBattle",
+    atlanticConvoyData as CampaignDataModule,
+    "night-torpedo-attacks",
+    "hx229-convoy-track",
+    "raubgraf-hx229-contact",
+    2.0
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "atlanticConvoyBattle",
+    atlanticConvoyData as CampaignDataModule,
+    "night-torpedo-attacks",
+    "sc122-convoy-track",
+    "sturmer-sc122-attack",
+    2.7
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "atlanticConvoyBattle",
+    atlanticConvoyData as CampaignDataModule,
+    "second-night-battle",
+    "hx229-convoy-track",
+    "second-night-submarine-screen",
+    1.3
+  );
+  expectRoutesNearEachOtherAtEvent(
+    "atlanticConvoyBattle",
+    atlanticConvoyData as CampaignDataModule,
+    "second-night-battle",
+    "sc122-convoy-track",
+    "u-boat-disengagement",
+    0.7
+  );
   expectRoutesNearEachOtherAtEvent(
     "battleOfBritain",
     battleOfBritainData as CampaignDataModule,
@@ -1768,6 +1835,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
 });
 
 test("war library home lists ancient and modern animations", async ({ page }) => {
+  test.setTimeout(90_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await page.goto("/");
@@ -1824,6 +1892,7 @@ test("war library home lists ancient and modern animations", async ({ page }) =>
       "日美太平洋战争战史",
       "中途岛海空战",
       "俾斯麦海海空战",
+      "HX 229 / SC 122：大西洋狼群战",
       "第二次瓜岛海战",
       "大周行动：欧洲昼间制空权争夺",
       "抗美援朝战争",
@@ -2646,6 +2715,84 @@ test("bismarck sea air battle shows skip bombing and convoy breakup", async ({ p
   await expectAirRouteKeepsTrackButAircraftExit(page, ".bismarck-sea-air-battle", "skip-bombing-attack");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".bismarck-sea-air-battle", "allied-search-shadow");
   await expectNavalRoutesStayOffLand(page, ".bismarck-sea-air-battle");
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("atlantic convoy battle shows wolfpack submarine and anti-submarine timeline", async ({ page }) => {
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await openCampaignFromHome(page, "atlantic-convoy");
+  await expect(page.getByTestId("atlantic-convoy-app")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "HX 229 / SC 122：大西洋狼群战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "HX 229 / SC 122：大西洋狼群战");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-heart-of-oak.ogg");
+  await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 发现船队");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page);
+  await expectMapCanMoveUnderPointer(page);
+  await expectMapCanMoveHorizontallyUnderPointer(page);
+  await expectMapZoomButtonsWork(page);
+  await expectNoTerrainZones(page, ".atlantic-convoy-battle");
+  await expectMapPointsHidden(page, ".atlantic-convoy-battle", [
+    "sc122-contact",
+    "hx229-night-attack",
+    "sc122-night-attack",
+    "liberator-patrol-zone",
+    "second-night-attack",
+    "u384-sinking",
+    "attack-discontinued"
+  ]);
+  await expect(page.getByTestId("outcome-panel")).toContainText("U艇参战口径");
+  await expect(page.locator('.front-line[data-route-id="hx229-convoy-track"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="sc122-convoy-track"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="raubgraf-hx229-contact"]')).toHaveClass(/route-sea/);
+  await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "hx229-convoy-track", 8);
+  await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "sc122-convoy-track", 8);
+  await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "raubgraf-hx229-contact", 4);
+  await expectRealisticUnitIcon(page, "ww2-transport-ship-marker", "ww2TransportShip", "ww2-transport-ship");
+  await expectRealisticUnitIcon(page, "ww2-escort-ship-marker", "ww2EscortShip", "ww2-escort-ship");
+  await expectRealisticUnitIcon(page, "ww2-submarine-marker", "ww2Submarine", "ww2-submarine");
+  await expectNavalRoutesStayOffLand(page, ".atlantic-convoy-battle");
+
+  await installAudioSpy(page);
+  await page.getByTestId("event-list").getByRole("button", { name: /夜间鱼雷攻击高峰/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("夜间鱼雷攻击");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("atlantic-hx229-torpedo-salvo")).toBeVisible();
+  await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
+  await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(3);
+  await expect(page.getByTestId("atlantic-sc122-torpedo-salvo").locator(".salvo-impact")).toHaveCount(4);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBeGreaterThan(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
+  await expect(page.locator('.front-line[data-route-id="escort-counterattack-screen"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="escort-counterattack-screen"]')).toHaveAttribute("data-route-to", "second-night-attack");
+
+  await page.getByTestId("event-list").getByRole("button", { name: /远程巡逻机进入空隙边缘/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("远程巡逻机");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="vlr-liberator-first-patrol"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="vlr-liberator-first-patrol"]')).toHaveAttribute("data-route-to", "iceland-patrol-base");
+  await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
+  await expectCompactAircraftMarkers(page, "ww2-bomber-marker");
+
+  await page.getByTestId("event-list").getByRole("button", { name: /U-384 被 RAF 206中队击沉/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("U-384");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("atlantic-u384-depth-charge")).toBeVisible();
+  await expect(page.locator('.front-line[data-route-id="u384-hunt-by-air"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="u384-hunt-by-air"]')).toHaveAttribute("data-route-to", "northern-ireland-patrol-base");
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(1);
+
+  await page.getByTestId("timeline").fill("1000");
+  await expect(page.getByTestId("active-event-card")).toContainText("终止攻击");
+  await expectCurrentEventInsideMapCore(page);
+  await expect(page.locator('.front-line[data-route-id="u-boat-disengagement"]')).toHaveClass(/route-sea/);
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "vlr-liberator-first-patrol");
+  await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "u384-hunt-by-air");
+  await expectNavalRoutesStayOffLand(page, ".atlantic-convoy-battle");
 
   expect(apiFailures).toEqual([]);
   expect(consoleErrors).toEqual([]);

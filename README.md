@@ -10,7 +10,7 @@ The demo opens on the library shelf. Each card launches an interactive animation
 
 ## Current Library
 
-The repository currently includes 21 animations.
+The repository currently includes 22 animations.
 
 Ancient and pre-Napoleonic campaigns:
 
@@ -34,6 +34,7 @@ Modern campaigns and tactical battles:
 - 日美太平洋战争战史
 - 中途岛海空战
 - 俾斯麦海海空战
+- HX 229 / SC 122：大西洋狼群战
 - 第二次瓜岛海战
 - 大周行动：欧洲昼间制空权争夺
 - 抗美援朝战争
@@ -45,6 +46,7 @@ The latest series work focused on naval and air-war animation quality:
 
 - Added and refined tactical naval battles: Tsushima, Trafalgar, the Second Naval Battle of Guadalcanal, and Jutland.
 - Added WWII air and sea-air studies: Battle of Britain Day as `伦敦上空的鹰`, Big Week, and the Battle of the Bismarck Sea.
+- Added a WWII Atlantic submarine-war study: `HX 229 / SC 122：大西洋狼群战`, covering convoy movement, wolfpack convergence, torpedo attacks, escort ASW, VLR patrol aircraft, and U-384's loss.
 - Improved aircraft lifecycle modeling: sorties now show departure, contact, attack, pursuit, return, or landing instead of disappearing or loitering at target points.
 - Added dogfight effects for dense air combat, without using naval-style salvo lines for air battles.
 - Tightened route quality gates: air routes keep trails after aircraft leave, but visible aircraft must still be moving along a valid route.

@@ -86,6 +86,22 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [145.95, -7.55],
     [148.6, -4.9]
   ],
+  atlanticConvoyWide: [
+    [-56.0, 47.0],
+    [-4.0, 64.5]
+  ],
+  atlanticConvoyBattle: [
+    [-47.5, 49.9],
+    [-30.6, 54.8]
+  ],
+  atlanticConvoyAirCover: [
+    [-42.0, 51.0],
+    [-18.8, 56.6]
+  ],
+  atlanticConvoyEastern: [
+    [-31.5, 51.8],
+    [-12.0, 56.5]
+  ],
   mediterranean: [
     [-8.0, 30.0],
     [31.0, 47.0]
@@ -631,6 +647,17 @@ const jutlandCampaignCountryNames = new Set(["Denmark", "Germany", "Netherlands"
 const battleOfBritainCampaignCountryNames = new Set(["Belgium", "France", "Germany", "Netherlands", "United Kingdom"]);
 const bigWeekCampaignCountryNames = new Set(["Belgium", "Czechia", "Denmark", "France", "Germany", "Netherlands", "Poland", "United Kingdom"]);
 const bismarckSeaCampaignCountryNames = new Set(["Papua New Guinea", "Solomon Is."]);
+const atlanticConvoyCampaignCountryNames = new Set([
+  "Canada",
+  "France",
+  "Greenland",
+  "Iceland",
+  "Ireland",
+  "Portugal",
+  "Spain",
+  "United Kingdom",
+  "United States of America"
+]);
 
 const mongolCoreCountryNames = new Set(["Mongolia", "China", "Kazakhstan", "Uzbekistan", "Iran", "Russia"]);
 const qinCoreCountryNames = new Set(["China"]);
@@ -644,6 +671,7 @@ const jutlandCoreCountryNames = new Set(["Denmark", "Germany", "United Kingdom"]
 const battleOfBritainCoreCountryNames = new Set(["France", "United Kingdom"]);
 const bigWeekCoreCountryNames = new Set(["Germany", "United Kingdom"]);
 const bismarckSeaCoreCountryNames = new Set(["Papua New Guinea"]);
+const atlanticConvoyCoreCountryNames = new Set(["Canada", "Iceland", "Ireland", "United Kingdom"]);
 
 export const westernEuropeCountries = countryCollection.features.filter((country) =>
   focusCountryNames.has(country.properties?.name ?? "")
@@ -719,6 +747,10 @@ export const bigWeekCampaignCountries = countryCollection.features.filter((count
 
 export const bismarckSeaCampaignCountries = countryCollection.features.filter((country) =>
   bismarckSeaCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const atlanticConvoyCampaignCountries = countryCollection.features.filter((country) =>
+  atlanticConvoyCampaignCountryNames.has(country.properties?.name ?? "")
 ) as CountryFeature[];
 
 export function createCampaignProjection(width: number, height: number, focus: keyof typeof viewports = "north") {
@@ -863,4 +895,10 @@ export function bismarckSeaCountryClassName(country: CountryFeature) {
   const name = country.properties?.name ?? "unknown";
   const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
   return `country country-${normalized} ${bismarckSeaCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function atlanticConvoyCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${atlanticConvoyCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
 }

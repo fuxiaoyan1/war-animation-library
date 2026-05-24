@@ -107,6 +107,7 @@
 - 伦敦上空的鹰：聚焦 1940-09-15 伦敦方向两次昼间大空袭，雷达预警、扇区指挥、RAF 拦截、城市上空混战和回程追击。
 - 大周行动：欧洲昼间制空权争夺：轰炸机流、远程护航、德机截击、制空权消耗。
 - 俾斯麦海海空战：海上运输线、侦察跟踪、高空轰炸、低空扫射、跳弹轰炸、船队瓦解。
+- HX 229 / SC 122：大西洋狼群战：中大西洋空隙、双船队、Raubgraf / Sturmer / Dranger 狼群线、夜间鱼雷攻击、护航反潜、VLR Liberator 反潜巡逻、U-384 被击沉与德方终止攻击。
 
 同时改进了旧动画和通用层：
 
@@ -126,6 +127,7 @@
 - `src/data/battleOfBritain.ts`
 - `src/data/bigWeekAirBattle.ts`
 - `src/data/bismarckSeaAirBattle.ts`
+- `src/data/atlanticConvoyBattle.ts`
 - `src/data/guadalcanalNavalBattle.ts`
 - `src/data/jutlandBattle.ts`
 - `src/data/trafalgarBattle.ts`
@@ -136,6 +138,7 @@
 - `src/components/BattleOfBritainAnimation.tsx`
 - `src/components/BigWeekAirBattleAnimation.tsx`
 - `src/components/BismarckSeaAirBattleAnimation.tsx`
+- `src/components/AtlanticConvoyBattleAnimation.tsx`
 - `src/components/GuadalcanalNavalBattleAnimation.tsx`
 - `src/components/JutlandBattleAnimation.tsx`
 - `src/components/TrafalgarBattleAnimation.tsx`
@@ -167,6 +170,7 @@
 - `docs/sources/battle-of-britain.md`
 - `docs/sources/big-week-air-battle.md`
 - `docs/sources/bismarck-sea-air-battle.md`
+- `docs/sources/atlantic-convoy-battle.md`
 - `docs/sources/audio.md`
 - `docs/sources/unit-icons.md`
 
@@ -266,6 +270,8 @@
 - 爆炸音和齐射效果必须对齐战斗时间点。不能战斗点无声，也不能无战斗时乱响。
 - 海路不能从陆地出发、穿陆、贴陆或开上岸。港口叙事要用离岸锚地/外海点和 `waypoints`。
 - 视觉上舰船图标要压缩到合适比例，当前海战测试用 `expectWarshipScale(page, selector, 0.5)` 覆盖。
+- 潜艇战不是普通水面舰队战。商船/护航舰可以持续航行，U 艇应按接触、合围、攻击、脱离分段显示，航迹保留但单位不能长期悬停在攻击点；飞机反潜必须按短时巡逻出击和返航建模。
+- 潜艇战不要主动加入潜潜对战，除非资料明确支持。HX 229 / SC 122 的重点是 U 艇攻击商船、护航舰反潜和飞机反潜。
 
 海路不上陆测试已经覆盖：
 
@@ -281,6 +287,38 @@
 - `expectJutlandFleetGroupsContinuous`
 - `expectWarshipScale`
 - `expectRouteHasPolylineComplexity`
+
+### HX 229 / SC 122：大西洋狼群战
+
+文件：
+
+- `src/data/atlanticConvoyBattle.ts`
+- `src/components/AtlanticConvoyBattleAnimation.tsx`
+- `docs/sources/atlantic-convoy-battle.md`
+
+当前叙事阶段：
+
+- U-653 / U 艇接触 HX 229。
+- Raubgraf、Sturmer、Dranger 多狼群向航路合围。
+- U-338 发现 SC 122，形成双船队同场战斗。
+- 3月17日夜间鱼雷攻击高峰。
+- VLR Liberator 从冰岛/北爱尔兰方向进入中大西洋空隙边缘。
+- 第二夜攻击持续，护航舰反潜屏幕压向狼群。
+- 1943-03-19 17:45，U-384 在约 54.18N, 26.15W 被 RAF 206 中队 Fortress 机深弹击沉。
+- 当夜德方终止攻击，船队继续向西部入口方向脱离，U 艇撤离。
+
+最容易回归的问题：
+
+- 把船队强行拉到英国近岸，导致接触、夜袭和第二夜攻击与船队位置错开。当前动画只复原战斗海域内态势，不做完整横跨大西洋航程。
+- U 艇停在攻击点不动。正确做法是分段路线，`visibleUntil` 保留航迹，`unitVisibleUntil` 控制单位退场。
+- 发现/合围节点乱放爆炸音。当前只有夜间鱼雷、第二夜攻击和 U-384 深弹节点有战斗音。
+- 关键点提前显示。`sc122-contact`、夜袭点、`second-night-attack`、`u384-sinking`、`attack-discontinued` 都要 `revealAt`。
+- 把反潜飞机当作常驻单位。`vlr-liberator-first-patrol` 和 `u384-hunt-by-air` 必须飞入、接触、返航，航迹保留但飞机图标在任务结束时退场。
+
+测试覆盖：
+
+- 新动画 smoke：`atlantic convoy battle shows wolfpack submarine and anti-submarine timeline`。
+- 数据门禁检查关键事件有活跃路线、攻击/反潜路线同窗接近、空中反潜路线短时窗口、海路不上陆、潜艇/商船/护航舰/巡逻机写实资产。
 
 ## 9. 重点战役接手说明
 
