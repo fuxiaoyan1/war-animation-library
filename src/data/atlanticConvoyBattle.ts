@@ -14,8 +14,8 @@ export const mapPoints: MapPoint[] = [
   { id: "raubgraf-line", label: "Raubgraf 狼群线", coordinates: [-42.7, 51.55], kind: "front", revealAt: "1943-03-16T12:00" },
   { id: "sturmer-dranger-line", label: "Sturmer / Dranger 狼群线", coordinates: [-37.8, 52.45], kind: "front", revealAt: "1943-03-17T00:30" },
   { id: "sc122-contact", label: "SC 122 被 U-338 发现", coordinates: [-38.65, 52.7], kind: "front", revealAt: "1943-03-17T00:30" },
-  { id: "hx229-night-attack", label: "HX 229 夜间鱼雷攻击", coordinates: [-41.9, 51.55], kind: "objective", revealAt: "1943-03-17T00:30" },
-  { id: "sc122-night-attack", label: "SC 122 夜间鱼雷攻击", coordinates: [-38.25, 52.85], kind: "objective", revealAt: "1943-03-17T00:45" },
+  { id: "hx229-night-attack", label: "HX 229 夜间鱼雷攻击", coordinates: [-40.95, 51.75], kind: "objective", revealAt: "1943-03-17T00:30" },
+  { id: "sc122-night-attack", label: "SC 122 夜间鱼雷攻击", coordinates: [-40.95, 52.39], kind: "objective", revealAt: "1943-03-17T00:45" },
   { id: "liberator-patrol-zone", label: "VLR Liberator 巡逻进入", coordinates: [-35.4, 54.0], kind: "front", revealAt: "1943-03-17T12:00" },
   { id: "second-night-attack", label: "第二夜持续攻击", coordinates: [-33.6, 53.1], kind: "objective", revealAt: "1943-03-18T22:00" },
   { id: "u384-sinking", label: "U-384 被飞机击沉", coordinates: [-26.25, 54.3], kind: "objective", revealAt: "1943-03-19T17:45" },
@@ -44,7 +44,7 @@ const raubgrafSubmarines: FormationUnit[] = [
 
 const sturmerSubmarines: FormationUnit[] = [
   { id: "u338", label: "U-338", badgeLabel: "U", icon: "ww2Submarine", offset: [0, 12] },
-  { id: "u384", label: "U-384", badgeLabel: "U", icon: "ww2Submarine", offset: [-32, -12] },
+  { id: "u523", label: "U-523", badgeLabel: "U", icon: "ww2Submarine", offset: [-32, -12] },
   { id: "u305", label: "U-305", badgeLabel: "U", icon: "ww2Submarine", offset: [-64, 14] }
 ];
 
@@ -57,6 +57,10 @@ const drangerSubmarines: FormationUnit[] = [
 const liberatorPatrol: FormationUnit[] = [
   { id: "liberator-a", label: "VLR Liberator", badgeLabel: "RAF", icon: "ww2Bomber", offset: [0, -12] },
   { id: "liberator-b", label: "巡逻机", badgeLabel: "RAF", icon: "ww2Bomber", offset: [-28, 12], hiddenUntil: "1943-03-17T12:00" }
+];
+
+const u384Submarine: FormationUnit[] = [
+  { id: "u384", label: "U-384", badgeLabel: "U", icon: "ww2Submarine", offset: [0, -12] }
 ];
 
 export const frontLines: FrontLine[] = [
@@ -74,7 +78,7 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [-43.85, 51.25],
       [-43.2, 51.35],
-      [-41.9, 51.55],
+      [-40.95, 51.75],
       [-38.2, 52.05],
       [-33.6, 53.1],
       [-28.1, 53.6],
@@ -96,8 +100,9 @@ export const frontLines: FrontLine[] = [
     waypoints: [
       [-43.4, 52.1],
       [-42.0, 52.25],
+      [-40.95, 52.39],
       [-38.65, 52.7],
-      [-38.25, 52.85],
+      [-36.2, 52.95],
       [-33.6, 53.1],
       [-29.2, 53.7],
       [-28.0, 54.0]
@@ -114,15 +119,16 @@ export const frontLines: FrontLine[] = [
     start: "1943-03-16T03:30",
     end: "1943-03-17T06:00",
     unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "raubgraf-wolfpack",
     formationUnits: raubgrafSubmarines,
     waypoints: [
       [-43.9, 50.9],
       [-43.85, 51.25],
-      [-42.8, 51.35],
-      [-41.9, 51.55]
+      [-42.5, 51.45],
+      [-40.95, 51.75]
     ],
-    visibleUntil: "1943-03-20T12:00",
-    unitVisibleUntil: "1943-03-17T09:00"
+    visibleUntil: "1943-03-20T12:00"
   },
   {
     id: "sturmer-sc122-attack",
@@ -134,14 +140,15 @@ export const frontLines: FrontLine[] = [
     start: "1943-03-16T20:00",
     end: "1943-03-17T07:30",
     unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "sturmer-wolfpack",
     formationUnits: sturmerSubmarines,
     waypoints: [
       [-39.1, 53.55],
       [-38.65, 52.7],
-      [-38.25, 52.85]
+      [-40.95, 52.39]
     ],
-    visibleUntil: "1943-03-20T12:00",
-    unitVisibleUntil: "1943-03-17T12:00"
+    visibleUntil: "1943-03-20T12:00"
   },
   {
     id: "dranger-hx229-converge",
@@ -153,14 +160,155 @@ export const frontLines: FrontLine[] = [
     start: "1943-03-16T14:00",
     end: "1943-03-17T08:30",
     unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "dranger-wolfpack",
     formationUnits: drangerSubmarines,
     waypoints: [
       [-38.0, 52.0],
       [-39.8, 51.8],
-      [-41.9, 51.55]
+      [-40.95, 51.75]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "u384-continuous-track",
+    faction: "germany",
+    label: "U-384 单艇持续航迹",
+    from: "sturmer-dranger-line",
+    to: "u384-sinking",
+    routeKind: "sea",
+    start: "1943-03-16T03:30",
+    end: "1943-03-19T17:45",
+    unitIcon: "ww2Submarine",
+    formationUnits: u384Submarine,
+    waypoints: [
+      [-39.1, 53.55],
+      [-38.65, 52.7],
+      [-40.95, 52.39],
+      [-36.6, 52.8],
+      [-33.6, 53.1],
+      [-30.2, 53.7],
+      [-28.2, 54.05]
     ],
     visibleUntil: "1943-03-20T12:00",
-    unitVisibleUntil: "1943-03-17T11:00"
+    unitVisibleUntil: "1943-03-19T17:45"
+  },
+  {
+    id: "raubgraf-second-night-shadow",
+    faction: "germany",
+    label: "Raubgraf 持续跟踪东航船队",
+    from: "hx229-night-attack",
+    to: "second-night-attack",
+    routeKind: "sea",
+    start: "1943-03-17T06:00",
+    end: "1943-03-19T02:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "raubgraf-wolfpack",
+    formationUnits: raubgrafSubmarines,
+    waypoints: [
+      [-39.6, 51.95],
+      [-36.8, 52.6],
+      [-34.3, 53.0]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "sturmer-second-night-shadow",
+    faction: "germany",
+    label: "Sturmer 随 SC 122 东移",
+    from: "sc122-night-attack",
+    to: "second-night-attack",
+    routeKind: "sea",
+    start: "1943-03-17T07:30",
+    end: "1943-03-19T02:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "sturmer-wolfpack",
+    formationUnits: sturmerSubmarines,
+    waypoints: [
+      [-37.6, 52.75],
+      [-35.4, 53.0],
+      [-33.6, 53.1]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "dranger-second-night-shadow",
+    faction: "germany",
+    label: "Dranger 从侧翼继续压迫",
+    from: "hx229-night-attack",
+    to: "second-night-attack",
+    routeKind: "sea",
+    start: "1943-03-17T08:30",
+    end: "1943-03-19T02:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "dranger-wolfpack",
+    formationUnits: drangerSubmarines,
+    waypoints: [
+      [-39.0, 52.2],
+      [-36.5, 52.75],
+      [-33.6, 53.1]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "raubgraf-disengagement",
+    faction: "germany",
+    label: "Raubgraf 向东脱离",
+    from: "second-night-attack",
+    to: "attack-discontinued",
+    routeKind: "sea",
+    start: "1943-03-19T02:00",
+    end: "1943-03-19T23:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "raubgraf-wolfpack",
+    formationUnits: raubgrafSubmarines,
+    waypoints: [
+      [-31.2, 53.2],
+      [-27.4, 53.55]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "sturmer-disengagement",
+    faction: "germany",
+    label: "Sturmer 中断攻击",
+    from: "second-night-attack",
+    to: "attack-discontinued",
+    routeKind: "sea",
+    start: "1943-03-19T02:00",
+    end: "1943-03-19T23:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "sturmer-wolfpack",
+    formationUnits: sturmerSubmarines,
+    waypoints: [
+      [-31.0, 53.0],
+      [-27.6, 53.35]
+    ],
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "dranger-disengagement",
+    faction: "germany",
+    label: "Dranger 脱离船队航路",
+    from: "second-night-attack",
+    to: "attack-discontinued",
+    routeKind: "sea",
+    start: "1943-03-19T02:00",
+    end: "1943-03-19T23:00",
+    unitIcon: "ww2Submarine",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "dranger-wolfpack",
+    formationUnits: drangerSubmarines,
+    waypoints: [
+      [-31.4, 53.45],
+      [-27.8, 53.75]
+    ],
+    visibleUntil: "1943-03-20T12:00"
   },
   {
     id: "vlr-liberator-first-patrol",
@@ -192,6 +340,7 @@ export const frontLines: FrontLine[] = [
     from: "sc122-night-attack",
     to: "second-night-attack",
     routeKind: "sea",
+    hideUnit: true,
     start: "1943-03-17T18:00",
     end: "1943-03-19T02:00",
     unitIcon: "ww2Submarine",
@@ -205,8 +354,7 @@ export const frontLines: FrontLine[] = [
       [-34.8, 53.05],
       [-33.6, 53.1]
     ],
-    visibleUntil: "1943-03-20T12:00",
-    unitVisibleUntil: "1943-03-19T08:00"
+    visibleUntil: "1943-03-20T12:00"
   },
   {
     id: "escort-counterattack-screen",
@@ -218,6 +366,8 @@ export const frontLines: FrontLine[] = [
     start: "1943-03-17T00:30",
     end: "1943-03-19T12:00",
     unitIcon: "ww2EscortShip",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "allied-escort-screen",
     formationUnits: [
       { id: "havelock", label: "Havelock", badgeLabel: "英", icon: "ww2EscortShip", offset: [0, -18] },
       { id: "swale", label: "Swale", badgeLabel: "英", icon: "ww2EscortShip", offset: [-42, 16] },
@@ -229,8 +379,30 @@ export const frontLines: FrontLine[] = [
       [-35.4, 53.05],
       [-33.6, 53.1]
     ],
-    visibleUntil: "1943-03-20T12:00",
-    unitVisibleUntil: "1943-03-19T12:00"
+    visibleUntil: "1943-03-20T12:00"
+  },
+  {
+    id: "escort-eastern-cover",
+    faction: "britain",
+    label: "护航舰掩护船队东撤",
+    from: "second-night-attack",
+    to: "western-approaches",
+    routeKind: "sea",
+    start: "1943-03-19T12:00",
+    end: "1943-03-20T12:00",
+    unitIcon: "ww2EscortShip",
+    retainUnitAfterRouteEnd: true,
+    unitGroupId: "allied-escort-screen",
+    formationUnits: [
+      { id: "havelock", label: "Havelock", badgeLabel: "英", icon: "ww2EscortShip", offset: [0, -18] },
+      { id: "swale", label: "Swale", badgeLabel: "英", icon: "ww2EscortShip", offset: [-42, 16] },
+      { id: "highlander", label: "增援舰", badgeLabel: "英", icon: "ww2EscortShip", offset: [-84, -14] }
+    ],
+    waypoints: [
+      [-31.0, 53.35],
+      [-29.2, 53.7]
+    ],
+    visibleUntil: "1943-03-20T12:00"
   },
   {
     id: "u384-hunt-by-air",
@@ -265,6 +437,7 @@ export const frontLines: FrontLine[] = [
     from: "second-night-attack",
     to: "attack-discontinued",
     routeKind: "sea",
+    hideUnit: true,
     start: "1943-03-19T17:45",
     end: "1943-03-20T12:00",
     unitIcon: "ww2Submarine",
@@ -288,8 +461,9 @@ export const torpedoAndDepthChargeEffects = [
     start: "1943-03-17T00:45",
     end: "1943-03-17T02:30",
     from: [-42.45, 51.35] as [number, number],
-    to: [-41.9, 51.55] as [number, number],
+    to: [-40.95, 51.75] as [number, number],
     label: "鱼雷齐射",
+    className: "atlantic-hx229-torpedo-effect",
     testId: "atlantic-hx229-torpedo-salvo",
     shellOffsets: [
       [-22, -10],
@@ -308,9 +482,10 @@ export const torpedoAndDepthChargeEffects = [
     type: "salvo" as const,
     start: "1943-03-17T01:00",
     end: "1943-03-17T03:00",
-    from: [-38.75, 53.1] as [number, number],
-    to: [-38.25, 52.85] as [number, number],
+    from: [-40.35, 52.72] as [number, number],
+    to: [-40.95, 52.39] as [number, number],
     label: "U-338 齐射",
+    className: "atlantic-sc122-torpedo-effect",
     testId: "atlantic-sc122-torpedo-salvo",
     shellOffsets: [
       [-18, -10],
@@ -329,9 +504,10 @@ export const torpedoAndDepthChargeEffects = [
     type: "salvo" as const,
     start: "1943-03-19T17:35",
     end: "1943-03-19T18:20",
-    from: [-25.7, 54.55] as [number, number],
+    from: [-25.85, 54.56] as [number, number],
     to: [-26.25, 54.3] as [number, number],
     label: "航空深弹",
+    className: "atlantic-u384-depth-charge-effect",
     testId: "atlantic-u384-depth-charge",
     shellOffsets: [
       [-18, -16],

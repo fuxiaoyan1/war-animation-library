@@ -62,14 +62,23 @@ type CampaignDataModule = {
     testId?: string;
     type: string;
   }>;
+  torpedoAndDepthChargeEffects?: Array<{
+    from: [number, number];
+    id: string;
+    to: [number, number];
+    type: string;
+  }>;
   frontLines?: Array<{
     end: string;
     formationUnits?: unknown[];
     from: string;
     hideUnit?: boolean;
     id: string;
+    retainUnitAfterRouteEnd?: boolean;
     routeKind?: string;
     start: string;
+    unitIcon?: string;
+    unitGroupId?: string;
     unitVisibleFrom?: string;
     to: string;
     unitVisibleUntil?: string;
@@ -1111,6 +1120,78 @@ function expectAirRouteUnitsMoveUntilExit(campaignName: string, data: CampaignDa
   }
 }
 
+function expectAtlanticConvoySeaUnitsStayOnline(data: CampaignDataModule) {
+  const attackDiscontinued = toTime("1943-03-19T23:00");
+  const continuousSeaRoutes = ["raubgraf", "sturmer", "dranger", "allied-escort"];
+
+  for (const groupName of continuousSeaRoutes) {
+    const groupRoutes = (data.frontLines ?? []).filter((line) => line.routeKind === "sea" && line.unitGroupId?.includes(groupName));
+    expect(groupRoutes.length, `atlantic convoy ${groupName} should have continuous sea route handoffs`).toBeGreaterThan(1);
+    expect(
+      groupRoutes.some((line) => toTime(line.end) >= attackDiscontinued),
+      `atlantic convoy ${groupName} should keep units online until the disengagement/arrival phase`
+    ).toBe(true);
+  }
+
+  for (const line of data.frontLines ?? []) {
+    if (line.routeKind !== "sea" || line.hideUnit) {
+      continue;
+    }
+
+    if (line.unitIcon === "ww2Submarine" && line.id !== "u384-continuous-track") {
+      expect(line.unitVisibleUntil, `atlantic convoy submarine route ${line.id} should not disappear before it sinks or hands off`).toBeFalsy();
+      expect(line.retainUnitAfterRouteEnd, `atlantic convoy submarine route ${line.id} should retain through handoff`).toBe(true);
+      expect(line.unitGroupId, `atlantic convoy submarine route ${line.id} should declare a continuous group`).toBeTruthy();
+    }
+
+    if (line.unitIcon === "ww2EscortShip") {
+      expect(line.unitVisibleUntil, `atlantic convoy escort route ${line.id} should not disappear while afloat`).toBeFalsy();
+      expect(line.retainUnitAfterRouteEnd, `atlantic convoy escort route ${line.id} should retain through handoff`).toBe(true);
+      expect(line.unitGroupId, `atlantic convoy escort route ${line.id} should declare a continuous group`).toBeTruthy();
+    }
+  }
+
+  const u384Route = (data.frontLines ?? []).find((line) => line.id === "u384-continuous-track");
+  expect(u384Route, "atlantic convoy should model U-384 as its own continuous submarine track").toBeTruthy();
+  expect(u384Route!.unitIcon).toBe("ww2Submarine");
+  expect(u384Route!.start).toBe(data.campaignStart);
+  expect(u384Route!.end).toBe("1943-03-19T17:45");
+  expect(u384Route!.unitVisibleUntil).toBe("1943-03-19T17:45");
+  expect(
+    u384Route!.formationUnits?.some((unit) => (unit as { label?: string }).label === "U-384"),
+    "atlantic convoy U-384 should be labeled on the continuous route"
+  ).toBe(true);
+
+  for (const line of data.frontLines ?? []) {
+    if (line.id === "u384-continuous-track") {
+      continue;
+    }
+
+    expect(
+      line.formationUnits?.some((unit) => (unit as { label?: string }).label === "U-384"),
+      `atlantic convoy route ${line.id} should not duplicate U-384`
+    ).not.toBe(true);
+  }
+}
+
+function expectAtlanticConvoyEffectsAlignWithTargets(data: CampaignDataModule) {
+  const routeTargets: Record<string, { maxDistance: number; routeId: string; time: string }> = {
+    "hx229-torpedo-spread": { routeId: "hx229-convoy-track", time: "1943-03-17T01:00", maxDistance: 0.45 },
+    "sc122-torpedo-spread": { routeId: "sc122-convoy-track", time: "1943-03-17T01:00", maxDistance: 0.45 },
+    "u384-depth-charge-attack": { routeId: "u384-continuous-track", time: "1943-03-19T17:45", maxDistance: 0.15 }
+  };
+
+  for (const effect of data.torpedoAndDepthChargeEffects ?? []) {
+    const target = routeTargets[effect.id];
+    expect(target, `atlantic convoy effect ${effect.id} should have a checked target route`).toBeTruthy();
+    const line = (data.frontLines ?? []).find((item) => item.id === target!.routeId);
+    expect(line, `atlantic convoy effect ${effect.id} target route exists`).toBeTruthy();
+    const targetPoint = routePointAtDate(data, line!, target!.time);
+    const distance = Math.hypot(effect.to[0] - targetPoint[0], effect.to[1] - targetPoint[1]);
+    expect(distance, `atlantic convoy effect ${effect.id} should hit the live route position`).toBeLessThanOrEqual(target!.maxDistance);
+  }
+}
+
 function pointCoordinatesById(data: CampaignDataModule) {
   return new Map(
     (data.mapPoints ?? [])
@@ -1719,6 +1800,8 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     if (campaignName === "atlanticConvoyBattle") {
       expectAirRoutesHaveShortUnitWindows(campaignName, data, 12);
       expectAirRouteUnitsMoveUntilExit(campaignName, data);
+      expectAtlanticConvoySeaUnitsStayOnline(data);
+      expectAtlanticConvoyEffectsAlignWithTargets(data);
     }
   }
 
@@ -1824,13 +1907,23 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "hx229-convoy-track",
     "sc122-convoy-track",
     "second-night-submarine-screen",
+    "raubgraf-second-night-shadow",
+    "sturmer-second-night-shadow",
+    "dranger-second-night-shadow",
     "escort-counterattack-screen"
   ]);
-  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", ["u384-hunt-by-air"]);
+  expectEventHasActiveRoute("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", [
+    "u384-continuous-track",
+    "u384-hunt-by-air"
+  ]);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "sc122-first-contact", "sturmer-sc122-attack", 0.8, 0.3);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "night-torpedo-attacks", "raubgraf-hx229-contact", 0.8, 0.4);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "second-night-submarine-screen", 0.2, 0.95);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "raubgraf-second-night-shadow", 0.4, 0.9);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "sturmer-second-night-shadow", 0.3, 0.9);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "dranger-second-night-shadow", 0.3, 0.9);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", "u384-hunt-by-air", 0.25, 0.45);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", "u384-continuous-track", 0.05, 0.85);
   expectRoutesNearEachOtherAtEvent(
     "atlanticConvoyBattle",
     atlanticConvoyData as CampaignDataModule,
@@ -1852,7 +1945,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     atlanticConvoyData as CampaignDataModule,
     "second-night-battle",
     "hx229-convoy-track",
-    "second-night-submarine-screen",
+    "raubgraf-second-night-shadow",
     1.3
   );
   expectRoutesNearEachOtherAtEvent(
@@ -1860,7 +1953,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     atlanticConvoyData as CampaignDataModule,
     "second-night-battle",
     "sc122-convoy-track",
-    "u-boat-disengagement",
+    "sturmer-second-night-shadow",
     0.7
   );
   expectRoutesNearEachOtherAtEvent(
@@ -2850,7 +2943,7 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expectVisibleUnitsUseReadableBattleArea(
     page,
     ".atlantic-convoy-battle",
-    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact"],
+    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact", "u384-continuous-track"],
     0.4,
     0.12
   );
@@ -2867,9 +2960,13 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.locator('.front-line[data-route-id="hx229-convoy-track"]')).toHaveClass(/route-sea/);
   await expect(page.locator('.front-line[data-route-id="sc122-convoy-track"]')).toHaveClass(/route-sea/);
   await expect(page.locator('.front-line[data-route-id="raubgraf-hx229-contact"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="u384-continuous-track"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="u384-continuous-track"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.getByTestId("formation-unit-u384-continuous-track-u384")).toBeVisible();
   await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "hx229-convoy-track", 8);
   await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "sc122-convoy-track", 8);
   await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "raubgraf-hx229-contact", 4);
+  await expectRouteHasPolylineComplexity(page, ".atlantic-convoy-battle", "u384-continuous-track", 8);
   await expectRealisticUnitIcon(page, "ww2-transport-ship-marker", "ww2TransportShip", "ww2-transport-ship");
   await expectRealisticUnitIcon(page, "ww2-escort-ship-marker", "ww2EscortShip", "ww2-escort-ship");
   await expectRealisticUnitIcon(page, "ww2-submarine-marker", "ww2Submarine", "ww2-submarine");
@@ -2882,10 +2979,13 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expectRoutesUseReadableBattleArea(
     page,
     ".atlantic-convoy-battle",
-    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact", "sturmer-sc122-attack", "dranger-hx229-converge"],
+    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact", "sturmer-sc122-attack", "dranger-hx229-converge", "u384-continuous-track"],
     0.62,
     0.28
   );
+  await expect(page.locator('.front-line[data-route-id="raubgraf-hx229-contact"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="sturmer-sc122-attack"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="dranger-hx229-converge"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(3);
@@ -2907,6 +3007,8 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.getByTestId("active-event-card")).toContainText("U-384");
   await expectCurrentEventInsideMapCore(page);
   await expect(page.getByTestId("atlantic-u384-depth-charge")).toBeVisible();
+  await expect(page.locator('.front-line[data-route-id="u384-continuous-track"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.getByTestId("formation-unit-u384-continuous-track-u384")).toBeVisible();
   await expect(page.locator('.front-line[data-route-id="u384-hunt-by-air"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="u384-hunt-by-air"]')).toHaveAttribute("data-route-to", "northern-ireland-patrol-base");
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(1);
@@ -2915,6 +3017,11 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.getByTestId("active-event-card")).toContainText("终止攻击");
   await expectCurrentEventInsideMapCore(page);
   await expect(page.locator('.front-line[data-route-id="u-boat-disengagement"]')).toHaveClass(/route-sea/);
+  await expect(page.locator('.front-line[data-route-id="u384-continuous-track"]')).toHaveAttribute("data-unit-visible", "false");
+  await expect(page.locator('.front-line[data-route-id="raubgraf-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="sturmer-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="dranger-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="escort-eastern-cover"]')).toHaveAttribute("data-unit-visible", "true");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "vlr-liberator-first-patrol");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "u384-hunt-by-air");
   await expectNavalRoutesStayOffLand(page, ".atlantic-convoy-battle");

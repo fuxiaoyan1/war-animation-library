@@ -1693,11 +1693,11 @@ h1 {
 }
 
 .atlantic-convoy-battle .ww2-ship-marker {
-  transform: scale(0.34);
+  transform: scale(0.42);
 }
 
 .atlantic-convoy-battle .ww2-submarine-marker {
-  transform: scale(0.32);
+  transform: scale(0.42);
 }
 
 .atlantic-convoy-battle .route-sea.faction-germany .front-route {
@@ -1731,6 +1731,12 @@ h1 {
 .atlantic-convoy-battle .unit-faction-badge text {
   font-size: 7px;
   letter-spacing: 0;
+}
+
+.atlantic-convoy-battle .battle-salvo-effect.atlantic-hx229-torpedo-effect .salvo-label,
+.atlantic-convoy-battle .battle-salvo-effect.atlantic-sc122-torpedo-effect .salvo-label,
+.atlantic-convoy-battle .battle-salvo-effect.atlantic-u384-depth-charge-effect .salvo-label {
+  font-size: 11px;
 }
 
 .infantry-marker {

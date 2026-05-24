@@ -110,6 +110,7 @@ export function AtlanticConvoyBattleAnimation() {
       sfxProfile="ww2"
       subtitle="按5分钟播放设计：U-653接触、三狼群合围、HX 229与SC 122夜间鱼雷攻击、远程巡逻机压入空隙、U-384被击沉与攻击终止。"
       tacticalRouteRetention
+      retainSeaUnitsAfterRouteEnd
       terrainZones={[]}
       testId="atlantic-convoy-app"
       timeCounterLabel="小时"
