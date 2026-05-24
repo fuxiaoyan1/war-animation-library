@@ -953,7 +953,6 @@ export function CampaignMapAnimation({
 
   const handleRangeChange = (value: string) => {
     setProgress(Number(value) / 1000);
-    lastCueEventRef.current = null;
   };
 
   const startScore = async () => {

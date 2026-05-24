@@ -882,6 +882,117 @@ async function expectRouteHasPolylineComplexity(page: Page, shellSelector: strin
   expect(segmentCount).toBeGreaterThanOrEqual(minimumSegments);
 }
 
+async function expectRoutesUseReadableBattleArea(
+  page: Page,
+  shellSelector: string,
+  routeIds: string[],
+  minimumWidthRatio: number,
+  minimumHeightRatio: number
+) {
+  const spread = await page.evaluate(
+    ({ routes, selector }) => {
+      const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+      const routeBoxes = routes
+        .map((routeId) => {
+          const box = document.querySelector(`${selector} .front-line[data-route-id="${routeId}"] .front-route`)?.getBoundingClientRect();
+          return box && box.width > 0 && box.height > 0
+            ? {
+                bottom: box.bottom,
+                left: box.left,
+                right: box.right,
+                top: box.top
+              }
+            : null;
+        })
+        .filter((box): box is { bottom: number; left: number; right: number; top: number } => box !== null);
+
+      if (!stage || routeBoxes.length === 0) {
+        return null;
+      }
+
+      const bounds = routeBoxes.reduce(
+        (accumulator, box) => ({
+          bottom: Math.max(accumulator.bottom, box.bottom),
+          left: Math.min(accumulator.left, box.left),
+          right: Math.max(accumulator.right, box.right),
+          top: Math.min(accumulator.top, box.top)
+        }),
+        {
+          bottom: Number.NEGATIVE_INFINITY,
+          left: Number.POSITIVE_INFINITY,
+          right: Number.NEGATIVE_INFINITY,
+          top: Number.POSITIVE_INFINITY
+        }
+      );
+
+      return {
+        heightRatio: (bounds.bottom - bounds.top) / stage.height,
+        widthRatio: (bounds.right - bounds.left) / stage.width
+      };
+    },
+    { routes: routeIds, selector: shellSelector }
+  );
+
+  expect(spread).not.toBeNull();
+  expect(spread?.widthRatio).toBeGreaterThan(minimumWidthRatio);
+  expect(spread?.heightRatio).toBeGreaterThan(minimumHeightRatio);
+}
+
+async function expectVisibleUnitsUseReadableBattleArea(
+  page: Page,
+  shellSelector: string,
+  routeIds: string[],
+  minimumWidthRatio: number,
+  minimumHeightRatio: number
+) {
+  const spread = await page.evaluate(
+    ({ routes, selector }) => {
+      const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+      const wanted = new Set(routes);
+      const unitBoxes = [...document.querySelectorAll(`${selector} .front-line[data-unit-visible="true"]`)]
+        .filter((route) => wanted.has(route.getAttribute("data-route-id") ?? ""))
+        .flatMap((route) => [...route.querySelectorAll(".formation-unit")])
+        .map((unit) => unit.getBoundingClientRect())
+        .filter((box) => box.width > 0 && box.height > 0)
+        .map((box) => ({
+          bottom: box.bottom,
+          left: box.left,
+          right: box.right,
+          top: box.top
+        }));
+
+      if (!stage || unitBoxes.length === 0) {
+        return null;
+      }
+
+      const bounds = unitBoxes.reduce(
+        (accumulator, box) => ({
+          bottom: Math.max(accumulator.bottom, box.bottom),
+          left: Math.min(accumulator.left, box.left),
+          right: Math.max(accumulator.right, box.right),
+          top: Math.min(accumulator.top, box.top)
+        }),
+        {
+          bottom: Number.NEGATIVE_INFINITY,
+          left: Number.POSITIVE_INFINITY,
+          right: Number.NEGATIVE_INFINITY,
+          top: Number.POSITIVE_INFINITY
+        }
+      );
+
+      return {
+        heightRatio: (bounds.bottom - bounds.top) / stage.height,
+        widthRatio: (bounds.right - bounds.left) / stage.width
+      };
+    },
+    { routes: routeIds, selector: shellSelector }
+  );
+
+  expect(spread).not.toBeNull();
+  expect(spread?.widthRatio).toBeGreaterThan(minimumWidthRatio);
+  expect(spread?.heightRatio).toBeGreaterThan(minimumHeightRatio);
+}
+
 async function expectVisibleFleetRoutes(page: Page, shellSelector: string, expectedRouteIds: string[]) {
   const visibleRoutes = await visibleFleetRouteIds(page, shellSelector);
 
@@ -1490,12 +1601,12 @@ async function installAudioSpy(page: Page) {
       constructor(src = "") {
         super();
         this.src = src;
-        sources.push(src);
       }
 
       pause() {}
 
       async play() {
+        sources.push(this.src);
         return Promise.resolve();
       }
     }
@@ -2736,6 +2847,13 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expectMapCanMoveHorizontallyUnderPointer(page);
   await expectMapZoomButtonsWork(page);
   await expectNoTerrainZones(page, ".atlantic-convoy-battle");
+  await expectVisibleUnitsUseReadableBattleArea(
+    page,
+    ".atlantic-convoy-battle",
+    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact"],
+    0.4,
+    0.12
+  );
   await expectMapPointsHidden(page, ".atlantic-convoy-battle", [
     "sc122-contact",
     "hx229-night-attack",
@@ -2761,6 +2879,13 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await page.getByTestId("event-list").getByRole("button", { name: /夜间鱼雷攻击高峰/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("夜间鱼雷攻击");
   await expectCurrentEventInsideMapCore(page);
+  await expectRoutesUseReadableBattleArea(
+    page,
+    ".atlantic-convoy-battle",
+    ["hx229-convoy-track", "sc122-convoy-track", "raubgraf-hx229-contact", "sturmer-sc122-attack", "dranger-hx229-converge"],
+    0.62,
+    0.28
+  );
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(3);

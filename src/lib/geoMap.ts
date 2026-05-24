@@ -90,17 +90,21 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [-56.0, 47.0],
     [-4.0, 64.5]
   ],
+  atlanticConvoyContact: [
+    [-45.2, 50.8],
+    [-41.2, 52.55]
+  ],
   atlanticConvoyBattle: [
-    [-47.5, 49.9],
-    [-30.6, 54.8]
+    [-43.6, 50.65],
+    [-36.4, 53.55]
   ],
   atlanticConvoyAirCover: [
-    [-42.0, 51.0],
-    [-18.8, 56.6]
+    [-39.5, 51.55],
+    [-31.2, 55.0]
   ],
   atlanticConvoyEastern: [
-    [-31.5, 51.8],
-    [-12.0, 56.5]
+    [-29.5, 52.55],
+    [-22.2, 55.25]
   ],
   mediterranean: [
     [-8.0, 30.0],

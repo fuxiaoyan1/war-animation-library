@@ -80,10 +80,10 @@ export function AtlanticConvoyBattleAnimation() {
       diveCueEvents={diveCueEventIds}
       eyebrow="战争动画藏书馆 / 二战潜艇战"
       focusSteps={[
-        { fromProgress: 0, focus: "atlanticConvoyWide" },
+        { fromProgress: 0, focus: "atlanticConvoyContact" },
         { fromProgress: timeline.dateToProgress("1943-03-17T00:30"), focus: "atlanticConvoyBattle" },
-        { fromProgress: timeline.dateToProgress("1943-03-19T12:30"), focus: "atlanticConvoyAirCover" },
-        { fromProgress: timeline.dateToProgress("1943-03-19T17:45"), focus: "atlanticConvoyEastern" }
+        { fromProgress: timeline.dateToProgress("1943-03-17T07:30"), focus: "atlanticConvoyAirCover" },
+        { fromProgress: timeline.dateToProgress("1943-03-19T12:30"), focus: "atlanticConvoyEastern" }
       ]}
       focusTransitionProgress={0.035}
       frontLines={semanticFrontLines}
@@ -102,10 +102,9 @@ export function AtlanticConvoyBattleAnimation() {
       ]}
       playbackDurationSeconds={300}
       regionLabels={[
-        { label: "NORTH ATLANTIC", coordinates: [-39.0, 55.2] },
         { label: "AIR GAP", coordinates: [-37.2, 52.0] },
-        { label: "WESTERN APPROACHES", coordinates: [-18.4, 52.2] },
-        { label: "NEWFOUNDLAND", coordinates: [-52.0, 48.2] }
+        { label: "WOLFPACK LINE", coordinates: [-42.7, 51.55] },
+        { label: "WESTERN APPROACHES", coordinates: [-24.2, 53.7] }
       ]}
       shellClassName="atlantic-convoy-battle modern-war naval-war ww2-submarine-war"
       sfxProfile="ww2"
