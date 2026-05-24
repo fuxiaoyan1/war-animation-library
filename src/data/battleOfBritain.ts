@@ -76,7 +76,7 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "上午第一波：百机越岸",
     from: "calais",
-    to: "london",
+    to: "dungeness",
     routeKind: "air",
     start: "1940-09-15T10:55",
     end: "1940-09-15T12:05",
@@ -88,8 +88,7 @@ export const frontLines: FrontLine[] = [
       [0.12, 51.42],
       [0.02, 51.48],
       [0.18, 51.34],
-      [0.72, 51.1],
-      [0.97, 50.91]
+      [0.72, 51.1]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:50"
@@ -99,7 +98,7 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "上午第二波：后续梯队",
     from: "boulogne",
-    to: "south-london",
+    to: "dungeness",
     routeKind: "air",
     start: "1940-09-15T11:05",
     end: "1940-09-15T12:18",
@@ -111,8 +110,7 @@ export const frontLines: FrontLine[] = [
       [0.06, 51.36],
       [-0.02, 51.42],
       [0.24, 51.28],
-      [0.86, 50.98],
-      [0.97, 50.91]
+      [0.86, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T12:55"
@@ -199,7 +197,7 @@ export const frontLines: FrontLine[] = [
     formationUnits: [{ id: "dornier-lone", label: "脱队Do 17", badgeLabel: "德", icon: "ww2Bomber", offset: [0, 0] }],
     waypoints: [[0.35, 51.5], [0.04, 51.52], [-0.12, 51.5]],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T12:15"
+    unitVisibleUntil: "1940-09-15T11:52"
   },
   {
     id: "ray-holmes-intercept",
@@ -214,7 +212,7 @@ export const frontLines: FrontLine[] = [
     formationUnits: [{ id: "holmes-hurricane", label: "飓风拦截", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] }],
     waypoints: [[-0.35, 51.55], [-0.22, 51.54], [-0.16, 51.51]],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T12:18"
+    unitVisibleUntil: "1940-09-15T11:52"
   },
   {
     id: "morning-return-pursuit",
@@ -271,7 +269,7 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "下午第一波：150机越岸",
     from: "calais",
-    to: "london",
+    to: "dungeness",
     routeKind: "air",
     start: "1940-09-15T14:14",
     end: "1940-09-15T15:35",
@@ -286,8 +284,7 @@ export const frontLines: FrontLine[] = [
       [0.28, 51.42],
       [0.0, 51.48],
       [0.2, 51.34],
-      [0.82, 51.02],
-      [0.97, 50.91]
+      [0.82, 51.02]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:25"
@@ -297,7 +294,7 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "下午第二波：百机续进",
     from: "cap-gris-nez",
-    to: "south-london",
+    to: "dungeness",
     routeKind: "air",
     start: "1940-09-15T14:20",
     end: "1940-09-15T15:48",
@@ -309,8 +306,7 @@ export const frontLines: FrontLine[] = [
       [0.08, 51.36],
       [-0.02, 51.42],
       [0.3, 51.2],
-      [0.92, 50.98],
-      [0.97, 50.91]
+      [0.92, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:35"
@@ -457,17 +453,19 @@ export const dogfightEffects = [
     radius: 46,
     intensity: 1.05,
     label: "侧前拦截",
+    routeIds: ["morning-raf-dogfight-weave", "morning-luftwaffe-cover-break"],
     testId: "britain-morning-dogfight"
   },
   {
     id: "morning-return-dogfight",
     type: "dogfight" as const,
-    start: "1940-09-15T11:56",
-    end: "1940-09-15T12:18",
-    center: [0.18, 51.36] as [number, number],
+    start: "1940-09-15T12:00",
+    end: "1940-09-15T12:08",
+    center: [0.42, 51.18] as [number, number],
     radius: 38,
     intensity: 0.9,
     label: "回程追击",
+    routeIds: ["morning-raid-second-wave", "morning-return-pursuit"],
     testId: "britain-morning-return-dogfight"
   },
   {
@@ -479,17 +477,19 @@ export const dogfightEffects = [
     radius: 54,
     intensity: 1.18,
     label: "伦敦上空混战",
+    routeIds: ["afternoon-raf-dogfight-weave", "afternoon-luftwaffe-cover-split"],
     testId: "britain-afternoon-dogfight"
   },
   {
     id: "afternoon-return-dogfight",
     type: "dogfight" as const,
-    start: "1940-09-15T15:12",
-    end: "1940-09-15T16:05",
+    start: "1940-09-15T15:45",
+    end: "1940-09-15T16:15",
     center: [0.48, 51.18] as [number, number],
     radius: 46,
     intensity: 1,
     label: "破阵后追击",
+    routeIds: ["afternoon-return-broken-raid", "late-pursuit-over-channel"],
     testId: "britain-afternoon-return-dogfight"
   }
 ];

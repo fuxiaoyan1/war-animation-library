@@ -19,5 +19,7 @@
 - 2026-05-23 复核后，`operation-argument-start` 调整到 `1944-02-20T12:05`，此时 `argument-first-wave` 插值位置贴近莱比锡；该节点加入 `cueEventIds`，并通过 `cueEventKinds["operation-argument-start"] = "bombing"` 触发轰炸音效。浏览器烟测点击该事件会校验爆炸音确实播放。
 - 2月24日补充 `feb-24-industrial-strike`、`feb-24-escort-cover`、`feb-24-luftwaffe-defense`，让 `aircraft-industry-targets` 发生时画面上有轰炸机、护航机和德机防空同窗活动。
 - 空战不再使用舰炮式集火/齐射线；`aircraft-industry-targets` 只通过目标区事件音效触发 `bombing` 爆炸+飞机声。不能让飞机未到目标区时提前显示攻击线，也不能把空中混战画成射击线。
+- 2026-05-24 引入伦敦同款 `dogfightEffects`：2月21日损失带截击、2月22日护航猎歼、2月24日目标西侧缠斗均使用缠斗圈、盘旋弧、短曳光和闪点，不使用 `salvo`。每个缠斗效果必须绑定 `routeIds`，测试在效果中点检查双方飞机仍在单位可见窗口内且靠近中心，避免没有两军飞机时出现空缠斗。
+- 2月22日新增 `escort-sweep-dogfight-weave` 与 `luftwaffe-dogfight-break` 两条短时缠斗航迹，专门表现护航机把德军截击机拉散；`luftwaffe-attrition` 事件时间调整到 `1944-02-22T11:15`，对应实际接触窗口，而不是德机刚起飞的时刻。
 - 2月25日 `berlin-feint-and-return` 不再飞到柏林边缘，也不触发 `argument-outcome` 爆炸音；终幕是远程返航分散和制空权结果展示，不是新一轮不明轰炸。
 - 航迹通过 `visibleUntil` 保留到片尾，飞机图标通过 `unitVisibleUntil` 在任务结束后退出，体现空战密集航迹而非飞机长期驻留。

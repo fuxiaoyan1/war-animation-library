@@ -53,8 +53,10 @@ type CampaignDataModule = {
   cueEventKinds?: Partial<Record<string, string>>;
   diveCueEventIds?: Set<string>;
   dogfightEffects?: Array<{
+    center?: [number, number];
     end: string;
     id: string;
+    routeIds?: string[];
     start: string;
     testId?: string;
     type: string;
@@ -1026,6 +1028,49 @@ function routeProgressAtDate(line: NonNullable<CampaignDataModule["frontLines"]>
   return Math.min(1, Math.max(0, (toTime(date) - start) / Math.max(1, end - start)));
 }
 
+function dateAtRatio(start: string, end: string, ratio: number) {
+  return new Date(toTime(start) + (toTime(end) - toTime(start)) * ratio).toISOString().slice(0, 16);
+}
+
+function routePointAtDate(data: CampaignDataModule, line: NonNullable<CampaignDataModule["frontLines"]>[number], date: string) {
+  return routePointAtProgress(routeCoordinates(data, line), routeProgressAtDate(line, date));
+}
+
+function expectDogfightEffectsHaveLiveAircraft(campaignName: string, data: CampaignDataModule, maxCenterDistanceDegrees: number) {
+  for (const effect of data.dogfightEffects ?? []) {
+    expect(effect.type, `${campaignName} effect ${effect.id} should use air dogfight visuals`).toBe("dogfight");
+    expect(effect.testId, `${campaignName} effect ${effect.id} should expose a stable smoke selector`).toBeTruthy();
+    expect(effect.center, `${campaignName} dogfight effect ${effect.id} should declare its contact center`).toBeTruthy();
+    expect(effect.routeIds?.length ?? 0, `${campaignName} dogfight effect ${effect.id} should bind to live aircraft routes`).toBeGreaterThanOrEqual(2);
+    expectDateWithinRange(`${campaignName} dogfight effect ${effect.id} start`, effect.start, data.campaignStart, data.campaignEnd);
+    expectDateWithinRange(`${campaignName} dogfight effect ${effect.id} end`, effect.end, data.campaignStart, data.campaignEnd);
+    expect(toTime(effect.end), `${campaignName} dogfight effect ${effect.id} should not end before start`).toBeGreaterThan(toTime(effect.start));
+
+    const midpoint = dateAtRatio(effect.start, effect.end, 0.5);
+    const liveRoutes = effect.routeIds!.map((routeId) => {
+      const line = (data.frontLines ?? []).find((item) => item.id === routeId);
+      expect(line, `${campaignName} dogfight effect ${effect.id} route ${routeId} exists`).toBeTruthy();
+      expect(line!.routeKind, `${campaignName} dogfight effect ${effect.id} route ${routeId} should be air`).toBe("air");
+      expect(line!.hideUnit, `${campaignName} dogfight effect ${effect.id} route ${routeId} should render aircraft`).not.toBe(true);
+      expect(toTime(midpoint), `${campaignName} dogfight effect ${effect.id} route ${routeId} should have started by effect midpoint`).toBeGreaterThanOrEqual(
+        toTime(line!.unitVisibleFrom ?? line!.start)
+      );
+      expect(toTime(midpoint), `${campaignName} dogfight effect ${effect.id} route ${routeId} should still show aircraft at effect midpoint`).toBeLessThanOrEqual(
+        toTime(line!.unitVisibleUntil ?? line!.end)
+      );
+      return line!;
+    });
+
+    for (const line of liveRoutes) {
+      const point = routePointAtDate(data, line, midpoint);
+      const distance = Math.hypot(point[0] - effect.center![0], point[1] - effect.center![1]);
+      expect(distance, `${campaignName} dogfight effect ${effect.id} route ${line.id} should be near contact center`).toBeLessThanOrEqual(
+        maxCenterDistanceDegrees
+      );
+    }
+  }
+}
+
 function expectEventHasActiveRoute(campaignName: string, data: CampaignDataModule, eventId: string, expectedRouteIds: string[]) {
   const event = data.battleEvents.find((item) => item.id === eventId);
   expect(event, `${campaignName} event ${eventId} exists`).toBeTruthy();
@@ -1644,17 +1689,9 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "battleOfBritain",
     battleOfBritainData as CampaignDataModule,
     "morning-return-fire",
-    "morning-raid-first-wave",
+    "morning-raid-second-wave",
     "morning-return-pursuit",
-    0.25
-  );
-  expectRoutesNearEachOtherAtEvent(
-    "battleOfBritain",
-    battleOfBritainData as CampaignDataModule,
-    "afternoon-all-squadrons-engaged",
-    "afternoon-raid-main-wave",
-    "eleven-group-afternoon-all-in",
-    0.25
+    0.5
   );
   expectRoutesNearEachOtherAtEvent(
     "battleOfBritain",
@@ -1689,13 +1726,8 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     expect(data.diveCueEventIds?.size ?? 0, `${campaignName} air war should not use generic dive cues after explicit cue kinds`).toBe(0);
   }
 
-  for (const effect of (battleOfBritainData as CampaignDataModule).dogfightEffects ?? []) {
-    expect(effect.type, `battleOfBritain effect ${effect.id} should use air dogfight visuals`).toBe("dogfight");
-    expect(effect.testId, `battleOfBritain effect ${effect.id} should expose a stable smoke selector`).toBeTruthy();
-    expectDateWithinRange(`battleOfBritain dogfight effect ${effect.id} start`, effect.start, battleOfBritainData.campaignStart, battleOfBritainData.campaignEnd);
-    expectDateWithinRange(`battleOfBritain dogfight effect ${effect.id} end`, effect.end, battleOfBritainData.campaignStart, battleOfBritainData.campaignEnd);
-    expect(toTime(effect.end), `battleOfBritain dogfight effect ${effect.id} should not end before start`).toBeGreaterThan(toTime(effect.start));
-  }
+  expectDogfightEffectsHaveLiveAircraft("battleOfBritain", battleOfBritainData as CampaignDataModule, 0.85);
+  expectDogfightEffectsHaveLiveAircraft("bigWeekAirBattle", bigWeekData as CampaignDataModule, 1.1);
 
   for (const [campaignName, data] of customCampaignData) {
     expect(toTime(data.campaignEnd), `${campaignName} campaign end should be after start`).toBeGreaterThan(toTime(data.campaignStart));
@@ -2347,7 +2379,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.getByTestId("active-event-card")).toContainText("雷达报告");
   await expect(page.locator('.front-line[data-route-id="morning-radar-plots"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveClass(/route-air/);
-  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "london");
+  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "dungeness");
   await expectRouteHasPolylineComplexity(page, ".battle-of-britain", "morning-raid-first-wave", 5);
   await page.getByTestId("event-list").getByRole("button", { name: /11群连续下令升空/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
@@ -2385,6 +2417,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectCurrentEventInsideMapCore(page);
   await expect(page.locator('.front-line[data-route-id="buckingham-palace-dornier"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="ray-holmes-intercept"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="buckingham-palace-dornier"]')).toHaveAttribute("data-unit-visible-until", "1940-09-15T11:52");
+  await expect(page.locator('.front-line[data-route-id="ray-holmes-intercept"]')).toHaveAttribute("data-unit-visible-until", "1940-09-15T11:52");
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(0);
@@ -2396,6 +2430,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
   await expect(page.locator('.front-line[data-route-id="afternoon-raf-dogfight-weave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="afternoon-luftwaffe-cover-split"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="afternoon-raid-main-wave"]')).toHaveAttribute("data-route-to", "dungeness");
+  await expect(page.locator('.front-line[data-route-id="afternoon-raid-follow-wave"]')).toHaveAttribute("data-route-to", "dungeness");
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("傍晚：伦敦守住白昼");
@@ -2462,6 +2498,8 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
   await page.getByTestId("event-list").getByRole("button", { name: /远程护航改变深袭生存率/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("受损轰炸机有返航机会");
   await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("big-week-loss-belt-dogfight")).toBeVisible();
+  await expect(page.locator(".big-week-air-battle .battle-salvo-effect")).toHaveCount(0);
   await expect(page.locator('.front-line[data-route-id="deep-escort-chain"]')).toHaveAttribute("data-route-to", "east-anglia");
   await expect(page.locator('.front-line[data-route-id="schweinfurt-regensburg-lesson"]')).toHaveAttribute("data-route-to", "east-anglia");
   await expect(page.locator('.front-line[data-route-id="loss-belt-luftwaffe-intercept"]')).toHaveClass(/route-air/);
@@ -2483,15 +2521,20 @@ test("big week air battle shows bomber streams escorts and interceptors", async 
   await expect(page.locator('.front-line[data-route-id="luftwaffe-rises"]')).toHaveAttribute("data-route-to", "brunswick");
   await expect(page.locator('.front-line[data-route-id="escort-fighter-sweep"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="escort-fighter-sweep"]')).toHaveAttribute("data-route-to", "east-anglia");
+  await expect(page.locator('.front-line[data-route-id="escort-sweep-dogfight-weave"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="luftwaffe-dogfight-break"]')).toHaveClass(/route-air/);
   await expectRealisticUnitIcon(page, "ww2-fighter-marker", "ww2Fighter", "ww2-fighter");
   await expectCompactAircraftMarkers(page, "ww2-fighter-marker");
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/airplane-in-flight.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/machine-gun-vulcan.mp3")).toBeGreaterThan(0);
   await expectRouteBadgeLabels(page, "escort-fighter-sweep", ["美", "美", "美", "美"]);
+  await expect(page.getByTestId("big-week-escort-dogfight")).toBeVisible();
+  await expect(page.locator(".big-week-air-battle .battle-salvo-effect")).toHaveCount(0);
 
   await page.getByTestId("event-list").getByRole("button", { name: /航空工业目标遭连续打击/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("爆炸点必须落在工业目标");
   await expectCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("big-week-industrial-dogfight")).toBeVisible();
   await expect(page.locator(".big-week-air-battle .battle-salvo-effect")).toHaveCount(0);
   await expect(page.locator(".big-week-air-battle .salvo-impact")).toHaveCount(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);

@@ -77,6 +77,7 @@ type DogfightBattleEffectElement = {
   intensity?: number;
   label?: string;
   radius?: number;
+  routeIds?: string[];
   start: string;
   testId?: string;
   type: "dogfight";

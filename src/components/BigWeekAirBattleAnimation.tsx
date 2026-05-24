@@ -5,6 +5,7 @@ import {
   cueEventIds,
   cueEventKinds,
   diveCueEventIds,
+  dogfightEffects,
   frontLines,
   mapPoints
 } from "../data/bigWeekAirBattle";
@@ -62,6 +63,7 @@ export function BigWeekAirBattleAnimation() {
       activeSpans={activeSpans}
       ariaLabel="大周行动动态地图"
       battleEvents={battleEvents}
+      battleEffects={dogfightEffects}
       campaignEnd={campaignEnd}
       campaignStart={campaignStart}
       cinematicMode

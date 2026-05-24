@@ -398,6 +398,7 @@
 - 2026-05-23 继续修复后，上午回程追击改为 `12:00`，下午高峰改为 `14:45`，下午队形破碎改为 `15:10`；敌我路线在事件窗口必须同位，避免两军交汇却没有战斗事件。
 - 德军来袭线已延伸到肯特/邓杰内斯返航方向，RAF 追击线从接触点接上返航走廊，补足伦敦两轮战斗后的返航流。
 - 2026-05-23 再修“没有空军交战感”：伦敦新增 RAF/德军短时缠斗航迹和 `dogfightEffects`，上午/下午接触窗口显示缠斗圈、盘旋弧、短曳光和闪点；空战不要用 `salvo`/集火线。
+- 2026-05-24 修复德机停在维多利亚/南伦敦问题：德军大编队 `to` 指向 `dungeness`，伦敦/南伦敦只作为中间航路点；白金汉宫脱队机与拦截机在事件完成时退场。`dogfightEffects` 绑定 `routeIds`，测试检查效果中点必须有双方飞机仍可见且靠近中心。
 - 10:30 开场已有雷达航迹，13:45 预警和18:00结果节点静音；实际拦截/混战/追击才播放飞机或扫射音效。
 
 最容易回归的问题：
@@ -426,6 +427,8 @@
 - 2月24日工业目标节点必须有 `feb-24-industrial-strike`、`feb-24-escort-cover`、`feb-24-luftwaffe-defense` 同窗活动。
 - 目标点如不伦瑞克、莱比锡、雷根斯堡、柏林、截击区、损失带、返航集合点按 `revealAt` 出现。
 - 空战不使用 `big-week-industrial-bombing` / `big-week-brunswick-bombing` 这类舰炮式 `salvo` 特效；工业目标轰炸只通过 `bombing` 事件音效和目标区同窗航迹表达。
+- 2026-05-24 已接入伦敦同款缠斗效果：`big-week-loss-belt-dogfight`、`big-week-escort-dogfight`、`big-week-industrial-dogfight`。新增 `escort-sweep-dogfight-weave` 和 `luftwaffe-dogfight-break`，并把 `luftwaffe-attrition` 移到 `1944-02-22T11:15` 接敌窗口。
+- 大周缠斗必须绑定 `routeIds`，测试会检查效果中点双方飞机仍在单位可见窗口内且靠近缠斗中心；不要出现没有双方飞机的空缠斗。
 - “无护航深袭的代价”要通过 `schweinfurt-regensburg-lesson`、`loss-belt-luftwaffe-intercept`、`ruhr-flak-belt-fire`、`damaged-bomber-return` 等同窗航迹表现，必须明确损失来自德机截击和高炮带。
 - 2月25日终幕是纵深返航分散，不是新一轮不明轰炸；航线不能飞到柏林边缘却不解释，也不能在收束节点播放爆炸音。
 

@@ -225,6 +225,45 @@ export const frontLines: FrontLine[] = [
     unitVisibleUntil: "1944-02-22T16:00"
   },
   {
+    id: "escort-sweep-dogfight-weave",
+    faction: "allies",
+    label: "护航机主动缠斗",
+    from: "fighter-rendezvous",
+    to: "north-sea-return",
+    routeKind: "air",
+    start: "1944-02-22T10:40",
+    end: "1944-02-22T12:20",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "p51-dogfight-a", label: "P-51压制", badgeLabel: "美", icon: "ww2Fighter", offset: [0, -18] },
+      { id: "p47-dogfight-a", label: "P-47咬尾", badgeLabel: "美", icon: "ww2Fighter", offset: [-30, 18] },
+      { id: "p51-dogfight-b", label: "侧后补位", badgeLabel: "美", icon: "ww2Fighter", offset: [-56, 0] }
+    ],
+    waypoints: [[6.5, 51.78], [7.8, 51.45], [8.45, 51.72], [7.35, 51.58], [6.2, 51.95]],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-22T10:40",
+    unitVisibleUntil: "1944-02-22T12:25"
+  },
+  {
+    id: "luftwaffe-dogfight-break",
+    faction: "germany",
+    label: "截击机被拉入缠斗",
+    from: "brunswick",
+    to: "brunswick",
+    routeKind: "air",
+    start: "1944-02-22T10:30",
+    end: "1944-02-22T12:05",
+    unitIcon: "ww2Fighter",
+    formationUnits: [
+      { id: "fw190-dogfight-a", label: "Fw 190脱节", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 16] },
+      { id: "bf109-dogfight-a", label: "Bf 109急转", badgeLabel: "德", icon: "ww2Fighter", offset: [-30, -16] }
+    ],
+    waypoints: [[9.3, 51.9], [7.8, 51.45], [8.45, 51.72], [9.4, 51.9]],
+    visibleUntil: "1944-02-25T18:00",
+    unitVisibleFrom: "1944-02-22T10:30",
+    unitVisibleUntil: "1944-02-22T12:10"
+  },
+  {
     id: "feb-24-industrial-strike",
     faction: "allies",
     label: "2月24日工业目标空袭",
@@ -316,6 +355,45 @@ export const frontLines: FrontLine[] = [
   }
 ];
 
+export const dogfightEffects = [
+  {
+    id: "big-week-loss-belt-dogfight",
+    type: "dogfight" as const,
+    start: "1944-02-21T11:40",
+    end: "1944-02-21T12:10",
+    center: [7.1, 50.72] as [number, number],
+    radius: 48,
+    intensity: 1,
+    label: "损失带截击",
+    routeIds: ["schweinfurt-regensburg-lesson", "loss-belt-luftwaffe-intercept"],
+    testId: "big-week-loss-belt-dogfight"
+  },
+  {
+    id: "big-week-escort-sweep-dogfight",
+    type: "dogfight" as const,
+    start: "1944-02-22T11:00",
+    end: "1944-02-22T11:35",
+    center: [7.95, 51.56] as [number, number],
+    radius: 52,
+    intensity: 1.12,
+    label: "护航猎歼",
+    routeIds: ["escort-sweep-dogfight-weave", "luftwaffe-dogfight-break"],
+    testId: "big-week-escort-dogfight"
+  },
+  {
+    id: "big-week-industrial-cover-dogfight",
+    type: "dogfight" as const,
+    start: "1944-02-24T10:35",
+    end: "1944-02-24T11:05",
+    center: [8.4, 51.82] as [number, number],
+    radius: 50,
+    intensity: 1.04,
+    label: "目标西侧缠斗",
+    routeIds: ["feb-24-escort-cover", "feb-24-luftwaffe-defense"],
+    testId: "big-week-industrial-dogfight"
+  }
+];
+
 export const battleEvents: BattleEvent[] = [
   {
     id: "argument-sortie-begins",
@@ -355,7 +433,7 @@ export const battleEvents: BattleEvent[] = [
   },
   {
     id: "luftwaffe-attrition",
-    date: "1944-02-22T10:00",
+    date: "1944-02-22T11:15",
     title: "德国截击机群被拖入消耗",
     location: "德国西北部",
     coordinates: [7.8, 51.45],
