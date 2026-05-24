@@ -76,10 +76,10 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "上午第一波：百机越岸",
     from: "calais",
-    to: "dungeness",
+    to: "calais",
     routeKind: "air",
     start: "1940-09-15T10:55",
-    end: "1940-09-15T12:05",
+    end: "1940-09-15T12:15",
     unitIcon: "ww2Bomber",
     formationUnits: luftwaffeBomberBox,
     waypoints: [
@@ -88,20 +88,22 @@ export const frontLines: FrontLine[] = [
       [0.12, 51.42],
       [0.02, 51.48],
       [0.18, 51.34],
-      [0.72, 51.1]
+      [0.72, 51.1],
+      [0.97, 50.91],
+      [1.25, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T12:50"
+    unitVisibleUntil: "1940-09-15T12:15"
   },
   {
     id: "morning-raid-second-wave",
     faction: "germany",
     label: "上午第二波：后续梯队",
     from: "boulogne",
-    to: "dungeness",
+    to: "boulogne",
     routeKind: "air",
     start: "1940-09-15T11:05",
-    end: "1940-09-15T12:18",
+    end: "1940-09-15T12:35",
     unitIcon: "ww2Bomber",
     formationUnits: luftwaffeFollowWave,
     waypoints: [
@@ -110,38 +112,40 @@ export const frontLines: FrontLine[] = [
       [0.06, 51.36],
       [-0.02, 51.42],
       [0.24, 51.28],
-      [0.86, 50.98]
+      [0.86, 50.98],
+      [0.97, 50.91],
+      [1.28, 50.9]
     ],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T12:55"
+    unitVisibleUntil: "1940-09-15T12:35"
   },
   {
     id: "eleven-group-morning-scramble",
     faction: "britain",
     label: "11群升空迎击",
     from: "biggin-hill",
-    to: "brenchley",
+    to: "biggin-hill",
     routeKind: "air",
     start: "1940-09-15T11:05",
-    end: "1940-09-15T11:45",
+    end: "1940-09-15T12:15",
     unitIcon: "ww2Fighter",
     formationUnits: rafElevenGroup,
-    waypoints: [[0.16, 51.32], [0.28, 51.32], [0.36, 51.24], [0.18, 51.36], [0.52, 51.16]],
+    waypoints: [[0.16, 51.32], [0.28, 51.32], [0.36, 51.24], [0.18, 51.36], [0.52, 51.16], [0.4, 51.15], [0.28, 51.25], [0.12, 51.32]],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T12:55"
+    unitVisibleUntil: "1940-09-15T12:15"
   },
   {
     id: "twelve-group-morning-wing",
     faction: "britain",
     label: "12群大编队南下",
     from: "duxford",
-    to: "thames-estuary",
+    to: "duxford",
     routeKind: "air",
     start: "1940-09-15T11:25",
-    end: "1940-09-15T12:20",
+    end: "1940-09-15T13:05",
     unitIcon: "ww2Fighter",
     formationUnits: rafReinforcementWing,
-    waypoints: [[0.18, 51.84], [0.32, 51.66], [0.52, 51.52], [0.48, 51.34]],
+    waypoints: [[0.18, 51.84], [0.32, 51.66], [0.52, 51.52], [0.48, 51.34], [0.72, 51.52], [0.42, 51.55], [0.28, 51.78]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T13:05"
   },
@@ -150,17 +154,17 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "上午RAF缠斗圈",
     from: "brenchley",
-    to: "south-london",
+    to: "biggin-hill",
     routeKind: "air",
     start: "1940-09-15T11:24",
-    end: "1940-09-15T12:08",
+    end: "1940-09-15T12:20",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "morning-weave-spitfire", label: "喷火缠斗", badgeLabel: "英", icon: "ww2Fighter", offset: [0, -20] },
       { id: "morning-weave-hurricane", label: "飓风咬尾", badgeLabel: "英", icon: "ww2Fighter", offset: [-28, 18] },
       { id: "morning-weave-cover", label: "侧后补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-56, -10] }
     ],
-    waypoints: [[0.28, 51.38], [0.08, 51.47], [0.2, 51.32], [0.46, 51.2], [0.18, 51.36]],
+    waypoints: [[0.28, 51.38], [0.08, 51.47], [0.2, 51.32], [0.46, 51.2], [0.18, 51.36], [0.04, 51.34]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleFrom: "1940-09-15T11:24",
     unitVisibleUntil: "1940-09-15T12:20"
@@ -170,16 +174,16 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "上午德军护航纠缠",
     from: "thames-estuary",
-    to: "dungeness",
+    to: "calais",
     routeKind: "air",
     start: "1940-09-15T11:22",
-    end: "1940-09-15T12:12",
+    end: "1940-09-15T12:18",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "morning-bf109-cover-a", label: "Bf 109护航", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 16] },
       { id: "morning-bf109-cover-b", label: "护航脱节", badgeLabel: "德", icon: "ww2Fighter", offset: [-28, -16] }
     ],
-    waypoints: [[0.48, 51.38], [0.18, 51.36], [0.34, 51.24], [0.72, 51.06]],
+    waypoints: [[0.48, 51.38], [0.18, 51.36], [0.34, 51.24], [0.72, 51.06], [0.97, 50.91], [1.28, 50.98]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleFrom: "1940-09-15T11:22",
     unitVisibleUntil: "1940-09-15T12:18"
@@ -219,18 +223,18 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "回程追击",
     from: "south-london",
-    to: "dungeness",
+    to: "biggin-hill",
     routeKind: "air",
-    start: "1940-09-15T11:58",
+    start: "1940-09-15T11:45",
     end: "1940-09-15T13:10",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "pursuit-a", label: "追击中队", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
       { id: "pursuit-b", label: "侧后攻击", badgeLabel: "英", icon: "ww2Fighter", offset: [-34, 20] }
     ],
-    waypoints: [[0.18, 51.28], [0.48, 51.18], [0.82, 50.98]],
+    waypoints: [[0.18, 51.28], [0.48, 51.18], [0.82, 50.98], [0.97, 50.91], [0.72, 51.05], [0.32, 51.18], [0.12, 51.32]],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T13:35"
+    unitVisibleUntil: "1940-09-15T13:10"
   },
   {
     id: "afternoon-radar-warning",
@@ -251,16 +255,16 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "午间中队整补巡逻",
     from: "biggin-hill",
-    to: "dover",
+    to: "biggin-hill",
     routeKind: "air",
     start: "1940-09-15T12:45",
-    end: "1940-09-15T14:05",
+    end: "1940-09-15T14:10",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "patrol-spitfire", label: "巡逻喷火", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
       { id: "patrol-hurricane", label: "整补飓风", badgeLabel: "英", icon: "ww2Fighter", offset: [-22, 14] }
     ],
-    waypoints: [[0.24, 51.32], [0.55, 51.21], [0.84, 51.1]],
+    waypoints: [[0.24, 51.32], [0.55, 51.21], [0.84, 51.1], [1.1, 51.05], [0.84, 51.1], [0.36, 51.22], [0.12, 51.32]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T14:10"
   },
@@ -269,10 +273,10 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "下午第一波：150机越岸",
     from: "calais",
-    to: "dungeness",
+    to: "calais",
     routeKind: "air",
     start: "1940-09-15T14:14",
-    end: "1940-09-15T15:35",
+    end: "1940-09-15T15:50",
     unitIcon: "ww2Bomber",
     formationUnits: [
       ...luftwaffeBomberBox,
@@ -284,20 +288,22 @@ export const frontLines: FrontLine[] = [
       [0.28, 51.42],
       [0.0, 51.48],
       [0.2, 51.34],
-      [0.82, 51.02]
+      [0.82, 51.02],
+      [0.97, 50.91],
+      [1.25, 50.98]
     ],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T16:25"
+    unitVisibleUntil: "1940-09-15T15:50"
   },
   {
     id: "afternoon-raid-follow-wave",
     faction: "germany",
     label: "下午第二波：百机续进",
     from: "cap-gris-nez",
-    to: "dungeness",
+    to: "cap-gris-nez",
     routeKind: "air",
     start: "1940-09-15T14:20",
-    end: "1940-09-15T15:48",
+    end: "1940-09-15T15:55",
     unitIcon: "ww2Bomber",
     formationUnits: luftwaffeFollowWave,
     waypoints: [
@@ -306,26 +312,28 @@ export const frontLines: FrontLine[] = [
       [0.08, 51.36],
       [-0.02, 51.42],
       [0.3, 51.2],
-      [0.92, 50.98]
+      [0.92, 50.98],
+      [0.97, 50.91],
+      [1.25, 50.9]
     ],
     visibleUntil: "1940-09-15T18:00",
-    unitVisibleUntil: "1940-09-15T16:35"
+    unitVisibleUntil: "1940-09-15T15:55"
   },
   {
     id: "eleven-group-afternoon-all-in",
     faction: "britain",
     label: "11群多数中队投入",
     from: "kenley",
-    to: "south-london",
+    to: "kenley",
     routeKind: "air",
     start: "1940-09-15T14:00",
-    end: "1940-09-15T15:35",
+    end: "1940-09-15T16:30",
     unitIcon: "ww2Fighter",
     formationUnits: [
       ...rafElevenGroup,
       { id: "hurricane-249", label: "249中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-75, 17] }
     ],
-    waypoints: [[-0.02, 51.34], [0.08, 51.4], [0.22, 51.36], [0.48, 51.22]],
+    waypoints: [[-0.02, 51.34], [0.08, 51.4], [0.22, 51.36], [0.48, 51.22], [0.28, 51.32], [0.08, 51.36], [-0.02, 51.34]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:30"
   },
@@ -334,16 +342,16 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "12群大编队加入",
     from: "duxford",
-    to: "thames-estuary",
+    to: "duxford",
     routeKind: "air",
     start: "1940-09-15T14:10",
-    end: "1940-09-15T15:45",
+    end: "1940-09-15T16:40",
     unitIcon: "ww2Fighter",
     formationUnits: [
       ...rafReinforcementWing,
       { id: "hurricane-310", label: "310中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-80, -13] }
     ],
-    waypoints: [[0.18, 51.82], [0.38, 51.66], [0.58, 51.5], [0.38, 51.36]],
+    waypoints: [[0.18, 51.82], [0.38, 51.66], [0.58, 51.5], [0.38, 51.36], [0.72, 51.52], [0.42, 51.55], [0.28, 51.78]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T16:40"
   },
@@ -352,16 +360,16 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "轰炸队形破碎返航",
     from: "london",
-    to: "dungeness",
+    to: "calais",
     routeKind: "air",
     start: "1940-09-15T15:10",
-    end: "1940-09-15T16:45",
+    end: "1940-09-15T17:20",
     unitIcon: "ww2Bomber",
     formationUnits: [
       { id: "damaged-bomber-a", label: "受损轰炸机", badgeLabel: "德", icon: "ww2Bomber", offset: [0, 0] },
       { id: "escort-return-a", label: "残余护航", badgeLabel: "德", icon: "ww2Fighter", offset: [-24, 16] }
     ],
-    waypoints: [[0.18, 51.34], [0.62, 51.16], [0.92, 50.98]],
+    waypoints: [[0.18, 51.34], [0.62, 51.16], [0.92, 50.98], [0.97, 50.91], [1.25, 50.98]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T17:20"
   },
@@ -370,17 +378,17 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "下午伦敦东南缠斗圈",
     from: "south-london",
-    to: "thames-estuary",
+    to: "biggin-hill",
     routeKind: "air",
     start: "1940-09-15T14:34",
-    end: "1940-09-15T15:45",
+    end: "1940-09-15T16:00",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "afternoon-weave-spitfire", label: "喷火高空压制", badgeLabel: "英", icon: "ww2Fighter", offset: [0, -18] },
       { id: "afternoon-weave-hurricane", label: "飓风近距攻击", badgeLabel: "英", icon: "ww2Fighter", offset: [-30, 18] },
       { id: "afternoon-weave-polish", label: "波兰中队咬尾", badgeLabel: "英", icon: "ww2Fighter", offset: [-60, 0] }
     ],
-    waypoints: [[0.28, 51.42], [0.04, 51.52], [0.36, 51.24], [0.16, 51.36], [0.62, 51.18]],
+    waypoints: [[0.28, 51.42], [0.04, 51.52], [0.36, 51.24], [0.16, 51.36], [0.62, 51.18], [0.42, 51.28], [0.12, 51.32]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleFrom: "1940-09-15T14:34",
     unitVisibleUntil: "1940-09-15T16:00"
@@ -390,16 +398,16 @@ export const frontLines: FrontLine[] = [
     faction: "germany",
     label: "下午德军护航被拉散",
     from: "thames-estuary",
-    to: "dungeness",
+    to: "calais",
     routeKind: "air",
     start: "1940-09-15T14:32",
-    end: "1940-09-15T15:48",
+    end: "1940-09-15T16:05",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "afternoon-bf109-cover-a", label: "Bf 109护航", badgeLabel: "德", icon: "ww2Fighter", offset: [0, 17] },
       { id: "afternoon-bf110-cover-a", label: "Bf 110失速缠斗", badgeLabel: "德", icon: "ww2Fighter", offset: [-34, -17] }
     ],
-    waypoints: [[0.46, 51.42], [0.18, 51.34], [0.34, 51.2], [0.72, 51.08]],
+    waypoints: [[0.46, 51.42], [0.18, 51.34], [0.34, 51.2], [0.72, 51.08], [0.97, 50.91], [1.25, 50.95]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleFrom: "1940-09-15T14:32",
     unitVisibleUntil: "1940-09-15T16:05"
@@ -409,17 +417,17 @@ export const frontLines: FrontLine[] = [
     faction: "britain",
     label: "海峡上空追击收束",
     from: "south-london",
-    to: "dover",
+    to: "biggin-hill",
     routeKind: "air",
     start: "1940-09-15T15:10",
-    end: "1940-09-15T17:20",
+    end: "1940-09-15T18:00",
     unitIcon: "ww2Fighter",
     formationUnits: [
       { id: "late-pursuit-spitfire", label: "喷火追击", badgeLabel: "英", icon: "ww2Fighter", offset: [0, 0] },
       { id: "late-pursuit-hurricane", label: "飓风补位", badgeLabel: "英", icon: "ww2Fighter", offset: [-24, -14] },
       { id: "late-pursuit-polish", label: "波兰中队", badgeLabel: "英", icon: "ww2Fighter", offset: [-48, 13] }
     ],
-    waypoints: [[0.12, 51.32], [0.18, 51.34], [0.48, 51.18], [0.92, 51.08]],
+    waypoints: [[0.12, 51.32], [0.18, 51.34], [0.48, 51.18], [0.82, 51.04], [0.97, 50.91], [0.72, 51.08], [0.36, 51.22], [0.12, 51.32]],
     visibleUntil: "1940-09-15T18:00",
     unitVisibleUntil: "1940-09-15T18:00"
   },

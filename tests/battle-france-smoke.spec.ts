@@ -979,6 +979,20 @@ function expectAirRoutesHaveShortUnitWindows(campaignName: string, data: Campaig
   }
 }
 
+function expectAirRouteUnitsMoveUntilExit(campaignName: string, data: CampaignDataModule) {
+  for (const line of data.frontLines ?? []) {
+    if (line.routeKind !== "air" || line.hideUnit) {
+      continue;
+    }
+
+    expect(line.unitVisibleUntil, `${campaignName} air route ${line.id} should define aircraft exit time`).toBeTruthy();
+    expect(
+      toTime(line.unitVisibleUntil!),
+      `${campaignName} air route ${line.id} should not leave aircraft loitering after route motion ends`
+    ).toBeLessThanOrEqual(toTime(line.end));
+  }
+}
+
 function pointCoordinatesById(data: CampaignDataModule) {
   return new Map(
     (data.mapPoints ?? [])
@@ -1583,6 +1597,8 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
       expectAirRoutesHaveShortUnitWindows(campaignName, data, campaignName === "bigWeekAirBattle" ? 12 : 8);
     }
   }
+
+  expectAirRouteUnitsMoveUntilExit("battleOfBritain", battleOfBritainData as CampaignDataModule);
 
   expectEventHasActiveRoute("battleOfBritain", battleOfBritainData as CampaignDataModule, "afternoon-warning", [
     "midday-raf-refuel-patrol",
@@ -2379,11 +2395,12 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.getByTestId("active-event-card")).toContainText("雷达报告");
   await expect(page.locator('.front-line[data-route-id="morning-radar-plots"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveClass(/route-air/);
-  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "dungeness");
+  await expect(page.locator('.front-line[data-route-id="morning-raid-first-wave"]')).toHaveAttribute("data-route-to", "calais");
   await expectRouteHasPolylineComplexity(page, ".battle-of-britain", "morning-raid-first-wave", 5);
   await page.getByTestId("event-list").getByRole("button", { name: /11群连续下令升空/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveClass(/route-air/);
+  await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveAttribute("data-route-to", "biggin-hill");
   await expectRealisticUnitIcon(page, "ww2-bomber-marker", "ww2Bomber", "ww2-bomber");
   await expectRealisticUnitIcon(page, "ww2-fighter-marker", "ww2Fighter", "ww2-fighter");
   await expectCompactAircraftMarkers(page, "ww2-bomber-marker");
@@ -2395,6 +2412,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectCurrentEventInsideMapCore(page);
   await expect(page.getByTestId("britain-morning-dogfight")).toBeVisible();
   await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
+  await expect(page.locator('.front-line[data-route-id="morning-raid-second-wave"]')).toHaveAttribute("data-route-to", "boulogne");
+  await expect(page.locator('.front-line[data-route-id="twelve-group-morning-wing"]')).toHaveAttribute("data-route-to", "duxford");
   await expect(page.locator('.front-line[data-route-id="morning-raf-dogfight-weave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-luftwaffe-cover-break"]')).toHaveClass(/route-air/);
   await expect(page.getByTestId("dogfight-clash")).toBeVisible();
@@ -2430,8 +2449,10 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
   await expect(page.locator('.front-line[data-route-id="afternoon-raf-dogfight-weave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="afternoon-luftwaffe-cover-split"]')).toHaveClass(/route-air/);
-  await expect(page.locator('.front-line[data-route-id="afternoon-raid-main-wave"]')).toHaveAttribute("data-route-to", "dungeness");
-  await expect(page.locator('.front-line[data-route-id="afternoon-raid-follow-wave"]')).toHaveAttribute("data-route-to", "dungeness");
+  await expect(page.locator('.front-line[data-route-id="afternoon-raid-main-wave"]')).toHaveAttribute("data-route-to", "calais");
+  await expect(page.locator('.front-line[data-route-id="afternoon-raid-follow-wave"]')).toHaveAttribute("data-route-to", "cap-gris-nez");
+  await expect(page.locator('.front-line[data-route-id="eleven-group-afternoon-all-in"]')).toHaveAttribute("data-route-to", "kenley");
+  await expect(page.locator('.front-line[data-route-id="big-wing-afternoon-commitment"]')).toHaveAttribute("data-route-to", "duxford");
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");
   await expect(page.getByTestId("active-event-card")).toContainText("傍晚：伦敦守住白昼");
