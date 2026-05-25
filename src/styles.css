@@ -1739,6 +1739,18 @@ h1 {
   font-size: 11px;
 }
 
+.atlantic-convoy-battle .battle-salvo-effect.atlantic-local-impact-effect .salvo-impact circle {
+  stroke: #8bd7ff;
+  stroke-width: 2.5;
+}
+
+.atlantic-convoy-battle .battle-salvo-effect.atlantic-local-impact-effect .salvo-impact path {
+  fill: rgba(151, 220, 255, 0.86);
+  stroke: #f2fbff;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 11px rgba(125, 205, 255, 0.62));
+}
+
 .infantry-marker {
   transform: scale(1.04);
 }

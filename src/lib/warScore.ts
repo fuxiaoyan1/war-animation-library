@@ -47,6 +47,7 @@ const sfxClips: Record<SfxKey, SfxClip> = {
 export class WarScore {
   private music: HTMLAudioElement | null = null;
   private activeSfx = new Set<HTMLAudioElement>();
+  private cueTimers = new Map<number, SfxKey>();
   private stopTimers = new Set<number>();
 
   constructor(private readonly musicSource = defaultMusicSource) {}
@@ -88,37 +89,47 @@ export class WarScore {
       return;
     }
 
+    this.clearCueTimers();
+
     if (kind === "cannon" || kind === "combined") {
       void this.playClip("cannon");
       if (kind === "combined") {
-        window.setTimeout(() => {
+        this.scheduleCue(420, () => {
           void this.playClip("explosion");
-        }, 420);
+        }, "explosion");
       }
     }
 
     if (kind === "bombing") {
       void this.playClip("explosion");
-      window.setTimeout(() => {
+      this.scheduleCue(180, () => {
         void this.playClip("aircraft");
-      }, 180);
+      }, "aircraft");
     }
 
     if (kind === "aircraft" || kind === "dive" || kind === "airCombat" || kind === "combined") {
-      window.setTimeout(() => {
+      this.scheduleCue(140, () => {
         void this.playClip("aircraft");
-      }, 140);
+      }, "aircraft");
     }
 
     if (kind === "airCombat" || kind === "strafing" || kind === "combined") {
-      window.setTimeout(() => {
+      this.scheduleCue(760, () => {
         void this.playClip("strafing");
-      }, 760);
+      }, "strafing");
     }
 
     if (kind === "melee") {
       void this.playClip("melee");
     }
+  }
+
+  cancelPendingBattleCues() {
+    this.clearCueTimers();
+  }
+
+  cancelPendingAirCues() {
+    this.clearCueTimers((key) => key === "aircraft" || key === "strafing");
   }
 
   private ensureMusic() {
@@ -164,7 +175,28 @@ export class WarScore {
     }
   }
 
+  private scheduleCue(delayMs: number, callback: () => void, key: SfxKey) {
+    const timer = window.setTimeout(() => {
+      this.cueTimers.delete(timer);
+      callback();
+    }, delayMs);
+    this.cueTimers.set(timer, key);
+  }
+
+  private clearCueTimers(predicate?: (key: SfxKey) => boolean) {
+    for (const [timer, key] of this.cueTimers) {
+      if (predicate && !predicate(key)) {
+        continue;
+      }
+
+      window.clearTimeout(timer);
+      this.cueTimers.delete(timer);
+    }
+  }
+
   private stopSfx() {
+    this.clearCueTimers();
+
     for (const timer of this.stopTimers) {
       window.clearTimeout(timer);
     }

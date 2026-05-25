@@ -66,6 +66,7 @@ type CampaignDataModule = {
     from: [number, number];
     fromRouteId?: string;
     id: string;
+    showShellTraces?: boolean;
     to: [number, number];
     toRouteId?: string;
     type: string;
@@ -1198,6 +1199,7 @@ function expectAtlanticConvoyEffectsAlignWithTargets(data: CampaignDataModule) {
     const target = routeTargets[effect.id];
     expect(target, `atlantic convoy effect ${effect.id} should have a checked target route`).toBeTruthy();
     expect(effect.toRouteId, `atlantic convoy effect ${effect.id} should bind impact to the live target route`).toBe(target!.routeId);
+    expect(effect.showShellTraces, `atlantic convoy effect ${effect.id} should avoid focus-fire trace animation`).toBe(false);
     const line = (data.frontLines ?? []).find((item) => item.id === target!.routeId);
     expect(line, `atlantic convoy effect ${effect.id} target route exists`).toBeTruthy();
     for (const time of target!.times) {
@@ -3004,11 +3006,14 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.locator('.front-line[data-route-id="sturmer-sc122-attack"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.locator('.front-line[data-route-id="dranger-hx229-converge"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo")).toBeVisible();
-  await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(3);
+  await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(0);
+  await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-head")).toHaveCount(0);
+  await expect(page.locator(".atlantic-convoy-battle .salvo-shell-trace")).toHaveCount(0);
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toHaveCount(0);
   await setTimeline(page, 217);
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo").locator(".salvo-impact")).toHaveCount(4);
+  await expect(page.locator(".atlantic-convoy-battle .salvo-shell-trace")).toHaveCount(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
   await expect(page.locator('.front-line[data-route-id="escort-counterattack-screen"]')).toHaveClass(/route-sea/);

@@ -63,6 +63,7 @@ type SalvoBattleEffectElement = {
   id: string;
   impactOffsets?: Array<[number, number]>;
   label?: string;
+  showShellTraces?: boolean;
   shellOffsets?: Array<[number, number]>;
   start: string;
   testId?: string;
@@ -509,6 +510,7 @@ function SalvoBattleEffect({
   const from = project(effect.from);
   const to = project(effect.to);
   const easedProgress = smoothStep(progress);
+  const showShellTraces = effect.showShellTraces ?? true;
 
   return (
     <g
@@ -516,18 +518,19 @@ function SalvoBattleEffect({
       data-effect-progress={progress.toFixed(3)}
       data-testid={effect.testId ?? `battle-effect-${effect.id}`}
     >
-      {shellOffsets.map((offset, index) => {
-        const start: [number, number] = [from[0] + offset[0], from[1] + offset[1]];
-        const end: [number, number] = [to[0] + offset[0] * 0.22, to[1] + offset[1] * 0.18];
-        const shellX = start[0] + (end[0] - start[0]) * easedProgress;
-        const shellY = start[1] + (end[1] - start[1]) * easedProgress;
-        return (
-          <g key={`${effect.id}-shell-${index}`} className="salvo-shell">
-            <path className="salvo-shell-trace" d={`M ${start[0]} ${start[1]} L ${end[0]} ${end[1]}`} />
-            <circle className="salvo-shell-head" cx={shellX} cy={shellY} r={2.7} />
-          </g>
-        );
-      })}
+      {showShellTraces &&
+        shellOffsets.map((offset, index) => {
+          const start: [number, number] = [from[0] + offset[0], from[1] + offset[1]];
+          const end: [number, number] = [to[0] + offset[0] * 0.22, to[1] + offset[1] * 0.18];
+          const shellX = start[0] + (end[0] - start[0]) * easedProgress;
+          const shellY = start[1] + (end[1] - start[1]) * easedProgress;
+          return (
+            <g key={`${effect.id}-shell-${index}`} className="salvo-shell">
+              <path className="salvo-shell-trace" d={`M ${start[0]} ${start[1]} L ${end[0]} ${end[1]}`} />
+              <circle className="salvo-shell-head" cx={shellX} cy={shellY} r={2.7} />
+            </g>
+          );
+        })}
       {impactOffsets.map((offset, index) => (
         <g
           key={`${effect.id}-impact-${index}`}
@@ -968,6 +971,8 @@ export function CampaignMapAnimation({
   };
 
   const playEventCue = (eventId: string) => {
+    scoreRef.current?.cancelPendingBattleCues();
+
     if (!isScoreEnabled || !cueEvents.has(eventId)) {
       return;
     }
@@ -977,6 +982,7 @@ export function CampaignMapAnimation({
   };
 
   const handleRangeChange = (value: string) => {
+    scoreRef.current?.cancelPendingAirCues();
     setProgress(Number(value) / 1000);
   };
 
