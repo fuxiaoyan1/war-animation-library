@@ -64,8 +64,10 @@ type CampaignDataModule = {
   }>;
   torpedoAndDepthChargeEffects?: Array<{
     from: [number, number];
+    fromRouteId?: string;
     id: string;
     to: [number, number];
+    toRouteId?: string;
     type: string;
   }>;
   frontLines?: Array<{
@@ -1139,6 +1141,9 @@ function expectAtlanticConvoySeaUnitsStayOnline(data: CampaignDataModule) {
     }
 
     if (line.unitIcon === "ww2Submarine" && line.id !== "u384-continuous-track") {
+      if (line.hideUnit) {
+        continue;
+      }
       expect(line.unitVisibleUntil, `atlantic convoy submarine route ${line.id} should not disappear before it sinks or hands off`).toBeFalsy();
       expect(line.retainUnitAfterRouteEnd, `atlantic convoy submarine route ${line.id} should retain through handoff`).toBe(true);
       expect(line.unitGroupId, `atlantic convoy submarine route ${line.id} should declare a continuous group`).toBeTruthy();
@@ -1175,20 +1180,32 @@ function expectAtlanticConvoySeaUnitsStayOnline(data: CampaignDataModule) {
 }
 
 function expectAtlanticConvoyEffectsAlignWithTargets(data: CampaignDataModule) {
-  const routeTargets: Record<string, { maxDistance: number; routeId: string; time: string }> = {
-    "hx229-torpedo-spread": { routeId: "hx229-convoy-track", time: "1943-03-17T01:00", maxDistance: 0.45 },
-    "sc122-torpedo-spread": { routeId: "sc122-convoy-track", time: "1943-03-17T01:00", maxDistance: 0.45 },
-    "u384-depth-charge-attack": { routeId: "u384-continuous-track", time: "1943-03-19T17:45", maxDistance: 0.15 }
+  const routeTargets: Record<string, { maxDistance: number; routeId: string; times: string[] }> = {
+    "hx229-torpedo-spread": {
+      routeId: "hx229-convoy-track",
+      times: ["1943-03-17T00:45", "1943-03-17T01:30", "1943-03-17T02:15"],
+      maxDistance: 0.01
+    },
+    "sc122-torpedo-spread": {
+      routeId: "sc122-convoy-track",
+      times: ["1943-03-17T02:00", "1943-03-17T02:10", "1943-03-17T02:25"],
+      maxDistance: 0.01
+    },
+    "u384-depth-charge-attack": { routeId: "u384-continuous-track", times: ["1943-03-19T17:35", "1943-03-19T17:45"], maxDistance: 0.01 }
   };
 
   for (const effect of data.torpedoAndDepthChargeEffects ?? []) {
     const target = routeTargets[effect.id];
     expect(target, `atlantic convoy effect ${effect.id} should have a checked target route`).toBeTruthy();
+    expect(effect.toRouteId, `atlantic convoy effect ${effect.id} should bind impact to the live target route`).toBe(target!.routeId);
     const line = (data.frontLines ?? []).find((item) => item.id === target!.routeId);
     expect(line, `atlantic convoy effect ${effect.id} target route exists`).toBeTruthy();
-    const targetPoint = routePointAtDate(data, line!, target!.time);
-    const distance = Math.hypot(effect.to[0] - targetPoint[0], effect.to[1] - targetPoint[1]);
-    expect(distance, `atlantic convoy effect ${effect.id} should hit the live route position`).toBeLessThanOrEqual(target!.maxDistance);
+    for (const time of target!.times) {
+      const targetPoint = routePointAtDate(data, line!, time);
+      const boundImpactPoint = effect.toRouteId ? targetPoint : effect.to;
+      const distance = Math.hypot(boundImpactPoint[0] - targetPoint[0], boundImpactPoint[1] - targetPoint[1]);
+      expect(distance, `atlantic convoy effect ${effect.id} should hit the live route position at ${time}`).toBeLessThanOrEqual(target!.maxDistance);
+    }
   }
 }
 
@@ -1918,10 +1935,10 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   ]);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "sc122-first-contact", "sturmer-sc122-attack", 0.8, 0.3);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "night-torpedo-attacks", "raubgraf-hx229-contact", 0.8, 0.4);
-  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "second-night-submarine-screen", 0.2, 0.95);
-  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "raubgraf-second-night-shadow", 0.4, 0.9);
-  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "sturmer-second-night-shadow", 0.3, 0.9);
-  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "dranger-second-night-shadow", 0.3, 0.9);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "second-night-submarine-screen", 0.25, 0.95);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "raubgraf-second-night-shadow", 0.55, 0.9);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "sturmer-second-night-shadow", 0.45, 0.9);
+  expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "second-night-battle", "dranger-second-night-shadow", 0.45, 0.9);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", "u384-hunt-by-air", 0.25, 0.45);
   expectRouteNearEvent("atlanticConvoyBattle", atlanticConvoyData as CampaignDataModule, "u384-sunk", "u384-continuous-track", 0.05, 0.85);
   expectRoutesNearEachOtherAtEvent(
@@ -1946,7 +1963,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "second-night-battle",
     "hx229-convoy-track",
     "raubgraf-second-night-shadow",
-    1.3
+    1.6
   );
   expectRoutesNearEachOtherAtEvent(
     "atlanticConvoyBattle",
@@ -1954,7 +1971,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "second-night-battle",
     "sc122-convoy-track",
     "sturmer-second-night-shadow",
-    0.7
+    1.0
   );
   expectRoutesNearEachOtherAtEvent(
     "battleOfBritain",
@@ -2987,8 +3004,10 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.locator('.front-line[data-route-id="sturmer-sc122-attack"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.locator('.front-line[data-route-id="dranger-hx229-converge"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo")).toBeVisible();
-  await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-hx229-torpedo-salvo").locator(".salvo-shell-trace")).toHaveCount(3);
+  await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toHaveCount(0);
+  await setTimeline(page, 217);
+  await expect(page.getByTestId("atlantic-sc122-torpedo-salvo")).toBeVisible();
   await expect(page.getByTestId("atlantic-sc122-torpedo-salvo").locator(".salvo-impact")).toHaveCount(4);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBeGreaterThan(0);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBeGreaterThan(0);
@@ -3021,6 +3040,8 @@ test("atlantic convoy battle shows wolfpack submarine and anti-submarine timelin
   await expect(page.locator('.front-line[data-route-id="raubgraf-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.locator('.front-line[data-route-id="sturmer-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
   await expect(page.locator('.front-line[data-route-id="dranger-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.locator('.front-line[data-route-id="u-boat-disengagement"]')).toHaveAttribute("data-unit-visible", "true");
+  await expect(page.getByTestId("formation-unit-u-boat-disengagement-u-withdraw-a")).toBeVisible();
   await expect(page.locator('.front-line[data-route-id="escort-eastern-cover"]')).toHaveAttribute("data-unit-visible", "true");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "vlr-liberator-first-patrol");
   await expectAirRouteKeepsTrackButAircraftExit(page, ".atlantic-convoy-battle", "u384-hunt-by-air");

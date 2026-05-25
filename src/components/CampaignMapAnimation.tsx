@@ -59,6 +59,7 @@ type SalvoBattleEffectElement = {
   className?: string;
   end: string;
   from: [number, number];
+  fromRouteId?: string;
   id: string;
   impactOffsets?: Array<[number, number]>;
   label?: string;
@@ -66,6 +67,7 @@ type SalvoBattleEffectElement = {
   start: string;
   testId?: string;
   to: [number, number];
+  toRouteId?: string;
   type: "salvo";
 };
 
@@ -845,13 +847,36 @@ export function CampaignMapAnimation({
           }
 
           const effectProgress = end > start ? (progress - start) / (end - start) : 1;
+          if (effect.type === "salvo" && (effect.fromRouteId || effect.toRouteId)) {
+            const routePointAtCurrentTime = (routeId: string) => {
+              const line = frontLines.find((frontLine) => frontLine.id === routeId);
+              if (!line) {
+                return undefined;
+              }
+
+              const routePoints = [
+                timeline.findPoint(line.from).coordinates,
+                ...(line.waypoints ?? []),
+                timeline.findPoint(line.to).coordinates
+              ];
+              return interpolateRoute(routePoints, timeline.lineProgress(line.start, line.end, progress));
+            };
+
+            return {
+              ...effect,
+              from: effect.fromRouteId ? routePointAtCurrentTime(effect.fromRouteId) ?? effect.from : effect.from,
+              progress: Math.min(1, Math.max(0, effectProgress)),
+              to: effect.toRouteId ? routePointAtCurrentTime(effect.toRouteId) ?? effect.to : effect.to
+            };
+          }
+
           return {
             ...effect,
             progress: Math.min(1, Math.max(0, effectProgress))
           };
         })
         .filter((effect): effect is BattleEffectElement & { progress: number } => Boolean(effect)),
-    [battleEffects, progress, timeline]
+    [battleEffects, frontLines, progress, timeline]
   );
 
   const activeEventPoint = useMemo(() => projectPoint(projection, activeEvent.coordinates), [activeEvent.coordinates, projection]);
