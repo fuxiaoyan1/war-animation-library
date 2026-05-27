@@ -204,7 +204,7 @@ async function expectCurrentEventInsideMapCore(page: Page) {
   expect(relativeY).toBeLessThan(0.84);
 }
 
-async function expectLowImpactTicker(page: Page) {
+async function expectLowImpactTicker(page: Page, backgroundPattern = /rgba\(5, 12, 14, 0\.16\)/) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const subtitleBox = await page.getByTestId("narration-subtitle").boundingBox();
   const legendBox = await page.locator(".map-legend").boundingBox();
@@ -217,7 +217,7 @@ async function expectLowImpactTicker(page: Page) {
   expect((subtitleBox?.y ?? 0) - (mapBox?.y ?? 0)).toBeLessThan((mapBox?.height ?? 0) * 0.14);
   expect((subtitleBox?.x ?? 0) - (mapBox?.x ?? 0)).toBeGreaterThan((mapBox?.width ?? 0) * 0.32);
   expect((legendBox?.y ?? 0) - ((subtitleBox?.y ?? 0) + (subtitleBox?.height ?? 0))).toBeGreaterThanOrEqual(4);
-  await expect(page.getByTestId("narration-subtitle")).toHaveCSS("background-color", /rgba\(5, 12, 14, 0\.16\)/);
+  await expect(page.getByTestId("narration-subtitle")).toHaveCSS("background-color", backgroundPattern);
   await expect(page.getByTestId("narration-subtitle")).toHaveCSS("pointer-events", "none");
 }
 
@@ -303,7 +303,7 @@ async function expectMapCanMoveHorizontallyUnderPointer(page: Page) {
   expect(mapBox).not.toBeNull();
   const center = visibleMapPoint(page, mapBox!, 0.5, 0.5);
   await page.mouse.dblclick(center.x, center.y);
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  const resetTransform = await expectMapResetSettles(page);
 
   const beforeShiftWheel = parseMapTransform(await cameraLayer.getAttribute("transform"));
   const wheelTarget = visibleMapPoint(page, mapBox!, 0.52, 0.48);
@@ -317,7 +317,7 @@ async function expectMapCanMoveHorizontallyUnderPointer(page: Page) {
   expect(afterShiftWheel.scale).toBeCloseTo(beforeShiftWheel.scale, 3);
 
   await page.mouse.dblclick(center.x, center.y);
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe(resetTransform);
   const beforeDrag = parseMapTransform(await cameraLayer.getAttribute("transform"));
   const dragStart = visibleMapPoint(page, mapBox!, 0.58, 0.48);
   const dragEnd = visibleMapPoint(page, mapBox!, 0.36, 0.48);
@@ -334,15 +334,25 @@ async function expectMapZoomButtonsWork(page: Page) {
 
   expect(mapBox).not.toBeNull();
   await page.getByTestId("map-reset").click();
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  const resetTransform = await expectMapResetSettles(page);
+  const resetScale = parseMapTransform(resetTransform).scale;
 
   await page.getByTestId("map-zoom-in").click();
-  await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).scale).toBeGreaterThan(1);
+  await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).scale).toBeGreaterThan(resetScale);
   await page.getByTestId("map-zoom-out").click();
-  await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).scale).toBeCloseTo(1, 2);
+  await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).scale).toBeCloseTo(resetScale, 2);
   await page.getByTestId("map-zoom-in").click();
   await page.getByTestId("map-reset").click();
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe(resetTransform);
+}
+
+async function expectMapResetSettles(page: Page) {
+  const cameraLayer = page.getByTestId("camera-layer");
+  await expect.poll(async () => cameraLayer.getAttribute("transform")).not.toBeNull();
+  const transform = await cameraLayer.getAttribute("transform");
+  expect(transform).not.toBeNull();
+  parseMapTransform(transform);
+  return transform!;
 }
 
 function parseMapTransform(transform: string | null) {
@@ -363,7 +373,7 @@ async function expectTickerDoesNotBlockMapWheel(page: Page) {
   expect(mapBox).not.toBeNull();
   expect(subtitleBox).not.toBeNull();
   await page.mouse.dblclick((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.5, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.5);
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  const resetTransform = await expectMapResetSettles(page);
 
   const beforeWheel = parseMapTransform(await cameraLayer.getAttribute("transform"));
   const x = Math.min(
@@ -381,7 +391,7 @@ async function expectTickerDoesNotBlockMapWheel(page: Page) {
   expect(afterWheel.x).toBeCloseTo(beforeWheel.x, 1);
   expect(afterWheel.scale).toBeCloseTo(beforeWheel.scale, 3);
   await page.mouse.dblclick((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.5, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.5);
-  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
+  await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe(resetTransform);
 }
 
 async function expectGaixiaRouteStaysInMapStage(page: Page, routeId: string) {
@@ -408,12 +418,33 @@ async function expectGaixiaExpandedBattlefield(page: Page) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const gaixiaMap = page.locator(".gaixia-map");
   const svgBox = await gaixiaMap.boundingBox();
+  const cameraTransform = parseMapTransform(await page.getByTestId("camera-layer").getAttribute("transform"));
+  const viewport = page.viewportSize();
 
   expect(mapBox).not.toBeNull();
   expect(svgBox).not.toBeNull();
-  expect(mapBox?.height).toBeGreaterThan(1350);
-  expect(svgBox?.height).toBeGreaterThan(1350);
-  await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 1408");
+  expect(viewport).not.toBeNull();
+  expect(mapBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
+  expect(svgBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
+  expect(cameraTransform.scale).toBeGreaterThan(1.4);
+  expect(cameraTransform.y).toBeLessThan(-650);
+  await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 2816");
+  await expectCurrentEventInsideMapCore(page);
+  await expectGaixiaPointInsideMapStage(page, "gaixia");
+}
+
+async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
+  const mapBox = await page.getByTestId("map-stage").boundingBox();
+  const pointBox = await page.getByTestId(`gaixia-point-${pointId}`).boundingBox();
+
+  expect(mapBox).not.toBeNull();
+  expect(pointBox).not.toBeNull();
+  const centerX = (pointBox?.x ?? 0) + (pointBox?.width ?? 0) / 2;
+  const centerY = (pointBox?.y ?? 0) + (pointBox?.height ?? 0) / 2;
+  expect(centerX).toBeGreaterThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.18);
+  expect(centerX).toBeLessThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.88);
+  expect(centerY).toBeGreaterThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.16);
+  expect(centerY).toBeLessThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.88);
 }
 
 async function expectRealisticUnitIcon(
@@ -2553,15 +2584,21 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 河边高地");
   await expectMapFirstLayout(page);
   await expectGaixiaExpandedBattlefield(page);
-  await expectLowImpactTicker(page);
+  await expectLowImpactTicker(page, /rgba\(245, 233, 196, 0\.72\)/);
   await expectMapCanMoveUnderPointer(page);
   await expectMapCanMoveHorizontallyUnderPointer(page);
   await expectMapZoomButtonsWork(page);
   await expectScoreUsesMusic(page, "/audio/shi-mian-mai-fu-pipa.mp3");
 
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
-  await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toBeVisible();
-  await expect(page.getByTestId("gaixia-contour-layer")).toContainText("42m");
+  await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
+  await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
+  await expect(page.getByTestId("gaixia-terrain-north-bank-ridge")).toContainText("北岸岗脊");
+  await expect(page.getByTestId("gaixia-terrain-gaixia-east-ridge")).toContainText("垓下东岗 42m");
+  await expect(page.getByTestId("gaixia-terrain-south-lowland")).toContainText("南侧洼地");
+  await expect(page.getByTestId("gaixia-terrain-east-breakout-corridor")).toContainText("东口通道");
+  await expect(page.locator(".gaixia-contour-ridge .gaixia-contour-buffer")).toHaveCount(3);
+  await expect(page.locator(".gaixia-contour-corridor .gaixia-contour-line")).toHaveCount(2);
   await expect(page.getByTestId("gaixia-terrain-layer")).toContainText("垓下高地");
   await expect(page.getByTestId("gaixia-terrain-layer")).toContainText("旧河汊低地");
   await expect(page.getByTestId("gaixia-river-layer")).toContainText("沱河");

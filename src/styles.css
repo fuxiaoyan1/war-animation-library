@@ -2505,43 +2505,168 @@ h1 {
 }
 
 .gaixia-ambush .map-stage {
-  background: #13251f;
-  min-height: calc((100vh - 124px) * 2);
+  border-color: rgba(92, 83, 58, 0.38);
+  background:
+    linear-gradient(135deg, rgba(232, 213, 162, 0.16), rgba(80, 93, 70, 0.08)),
+    #cfc39f;
+  height: calc(100vh - 124px);
+  min-height: calc(100vh - 124px);
+}
+
+.gaixia-ambush {
+  color: #2f2b21;
+  --ink: #2f2b21;
+  --muted: #5d5747;
+  --paper: rgba(255, 250, 232, 0.46);
+  --paper-strong: rgba(255, 250, 232, 0.66);
+  --line: rgba(92, 83, 58, 0.28);
+  --shadow: 0 18px 54px rgba(80, 64, 33, 0.18);
+}
+
+body:has(.gaixia-ambush) {
+  background:
+    linear-gradient(135deg, rgba(85, 105, 82, 0.16), transparent 42%),
+    linear-gradient(180deg, #d4c8a2 0%, #b8ad8b 100%);
+}
+
+.gaixia-ambush .control-deck,
+.gaixia-ambush .story-card,
+.gaixia-ambush .timeline-list {
+  border-color: rgba(92, 83, 58, 0.3);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 236, 0.78), rgba(228, 216, 177, 0.52)),
+    rgba(210, 196, 157, 0.7);
+  color: #2f2b21;
+  box-shadow: 0 16px 42px rgba(76, 61, 33, 0.18);
+  backdrop-filter: none;
+}
+
+.gaixia-ambush .map-overlay > div,
+.gaixia-ambush .narration-subtitle {
+  border-color: rgba(83, 72, 46, 0.2);
+  background: rgba(245, 233, 196, 0.72);
+  color: #2f2b21;
+}
+
+.gaixia-ambush .map-topbar h1,
+.gaixia-ambush .day-counter,
+.gaixia-ambush .narration-subtitle p,
+.gaixia-ambush .narration-subtitle span,
+.gaixia-ambush .narration-card p,
+.gaixia-ambush .clock,
+.gaixia-ambush .event-list small,
+.gaixia-ambush .story-card p {
+  color: #3b3526;
+  text-shadow: none;
+}
+
+.gaixia-ambush .day-counter {
+  background: rgba(245, 233, 196, 0.76);
+}
+
+.gaixia-ambush .narration-subtitle span {
+  border-right-color: rgba(83, 72, 46, 0.26);
+}
+
+.gaixia-ambush .cinematic-vignette {
+  background:
+    linear-gradient(180deg, rgba(82, 66, 37, 0.14), transparent 14%, transparent 82%, rgba(82, 66, 37, 0.12)),
+    radial-gradient(circle at 50% 48%, transparent 56%, rgba(77, 62, 35, 0.18) 100%);
+  box-shadow: inset 0 0 48px rgba(85, 72, 43, 0.16);
+}
+
+.gaixia-ambush .map-zoom-controls button {
+  border-color: rgba(83, 72, 46, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 232, 0.86), rgba(222, 208, 169, 0.78)),
+    #eadfba;
+  color: #2f2b21;
+  box-shadow: 0 8px 18px rgba(76, 61, 33, 0.18);
+  backdrop-filter: none;
+}
+
+.gaixia-ambush .event-list button {
+  border-color: rgba(92, 83, 58, 0.22);
+  background: rgba(255, 250, 232, 0.5);
+  color: #2f2b21;
+}
+
+.gaixia-ambush .event-list button.active {
+  border-color: rgba(139, 62, 45, 0.5);
+  background: linear-gradient(135deg, rgba(179, 75, 50, 0.16), rgba(36, 101, 129, 0.1));
 }
 
 .gaixia-map {
-  background: #13251f;
-  min-height: calc((100vh - 124px) * 2);
+  background: #cfc39f;
+  height: calc(100vh - 124px);
+  min-height: calc(100vh - 124px);
 }
 
-.gaixia-ground {
-  filter: saturate(1.08) contrast(1.12);
+.gaixia-tactical-ground {
+  fill: #cfc39f;
 }
 
 .gaixia-grid {
-  fill: rgba(2, 8, 7, 0.12);
+  fill: rgba(79, 87, 68, 0.08);
   background: transparent;
 }
 
 .gaixia-terrain-base rect {
-  fill: rgba(255, 238, 174, 0.03);
+  fill: rgba(255, 247, 216, 0.08);
   pointer-events: none;
 }
 
-.gaixia-contour path {
+.gaixia-contour-buffer,
+.gaixia-contour-line {
   fill: none;
-  stroke: rgba(255, 233, 164, 0.28);
-  stroke-dasharray: 10 8;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
 }
 
-.gaixia-contour[data-elevation="42"] path,
-.gaixia-contour[data-elevation="38"] path {
-  stroke: rgba(255, 239, 178, 0.42);
-  stroke-width: 1.8;
+.gaixia-contour-buffer {
+  opacity: 0.34;
+  stroke-width: 24;
+}
+
+.gaixia-contour-line {
+  stroke-dasharray: 12 8;
+  stroke-width: 3;
+}
+
+.gaixia-contour-ridge .gaixia-contour-buffer {
+  stroke: rgba(112, 86, 46, 0.24);
+}
+
+.gaixia-contour-ridge .gaixia-contour-line {
+  stroke: rgba(111, 83, 42, 0.62);
+}
+
+.gaixia-contour-slope .gaixia-contour-buffer {
+  stroke: rgba(124, 105, 59, 0.18);
+}
+
+.gaixia-contour-slope .gaixia-contour-line {
+  stroke: rgba(126, 104, 56, 0.42);
+  stroke-dasharray: 8 12;
+}
+
+.gaixia-contour-lowland .gaixia-contour-buffer {
+  stroke: rgba(75, 118, 128, 0.2);
+}
+
+.gaixia-contour-lowland .gaixia-contour-line {
+  stroke: rgba(51, 111, 130, 0.46);
+  stroke-dasharray: 5 10;
+}
+
+.gaixia-contour-corridor .gaixia-contour-buffer {
+  stroke: rgba(83, 125, 82, 0.2);
+}
+
+.gaixia-contour-corridor .gaixia-contour-line {
+  stroke: rgba(55, 117, 71, 0.48);
+  stroke-dasharray: 18 8;
 }
 
 .gaixia-contour text,
@@ -2551,30 +2676,30 @@ h1 {
   font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
   font-weight: 900;
   paint-order: stroke;
-  stroke: rgba(6, 13, 10, 0.82);
-  stroke-width: 4px;
+  stroke: rgba(238, 225, 188, 0.82);
+  stroke-width: 3px;
   text-anchor: middle;
 }
 
 .gaixia-contour text {
-  fill: rgba(255, 238, 178, 0.72);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  fill: rgba(74, 62, 39, 0.78);
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
 
 .gaixia-terrain-label {
-  fill: rgba(255, 238, 178, 0.88);
+  fill: rgba(74, 70, 44, 0.82);
   font-size: 13px;
   letter-spacing: 0.16em;
 }
 
 .gaixia-terrain-label-old-channel,
 .gaixia-terrain-label-lowland {
-  fill: rgba(170, 225, 236, 0.82);
+  fill: rgba(38, 98, 119, 0.74);
 }
 
 .gaixia-terrain-label-camp {
-  fill: rgba(255, 191, 142, 0.94);
+  fill: rgba(122, 52, 36, 0.86);
   font-size: 14px;
 }
 
@@ -2589,102 +2714,102 @@ h1 {
   font-weight: 900;
   letter-spacing: 0.1em;
   paint-order: stroke;
-  stroke: rgba(8, 14, 10, 0.72);
-  stroke-width: 4px;
+  stroke: rgba(237, 224, 187, 0.78);
+  stroke-width: 3px;
   text-anchor: middle;
 }
 
 .gaixia-region-han-ring path {
-  fill: rgba(69, 161, 218, 0.08);
-  stroke: rgba(114, 214, 255, 0.35);
+  fill: rgba(72, 126, 153, 0.08);
+  stroke: rgba(41, 117, 147, 0.34);
   stroke-dasharray: 14 8;
 }
 
 .gaixia-region-han-ring text {
-  fill: #bfeaff;
+  fill: #245f78;
 }
 
 .gaixia-region-chu-pocket path {
-  fill: rgba(178, 46, 38, 0.14);
-  stroke: rgba(255, 103, 82, 0.42);
+  fill: rgba(160, 52, 39, 0.14);
+  stroke: rgba(139, 48, 39, 0.42);
 }
 
 .gaixia-region-chu-pocket text {
-  fill: #ffd0ba;
+  fill: #88362e;
 }
 
 .gaixia-region-terrain path {
-  fill: rgba(235, 199, 112, 0.09);
-  stroke: rgba(245, 220, 143, 0.34);
+  fill: rgba(132, 103, 52, 0.08);
+  stroke: rgba(107, 84, 45, 0.28);
 }
 
 .gaixia-region-terrain text {
-  fill: #f4df9a;
+  fill: #705a2b;
 }
 
 .gaixia-region-commandery path {
   fill: none;
-  stroke: rgba(246, 225, 154, 0.34);
+  stroke: rgba(88, 74, 45, 0.3);
   stroke-dasharray: 4 10;
 }
 
 .gaixia-region-commandery text {
-  fill: rgba(255, 236, 177, 0.9);
+  fill: rgba(70, 59, 38, 0.82);
   font-size: 13px;
 }
 
 .gaixia-river path {
   fill: none;
-  stroke: rgba(116, 207, 242, 0.68);
+  stroke: rgba(58, 128, 153, 0.68);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 7;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 8px rgba(64, 181, 224, 0.32));
+  filter: drop-shadow(0 2px 2px rgba(31, 71, 88, 0.18));
 }
 
 .gaixia-camp-fortification path {
-  fill: rgba(160, 44, 34, 0.06);
-  stroke: rgba(255, 183, 117, 0.62);
+  fill: rgba(148, 48, 36, 0.06);
+  stroke: rgba(143, 69, 40, 0.62);
   stroke-dasharray: 8 5;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 3;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 8px rgba(180, 64, 35, 0.22));
+  filter: drop-shadow(0 2px 3px rgba(82, 40, 24, 0.2));
 }
 
 .gaixia-camp-fortification-inner-camp path {
-  fill: rgba(122, 29, 25, 0.09);
-  stroke: rgba(255, 122, 92, 0.6);
+  fill: rgba(122, 29, 25, 0.08);
+  stroke: rgba(132, 48, 35, 0.58);
   stroke-dasharray: 4 5;
   stroke-width: 2;
 }
 
 .gaixia-camp-fortification text {
-  fill: #ffd3ab;
+  fill: #7f3829;
   font-size: 14px;
   letter-spacing: 0.16em;
 }
 
 .gaixia-ambush-sector path {
   fill: none;
-  stroke: rgba(132, 220, 255, 0.52);
+  stroke: rgba(35, 109, 145, 0.5);
   stroke-dasharray: 5 10;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 7px rgba(82, 193, 238, 0.28));
+  filter: drop-shadow(0 2px 2px rgba(38, 80, 95, 0.16));
 }
 
 .gaixia-ambush-sector-east path,
 .gaixia-ambush-sector-south path {
-  stroke: rgba(125, 236, 198, 0.48);
+  stroke: rgba(38, 119, 84, 0.5);
 }
 
 .gaixia-ambush-sector text {
-  fill: rgba(210, 245, 255, 0.82);
+  fill: rgba(28, 86, 100, 0.82);
   font-size: 11px;
   letter-spacing: 0.12em;
 }
@@ -2692,12 +2817,12 @@ h1 {
 .gaixia-river text,
 .gaixia-point text,
 .gaixia-route-label {
-  fill: #f7e7bb;
+  fill: #30271b;
   font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
   font-size: 11px;
   font-weight: 900;
   paint-order: stroke;
-  stroke: rgba(8, 14, 10, 0.82);
+  stroke: rgba(239, 226, 190, 0.88);
   stroke-width: 3px;
 }
 
@@ -2706,13 +2831,13 @@ h1 {
 }
 
 .gaixia-point circle {
-  fill: #fff1b8;
-  stroke: #10211c;
+  fill: #f7e3a4;
+  stroke: #3c3122;
   stroke-width: 2;
 }
 
 .gaixia-point-camp circle {
-  fill: #ffcf6e;
+  fill: #c9523f;
   stroke: #5e1713;
   stroke-width: 3;
 }
@@ -2727,28 +2852,28 @@ h1 {
 }
 
 .gaixia-route-shadow {
-  stroke: rgba(0, 0, 0, 0.36);
+  stroke: rgba(57, 42, 24, 0.22);
   stroke-width: 13;
   transform: translate(0, 9px);
 }
 
 .gaixia-route-line {
   stroke-width: 5;
-  filter: drop-shadow(0 8px 7px rgba(0, 0, 0, 0.38));
+  filter: drop-shadow(0 4px 4px rgba(57, 42, 24, 0.28));
 }
 
 .gaixia-route-highlight {
-  stroke: rgba(255, 245, 193, 0.36);
+  stroke: rgba(255, 248, 213, 0.54);
   stroke-dasharray: 3 11;
   stroke-width: 1.6;
 }
 
 .gaixia-route-han .gaixia-route-line {
-  stroke: rgba(96, 205, 255, 0.88);
+  stroke: rgba(21, 111, 157, 0.9);
 }
 
 .gaixia-route-chu .gaixia-route-line {
-  stroke: rgba(255, 83, 65, 0.9);
+  stroke: rgba(178, 54, 42, 0.9);
 }
 
 .gaixia-route[data-route-current="false"].is-complete {
@@ -2757,8 +2882,8 @@ h1 {
 
 .gaixia-route[data-route-current="true"] .gaixia-route-line {
   filter:
-    drop-shadow(0 0 8px rgba(255, 231, 145, 0.22))
-    drop-shadow(0 8px 7px rgba(0, 0, 0, 0.38));
+    drop-shadow(0 0 5px rgba(255, 236, 152, 0.34))
+    drop-shadow(0 4px 4px rgba(57, 42, 24, 0.28));
 }
 
 .gaixia-route-blockade .gaixia-route-line {
@@ -2775,30 +2900,30 @@ h1 {
 }
 
 .gaixia-route-pursuit .gaixia-route-line {
-  stroke: rgba(120, 232, 255, 0.94);
+  stroke: rgba(25, 128, 154, 0.94);
   stroke-width: 4.4;
   stroke-dasharray: 5 7;
 }
 
 .gaixia-route-pursuit .gaixia-route-highlight {
-  stroke: rgba(255, 255, 255, 0.48);
+  stroke: rgba(255, 252, 231, 0.56);
   stroke-dasharray: 2 8;
 }
 
 .gaixia-route-song .gaixia-route-line {
-  stroke: rgba(191, 234, 255, 0.7);
+  stroke: rgba(61, 130, 159, 0.72);
   stroke-dasharray: 2 10;
   stroke-width: 3.2;
 }
 
 .gaixia-route-song .gaixia-route-highlight {
-  stroke: rgba(255, 246, 191, 0.38);
+  stroke: rgba(255, 248, 210, 0.46);
   stroke-dasharray: 1 13;
 }
 
 .gaixia-ambush-pulse {
   fill: none;
-  stroke: rgba(255, 226, 132, 0.72);
+  stroke: rgba(133, 59, 43, 0.68);
   stroke-width: 2;
   animation: breathe 1.4s ease-in-out infinite alternate;
 }
@@ -2811,7 +2936,7 @@ h1 {
 }
 
 .gaixia-unit-shadow {
-  fill: rgba(0, 0, 0, 0.34);
+  fill: rgba(55, 38, 23, 0.28);
 }
 
 .gaixia-unit-holder .gaixia-unit {
@@ -2820,13 +2945,13 @@ h1 {
 
 .gaixia-unit-image {
   filter:
-    drop-shadow(0 7px 6px rgba(0, 0, 0, 0.44))
-    drop-shadow(0 0 3px rgba(255, 226, 143, 0.2));
+    drop-shadow(0 5px 5px rgba(55, 38, 23, 0.36))
+    drop-shadow(0 0 2px rgba(255, 246, 205, 0.28));
 }
 
 .gaixia-unit-badge circle {
-  fill: rgba(18, 25, 22, 0.92);
-  stroke: rgba(255, 223, 135, 0.85);
+  fill: rgba(61, 50, 33, 0.92);
+  stroke: rgba(247, 222, 151, 0.9);
   stroke-width: 2;
 }
 
@@ -2844,44 +2969,44 @@ h1 {
 .gaixia-melee-effect circle,
 .gaixia-song-effect circle {
   fill: none;
-  stroke: rgba(255, 219, 120, 0.55);
+  stroke: rgba(140, 61, 42, 0.52);
   stroke-width: 2;
   animation: meleeRing 1.1s ease-out 3 both;
 }
 
 .gaixia-melee-effect path {
-  stroke: #fff2c2;
+  stroke: #7f2f24;
   stroke-linecap: round;
   stroke-width: 5;
   animation: meleeFlash 1.1s ease-out 3 both;
 }
 
 .gaixia-song-effect circle {
-  stroke: rgba(155, 218, 255, 0.42);
+  stroke: rgba(44, 111, 148, 0.42);
 }
 
 .gaixia-song-effect path {
   fill: none;
-  stroke: rgba(189, 235, 255, 0.76);
+  stroke: rgba(42, 112, 150, 0.7);
   stroke-linecap: round;
   stroke-width: 3;
   animation: breathe 1.6s ease-in-out infinite alternate;
 }
 
 .gaixia-song-effect text {
-  fill: #dff6ff;
+  fill: #245f78;
   font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
   font-size: 16px;
   font-weight: 900;
   paint-order: stroke;
-  stroke: rgba(5, 14, 17, 0.84);
-  stroke-width: 4px;
+  stroke: rgba(238, 225, 188, 0.86);
+  stroke-width: 3px;
   text-anchor: middle;
 }
 
 .gaixia-passed-ring {
   fill: none;
-  stroke: rgba(255, 232, 147, 0.48);
+  stroke: rgba(116, 54, 40, 0.44);
   stroke-width: 2;
 }
 
@@ -2902,13 +3027,14 @@ h1 {
 }
 
 .gaixia-ambush .active-event-label {
-  fill: rgba(255, 242, 207, 0.92);
-  stroke-width: 4px;
+  fill: rgba(49, 37, 24, 0.92);
+  stroke: rgba(239, 226, 190, 0.92);
+  stroke-width: 3px;
   font-size: 12px;
 }
 
 .gaixia-ambush .event-pin > circle:last-child {
-  fill: rgba(255, 241, 190, 0.92);
+  fill: rgba(137, 55, 43, 0.9);
   stroke-width: 1.6;
 }
 

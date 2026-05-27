@@ -178,14 +178,14 @@ export const rivers: Array<{ id: string; label: string; points: Array<[number, n
   }
 ];
 
-export const terrainContours: Array<{ id: string; elevation: number; points: Array<[number, number]> }> = [
-  { id: "north-bank-34", elevation: 34, points: [[117.14, 33.49], [117.24, 33.55], [117.45, 33.56], [117.7, 33.48]] },
-  { id: "north-bank-38", elevation: 38, points: [[117.18, 33.44], [117.35, 33.51], [117.54, 33.52], [117.68, 33.44]] },
-  { id: "gaixia-rise-36", elevation: 36, points: [[117.25, 33.32], [117.36, 33.43], [117.52, 33.43], [117.66, 33.34], [117.55, 33.22], [117.36, 33.22]] },
-  { id: "gaixia-rise-42", elevation: 42, points: [[117.34, 33.31], [117.41, 33.39], [117.52, 33.39], [117.58, 33.32], [117.52, 33.25], [117.4, 33.25]] },
-  { id: "south-lowland-28", elevation: 28, points: [[117.18, 33.13], [117.36, 33.19], [117.58, 33.16], [117.78, 33.09]] },
-  { id: "east-breakout-32", elevation: 32, points: [[117.53, 33.28], [117.64, 33.23], [117.76, 33.14]] },
-  { id: "pursuit-road-30", elevation: 30, points: [[117.58, 33.22], [117.68, 33.14], [117.78, 33.05]] }
+export const terrainContours: Array<{ id: string; elevation: number; kind: "ridge" | "slope" | "lowland" | "corridor"; label: string; points: Array<[number, number]> }> = [
+  { id: "north-bank-ridge", elevation: 38, kind: "ridge", label: "北岸岗脊", points: [[117.16, 33.48], [117.25, 33.54], [117.45, 33.56], [117.66, 33.5]] },
+  { id: "gaixia-west-ridge", elevation: 40, kind: "ridge", label: "垓下西岗", points: [[117.26, 33.31], [117.34, 33.39], [117.43, 33.43]] },
+  { id: "gaixia-east-ridge", elevation: 42, kind: "ridge", label: "垓下东岗", points: [[117.5, 33.42], [117.58, 33.34], [117.55, 33.25]] },
+  { id: "camp-slope", elevation: 36, kind: "slope", label: "营垒缓坡", points: [[117.33, 33.3], [117.41, 33.37], [117.52, 33.38], [117.6, 33.31], [117.52, 33.24], [117.39, 33.24]] },
+  { id: "south-lowland", elevation: 28, kind: "lowland", label: "南侧洼地", points: [[117.18, 33.13], [117.36, 33.19], [117.58, 33.16], [117.78, 33.09]] },
+  { id: "east-breakout-corridor", elevation: 32, kind: "corridor", label: "东口通道", points: [[117.52, 33.3], [117.6, 33.26], [117.68, 33.18], [117.76, 33.1]] },
+  { id: "yinling-pursuit-corridor", elevation: 30, kind: "corridor", label: "阴陵追击道", points: [[117.58, 33.22], [117.66, 33.16], [117.74, 33.08], [117.79, 33.04]] }
 ];
 
 export const terrainLabels: GaixiaTerrainLabel[] = [
@@ -484,7 +484,8 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.76, 33.36],
       [117.68, 33.32],
-      [117.57, 33.31],
+      [117.6, 33.29],
+      [117.55, 33.28],
       [117.5, 33.32]
     ]
   },
@@ -524,7 +525,8 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.78, 33.08],
       [117.67, 33.16],
-      [117.57, 33.24],
+      [117.6, 33.22],
+      [117.54, 33.27],
       [117.5, 33.3]
     ]
   },
@@ -670,7 +672,8 @@ export const routes: GaixiaRoute[] = [
     ],
     points: [
       [117.45, 33.33],
-      [117.55, 33.25],
+      [117.52, 33.3],
+      [117.6, 33.24],
       [117.65, 33.16],
       [117.72, 33.1]
     ]
@@ -868,8 +871,9 @@ export const routes: GaixiaRoute[] = [
     ],
     points: [
       [117.64, 33.24],
-      [117.58, 33.25],
-      [117.53, 33.27],
+      [117.6, 33.24],
+      [117.55, 33.28],
+      [117.52, 33.3],
       [117.49, 33.3]
     ]
   },
@@ -888,8 +892,9 @@ export const routes: GaixiaRoute[] = [
     ],
     points: [
       [117.5, 33.31],
-      [117.58, 33.24],
-      [117.66, 33.16],
+      [117.56, 33.27],
+      [117.62, 33.21],
+      [117.68, 33.14],
       [117.72, 33.1]
     ]
   },
@@ -928,6 +933,7 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.66, 33.16],
       [117.72, 33.1],
+      [117.74, 33.08],
       [117.76, 33.07],
       [117.79, 33.04]
     ]

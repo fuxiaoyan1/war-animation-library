@@ -21,11 +21,14 @@ import { createCampaignProjection, projectPoint } from "../lib/geoMap";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { publicPath } from "../lib/publicPath";
 import { formatChineseDate } from "../lib/timeline";
-import { useMapInteraction } from "../lib/useMapInteraction";
+import { useMapInteraction, type MapView } from "../lib/useMapInteraction";
 import { WarScore } from "../lib/warScore";
 
 const mapWidth = 1180;
-const mapHeight = 1408;
+const projectionHeight = 1408;
+const tacticalYScale = 2;
+const mapHeight = projectionHeight * tacticalYScale;
+const initialMapView: MapView = { scale: 1.58, x: -180, y: -780 };
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventPoints = battleEvents.map((event) => ({
@@ -61,8 +64,13 @@ function buildPath(points: Array<[number, number]>) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(" ");
 }
 
+function projectTacticalPoint(projection: ReturnType<typeof createCampaignProjection>, point: [number, number]) {
+  const [x, y] = projectPoint(projection, point);
+  return [x, y * tacticalYScale] as [number, number];
+}
+
 function projectLine(projection: ReturnType<typeof createCampaignProjection>, points: Array<[number, number]>) {
-  return points.map((point) => projectPoint(projection, point));
+  return points.map((point) => projectTacticalPoint(projection, point));
 }
 
 function routeLength(points: Array<[number, number]>) {
@@ -241,7 +249,7 @@ export function GaixiaAmbushAnimation() {
   const activeRouteIds = useMemo(() => new Set(activeEvent.routeIds), [activeEvent.routeIds]);
   const currentDate = timeline.progressToDate(progress, 1 / (24 * 60));
   const elapsedHours = Math.max(1, Math.round(timeline.displayDaysAtProgress(progress) * 24) + 1);
-  const projection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, "gaixiaBattle"), []);
+  const projection = useMemo(() => createCampaignProjection(mapWidth, projectionHeight, "gaixiaBattle"), []);
   const {
     canZoomIn,
     canZoomOut,
@@ -253,13 +261,13 @@ export function GaixiaAmbushAnimation() {
     svgRef,
     zoomIn,
     zoomOut
-  } = useMapInteraction(mapWidth, mapHeight, "gaixiaBattle");
+  } = useMapInteraction(mapWidth, mapHeight, "gaixiaBattle", initialMapView);
   const activeNarrationCue = narrationCues.find((cue, index) => {
     const start = timeline.dateToProgress(cue.start);
     const end = timeline.dateToProgress(cue.end);
     return progress >= start && (progress < end || (index === narrationCues.length - 1 && progress <= end));
   });
-  const activePoint = projectPoint(projection, activeEvent.coordinates);
+  const activePoint = projectTacticalPoint(projection, activeEvent.coordinates);
 
   useEffect(() => {
     scoreRef.current = new WarScore(musicSource);
@@ -445,7 +453,7 @@ export function GaixiaAmbushAnimation() {
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
             <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" transform={mapTransform}>
-              <image className="gaixia-ground" href={publicPath("/assets/maps/gaixia-terrain-dem.webp")} x="0" y="0" width={mapWidth} height={mapHeight} preserveAspectRatio="none" />
+              <rect className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" x="0" y="0" width={mapWidth} height={mapHeight} />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <rect x="0" y="0" width={mapWidth} height={mapHeight} />
                 <g className="gaixia-contour-layer" data-testid="gaixia-contour-layer">
@@ -453,10 +461,11 @@ export function GaixiaAmbushAnimation() {
                     const points = projectLine(projection, contour.points);
                     const midpoint = points[Math.floor(points.length / 2)] ?? points[0];
                     return (
-                      <g key={contour.id} className="gaixia-contour" data-elevation={contour.elevation}>
-                        <path d={buildPath(points)} />
+                      <g key={contour.id} className={`gaixia-contour gaixia-contour-${contour.kind}`} data-elevation={contour.elevation} data-terrain-kind={contour.kind} data-testid={`gaixia-terrain-${contour.id}`}>
+                        <path className="gaixia-contour-buffer" d={buildPath(points)} />
+                        <path className="gaixia-contour-line" d={buildPath(points)} />
                         <text x={midpoint[0] + 6} y={midpoint[1] - 6}>
-                          {contour.elevation}m
+                          {contour.label} {contour.elevation}m
                         </text>
                       </g>
                     );
@@ -464,7 +473,7 @@ export function GaixiaAmbushAnimation() {
                 </g>
                 <g className="gaixia-terrain-labels">
                   {terrainLabels.map((label) => {
-                    const [x, y] = projectPoint(projection, label.coordinates);
+                    const [x, y] = projectTacticalPoint(projection, label.coordinates);
                     return (
                       <text key={label.id} className={`gaixia-terrain-label gaixia-terrain-label-${label.kind}`} x={x} y={y}>
                         {label.label}
@@ -477,7 +486,7 @@ export function GaixiaAmbushAnimation() {
               <g className="gaixia-regions">
                 {historicalRegions.map((region) => {
                   const points = projectLine(projection, region.coordinates);
-                  const labelPoint = projectPoint(projection, region.labelCoordinates);
+                  const labelPoint = projectTacticalPoint(projection, region.labelCoordinates);
                   return (
                     <g key={region.id} className={`gaixia-region gaixia-region-${region.kind}`} data-testid={`gaixia-region-${region.id}`}>
                       <path d={`${buildPath(points)} Z`} />
@@ -507,7 +516,7 @@ export function GaixiaAmbushAnimation() {
               <g className="gaixia-fortifications" data-testid="gaixia-fortification-layer">
                 {campFortifications.map((fortification) => {
                   const points = projectLine(projection, fortification.coordinates);
-                  const labelPoint = projectPoint(projection, fortification.labelCoordinates);
+                  const labelPoint = projectTacticalPoint(projection, fortification.labelCoordinates);
                   return (
                     <g key={fortification.id} className={`gaixia-camp-fortification gaixia-camp-fortification-${fortification.id}`}>
                       <path d={`${buildPath(points)} Z`} />
@@ -591,7 +600,7 @@ export function GaixiaAmbushAnimation() {
 
               <g className="gaixia-points">
                 {mapPoints.map((point) => {
-                  const [x, y] = projectPoint(projection, point.coordinates);
+                  const [x, y] = projectTacticalPoint(projection, point.coordinates);
                   return (
                     <g key={point.id} className={`gaixia-point gaixia-point-${point.kind}`} data-testid={`gaixia-point-${point.id}`}>
                       <circle cx={x} cy={y} r={point.kind === "camp" ? 6 : 4} />
@@ -608,7 +617,7 @@ export function GaixiaAmbushAnimation() {
                   const eventProgress = timeline.eventProgress(event.date, progress);
                   const passed = timeline.dateToProgress(event.date) <= progress;
                   const isCurrent = event.id === activeEvent.id;
-                  const [x, y] = projectPoint(projection, event.coordinates);
+                  const [x, y] = projectTacticalPoint(projection, event.coordinates);
                   return (
                     <g key={event.id} className={`event-pin ${passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
                       {isCurrent && <ActiveEffect event={event} point={[x, y]} />}

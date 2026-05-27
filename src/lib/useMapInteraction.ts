@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 
-type MapView = {
+export type MapView = {
   scale: number;
   x: number;
   y: number;
@@ -25,7 +25,7 @@ function clampOffset(value: number, scale: number, size: number, baseAllowance =
   return clamp(value, -overflow - baseAllowance, baseAllowance);
 }
 
-export function useMapInteraction(width: number, height: number, resetKey?: string | number) {
+export function useMapInteraction(width: number, height: number, resetKey?: string | number, initialMapView: MapView = defaultMapView) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<{
@@ -35,14 +35,8 @@ export function useMapInteraction(width: number, height: number, resetKey?: stri
     startX: number;
     startY: number;
   } | null>(null);
-  const [mapView, setMapView] = useState<MapView>(defaultMapView);
+  const [mapView, setMapView] = useState<MapView>(initialMapView);
   const [isMapDragging, setIsMapDragging] = useState(false);
-
-  useEffect(() => {
-    dragRef.current = null;
-    setIsMapDragging(false);
-    setMapView(defaultMapView);
-  }, [resetKey]);
 
   const clampView = useCallback(
     (view: MapView) => {
@@ -55,6 +49,12 @@ export function useMapInteraction(width: number, height: number, resetKey?: stri
     },
     [height, width]
   );
+
+  useEffect(() => {
+    dragRef.current = null;
+    setIsMapDragging(false);
+    setMapView(clampView(initialMapView));
+  }, [clampView, initialMapView, resetKey]);
 
   const pointFromEvent = useCallback(
     (clientX: number, clientY: number) => {
@@ -178,8 +178,8 @@ export function useMapInteraction(width: number, height: number, resetKey?: stri
   const resetMapView = useCallback(() => {
     dragRef.current = null;
     setIsMapDragging(false);
-    setMapView(defaultMapView);
-  }, []);
+    setMapView(clampView(initialMapView));
+  }, [clampView, initialMapView]);
 
   const zoomIn = useCallback(() => zoomAtPoint(1.22), [zoomAtPoint]);
   const zoomOut = useCallback(() => zoomAtPoint(1 / 1.22), [zoomAtPoint]);
