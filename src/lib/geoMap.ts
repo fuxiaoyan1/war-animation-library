@@ -366,6 +366,22 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [117.05, 32.94],
     [117.88, 33.64]
   ],
+  nianzhuangWide: [
+    [117.05, 34.02],
+    [118.52, 34.54]
+  ],
+  nianzhuangPocket: [
+    [117.48, 34.12],
+    [118.13, 34.43]
+  ],
+  nianzhuangRelief: [
+    [117.18, 34.1],
+    [117.94, 34.44]
+  ],
+  nianzhuangFinal: [
+    [117.68, 34.18],
+    [118.02, 34.37]
+  ],
   pacificWide: [
     [105.0, -18.0],
     [210.0, 48.0]
@@ -644,6 +660,7 @@ const gulfCampaignCountryNames = new Set([
 ]);
 
 const koreanWarCampaignCountryNames = new Set(["China", "Japan", "North Korea", "Russia", "South Korea"]);
+const nianzhuangCampaignCountryNames = new Set(["China"]);
 const tsushimaCampaignCountryNames = new Set(["Japan", "North Korea", "Russia", "South Korea"]);
 const trafalgarCampaignCountryNames = new Set(["Portugal", "Spain", "Morocco"]);
 const guadalcanalCampaignCountryNames = new Set(["Papua New Guinea", "Solomon Is."]);
@@ -668,6 +685,7 @@ const qinCoreCountryNames = new Set(["China"]);
 const pacificCoreCountryNames = new Set(["Japan", "United States of America", "Philippines", "Papua New Guinea", "Solomon Is."]);
 const gulfCoreCountryNames = new Set(["Iraq", "Kuwait", "Saudi Arabia"]);
 const koreanWarCoreCountryNames = new Set(["China", "North Korea", "South Korea"]);
+const nianzhuangCoreCountryNames = new Set(["China"]);
 const tsushimaCoreCountryNames = new Set(["Japan", "South Korea"]);
 const trafalgarCoreCountryNames = new Set(["Spain"]);
 const guadalcanalCoreCountryNames = new Set(["Solomon Is."]);
@@ -723,6 +741,10 @@ export const gulfCampaignCountries = countryCollection.features.filter((country)
 
 export const koreanWarCampaignCountries = countryCollection.features.filter((country) =>
   koreanWarCampaignCountryNames.has(country.properties?.name ?? "")
+) as CountryFeature[];
+
+export const nianzhuangCampaignCountries = countryCollection.features.filter((country) =>
+  nianzhuangCampaignCountryNames.has(country.properties?.name ?? "")
 ) as CountryFeature[];
 
 export const tsushimaCampaignCountries = countryCollection.features.filter((country) =>
@@ -857,6 +879,12 @@ export function koreanWarCountryClassName(country: CountryFeature) {
   const name = country.properties?.name ?? "unknown";
   const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
   return `country country-${normalized} ${koreanWarCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
+}
+
+export function nianzhuangCountryClassName(country: CountryFeature) {
+  const name = country.properties?.name ?? "unknown";
+  const normalized = name.toLowerCase().replace(/[^a-z]+/g, "-");
+  return `country country-${normalized} ${nianzhuangCoreCountryNames.has(name) ? "country-core" : "country-context"}`;
 }
 
 export function tsushimaCountryClassName(country: CountryFeature) {

@@ -95,6 +95,18 @@
 - 本地校验：文件大小 `7,508,078 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `156.500s`。
 - 使用位置：`十字军东征`。
 
+### The Thunderer
+
+- 文件：`public/audio/wikimedia-the-thunderer-us-army.ogg`
+- 曲目：`The Thunderer`
+- 作曲：John Philip Sousa。
+- 演奏/来源标注：United States Army Band；Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:The_Thunderer_-_U.S._Army_Band.ogg>
+- OGG：<https://upload.wikimedia.org/wikipedia/commons/1/1a/The_Thunderer_-_U.S._Army_Band.ogg>
+- 版权状态：Wikimedia Commons 文件为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `8,436,834 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `168.856s`，约 `395kbps`。
+- 使用位置：`淮海战役：碾庄圩围歼战`。该曲未被其他战争动画使用，满足系列配乐不重复规则。
+
 ### Hands Across the Sea
 
 - 文件：`public/audio/wikimedia-hands-across-the-sea.ogg`

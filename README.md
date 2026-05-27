@@ -10,10 +10,14 @@ The demo opens on the library shelf. Each card launches an interactive animation
 
 ## Latest Update
 
-The latest major update adds `HX 229 / SC 122：大西洋狼群战` and refines `韩信十面埋伏：垓下之战` into a denser cold-weapons tactical animation.
+The latest major update adds `淮海战役：碾庄圩围歼战` and keeps the recent Atlantic convoy plus Gaixia refinements in the library.
 
 Highlights:
 
+- Added the Nianzhuangwei encirclement battle from the first phase of the Huaihai Campaign, focused on Huang Baitao's Seventh Army Group rather than the later Shuangduiji/Huang Wei phase.
+- Modeled the battle as a larger multi-force map: Xin'anzhen withdrawal, Nianzhuang pocket, Xuzhou relief attempt, Daxujia blocking line, trench approaches, November 19 general assault, first-line breakthrough, final compression, and Nizhuang endgame.
+- Added route continuity gates so Huang's force, PLA pursuit columns, Xuzhou relief columns, blocking troops, trench approaches, artillery, and final pursuit all have visible source routes instead of appearing abruptly.
+- Added source notes for the Nianzhuang timeline and a distinct `The Thunderer` background score.
 - Added the Atlantic convoy/submarine battle of HX 229 / SC 122, including dual convoy movement, wolfpack convergence, torpedo attacks, escort ASW, VLR air patrols, U-384's loss, and the German attack breakoff.
 - Reworked submarine combat semantics: U-boats, escorts, and convoys stay online unless sunk or handed off; torpedo/depth-charge effects bind to live route positions; submarine combat no longer uses naval salvo trace lines.
 - Expanded the Gaixia battlefield into a larger tactical map with directly drawn ridges, lowland corridors, river channels, camp walls, and pursuit roads.
@@ -27,7 +31,7 @@ Full update note: [docs/updates/war-animation-update-2026-05-27.md](docs/updates
 
 ## Current Library
 
-The repository currently includes 22 animations.
+The repository currently includes 23 animations.
 
 Ancient and pre-Napoleonic campaigns:
 
@@ -54,6 +58,7 @@ Modern campaigns and tactical battles:
 - HX 229 / SC 122：大西洋狼群战
 - 第二次瓜岛海战
 - 大周行动：欧洲昼间制空权争夺
+- 淮海战役：碾庄圩围歼战
 - 抗美援朝战争
 - 1991年第一次海湾战争
 

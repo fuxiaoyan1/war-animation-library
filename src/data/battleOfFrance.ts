@@ -9,6 +9,7 @@ export type Faction =
   | "carthage"
   | "rome"
   | "communist"
+  | "nationalist"
   | "un"
   | "spain";
 

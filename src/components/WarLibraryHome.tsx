@@ -150,6 +150,13 @@ const wars: WarEntry[] = [
     description: "轰炸机流、远程护航、德机截击、航空工业目标与制空权消耗。"
   },
   {
+    id: "nianzhuang",
+    title: "淮海战役：碾庄圩围歼战",
+    era: "现代战争",
+    period: "1948-11-06 - 1948-11-22",
+    description: "新安镇追击、碾庄合围、徐东阻援、对壕近迫、总攻与倪庄终局。"
+  },
+  {
     id: "korean",
     title: "抗美援朝战争",
     era: "现代战争",

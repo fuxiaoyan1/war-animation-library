@@ -16,6 +16,7 @@ import { KoreanWarAnimation } from "./components/KoreanWarAnimation";
 import { MidwayBattleAnimation } from "./components/MidwayBattleAnimation";
 import { MongolEmpireAnimation } from "./components/MongolEmpireAnimation";
 import { NapoleonicWarsAnimation } from "./components/NapoleonicWarsAnimation";
+import { NianzhuangBattleAnimation } from "./components/NianzhuangBattleAnimation";
 import { PacificWarAnimation } from "./components/PacificWarAnimation";
 import { PunicWarsAnimation } from "./components/PunicWarsAnimation";
 import { QinUnificationAnimation } from "./components/QinUnificationAnimation";
@@ -29,6 +30,7 @@ export type CampaignKey =
   | "france"
   | "eastern"
   | "korean"
+  | "nianzhuang"
   | "napoleonic"
   | "punic"
   | "crusades"
@@ -152,6 +154,7 @@ function App() {
       {campaign === "midway" && <MidwayBattleAnimation />}
       {campaign === "mongol" && <MongolEmpireAnimation />}
       {campaign === "napoleonic" && <NapoleonicWarsAnimation />}
+      {campaign === "nianzhuang" && <NianzhuangBattleAnimation />}
       {campaign === "pacific" && <PacificWarAnimation />}
       {campaign === "punic" && <PunicWarsAnimation />}
       {campaign === "qin" && <QinUnificationAnimation />}

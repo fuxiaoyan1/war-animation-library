@@ -1548,6 +1548,19 @@ h1 {
   stroke: rgba(255, 226, 145, 0.8);
 }
 
+.faction-nationalist .front-route {
+  stroke: #4f83c5;
+}
+
+.faction-nationalist .front-halo {
+  stroke: #4f83c5;
+}
+
+.faction-nationalist .front-direction {
+  stroke: rgba(200, 231, 255, 0.86);
+  stroke-dasharray: 7 9;
+}
+
 .faction-rome .front-route {
   stroke: #4aa3d8;
 }
@@ -1609,6 +1622,10 @@ h1 {
   fill: #b33425;
 }
 
+.faction-badge-nationalist circle {
+  fill: #1f5795;
+}
+
 .faction-badge-un circle {
   fill: #1f6fa8;
 }
@@ -1640,6 +1657,210 @@ h1 {
   filter:
     drop-shadow(0 0 8px rgba(84, 174, 226, 0.72))
     drop-shadow(0 5px 8px rgba(0, 0, 0, 0.5));
+}
+
+.nianzhuang-battle .map-stage,
+.nianzhuang-battle .battle-map {
+  background: #d5c391;
+}
+
+.nianzhuang-battle .map-base {
+  fill: #d9c795;
+}
+
+.nianzhuang-battle .map-texture {
+  opacity: 0.42;
+}
+
+.nianzhuang-battle.cinematic-mode .map-stage {
+  background:
+    linear-gradient(180deg, #e3d2a1, #cbb880 58%, #bba66e);
+  box-shadow:
+    inset 0 0 0 1px rgba(86, 63, 32, 0.2),
+    inset 0 0 80px rgba(92, 65, 33, 0.14),
+    0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.nianzhuang-battle.cinematic-mode .battle-map {
+  filter: saturate(0.98) contrast(1.02);
+}
+
+.nianzhuang-battle .country-core {
+  fill: rgba(206, 192, 140, 0.88);
+  stroke: rgba(106, 86, 48, 0.28);
+}
+
+.nianzhuang-battle .historical-map-layer {
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.nianzhuang-battle .historical-paper-field {
+  display: none;
+}
+
+.nianzhuang-battle .historical-region {
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-pocket-region {
+  fill: rgba(104, 124, 85, 0.24);
+  stroke: rgba(74, 88, 56, 0.7);
+}
+
+.nianzhuang-battle .nianzhuang-block-region {
+  fill: rgba(175, 91, 62, 0.18);
+  stroke: rgba(139, 63, 45, 0.68);
+}
+
+.nianzhuang-battle .nianzhuang-water-region {
+  fill: rgba(88, 138, 155, 0.18);
+  stroke: rgba(71, 122, 144, 0.58);
+}
+
+.nianzhuang-battle .historical-region-name {
+  fill: rgba(55, 43, 24, 0.68);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(234, 220, 176, 0.82);
+  stroke-width: 3px;
+}
+
+.nianzhuang-battle .river {
+  stroke: rgba(64, 123, 150, 0.72);
+  stroke-width: 4;
+  filter: none;
+}
+
+.nianzhuang-battle .river-nianzhuang-ditches,
+.nianzhuang-battle .river-lowland-ponds {
+  stroke-dasharray: 9 7;
+  stroke-width: 3.2;
+}
+
+.nianzhuang-battle .nianzhuang-village-zone {
+  fill: rgba(116, 99, 62, 0.18);
+  stroke: rgba(91, 76, 45, 0.58);
+  stroke-dasharray: 4 5;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-water-zone {
+  fill: rgba(77, 139, 159, 0.16);
+  stroke: rgba(58, 115, 139, 0.5);
+  stroke-dasharray: 8 7;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-relief-zone {
+  fill: rgba(166, 72, 51, 0.13);
+  stroke: rgba(143, 60, 44, 0.54);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .terrain-label,
+.nianzhuang-battle .region-labels text {
+  fill: rgba(64, 47, 24, 0.66);
+  font-size: 13px;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(235, 220, 178, 0.72);
+  stroke-width: 3px;
+}
+
+.nianzhuang-battle .region-labels text {
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.nianzhuang-battle .wind-overlay.rail-overlay path {
+  stroke: rgba(63, 55, 45, 0.82);
+  stroke-dasharray: 10 6;
+  stroke-width: 3.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .wind-overlay.rail-overlay text,
+.nianzhuang-battle .annotation-marker text {
+  fill: rgba(50, 38, 22, 0.88);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(238, 223, 180, 0.86);
+  stroke-width: 3px;
+}
+
+.nianzhuang-battle .annotation-marker circle {
+  fill: rgba(132, 57, 45, 0.86);
+  stroke: rgba(245, 226, 176, 0.9);
+}
+
+.nianzhuang-battle .annotation-marker path {
+  stroke: rgba(255, 239, 194, 0.9);
+}
+
+.nianzhuang-battle .annotation-subtitle {
+  font-size: 10px;
+  opacity: 0.88;
+}
+
+.nianzhuang-battle .front-line .front-route {
+  stroke-opacity: 0.98;
+  filter: drop-shadow(0 2px 4px rgba(68, 45, 20, 0.2));
+}
+
+.nianzhuang-battle .front-line.is-complete .front-route {
+  stroke-opacity: 0.82;
+}
+
+.nianzhuang-battle .front-line.is-complete .front-halo {
+  stroke-opacity: 0.12;
+}
+
+.nianzhuang-battle .line-label,
+.nianzhuang-battle .formation-unit-label {
+  fill: #3a2717;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(239, 223, 178, 0.88);
+}
+
+.nianzhuang-battle .line-label {
+  font-size: 11px;
+  stroke-width: 3.5px;
+}
+
+.nianzhuang-battle .formation-unit-label {
+  font-size: 8px;
+  stroke-width: 2.5px;
+}
+
+.nianzhuang-battle .unit-marker-communist {
+  filter:
+    drop-shadow(0 0 7px rgba(205, 68, 45, 0.54))
+    drop-shadow(0 4px 7px rgba(60, 35, 18, 0.36));
+}
+
+.nianzhuang-battle .unit-marker-nationalist {
+  filter:
+    drop-shadow(0 0 7px rgba(67, 124, 186, 0.58))
+    drop-shadow(0 4px 7px rgba(60, 35, 18, 0.36));
+}
+
+.nianzhuang-battle .tank-korean-marker {
+  transform: scale(0.98);
+}
+
+.nianzhuang-battle .cannon-marker {
+  transform: scale(0.92);
 }
 
 .tank-marker,

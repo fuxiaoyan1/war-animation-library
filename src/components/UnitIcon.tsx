@@ -229,6 +229,7 @@ function factionBadgeLabel(faction: string) {
     carthage: "迦",
     france: "法",
     germany: "德",
+    nationalist: "國",
     rome: "罗",
     spain: "西",
     un: "UN"
