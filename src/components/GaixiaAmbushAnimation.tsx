@@ -25,7 +25,7 @@ import { useMapInteraction } from "../lib/useMapInteraction";
 import { WarScore } from "../lib/warScore";
 
 const mapWidth = 1180;
-const mapHeight = 704;
+const mapHeight = 1408;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventPoints = battleEvents.map((event) => ({
@@ -126,13 +126,42 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   return next[0] - previous[0] < -0.01 ? -1 : 1;
 }
 
+function routeUnitOffsets(route: (typeof routes)[number]) {
+  if (route.unitOffsets) {
+    return route.unitOffsets;
+  }
+
+  if (route.unitKind.includes("cavalry")) {
+    return [
+      [0, 0],
+      [-30, 14]
+    ];
+  }
+
+  if (route.unitKind.includes("crossbow")) {
+    return [
+      [0, 0],
+      [22, -12]
+    ];
+  }
+
+  return [[0, 0]];
+}
+
 function routeShouldRender(route: (typeof routes)[number], progress: number, activeRouteIds: Set<string>) {
   const routeStartProgress = timeline.dateToProgress(route.start);
   const routeEndProgress = timeline.dateToProgress(route.end);
   const isLinkedToActiveEvent = activeRouteIds.has(route.id);
   const isActive = progress >= routeStartProgress && progress < routeEndProgress;
-  const isWithinExplicitWindow = Boolean(route.visibleUntil) && progress >= routeStartProgress && progress <= timeline.dateToProgress(route.visibleUntil!);
-  return isLinkedToActiveEvent || isActive || isWithinExplicitWindow;
+  const routeVisibleEnd = route.visibleUntil ? timeline.dateToProgress(route.visibleUntil) : 1;
+  const isWithinRetainedWindow = progress >= routeStartProgress && progress <= routeVisibleEnd;
+  return isLinkedToActiveEvent || isActive || isWithinRetainedWindow;
+}
+
+function routeUnitShouldRender(route: (typeof routes)[number], progress: number) {
+  const routeStartProgress = timeline.dateToProgress(route.start);
+  const unitVisibleEnd = route.unitVisibleUntil ? timeline.dateToProgress(route.unitVisibleUntil) : route.visibleUntil ? timeline.dateToProgress(route.visibleUntil) : 1;
+  return progress >= routeStartProgress && progress <= unitVisibleEnd && route.routeKind !== "song";
 }
 
 function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKind }) {
@@ -416,7 +445,7 @@ export function GaixiaAmbushAnimation() {
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
             <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" transform={mapTransform}>
-              <image className="gaixia-ground" href={publicPath("/assets/maps/gaixia-terrain-dem.webp")} x="0" y="0" width={mapWidth} height={mapHeight} preserveAspectRatio="xMidYMid slice" />
+              <image className="gaixia-ground" href={publicPath("/assets/maps/gaixia-terrain-dem.webp")} x="0" y="0" width={mapWidth} height={mapHeight} preserveAspectRatio="none" />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <rect x="0" y="0" width={mapWidth} height={mapHeight} />
                 <g className="gaixia-contour-layer" data-testid="gaixia-contour-layer">
@@ -519,6 +548,9 @@ export function GaixiaAmbushAnimation() {
                   const markerPoint = interpolateRoute(projected, routeProgress);
                   const facingX = routeFacing(projected, routeProgress);
                   const active = routeProgress > 0 && routeProgress < 1;
+                  const labelPoint = visiblePoints.at(-1) ?? markerPoint;
+                  const labelOffset = route.labelOffset ?? [10, -12];
+                  const showUnits = routeUnitShouldRender(route, progress);
                   return (
                     <g
                       key={route.id}
@@ -538,12 +570,18 @@ export function GaixiaAmbushAnimation() {
                       {active && (route.routeKind === "ambush" || route.routeKind === "pursuit") && (
                         <circle className="gaixia-ambush-pulse" cx={markerPoint[0]} cy={markerPoint[1]} r={route.routeKind === "pursuit" ? 14 : 18} />
                       )}
-                      {(active || route.routeKind === "retreat" || route.routeKind === "breakout" || isComplete) && (
-                        <g className="gaixia-unit-holder" transform={`translate(${markerPoint[0]} ${markerPoint[1]})`}>
-                          <GaixiaUnitIcon kind={route.unitKind} facingX={facingX} />
-                        </g>
-                      )}
-                      <text className="gaixia-route-label" x={(visiblePoints.at(-1) ?? markerPoint)[0] + 10} y={(visiblePoints.at(-1) ?? markerPoint)[1] - 12}>
+                      {showUnits &&
+                        routeUnitOffsets(route).map((offset, index) => (
+                          <g
+                            key={`${route.id}-unit-${index}`}
+                            className="gaixia-unit-holder"
+                            data-testid={`gaixia-route-unit-${route.id}-${index}`}
+                            transform={`translate(${markerPoint[0] + offset[0]} ${markerPoint[1] + offset[1]})`}
+                          >
+                            <GaixiaUnitIcon kind={route.unitKind} facingX={facingX} />
+                          </g>
+                        ))}
+                      <text className="gaixia-route-label" x={labelPoint[0] + labelOffset[0]} y={labelPoint[1] + labelOffset[1]}>
                         {route.label}
                       </text>
                     </g>

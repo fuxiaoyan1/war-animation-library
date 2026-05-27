@@ -363,8 +363,8 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [124.0, 41.0]
   ],
   gaixiaBattle: [
-    [117.12, 32.95],
-    [117.84, 33.58]
+    [116.98, 32.82],
+    [118.04, 33.76]
   ],
   pacificWide: [
     [105.0, -18.0],

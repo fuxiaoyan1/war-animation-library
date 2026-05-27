@@ -570,6 +570,5 @@ export const cueEventIds = new Set([
   "queen-mary-loss",
   "jellicoe-deploys",
   "scheer-turns-away",
-  "battlecruiser-death-ride",
-  "night-escape"
+  "battlecruiser-death-ride"
 ]);

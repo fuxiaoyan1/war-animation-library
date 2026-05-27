@@ -51,6 +51,9 @@ export type GaixiaRoute = {
   end: string;
   points: Array<[number, number]>;
   routeKind: "advance" | "blockade" | "ambush" | "retreat" | "breakout" | "pursuit" | "song";
+  labelOffset?: [number, number];
+  unitOffsets?: Array<[number, number]>;
+  unitVisibleUntil?: string;
   visibleUntil?: string;
 };
 
@@ -83,7 +86,11 @@ export const mapPoints: GaixiaPoint[] = [
   { id: "lingbi", label: "灵璧方向", coordinates: [117.55, 33.55], kind: "city" },
   { id: "guzhen", label: "固镇方向", coordinates: [117.28, 33.18], kind: "city" },
   { id: "jiuli", label: "九里山战场意象", coordinates: [117.54, 33.38], kind: "ridge" },
+  { id: "crossbow-ridge", label: "弩阵高地", coordinates: [117.5, 33.43], kind: "ridge" },
+  { id: "east-gap", label: "东口诱隙", coordinates: [117.57, 33.3], kind: "pass" },
+  { id: "south-marsh-mouth", label: "南侧洼地口", coordinates: [117.44, 33.16], kind: "pass" },
   { id: "yinling", label: "阴陵迷道", coordinates: [117.67, 33.14], kind: "pass" },
+  { id: "pursuit-cutoff", label: "追击截口", coordinates: [117.71, 33.1], kind: "pass" },
   { id: "dongcheng", label: "东城快战", coordinates: [117.74, 33.09], kind: "pass" },
   { id: "wujiang-road", label: "向乌江突围方向", coordinates: [117.78, 33.04], kind: "pass" }
 ];
@@ -238,11 +245,80 @@ export const routes: GaixiaRoute[] = [
     routeKind: "retreat",
     start: "BCE-0202-12-01T16:00",
     end: "BCE-0202-12-01T18:00",
+    unitOffsets: [
+      [0, 0],
+      [-24, 18],
+      [-44, -14]
+    ],
     points: [
-      [117.68, 33.56],
+      [117.64, 33.52],
       [117.58, 33.48],
       [117.49, 33.4],
       [117.47, 33.39]
+    ]
+  },
+  {
+    id: "chu-camp-array-center",
+    label: "楚军中军收拢成营阵",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T18:00",
+    end: "BCE-0202-12-01T19:00",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-122, -18],
+    unitOffsets: [
+      [0, 0],
+      [22, -16],
+      [-24, 16],
+      [42, 16]
+    ],
+    points: [
+      [117.47, 33.39],
+      [117.45, 33.36],
+      [117.45, 33.33],
+      [117.46, 33.31]
+    ]
+  },
+  {
+    id: "chu-camp-array-east",
+    label: "楚骑东侧屏卫",
+    faction: "chu",
+    unitKind: "chu-cavalry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T18:10",
+    end: "BCE-0202-12-01T19:10",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [16, -24],
+    unitOffsets: [
+      [0, 0],
+      [26, 14]
+    ],
+    points: [
+      [117.47, 33.38],
+      [117.51, 33.36],
+      [117.54, 33.33],
+      [117.55, 33.3]
+    ]
+  },
+  {
+    id: "chu-camp-array-south",
+    label: "楚军南侧步阵",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T18:20",
+    end: "BCE-0202-12-01T19:20",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-118, 22],
+    unitOffsets: [
+      [0, 0],
+      [22, 14]
+    ],
+    points: [
+      [117.45, 33.34],
+      [117.45, 33.29],
+      [117.46, 33.25]
     ]
   },
   {
@@ -253,11 +329,81 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T17:00",
     end: "BCE-0202-12-01T21:00",
+    unitOffsets: [
+      [0, 0],
+      [-28, -14],
+      [-48, 16]
+    ],
     points: [
-      [117.08, 33.34],
+      [117.2, 33.34],
       [117.19, 33.35],
       [117.31, 33.37],
       [117.39, 33.36]
+    ]
+  },
+  {
+    id: "chu-west-counterpush",
+    label: "楚军西侧外推试探",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "advance",
+    start: "BCE-0202-12-01T19:20",
+    end: "BCE-0202-12-01T20:10",
+    visibleUntil: "BCE-0202-12-02T00:40",
+    labelOffset: [-130, 18],
+    unitOffsets: [
+      [0, 0],
+      [-24, 16]
+    ],
+    points: [
+      [117.43, 33.35],
+      [117.39, 33.35],
+      [117.35, 33.35],
+      [117.32, 33.36]
+    ]
+  },
+  {
+    id: "han-west-fallback",
+    label: "汉西路后退稳住阵脚",
+    faction: "han",
+    unitKind: "han-infantry",
+    routeKind: "retreat",
+    start: "BCE-0202-12-01T20:05",
+    end: "BCE-0202-12-01T20:45",
+    visibleUntil: "BCE-0202-12-02T00:40",
+    labelOffset: [-124, -22],
+    unitOffsets: [
+      [0, 0],
+      [-24, -14],
+      [-44, 16]
+    ],
+    points: [
+      [117.39, 33.36],
+      [117.35, 33.36],
+      [117.31, 33.36],
+      [117.28, 33.35]
+    ]
+  },
+  {
+    id: "han-west-counterpress",
+    label: "汉西路重新压回",
+    faction: "han",
+    unitKind: "han-infantry",
+    routeKind: "advance",
+    start: "BCE-0202-12-01T20:45",
+    end: "BCE-0202-12-01T22:10",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-112, 24],
+    unitOffsets: [
+      [0, 0],
+      [-24, -14],
+      [-44, 16]
+    ],
+    points: [
+      [117.28, 33.35],
+      [117.32, 33.36],
+      [117.36, 33.36],
+      [117.41, 33.35]
     ]
   },
   {
@@ -268,10 +414,57 @@ export const routes: GaixiaRoute[] = [
     routeKind: "blockade",
     start: "BCE-0202-12-01T17:30",
     end: "BCE-0202-12-01T22:00",
+    unitOffsets: [
+      [0, 0],
+      [-22, -16],
+      [-42, 12]
+    ],
     points: [
-      [117.31, 33.58],
+      [117.34, 33.53],
       [117.38, 33.51],
       [117.45, 33.44]
+    ]
+  },
+  {
+    id: "han-northwest-shield",
+    label: "北西盾阵封住河岸",
+    faction: "han",
+    unitKind: "han-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T17:40",
+    end: "BCE-0202-12-01T22:10",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-82, -8],
+    unitOffsets: [
+      [0, 0],
+      [-26, 14]
+    ],
+    points: [
+      [117.22, 33.49],
+      [117.29, 33.44],
+      [117.36, 33.4],
+      [117.41, 33.37]
+    ]
+  },
+  {
+    id: "han-east-crossbow-net",
+    label: "东口弩兵交叉封锁",
+    faction: "han",
+    unitKind: "han-crossbow",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T18:10",
+    end: "BCE-0202-12-01T22:40",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [12, -26],
+    unitOffsets: [
+      [0, 0],
+      [24, -16]
+    ],
+    points: [
+      [117.68, 33.38],
+      [117.62, 33.35],
+      [117.56, 33.32],
+      [117.5, 33.33]
     ]
   },
   {
@@ -283,6 +476,11 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:20",
     end: "BCE-0202-12-01T22:30",
     visibleUntil: "BCE-0202-12-02T04:00",
+    unitOffsets: [
+      [0, 0],
+      [-30, 16],
+      [-58, -12]
+    ],
     points: [
       [117.76, 33.36],
       [117.68, 33.32],
@@ -298,6 +496,10 @@ export const routes: GaixiaRoute[] = [
     routeKind: "ambush",
     start: "BCE-0202-12-01T18:40",
     end: "BCE-0202-12-01T23:00",
+    unitOffsets: [
+      [0, 0],
+      [24, 16]
+    ],
     points: [
       [117.42, 33.03],
       [117.44, 33.14],
@@ -313,6 +515,12 @@ export const routes: GaixiaRoute[] = [
     routeKind: "ambush",
     start: "BCE-0202-12-01T19:00",
     end: "BCE-0202-12-02T00:30",
+    labelOffset: [18, 22],
+    unitOffsets: [
+      [0, 0],
+      [-28, 16],
+      [-54, -12]
+    ],
     points: [
       [117.78, 33.08],
       [117.67, 33.16],
@@ -328,11 +536,122 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T18:00",
     end: "BCE-0202-12-02T01:00",
+    unitOffsets: [
+      [0, 0],
+      [-24, 14]
+    ],
     points: [
       [117.22, 33.18],
       [117.31, 33.24],
       [117.39, 33.29],
       [117.43, 33.34]
+    ]
+  },
+  {
+    id: "han-feigned-gap-east",
+    label: "东口诱隙牵出楚骑",
+    faction: "han",
+    unitKind: "han-cavalry",
+    routeKind: "ambush",
+    start: "BCE-0202-12-01T20:50",
+    end: "BCE-0202-12-02T00:20",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [18, -30],
+    unitOffsets: [
+      [0, 0],
+      [28, -12]
+    ],
+    points: [
+      [117.61, 33.28],
+      [117.56, 33.3],
+      [117.52, 33.31],
+      [117.49, 33.32]
+    ]
+  },
+  {
+    id: "chu-east-counterpush",
+    label: "楚骑东口外推",
+    faction: "chu",
+    unitKind: "chu-cavalry",
+    routeKind: "advance",
+    start: "BCE-0202-12-01T20:40",
+    end: "BCE-0202-12-01T21:20",
+    visibleUntil: "BCE-0202-12-02T00:30",
+    labelOffset: [18, 22],
+    unitOffsets: [
+      [0, 0],
+      [-24, 14]
+    ],
+    points: [
+      [117.5, 33.33],
+      [117.54, 33.31],
+      [117.58, 33.3],
+      [117.61, 33.29]
+    ]
+  },
+  {
+    id: "han-east-cavalry-yield",
+    label: "汉骑假退让出东口",
+    faction: "han",
+    unitKind: "han-cavalry",
+    routeKind: "retreat",
+    start: "BCE-0202-12-01T20:45",
+    end: "BCE-0202-12-01T21:30",
+    visibleUntil: "BCE-0202-12-02T00:30",
+    labelOffset: [18, -28],
+    unitOffsets: [
+      [0, 0],
+      [28, -12]
+    ],
+    points: [
+      [117.5, 33.32],
+      [117.55, 33.31],
+      [117.6, 33.29],
+      [117.64, 33.28]
+    ]
+  },
+  {
+    id: "chu-probe-east-gap",
+    label: "楚骑试探东口诱隙",
+    faction: "chu",
+    unitKind: "chu-cavalry",
+    routeKind: "breakout",
+    start: "BCE-0202-12-01T21:10",
+    end: "BCE-0202-12-01T22:30",
+    visibleUntil: "BCE-0202-12-02T00:30",
+    labelOffset: [16, 18],
+    unitOffsets: [
+      [0, 0],
+      [-24, 16]
+    ],
+    points: [
+      [117.47, 33.34],
+      [117.53, 33.31],
+      [117.58, 33.3],
+      [117.52, 33.32],
+      [117.47, 33.34]
+    ]
+  },
+  {
+    id: "han-east-counterpress",
+    label: "汉弩骑合力压回东口",
+    faction: "han",
+    unitKind: "han-crossbow",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T21:30",
+    end: "BCE-0202-12-01T22:40",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [16, -26],
+    unitOffsets: [
+      [0, 0],
+      [24, 14],
+      [-22, -14]
+    ],
+    points: [
+      [117.64, 33.28],
+      [117.59, 33.3],
+      [117.54, 33.32],
+      [117.49, 33.33]
     ]
   },
   {
@@ -344,6 +663,11 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T04:20",
     end: "BCE-0202-12-02T05:30",
     visibleUntil: "BCE-0202-12-02T06:40",
+    labelOffset: [14, 20],
+    unitOffsets: [
+      [0, 0],
+      [-26, 12]
+    ],
     points: [
       [117.45, 33.33],
       [117.55, 33.25],
@@ -359,6 +683,10 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T22:10",
     end: "BCE-0202-12-02T00:40",
+    unitOffsets: [
+      [0, 0],
+      [-22, -12]
+    ],
     points: [
       [117.32, 33.39],
       [117.37, 33.38],
@@ -374,11 +702,36 @@ export const routes: GaixiaRoute[] = [
     routeKind: "blockade",
     start: "BCE-0202-12-01T22:20",
     end: "BCE-0202-12-02T00:50",
+    unitOffsets: [
+      [0, 0],
+      [22, -14]
+    ],
     points: [
       [117.47, 33.45],
       [117.48, 33.41],
       [117.48, 33.37],
       [117.47, 33.34]
+    ]
+  },
+  {
+    id: "han-tighten-east",
+    label: "东侧弩骑反推楚军",
+    faction: "han",
+    unitKind: "han-crossbow",
+    routeKind: "blockade",
+    start: "BCE-0202-12-02T00:20",
+    end: "BCE-0202-12-02T02:00",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [18, -18],
+    unitOffsets: [
+      [0, 0],
+      [24, 14]
+    ],
+    points: [
+      [117.57, 33.31],
+      [117.54, 33.32],
+      [117.51, 33.33],
+      [117.48, 33.34]
     ]
   },
   {
@@ -390,12 +743,55 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T00:40",
     end: "BCE-0202-12-02T02:10",
     visibleUntil: "BCE-0202-12-02T04:20",
+    unitOffsets: [
+      [0, 0],
+      [-22, 14],
+      [22, -12]
+    ],
     points: [
       [117.46, 33.34],
       [117.52, 33.32],
       [117.56, 33.28],
       [117.51, 33.3],
       [117.46, 33.33]
+    ]
+  },
+  {
+    id: "han-song-cordons",
+    label: "楚歌声线沿外营推进",
+    faction: "han",
+    unitKind: "han-crossbow",
+    routeKind: "song",
+    start: "BCE-0202-12-02T01:00",
+    end: "BCE-0202-12-02T03:20",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-120, 14],
+    points: [
+      [117.28, 33.42],
+      [117.38, 33.39],
+      [117.48, 33.36],
+      [117.58, 33.33]
+    ]
+  },
+  {
+    id: "chu-camp-fragmentation",
+    label: "楚军营内队列碎裂",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "retreat",
+    start: "BCE-0202-12-02T02:20",
+    end: "BCE-0202-12-02T04:10",
+    visibleUntil: "BCE-0202-12-02T05:10",
+    labelOffset: [-118, -18],
+    unitOffsets: [
+      [0, 0],
+      [22, 14]
+    ],
+    points: [
+      [117.5, 33.36],
+      [117.47, 33.35],
+      [117.45, 33.33],
+      [117.43, 33.31]
     ]
   },
   {
@@ -406,6 +802,10 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-02T03:40",
     end: "BCE-0202-12-02T04:50",
+    unitOffsets: [
+      [0, 0],
+      [24, -14]
+    ],
     points: [
       [117.52, 33.43],
       [117.51, 33.39],
@@ -421,11 +821,56 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-02T03:50",
     end: "BCE-0202-12-02T05:00",
+    unitOffsets: [
+      [0, 0],
+      [-22, 14]
+    ],
     points: [
       [117.42, 33.2],
       [117.44, 33.25],
       [117.46, 33.29],
       [117.48, 33.32]
+    ]
+  },
+  {
+    id: "han-dawn-assault-west",
+    label: "黎明西路割裂楚营",
+    faction: "han",
+    unitKind: "han-infantry",
+    routeKind: "advance",
+    start: "BCE-0202-12-02T03:50",
+    end: "BCE-0202-12-02T05:05",
+    labelOffset: [-116, 8],
+    unitOffsets: [
+      [0, 0],
+      [-24, -14]
+    ],
+    points: [
+      [117.35, 33.34],
+      [117.39, 33.33],
+      [117.43, 33.32],
+      [117.48, 33.32]
+    ]
+  },
+  {
+    id: "han-dawn-cavalry-cutoff",
+    label: "东南骑兵截断退路",
+    faction: "han",
+    unitKind: "han-cavalry",
+    routeKind: "ambush",
+    start: "BCE-0202-12-02T04:00",
+    end: "BCE-0202-12-02T05:20",
+    visibleUntil: "BCE-0202-12-02T06:40",
+    labelOffset: [14, -24],
+    unitOffsets: [
+      [0, 0],
+      [-30, 16]
+    ],
+    points: [
+      [117.64, 33.24],
+      [117.58, 33.25],
+      [117.53, 33.27],
+      [117.49, 33.3]
     ]
   },
   {
@@ -436,6 +881,11 @@ export const routes: GaixiaRoute[] = [
     routeKind: "pursuit",
     start: "BCE-0202-12-02T05:10",
     end: "BCE-0202-12-02T06:30",
+    unitOffsets: [
+      [0, 0],
+      [-30, 16],
+      [-58, -12]
+    ],
     points: [
       [117.5, 33.31],
       [117.58, 33.24],
@@ -452,6 +902,10 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T06:20",
     end: "BCE-0202-12-02T07:10",
     visibleUntil: "BCE-0202-12-02T08:00",
+    unitOffsets: [
+      [0, 0],
+      [22, -14]
+    ],
     points: [
       [117.72, 33.1],
       [117.75, 33.08],
@@ -467,6 +921,10 @@ export const routes: GaixiaRoute[] = [
     routeKind: "pursuit",
     start: "BCE-0202-12-02T06:35",
     end: "BCE-0202-12-02T07:50",
+    unitOffsets: [
+      [0, 0],
+      [-28, 16]
+    ],
     points: [
       [117.66, 33.16],
       [117.72, 33.1],
@@ -484,36 +942,104 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "疲师入围",
     location: "垓下城垒",
     coordinates: [117.44, 33.35],
-    summary: "项羽主力退守沱河边高地，粮尽兵疲，外线机动空间急剧缩小。",
-    detail: "动画以垓下遗址与沱河高地为战场中心，先显示楚军据高地扎营，再显示汉军从多方向逼近。",
+    summary: "项羽主力退守沱河边高地，粮尽兵疲，外线机动空间急剧缩小，先抢占营垒准备整队。",
+    detail: "动画以垓下遗址与沱河高地为战场中心，先显示楚军退入霸王城土垒，而不是一进来就碎裂。",
     significance: "楚军虽然仍有精锐骑兵，但已失去战略纵深。",
     routeIds: ["chu-retreat-gaixia"],
     cue: "melee"
   },
   {
+    id: "chu-forms-camp-array",
+    date: "BCE-0202-12-01T18:20",
+    title: "楚军布成垓下营阵",
+    phase: "入营列阵",
+    location: "楚军内营",
+    coordinates: [117.46, 33.33],
+    summary: "退入垓下后，楚军先以步卒收拢中军，骑兵屏卫东侧，南侧步阵守住低地口。",
+    detail: "这一步把楚军从行军退却状态转成可防守的营阵：中军收束、东侧骑兵屏卫、南侧步阵卡口，后面队列碎裂才有明确参照。",
+    significance: "古代战场先有阵，再有阵形被压碎；否则十面埋伏只剩现代箭头式包围。",
+    routeIds: ["chu-retreat-gaixia", "chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south"]
+  },
+  {
     id: "hanxin-deploys",
-    date: "BCE-0202-12-01T18:00",
+    date: "BCE-0202-12-01T19:00",
     title: "韩信布成合围态势",
     phase: "十面成形",
     location: "垓下外围",
     coordinates: [117.39, 33.29],
-    summary: "韩信中军压住垓下西南，步兵、弩兵和骑兵分层封锁楚军可能突围方向。",
-    detail: "蓝色高架趋势线表示汉军外线，红色线表示楚军退守与突围方向，避免把十面埋伏画成单一箭头。",
+    summary: "韩信中军压住垓下西南，步兵、弩兵和骑兵分层封锁楚军营阵外缘。",
+    detail: "楚军营阵仍然完整；汉军西路步兵、北岸弩兵、北西盾阵、东口弩网和中军指挥线同时出现：这不是一圈装饰线，而是外线封锁、弩阵压制和机动预备队的组合。",
     significance: "胜负关键不只是兵力多，而是封闭了楚军机动空间。",
-    routeIds: ["han-west-infantry", "han-north-crossbow", "han-command-center"],
+    routeIds: [
+      "chu-camp-array-center",
+      "chu-camp-array-east",
+      "chu-camp-array-south",
+      "han-west-infantry",
+      "han-north-crossbow",
+      "han-northwest-shield",
+      "han-east-crossbow-net",
+      "han-command-center"
+    ],
+    cue: "melee"
+  },
+  {
+    id: "west-counterpush-yield",
+    date: "BCE-0202-12-01T20:15",
+    title: "楚军西侧外推，汉军后退稳住",
+    phase: "阵前拉扯",
+    location: "垓下西侧",
+    coordinates: [117.34, 33.36],
+    summary: "楚军从营阵西侧向外推，汉军西路没有立刻硬顶到底，而是后退半步稳住阵脚。",
+    detail: "西侧路线表现冷兵器战场常见的阵前拉扯：楚卒从营门外推，汉军步阵先退到预设位置，北西盾阵和弩兵仍压住侧翼，避免退却变成溃退。",
+    significance: "合围不是单向推进；能承受反推并保持队列，才有后续压回的条件。",
+    routeIds: ["chu-camp-array-center", "chu-west-counterpush", "han-west-infantry", "han-west-fallback", "han-northwest-shield", "han-north-crossbow"],
+    cue: "melee"
+  },
+  {
+    id: "han-counterpress-east-gap",
+    date: "BCE-0202-12-01T21:00",
+    title: "汉军西路再压回，东口诱隙展开",
+    phase: "诱隙反压",
+    location: "垓下西侧与东口",
+    coordinates: [117.52, 33.31],
+    summary: "汉军西路从后退位重新压回，同时东口骑兵有意让出缝隙，牵动楚骑外推。",
+    detail: "西侧是步兵重新顶回去，东侧是骑兵假退和弩网等待。两边同步变化，说明汉军不是静态围城，而是在用预备队调动楚军阵势。",
+    significance: "楚军还能局部外推，但每一次外推都在消耗阵形完整性。",
+    routeIds: [
+      "chu-camp-array-center",
+      "chu-camp-array-east",
+      "han-west-counterpress",
+      "han-east-crossbow-net",
+      "han-feigned-gap-east",
+      "chu-east-counterpush",
+      "han-east-cavalry-yield"
+    ],
     cue: "melee"
   },
   {
     id: "ten-sided-ring",
     date: "BCE-0202-12-01T22:00",
-    title: "十面伏兵完成闭合",
+    title: "十面伏兵完成闭合，东口诱隙被控",
     phase: "合围闭合",
     location: "垓下外围",
-    coordinates: [117.5, 33.32],
-    summary: "东、南、北多线伏兵收束，楚营被压在沱河高地与沟洫之间，随后包围圈继续向内压缩。",
-    detail: "地形层显示河汊、壕沟与低洼地。合围不是静态画圈，汉军还要持续缩小楚军整队和冲围的空间。",
+    coordinates: [117.52, 33.31],
+    summary: "东、南、北多线伏兵收束，东口诱隙被弩骑反压回去，楚军营阵被迫缩回内线。",
+    detail: "地形层显示河汊、壕沟与低洼地。合围不是静态画圈：东南骑兵、南路伏兵、东口诱隙、楚骑试探和汉弩骑反压共同说明，汉军在控制出口，而不是简单把楚军围成一个点。",
     significance: "包围态势从战略压力变成战术锁闭，并开始切碎楚军阵列。",
-    routeIds: ["han-east-cavalry", "han-south-infantry", "han-southeast-cavalry", "han-tighten-west", "han-tighten-north"],
+    routeIds: [
+      "chu-camp-array-center",
+      "chu-camp-array-east",
+      "chu-camp-array-south",
+      "han-east-cavalry",
+      "han-south-infantry",
+      "han-southeast-cavalry",
+      "han-feigned-gap-east",
+      "chu-probe-east-gap",
+      "han-west-counterpress",
+      "han-east-counterpress",
+      "han-tighten-west",
+      "han-tighten-north"
+    ],
     cue: "melee"
   },
   {
@@ -523,23 +1049,23 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "心理战",
     location: "楚军营垒",
     coordinates: [117.44, 33.35],
-    summary: "夜色中楚歌从汉军营垒传来，楚军试图冲开东南口却被压回营垒，士气进一步崩解。",
-    detail: "音乐层与地图上的声波同向推进，同时显示楚军夜间冲围受阻，突出十面埋伏既是空间合围，也是心理合围。",
+    summary: "夜色中楚歌从汉军营垒传来，楚军试图冲开东南口却被弩骑反推，营阵开始动摇。",
+    detail: "音乐层与地图上的声波同向推进，同时显示楚军夜间冲围受阻和东侧弩骑反推。此时先表现军心动摇，不提前把营内队列画成已经碎裂。",
     significance: "战场从兵力对抗转入意志崩溃。",
-    routeIds: ["han-command-center", "han-tighten-west", "han-tighten-north", "chu-night-breakout-check"],
+    routeIds: ["han-command-center", "chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south", "han-tighten-west", "han-tighten-north", "han-tighten-east", "han-song-cordons", "chu-night-breakout-check"],
     cue: "song"
   },
   {
     id: "farewell",
     date: "BCE-0202-12-02T02:30",
-    title: "霸王别姬",
+    title: "楚军营阵碎裂与霸王别姬",
     phase: "败局已定",
     location: "楚营",
     coordinates: [117.45, 33.34],
-    summary: "项羽在楚营中诀别，仍保留突围意志，但主力已无法恢复。",
-    detail: "此处不以爆炸表现，而以楚军营垒暗红光和民乐主题表现败军夜色。",
-    significance: "垓下之战的历史记忆由军事失败进入悲剧叙事。",
-    routeIds: ["chu-night-breakout-check"],
+    summary: "楚歌之后，原本收拢的中军、东侧屏卫和南侧步阵无法保持整齐，项羽在楚营中诀别。",
+    detail: "此处把早先布成的楚军营阵与营内碎裂线同时显示：碎裂不是突然出现，而是经过外推受阻、弩骑反压和楚歌动摇后的结果。",
+    significance: "垓下之战的历史记忆由军事失败进入悲剧叙事，同时主力阵势已无法恢复。",
+    routeIds: ["chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south", "chu-night-breakout-check", "han-song-cordons", "chu-camp-fragmentation"],
     cue: "song"
   },
   {
@@ -549,10 +1075,17 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "决战收束",
     location: "垓下外围",
     coordinates: [117.49, 33.32],
-    summary: "汉军多线压缩包围圈，楚军阵列被切碎，项羽率少数骑兵冲出，汉骑随即咬住追击。",
-    detail: "多条伏击线同时高亮，表现“十面”不是同一方向重复推进，而是多个封锁口同步收紧后逼出小股突围。",
+    summary: "汉军从北、南、西三面切入，东南骑兵截断退路，楚军阵列被切碎后只剩项羽小股骑兵冲出。",
+    detail: "多条伏击线同时高亮，表现“十面”不是同一方向重复推进，而是步兵切割、弩阵压制、骑兵截击同步收紧后逼出小股突围。",
     significance: "楚汉战争在战术层面进入不可逆结局。",
-    routeIds: ["han-dawn-assault-north", "han-dawn-assault-south", "chu-breakout-southeast", "han-cavalry-pursuit-yinling"],
+    routeIds: [
+      "han-dawn-assault-north",
+      "han-dawn-assault-south",
+      "han-dawn-assault-west",
+      "han-dawn-cavalry-cutoff",
+      "chu-breakout-southeast",
+      "han-cavalry-pursuit-yinling"
+    ],
     cue: "melee"
   },
   {
@@ -600,30 +1133,30 @@ export const narrationCues: GaixiaNarrationCue[] = [
   {
     id: "terrain",
     start: "BCE-0202-12-01T16:00",
-    end: "BCE-0202-12-01T18:00",
+    end: "BCE-0202-12-01T19:00",
     title: "第一幕 / 河边高地",
-    text: "垓下在沱河边高地上，周围河汊、壕沟和低洼地限制大军展开。楚军退入这里，已经不是主动选战场。"
+    text: "垓下在沱河边高地上，周围河汊、壕沟和低洼地限制大军展开。楚军退入这里后先收拢中军、屏卫东侧、卡住南口，后面的碎裂才有阵形参照。"
   },
   {
     id: "ring",
-    start: "BCE-0202-12-01T18:00",
+    start: "BCE-0202-12-01T19:00",
     end: "BCE-0202-12-02T01:00",
-    title: "第二幕 / 十面成形",
-    text: "韩信把步兵、弩兵、骑兵分成多层封锁线。合围成型后，西北和北岸继续内压，东南骑兵守住突围口。"
+    title: "第二幕 / 阵前拉扯",
+    text: "韩信把步兵、盾阵、弩兵、骑兵分成多层封锁线。楚军西侧外推，汉军后退稳住再压回；东口假退诱出楚骑，再由弩骑合力压回。"
   },
   {
     id: "song",
     start: "BCE-0202-12-02T01:00",
     end: "BCE-0202-12-02T04:20",
     title: "第三幕 / 四面楚歌",
-    text: "夜色和民乐主题进入战场。楚歌瓦解军心，楚军夜间冲围被压回，包围圈从地形与兵力延伸到军心。"
+    text: "夜色和民乐主题进入战场。楚歌瓦解军心，楚军夜间冲围被弩骑压回，先前布成的营阵开始碎裂，包围圈从地形与兵力延伸到军心。"
   },
   {
     id: "breakout",
     start: "BCE-0202-12-02T04:20",
     end: "BCE-0202-12-02T08:00",
     title: "终幕 / 追击至乌江",
-    text: "黎明后汉军合击，楚军主力溃散。项羽小股突围后仍被汉骑追击，东城快战与乌江终局接上垓下的军事因果。"
+    text: "黎明后汉军北、南、西三面切入，东南骑兵截断退路。项羽小股突围后仍被汉骑追击，东城快战与乌江终局接上垓下的军事因果。"
   }
 ];
 

@@ -16,6 +16,7 @@ import * as bismarckSeaData from "../src/data/bismarckSeaAirBattle";
 import * as caesarData from "../src/data/caesarWars";
 import * as crusadesData from "../src/data/crusades";
 import * as easternFrontData from "../src/data/easternFront";
+import * as gaixiaData from "../src/data/gaixiaAmbush";
 import * as guadalcanalData from "../src/data/guadalcanalNavalBattle";
 import * as gulfWarData from "../src/data/gulfWar1991";
 import * as jutlandData from "../src/data/jutlandBattle";
@@ -88,6 +89,14 @@ type CampaignDataModule = {
     visibleUntil?: string;
     waypoints?: Array<[number, number]>;
   }>;
+  routes?: Array<{
+    end: string;
+    id: string;
+    routeKind?: string;
+    start: string;
+    unitVisibleUntil?: string;
+    visibleUntil?: string;
+  }>;
   mapPoints?: Array<{
     coordinates?: [number, number];
     id: string;
@@ -107,6 +116,7 @@ const genericCampaignData: Array<[string, CampaignDataModule]> = [
   ["crusades", crusadesData as CampaignDataModule],
   ["mongolEmpire", mongolData as CampaignDataModule],
   ["qinUnification", qinData as CampaignDataModule],
+  ["gaixiaAmbush", gaixiaData as unknown as CampaignDataModule],
   ["alexanderConquests", alexanderData as CampaignDataModule],
   ["caesarWars", caesarData as CampaignDataModule],
   ["pacificWar", pacificWarData as CampaignDataModule],
@@ -255,13 +265,21 @@ async function expectOnlyWarNameInMapTitle(page: Page, warName: string) {
   await expect(page.getByTestId("map-title-card")).not.toContainText("战术级大地图");
 }
 
+function visibleMapPoint(page: Page, mapBox: { height: number; width: number; x: number; y: number }, xRatio: number, yRatio: number) {
+  const viewport = page.viewportSize();
+  const x = Math.min(Math.max(mapBox.x + mapBox.width * xRatio, mapBox.x + 24), mapBox.x + mapBox.width - 24, (viewport?.width ?? mapBox.x + mapBox.width) - 24);
+  const y = Math.min(Math.max(mapBox.y + mapBox.height * yRatio, mapBox.y + 24), mapBox.y + mapBox.height - 24, (viewport?.height ?? mapBox.y + mapBox.height) - 48);
+  return { x, y };
+}
+
 async function expectMapCanMoveUnderPointer(page: Page) {
   const cameraLayer = page.getByTestId("camera-layer");
   const mapBox = await page.getByTestId("map-stage").boundingBox();
 
   expect(mapBox).not.toBeNull();
+  const target = visibleMapPoint(page, mapBox!, 0.52, 0.48);
   const beforeWheel = parseMapTransform(await cameraLayer.getAttribute("transform"));
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.52, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.48);
+  await page.mouse.move(target.x, target.y);
   await page.mouse.wheel(0, -620);
   await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).y).not.toBe(beforeWheel.y);
   const afterWheel = parseMapTransform(await cameraLayer.getAttribute("transform"));
@@ -269,9 +287,11 @@ async function expectMapCanMoveUnderPointer(page: Page) {
   expect(afterWheel.scale).toBeCloseTo(beforeWheel.scale, 3);
 
   const beforeDrag = await cameraLayer.getAttribute("transform");
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.52, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.48);
+  const dragStart = visibleMapPoint(page, mapBox!, 0.52, 0.48);
+  const dragEnd = visibleMapPoint(page, mapBox!, 0.36, 0.38);
+  await page.mouse.move(dragStart.x, dragStart.y);
   await page.mouse.down();
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.36, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.38, { steps: 6 });
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 6 });
   await page.mouse.up();
   await expect.poll(async () => cameraLayer.getAttribute("transform")).not.toBe(beforeDrag);
 }
@@ -281,11 +301,13 @@ async function expectMapCanMoveHorizontallyUnderPointer(page: Page) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
 
   expect(mapBox).not.toBeNull();
-  await page.mouse.dblclick((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.5, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.5);
+  const center = visibleMapPoint(page, mapBox!, 0.5, 0.5);
+  await page.mouse.dblclick(center.x, center.y);
   await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
 
   const beforeShiftWheel = parseMapTransform(await cameraLayer.getAttribute("transform"));
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.52, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.48);
+  const wheelTarget = visibleMapPoint(page, mapBox!, 0.52, 0.48);
+  await page.mouse.move(wheelTarget.x, wheelTarget.y);
   await page.keyboard.down("Shift");
   await page.mouse.wheel(0, 520);
   await page.keyboard.up("Shift");
@@ -294,12 +316,14 @@ async function expectMapCanMoveHorizontallyUnderPointer(page: Page) {
   expect(afterShiftWheel.y).toBeCloseTo(beforeShiftWheel.y, 1);
   expect(afterShiftWheel.scale).toBeCloseTo(beforeShiftWheel.scale, 3);
 
-  await page.mouse.dblclick((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.5, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.5);
+  await page.mouse.dblclick(center.x, center.y);
   await expect.poll(async () => cameraLayer.getAttribute("transform")).toBe("translate(0.00 0.00) scale(1.000)");
   const beforeDrag = parseMapTransform(await cameraLayer.getAttribute("transform"));
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.58, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.48);
+  const dragStart = visibleMapPoint(page, mapBox!, 0.58, 0.48);
+  const dragEnd = visibleMapPoint(page, mapBox!, 0.36, 0.48);
+  await page.mouse.move(dragStart.x, dragStart.y);
   await page.mouse.down();
-  await page.mouse.move((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.36, (mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.48, { steps: 6 });
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 6 });
   await page.mouse.up();
   await expect.poll(async () => parseMapTransform(await cameraLayer.getAttribute("transform")).x).not.toBe(beforeDrag.x);
 }
@@ -370,6 +394,26 @@ async function expectGaixiaRouteStaysInMapStage(page: Page, routeId: string) {
   expect((routeBox?.x ?? 0) + (routeBox?.width ?? 0)).toBeLessThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) - 6);
   expect(routeBox?.y).toBeGreaterThan((mapBox?.y ?? 0) - 18);
   expect((routeBox?.y ?? 0) + (routeBox?.height ?? 0)).toBeLessThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) - 6);
+}
+
+async function expectGaixiaVisibleRouteCount(page: Page, minimumCount: number) {
+  await expect.poll(async () => page.locator(".gaixia-route").count()).toBeGreaterThanOrEqual(minimumCount);
+}
+
+async function expectGaixiaVisibleUnitCount(page: Page, minimumCount: number) {
+  await expect.poll(async () => page.locator(".gaixia-unit-holder").count()).toBeGreaterThanOrEqual(minimumCount);
+}
+
+async function expectGaixiaExpandedBattlefield(page: Page) {
+  const mapBox = await page.getByTestId("map-stage").boundingBox();
+  const gaixiaMap = page.locator(".gaixia-map");
+  const svgBox = await gaixiaMap.boundingBox();
+
+  expect(mapBox).not.toBeNull();
+  expect(svgBox).not.toBeNull();
+  expect(mapBox?.height).toBeGreaterThan(1350);
+  expect(svgBox?.height).toBeGreaterThan(1350);
+  await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 1408");
 }
 
 async function expectRealisticUnitIcon(
@@ -1316,6 +1360,31 @@ function expectEventHasActiveRoute(campaignName: string, data: CampaignDataModul
   }
 }
 
+function expectGaixiaEventHasRoutes(eventId: string, expectedRouteIds: string[]) {
+  const event = gaixiaData.battleEvents.find((item) => item.id === eventId);
+  expect(event, `gaixia event ${eventId} exists`).toBeTruthy();
+  for (const routeId of expectedRouteIds) {
+    expect(event!.routeIds, `gaixia event ${eventId} should reference route ${routeId}`).toContain(routeId);
+  }
+}
+
+function expectGaixiaRouteWindow(routeId: string, expectation: { start?: string; end?: string; visibleUntil?: string; unitVisibleUntil?: string }) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  if (expectation.start) {
+    expect(route!.start, `gaixia route ${routeId} start`).toBe(expectation.start);
+  }
+  if (expectation.end) {
+    expect(route!.end, `gaixia route ${routeId} end`).toBe(expectation.end);
+  }
+  if (expectation.visibleUntil) {
+    expect(route!.visibleUntil, `gaixia route ${routeId} visibleUntil`).toBe(expectation.visibleUntil);
+  }
+  if (expectation.unitVisibleUntil) {
+    expect(route!.unitVisibleUntil, `gaixia route ${routeId} unitVisibleUntil`).toBe(expectation.unitVisibleUntil);
+  }
+}
+
 function expectRouteNearEvent(
   campaignName: string,
   data: CampaignDataModule,
@@ -1812,6 +1881,22 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
       }
     }
 
+    for (const route of data.routes ?? []) {
+      expectDateWithinRange(`${campaignName} route ${route.id} start`, route.start, data.campaignStart, data.campaignEnd);
+      expectDateWithinRange(`${campaignName} route ${route.id} end`, route.end, data.campaignStart, data.campaignEnd);
+      expect(toTime(route.end), `${campaignName} route ${route.id} should not end before start`).toBeGreaterThanOrEqual(toTime(route.start));
+      if (route.visibleUntil) {
+        expect(toTime(route.visibleUntil), `${campaignName} route ${route.id} visibleUntil should not be before start`).toBeGreaterThanOrEqual(
+          toTime(route.start)
+        );
+      }
+      if (route.unitVisibleUntil) {
+        expect(toTime(route.unitVisibleUntil), `${campaignName} route ${route.id} unitVisibleUntil should not be before start`).toBeGreaterThanOrEqual(
+          toTime(route.start)
+        );
+      }
+    }
+
     if (["battleOfBritain", "bigWeekAirBattle", "bismarckSeaAirBattle"].includes(campaignName)) {
       expectAirRoutesHaveShortUnitWindows(campaignName, data, campaignName === "bigWeekAirBattle" ? 12 : 8);
     }
@@ -1868,6 +1953,28 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     "skip-bombing-attack",
     "convoy-breakup"
   ]);
+  expectGaixiaEventHasRoutes("chu-forms-camp-array", ["chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south"]);
+  expectGaixiaEventHasRoutes("hanxin-deploys", ["chu-camp-array-center", "han-west-infantry", "han-east-crossbow-net"]);
+  expectGaixiaEventHasRoutes("west-counterpush-yield", ["chu-west-counterpush", "han-west-fallback"]);
+  expectGaixiaEventHasRoutes("han-counterpress-east-gap", ["han-west-counterpress", "chu-east-counterpush", "han-east-cavalry-yield"]);
+  expectGaixiaEventHasRoutes("ten-sided-ring", ["han-east-counterpress", "chu-probe-east-gap", "han-west-counterpress"]);
+  expectGaixiaEventHasRoutes("farewell", ["chu-camp-array-center", "chu-camp-fragmentation"]);
+  expectGaixiaRouteWindow("chu-camp-array-center", { start: "BCE-0202-12-01T18:00", visibleUntil: "BCE-0202-12-02T04:20" });
+  expectGaixiaRouteWindow("chu-west-counterpush", { start: "BCE-0202-12-01T19:20", end: "BCE-0202-12-01T20:10" });
+  expectGaixiaRouteWindow("han-west-fallback", { start: "BCE-0202-12-01T20:05", end: "BCE-0202-12-01T20:45" });
+  expectGaixiaRouteWindow("han-west-counterpress", { start: "BCE-0202-12-01T20:45", visibleUntil: "BCE-0202-12-02T04:20" });
+  expectGaixiaRouteWindow("chu-east-counterpush", { start: "BCE-0202-12-01T20:40", end: "BCE-0202-12-01T21:20" });
+  expectGaixiaRouteWindow("han-east-cavalry-yield", { start: "BCE-0202-12-01T20:45", end: "BCE-0202-12-01T21:30" });
+  expectGaixiaRouteWindow("han-east-counterpress", { start: "BCE-0202-12-01T21:30", visibleUntil: "BCE-0202-12-02T04:20" });
+  expect(toTime(gaixiaData.battleEvents.find((event) => event.id === "chu-forms-camp-array")!.date)).toBeLessThan(
+    toTime(gaixiaData.battleEvents.find((event) => event.id === "west-counterpush-yield")!.date)
+  );
+  expect(toTime(gaixiaData.battleEvents.find((event) => event.id === "west-counterpush-yield")!.date)).toBeLessThan(
+    toTime(gaixiaData.battleEvents.find((event) => event.id === "han-counterpress-east-gap")!.date)
+  );
+  expect(toTime(gaixiaData.battleEvents.find((event) => event.id === "songs-of-chu")!.date)).toBeLessThan(
+    toTime(gaixiaData.battleEvents.find((event) => event.id === "farewell")!.date)
+  );
   expectRouteNearEvent("bigWeekAirBattle", bigWeekData as CampaignDataModule, "operation-argument-start", "argument-first-wave", 1.2, 0.35);
   expect((bigWeekData as CampaignDataModule).cueEventIds?.has("operation-argument-start")).toBe(true);
   expect((bigWeekData as CampaignDataModule).cueEventKinds?.["operation-argument-start"]).toBe("bombing");
@@ -2445,6 +2552,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectOnlyWarNameInMapTitle(page, "韩信十面埋伏：垓下之战");
   await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 河边高地");
   await expectMapFirstLayout(page);
+  await expectGaixiaExpandedBattlefield(page);
   await expectLowImpactTicker(page);
   await expectMapCanMoveUnderPointer(page);
   await expectMapCanMoveHorizontallyUnderPointer(page);
@@ -2463,9 +2571,12 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-fortification-layer")).toContainText("霸王城");
   await expect(page.getByTestId("gaixia-ambush-sector-layer")).toContainText("东南伏兵");
   await expect(page.getByTestId("gaixia-point-gaixia")).toContainText("垓下");
+  await expect(page.getByTestId("gaixia-point-crossbow-ridge")).toContainText("弩阵高地");
+  await expect(page.getByTestId("gaixia-point-east-gap")).toContainText("东口诱隙");
+  await expect(page.getByTestId("gaixia-point-south-marsh-mouth")).toContainText("南侧洼地口");
   await expect(page.getByTestId("gaixia-route-chu-retreat-gaixia")).toBeVisible();
-  await expect(page.getByTestId("gaixia-unit-chu-command")).toBeVisible();
-  await expect(page.getByTestId("gaixia-unit-chu-command").locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-chu-command.webp");
+  await expect(page.getByTestId("gaixia-unit-chu-command").first()).toBeVisible();
+  await expect(page.getByTestId("gaixia-unit-chu-command").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-chu-command.webp");
   for (const icon of ["chu-command", "chu-cavalry", "chu-infantry", "han-cavalry", "han-crossbow", "han-infantry"]) {
     const response = await page.request.head(`/assets/unit-icons/gaixia-${icon}.webp`);
     expect(response.ok()).toBe(true);
@@ -2474,33 +2585,122 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   }
   await expectGaixiaRouteStaysInMapStage(page, "chu-retreat-gaixia");
 
+  await page.getByTestId("event-list").getByRole("button", { name: /楚军布成垓下营阵/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("楚军布成垓下营阵");
+  await expect(page.getByTestId("active-event-card")).toContainText("先以步卒收拢中军");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-south")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-center-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-east-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-south-0")).toBeVisible();
+  await expectGaixiaVisibleUnitCount(page, 9);
+  await expectGaixiaRouteStaysInMapStage(page, "chu-camp-array-center");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-camp-array-east");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-camp-array-south");
+
   await page.getByTestId("event-list").getByRole("button", { name: /韩信布成合围态势/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("韩信布成合围态势");
+  await expect(page.locator(".detail-card")).toContainText("楚军营阵仍然完整");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-south")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-west-infantry")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-north-crossbow")).toBeVisible();
-  await expect(page.getByTestId("gaixia-unit-han-infantry")).toBeVisible();
-  await expect(page.getByTestId("gaixia-unit-han-crossbow")).toBeVisible();
-  await expect(page.getByTestId("gaixia-unit-han-infantry").locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-infantry.webp");
-  await expect(page.getByTestId("gaixia-unit-han-crossbow").locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-crossbow.webp");
+  await expect(page.getByTestId("gaixia-route-han-northwest-shield")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-east-crossbow-net")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-center-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-unit-han-infantry").first()).toBeVisible();
+  await expect(page.getByTestId("gaixia-unit-han-crossbow").first()).toBeVisible();
+  await expect(page.getByTestId("gaixia-unit-han-infantry").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-infantry.webp");
+  await expect(page.getByTestId("gaixia-unit-han-crossbow").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-crossbow.webp");
+  await expectGaixiaVisibleRouteCount(page, 8);
+  await expectGaixiaVisibleUnitCount(page, 16);
   await expectGaixiaRouteStaysInMapStage(page, "han-west-infantry");
   await expectGaixiaRouteStaysInMapStage(page, "han-north-crossbow");
+  await expectGaixiaRouteStaysInMapStage(page, "han-east-crossbow-net");
+
+  await page.getByTestId("event-list").getByRole("button", { name: /楚军西侧外推，汉军后退稳住/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("楚军西侧外推，汉军后退稳住");
+  await expect(page.getByTestId("active-event-card")).toContainText("后退半步稳住阵脚");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-west-counterpush")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-west-fallback")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-northwest-shield")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-west-counterpush-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-han-west-fallback-0")).toBeVisible();
+  await expectGaixiaVisibleRouteCount(page, 10);
+  await expectGaixiaVisibleUnitCount(page, 20);
+  await expectGaixiaRouteStaysInMapStage(page, "chu-west-counterpush");
+  await expectGaixiaRouteStaysInMapStage(page, "han-west-fallback");
+
+  await page.getByTestId("event-list").getByRole("button", { name: /汉军西路再压回，东口诱隙展开/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("汉军西路再压回，东口诱隙展开");
+  await expect(page.locator(".detail-card")).toContainText("骑兵假退和弩网等待");
+  await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-east-counterpush")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-east-cavalry-yield")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-feigned-gap-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-han-west-counterpress-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-east-counterpush-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-han-east-cavalry-yield-0")).toBeVisible();
+  await expectGaixiaVisibleRouteCount(page, 13);
+  await expectGaixiaVisibleUnitCount(page, 25);
+  await expectGaixiaRouteStaysInMapStage(page, "han-west-counterpress");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-east-counterpush");
+  await expectGaixiaRouteStaysInMapStage(page, "han-east-cavalry-yield");
 
   await page.getByTestId("event-list").getByRole("button", { name: /十面伏兵完成闭合/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("东口诱隙被弩骑反压回去");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-east-cavalry")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-south-infantry")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-southeast-cavalry")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-feigned-gap-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-probe-east-gap")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-east-counterpress")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-west")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-north")).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first()).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-cavalry.webp");
+  await expect(page.locator(".gaixia-route[data-route-kind='ambush']")).toHaveCount(4);
+  await expectGaixiaVisibleRouteCount(page, 16);
+  await expectGaixiaVisibleUnitCount(page, 34);
   await expectGaixiaRouteStaysInMapStage(page, "han-east-cavalry");
   await expectGaixiaRouteStaysInMapStage(page, "han-south-infantry");
   await expectGaixiaRouteStaysInMapStage(page, "han-southeast-cavalry");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-probe-east-gap");
 
   await page.getByTestId("event-list").getByRole("button", { name: /四面楚歌瓦解军心/ }).click();
   await expect(page.getByTestId("gaixia-song-effect")).toBeVisible();
   await expect(page.getByTestId("active-event-card")).toContainText("四面楚歌瓦解军心");
+  await expect(page.getByTestId("active-event-card")).toContainText("营阵开始动摇");
   await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-tighten-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-song-cordons")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toHaveCount(0);
+  await expect(page.locator(".gaixia-route[data-route-kind='song']")).toHaveCount(1);
+  await expectGaixiaVisibleUnitCount(page, 24);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /楚军营阵碎裂与霸王别姬/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("楚军营阵碎裂与霸王别姬");
+  await expect(page.getByTestId("active-event-card")).toContainText("原本收拢的中军");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toBeVisible();
+  await expectGaixiaVisibleUnitCount(page, 24);
+
+  await page.getByTestId("event-list").getByRole("button", { name: /黎明合击与楚军溃散/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("东南骑兵截断退路");
+  await expect(page.getByTestId("gaixia-route-han-dawn-assault-north")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-dawn-assault-south")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-dawn-assault-west")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-dawn-cavalry-cutoff")).toBeVisible();
+  await expectGaixiaVisibleRouteCount(page, 6);
+  await expectGaixiaVisibleUnitCount(page, 12);
+  await expectGaixiaRouteStaysInMapStage(page, "han-dawn-assault-west");
+  await expectGaixiaRouteStaysInMapStage(page, "han-dawn-cavalry-cutoff");
 
   await page.getByTestId("event-list").getByRole("button", { name: /项羽率骑兵东南突围/ }).click();
   await expect(page.getByTestId("gaixia-route-chu-breakout-southeast")).toBeVisible();
@@ -2524,6 +2724,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectAncientBattleEventsPlayMeleeCue(page, [
     /楚军退至垓下/,
     /韩信布成合围态势/,
+    /楚军西侧外推，汉军后退稳住/,
+    /汉军西路再压回，东口诱隙展开/,
     /十面伏兵完成闭合/,
     /黎明合击与楚军溃散/,
     /项羽率骑兵东南突围/,
@@ -3754,7 +3956,7 @@ test("jutland battle shows fleet deployment and battle turns", async ({ page }) 
   const explosionCueCount = await countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3");
   await page.getByTestId("event-list").getByRole("button", { name: /夜间接触混乱/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("夜间");
-  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount + 1);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/cannon-howitzer.mp3")).toBe(combatCueCount);
   await expect.poll(() => countPlayedAudio(page, "/audio/sfx/explosion-heavy.mp3")).toBe(explosionCueCount);
   await expectVisibleFleetRoutes(page, ".jutland-battle", [
     "hipper-night-retreat",

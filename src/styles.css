@@ -2506,10 +2506,12 @@ h1 {
 
 .gaixia-ambush .map-stage {
   background: #13251f;
+  min-height: calc((100vh - 124px) * 2);
 }
 
 .gaixia-map {
   background: #13251f;
+  min-height: calc((100vh - 124px) * 2);
 }
 
 .gaixia-ground {
@@ -2783,6 +2785,17 @@ h1 {
   stroke-dasharray: 2 8;
 }
 
+.gaixia-route-song .gaixia-route-line {
+  stroke: rgba(191, 234, 255, 0.7);
+  stroke-dasharray: 2 10;
+  stroke-width: 3.2;
+}
+
+.gaixia-route-song .gaixia-route-highlight {
+  stroke: rgba(255, 246, 191, 0.38);
+  stroke-dasharray: 1 13;
+}
+
 .gaixia-ambush-pulse {
   fill: none;
   stroke: rgba(255, 226, 132, 0.72);
@@ -2793,10 +2806,16 @@ h1 {
 .gaixia-unit {
   filter: url("#gaixiaUnitGlow");
   pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .gaixia-unit-shadow {
   fill: rgba(0, 0, 0, 0.34);
+}
+
+.gaixia-unit-holder .gaixia-unit {
+  transform: scale(0.88);
 }
 
 .gaixia-unit-image {
