@@ -311,6 +311,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:20",
     end: "BCE-0202-12-01T19:20",
     visibleUntil: "BCE-0202-12-02T04:20",
+    unitVisibleUntil: "BCE-0202-12-01T21:59",
     labelOffset: [-118, 22],
     unitOffsets: [
       [0, 0],
@@ -683,6 +684,27 @@ export const routes: GaixiaRoute[] = [
     ]
   },
   {
+    id: "chu-south-screen-recoil",
+    label: "楚南侧步阵被压回",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "retreat",
+    start: "BCE-0202-12-01T21:50",
+    end: "BCE-0202-12-02T00:30",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [-120, 18],
+    unitOffsets: [
+      [0, 0],
+      [22, 14]
+    ],
+    points: [
+      [117.46, 33.25],
+      [117.455, 33.28],
+      [117.45, 33.31],
+      [117.45, 33.33]
+    ]
+  },
+  {
     id: "han-tighten-west",
     label: "西北步兵压缩楚营",
     faction: "han",
@@ -718,6 +740,28 @@ export const routes: GaixiaRoute[] = [
       [117.48, 33.41],
       [117.48, 33.37],
       [117.47, 33.34]
+    ]
+  },
+  {
+    id: "han-south-locking-line",
+    label: "汉南路贴住楚南口",
+    faction: "han",
+    unitKind: "han-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-01T21:50",
+    end: "BCE-0202-12-02T00:40",
+    visibleUntil: "BCE-0202-12-02T05:00",
+    labelOffset: [-116, 24],
+    unitOffsets: [
+      [0, 0],
+      [24, 16],
+      [-24, -14]
+    ],
+    points: [
+      [117.42, 33.17],
+      [117.43, 33.22],
+      [117.445, 33.26],
+      [117.455, 33.29]
     ]
   },
   {
@@ -1095,10 +1139,12 @@ export const battleEvents: GaixiaEvent[] = [
       "han-southeast-cavalry",
       "han-feigned-gap-east",
       "chu-probe-east-gap",
+      "chu-south-screen-recoil",
       "han-west-counterpress",
       "han-east-counterpress",
       "han-tighten-west",
-      "han-tighten-north"
+      "han-tighten-north",
+      "han-south-locking-line"
     ],
     cue: "melee"
   },
@@ -1119,6 +1165,7 @@ export const battleEvents: GaixiaEvent[] = [
       "chu-camp-array-south",
       "han-tighten-west",
       "han-tighten-north",
+      "han-south-locking-line",
       "han-tighten-east",
       "han-night-east-gap-block",
       "han-song-cordons",
@@ -1136,7 +1183,16 @@ export const battleEvents: GaixiaEvent[] = [
     summary: "楚歌之后，原本收拢的中军、东侧屏卫和南侧步阵无法保持整齐，项羽在楚营中诀别。",
     detail: "此处把早先布成的楚军营阵与营内碎裂线同时显示：碎裂不是突然出现，而是经过外推受阻、弩骑反压和楚歌动摇后的结果。",
     significance: "垓下之战的历史记忆由军事失败进入悲剧叙事，同时主力阵势已无法恢复。",
-    routeIds: ["chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south", "chu-night-breakout-check", "han-song-cordons", "chu-camp-fragmentation"],
+    routeIds: [
+      "chu-camp-array-center",
+      "chu-camp-array-east",
+      "chu-camp-array-south",
+      "chu-south-screen-recoil",
+      "han-south-locking-line",
+      "chu-night-breakout-check",
+      "han-song-cordons",
+      "chu-camp-fragmentation"
+    ],
     cue: "song"
   },
   {

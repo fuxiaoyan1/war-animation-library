@@ -2112,7 +2112,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaEventHasRoutes("hanxin-deploys", ["chu-camp-array-center", "han-west-infantry", "han-east-crossbow-net"]);
   expectGaixiaEventHasRoutes("west-counterpush-yield", ["chu-west-counterpush", "han-west-fallback"]);
   expectGaixiaEventHasRoutes("han-counterpress-east-gap", ["han-west-counterpress", "chu-east-counterpush", "han-east-cavalry-yield"]);
-  expectGaixiaEventHasRoutes("ten-sided-ring", ["han-east-counterpress", "chu-probe-east-gap", "han-west-counterpress"]);
+  expectGaixiaEventHasRoutes("ten-sided-ring", ["han-east-counterpress", "chu-probe-east-gap", "han-west-counterpress", "chu-south-screen-recoil", "han-south-locking-line"]);
   expectGaixiaEventHasRoutes("songs-of-chu", ["chu-night-breakout-check", "han-night-east-gap-block"]);
   expectGaixiaEventHasRoutes("farewell", ["chu-camp-array-center", "chu-camp-fragmentation"]);
   expectGaixiaEventHasRoutes("wujiang-end", ["chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang"]);
@@ -2124,6 +2124,9 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRouteWindow("chu-east-counterpush", { start: "BCE-0202-12-01T20:40", end: "BCE-0202-12-01T21:20" });
   expectGaixiaRouteWindow("han-east-cavalry-yield", { start: "BCE-0202-12-01T20:45", end: "BCE-0202-12-01T21:30" });
   expectGaixiaRouteWindow("han-east-counterpress", { start: "BCE-0202-12-01T21:30", visibleUntil: "BCE-0202-12-02T04:20" });
+  expectGaixiaRouteWindow("chu-camp-array-south", { unitVisibleUntil: "BCE-0202-12-01T21:59" });
+  expectGaixiaRouteWindow("chu-south-screen-recoil", { start: "BCE-0202-12-01T21:50", end: "BCE-0202-12-02T00:30" });
+  expectGaixiaRouteWindow("han-south-locking-line", { start: "BCE-0202-12-01T21:50", visibleUntil: "BCE-0202-12-02T05:00" });
   expectGaixiaRouteWindow("han-dawn-assault-north", { start: "BCE-0202-12-02T03:05", end: "BCE-0202-12-02T04:50" });
   expectGaixiaRouteWindow("han-dawn-assault-south", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:00" });
   expectGaixiaRouteWindow("han-dawn-assault-west", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:05" });
@@ -2843,6 +2846,11 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-east-counterpress")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-west")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-north")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-south-screen-recoil")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-south-locking-line")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-south-0")).toHaveCount(0);
+  await expect(page.getByTestId("gaixia-route-unit-chu-south-screen-recoil-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-han-south-locking-line-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first()).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-cavalry.webp");
   await expect(page.locator(".gaixia-route[data-route-kind='ambush']")).toHaveCount(4);
@@ -2861,6 +2869,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-south-locking-line")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-song-cordons")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-han-night-east-gap-block-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
