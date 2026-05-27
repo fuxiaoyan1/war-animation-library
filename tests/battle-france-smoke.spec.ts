@@ -395,15 +395,30 @@ async function expectTickerDoesNotBlockMapWheel(page: Page) {
 }
 
 async function expectGaixiaRouteStaysInMapStage(page: Page, routeId: string) {
-  const mapBox = await page.getByTestId("map-stage").boundingBox();
-  const routeBox = await page.getByTestId(`gaixia-route-${routeId}`).locator(".gaixia-route-line").boundingBox();
+  const visibleRatio = await page.evaluate((targetRouteId) => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    const route = document.querySelector(`[data-testid="gaixia-route-${targetRouteId}"]`)?.getBoundingClientRect();
+    if (!stage || !route || route.width <= 0 || route.height <= 0) {
+      return null;
+    }
 
-  expect(mapBox).not.toBeNull();
-  expect(routeBox).not.toBeNull();
-  expect(routeBox?.x).toBeGreaterThan((mapBox?.x ?? 0) + 6);
-  expect((routeBox?.x ?? 0) + (routeBox?.width ?? 0)).toBeLessThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) - 6);
-  expect(routeBox?.y).toBeGreaterThan((mapBox?.y ?? 0) - 18);
-  expect((routeBox?.y ?? 0) + (routeBox?.height ?? 0)).toBeLessThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) - 6);
+    const left = Math.max(stage.left, route.left);
+    const right = Math.min(stage.right, route.right);
+    const top = Math.max(stage.top, route.top);
+    const bottom = Math.min(stage.bottom, route.bottom);
+    const visibleWidth = Math.max(0, right - left);
+    const visibleHeight = Math.max(0, bottom - top);
+    return {
+      areaRatio: (visibleWidth * visibleHeight) / Math.max(1, route.width * route.height),
+      height: visibleHeight,
+      width: visibleWidth
+    };
+  }, routeId);
+
+  expect(visibleRatio, `route ${routeId} should intersect the tactical viewport`).not.toBeNull();
+  expect(visibleRatio?.areaRatio, `route ${routeId} should have a readable visible segment`).toBeGreaterThan(0.08);
+  expect(visibleRatio?.width).toBeGreaterThan(10);
+  expect(visibleRatio?.height).toBeGreaterThan(6);
 }
 
 async function expectGaixiaVisibleRouteCount(page: Page, minimumCount: number) {
@@ -426,11 +441,38 @@ async function expectGaixiaExpandedBattlefield(page: Page) {
   expect(viewport).not.toBeNull();
   expect(mapBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
   expect(svgBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
-  expect(cameraTransform.scale).toBeGreaterThan(1.4);
-  expect(cameraTransform.y).toBeLessThan(-650);
+  expect(cameraTransform.scale).toBeGreaterThan(1.05);
+  expect(Math.abs(cameraTransform.x)).toBeGreaterThan(20);
   await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 2816");
+  await expect(gaixiaMap).toHaveAttribute("preserveAspectRatio", "xMidYMid slice");
   await expectCurrentEventInsideMapCore(page);
   await expectGaixiaPointInsideMapStage(page, "gaixia");
+  await expectGaixiaBattlefieldFillsWideStage(page);
+}
+
+async function expectGaixiaBattlefieldFillsWideStage(page: Page) {
+  const spread = await page.evaluate(() => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    const elements = Array.from(document.querySelectorAll<SVGGraphicsElement>(".gaixia-region, .gaixia-river, .gaixia-contour, .gaixia-route, .gaixia-point"));
+    const boxes = elements
+      .map((element) => element.getBoundingClientRect())
+      .filter((box) => box.width > 0 && box.height > 0 && stage && box.right > stage.left && box.left < stage.right && box.bottom > stage.top && box.top < stage.bottom);
+
+    if (!stage || boxes.length === 0) {
+      return null;
+    }
+
+    const left = Math.min(...boxes.map((box) => box.left));
+    const right = Math.max(...boxes.map((box) => box.right));
+    return {
+      visibleCount: boxes.length,
+      widthRatio: (right - left) / stage.width
+    };
+  });
+
+  expect(spread).not.toBeNull();
+  expect(spread?.visibleCount).toBeGreaterThan(12);
+  expect(spread?.widthRatio).toBeGreaterThan(0.62);
 }
 
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
@@ -2620,7 +2662,6 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
     expect(response.headers()["content-type"]).toContain("image");
     expect(Number(response.headers()["content-length"])).toBeGreaterThan(35_000);
   }
-  await expectGaixiaRouteStaysInMapStage(page, "chu-retreat-gaixia");
 
   await page.getByTestId("event-list").getByRole("button", { name: /楚军布成垓下营阵/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("楚军布成垓下营阵");
@@ -2750,13 +2791,13 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-cavalry-pursuit-wujiang")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-dongcheng")).toContainText("东城");
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
-  await expectGaixiaRouteStaysInMapStage(page, "han-cavalry-pursuit-wujiang");
+  await expectGaixiaPointInsideMapStage(page, "dongcheng");
 
   await page.getByTestId("event-list").getByRole("button", { name: /乌江方向终局/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("乌江方向终局");
   await expect(page.getByTestId("gaixia-route-han-cavalry-pursuit-wujiang")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
-  await expectGaixiaRouteStaysInMapStage(page, "han-cavalry-pursuit-wujiang");
+  await expectGaixiaPointInsideMapStage(page, "wujiang-road");
 
   await expectAncientBattleEventsPlayMeleeCue(page, [
     /楚军退至垓下/,

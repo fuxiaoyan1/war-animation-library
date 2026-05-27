@@ -2602,6 +2602,26 @@ body:has(.gaixia-ambush) {
   min-height: calc(100vh - 124px);
 }
 
+.gaixia-ambush .map-legend {
+  top: 58px;
+  right: 14px;
+  justify-content: flex-start;
+  width: min(360px, calc(100% - 28px));
+  max-width: min(360px, calc(100% - 28px));
+  min-height: 0;
+  padding: 7px 10px;
+  border-color: rgba(83, 72, 46, 0.22);
+  border-radius: 12px;
+  background: rgba(245, 233, 196, 0.72);
+  backdrop-filter: none;
+}
+
+.gaixia-ambush .map-legend span {
+  color: #3b3526;
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
 .gaixia-tactical-ground {
   fill: #cfc39f;
 }

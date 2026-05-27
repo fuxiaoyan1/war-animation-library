@@ -28,8 +28,24 @@ const mapWidth = 1180;
 const projectionHeight = 1408;
 const tacticalYScale = 2;
 const mapHeight = projectionHeight * tacticalYScale;
-const initialMapView: MapView = { scale: 1.58, x: -180, y: -780 };
+const gaixiaMapScale = 1.08;
+const gaixiaViewportCenterY = mapHeight / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
+
+const eventFocusY: Partial<Record<string, number>> = {
+  "chu-arrives-gaixia": 1130,
+  "chu-forms-camp-array": 1260,
+  "hanxin-deploys": 1150,
+  "west-counterpush-yield": 1220,
+  "han-counterpress-east-gap": 1280,
+  "ten-sided-ring": 1450,
+  "songs-of-chu": 1260,
+  farewell: 1300,
+  "dawn-assault": 1500,
+  "xiangyu-breakout": 1840,
+  "dongcheng-last-stand": 1975,
+  "wujiang-end": 2080
+};
 
 const eventPoints = battleEvents.map((event) => ({
   id: event.id,
@@ -132,6 +148,15 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   const previous = interpolateRoute(points, Math.max(0, progress - 0.025));
   const next = interpolateRoute(points, Math.min(1, progress + 0.025));
   return next[0] - previous[0] < -0.01 ? -1 : 1;
+}
+
+function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
+  const focusY = eventFocusY[event.id] ?? activePoint[1];
+  return {
+    scale: gaixiaMapScale,
+    x: (mapWidth * (1 - gaixiaMapScale)) / 2,
+    y: gaixiaViewportCenterY - focusY * gaixiaMapScale
+  };
 }
 
 function routeUnitOffsets(route: (typeof routes)[number]) {
@@ -250,6 +275,8 @@ export function GaixiaAmbushAnimation() {
   const currentDate = timeline.progressToDate(progress, 1 / (24 * 60));
   const elapsedHours = Math.max(1, Math.round(timeline.displayDaysAtProgress(progress) * 24) + 1);
   const projection = useMemo(() => createCampaignProjection(mapWidth, projectionHeight, "gaixiaBattle"), []);
+  const activePoint = projectTacticalPoint(projection, activeEvent.coordinates);
+  const activeMapView = useMemo(() => mapViewForEvent(activeEvent, activePoint), [activeEvent.id, activePoint[0], activePoint[1]]);
   const {
     canZoomIn,
     canZoomOut,
@@ -261,13 +288,12 @@ export function GaixiaAmbushAnimation() {
     svgRef,
     zoomIn,
     zoomOut
-  } = useMapInteraction(mapWidth, mapHeight, "gaixiaBattle", initialMapView);
+  } = useMapInteraction(mapWidth, mapHeight, activeEvent.id, activeMapView);
   const activeNarrationCue = narrationCues.find((cue, index) => {
     const start = timeline.dateToProgress(cue.start);
     const end = timeline.dateToProgress(cue.end);
     return progress >= start && (progress < end || (index === narrationCues.length - 1 && progress <= end));
   });
-  const activePoint = projectTacticalPoint(projection, activeEvent.coordinates);
 
   useEffect(() => {
     scoreRef.current = new WarScore(musicSource);
@@ -430,7 +456,7 @@ export function GaixiaAmbushAnimation() {
             ref={svgRef}
             className={`battle-map gaixia-map is-interactive-map ${isMapDragging ? "is-dragging" : ""}`}
             viewBox={`0 0 ${mapWidth} ${mapHeight}`}
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid slice"
             role="img"
             aria-label="韩信十面埋伏垓下之战地形态势图"
             {...mapInteractionProps}
