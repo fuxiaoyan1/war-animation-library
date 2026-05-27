@@ -8,6 +8,23 @@ GitHub Pages demo: <https://fuxiaoyan1.github.io/war-animation-library/>
 
 The demo opens on the library shelf. Each card launches an interactive animation with play/pause/replay, draggable timeline, event jumps, narration subtitles, map pan/zoom, retained operational tracks, and faction-specific unit markers.
 
+## Latest Update
+
+The latest major update adds `HX 229 / SC 122：大西洋狼群战` and refines `韩信十面埋伏：垓下之战` into a denser cold-weapons tactical animation.
+
+Highlights:
+
+- Added the Atlantic convoy/submarine battle of HX 229 / SC 122, including dual convoy movement, wolfpack convergence, torpedo attacks, escort ASW, VLR air patrols, U-384's loss, and the German attack breakoff.
+- Reworked submarine combat semantics: U-boats, escorts, and convoys stay online unless sunk or handed off; torpedo/depth-charge effects bind to live route positions; submarine combat no longer uses naval salvo trace lines.
+- Expanded the Gaixia battlefield into a larger tactical map with directly drawn ridges, lowland corridors, river channels, camp walls, and pursuit roads.
+- Reworked the battle from a simple encirclement into layered infantry, cavalry, crossbow, feigned-gap, counterpress, night-breakout, dawn-assault, and pursuit actions.
+- Fixed unit continuity so forces no longer disappear, turn into unclear grey shadows, or remain stranded after their tactical role has handed off.
+- Bound melee effects to the live positions of opposing Han and Chu units, so combat effects occur where units actually meet.
+- Added complete source routes for later reinforcements and pursuit forces, including the final Xiang Yu retreat line toward Wujiang with Han cavalry behind it.
+- Added Playwright gates for submarine route/effect coherence, map scale, route color semantics, effect alignment, reinforcement origin routes, south-line handoff, night-blocking lines, and pursuit geometry.
+
+Full update note: [docs/updates/war-animation-update-2026-05-27.md](docs/updates/war-animation-update-2026-05-27.md)
+
 ## Current Library
 
 The repository currently includes 22 animations.
