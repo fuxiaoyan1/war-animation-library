@@ -245,6 +245,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "retreat",
     start: "BCE-0202-12-01T16:00",
     end: "BCE-0202-12-01T18:00",
+    unitVisibleUntil: "BCE-0202-12-01T18:19",
     unitOffsets: [
       [0, 0],
       [-24, 18],
@@ -665,8 +666,9 @@ export const routes: GaixiaRoute[] = [
     unitKind: "chu-cavalry",
     routeKind: "breakout",
     start: "BCE-0202-12-02T04:20",
-    end: "BCE-0202-12-02T05:30",
+    end: "BCE-0202-12-02T06:20",
     visibleUntil: "BCE-0202-12-02T06:40",
+    unitVisibleUntil: "BCE-0202-12-02T06:20",
     labelOffset: [14, 20],
     unitOffsets: [
       [0, 0],
@@ -737,6 +739,27 @@ export const routes: GaixiaRoute[] = [
       [117.54, 33.32],
       [117.51, 33.33],
       [117.48, 33.34]
+    ]
+  },
+  {
+    id: "han-night-east-gap-block",
+    label: "东口汉骑横截冲围",
+    faction: "han",
+    unitKind: "han-cavalry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-02T00:30",
+    end: "BCE-0202-12-02T01:20",
+    visibleUntil: "BCE-0202-12-02T04:20",
+    labelOffset: [18, 24],
+    unitOffsets: [
+      [0, 0],
+      [30, -14]
+    ],
+    points: [
+      [117.63, 33.25],
+      [117.6, 33.27],
+      [117.57, 33.29],
+      [117.54, 33.31]
     ]
   },
   {
@@ -916,6 +939,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T06:20",
     end: "BCE-0202-12-02T07:10",
     visibleUntil: "BCE-0202-12-02T08:00",
+    unitVisibleUntil: "BCE-0202-12-02T07:05",
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -925,6 +949,27 @@ export const routes: GaixiaRoute[] = [
       [117.75, 33.08],
       [117.73, 33.11],
       [117.76, 33.09]
+    ]
+  },
+  {
+    id: "chu-wujiang-final-flight",
+    label: "项羽小股向乌江退走",
+    faction: "chu",
+    unitKind: "chu-command",
+    routeKind: "breakout",
+    start: "BCE-0202-12-02T07:05",
+    end: "BCE-0202-12-02T08:00",
+    visibleUntil: "BCE-0202-12-02T08:00",
+    labelOffset: [16, -18],
+    unitOffsets: [
+      [0, 0],
+      [22, -14]
+    ],
+    points: [
+      [117.76, 33.09],
+      [117.77, 33.07],
+      [117.79, 33.045],
+      [117.8, 33.035]
     ]
   },
   {
@@ -943,8 +988,8 @@ export const routes: GaixiaRoute[] = [
       [117.68, 33.14],
       [117.72, 33.1],
       [117.74, 33.08],
-      [117.76, 33.07],
-      [117.79, 33.04]
+      [117.755, 33.07],
+      [117.775, 33.055]
     ]
   }
 ];
@@ -1067,7 +1112,18 @@ export const battleEvents: GaixiaEvent[] = [
     summary: "夜色中楚歌从汉军营垒传来，楚军试图冲开东南口却被弩骑反推，营阵开始动摇。",
     detail: "音乐层与地图上的声波同向推进，同时显示楚军夜间冲围受阻和东侧弩骑反推。此时先表现军心动摇，不提前把营内队列画成已经碎裂。",
     significance: "战场从兵力对抗转入意志崩溃。",
-    routeIds: ["han-command-center", "chu-camp-array-center", "chu-camp-array-east", "chu-camp-array-south", "han-tighten-west", "han-tighten-north", "han-tighten-east", "han-song-cordons", "chu-night-breakout-check"],
+    routeIds: [
+      "han-command-center",
+      "chu-camp-array-center",
+      "chu-camp-array-east",
+      "chu-camp-array-south",
+      "han-tighten-west",
+      "han-tighten-north",
+      "han-tighten-east",
+      "han-night-east-gap-block",
+      "han-song-cordons",
+      "chu-night-breakout-check"
+    ],
     cue: "song"
   },
   {
@@ -1136,10 +1192,10 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "霸王自刎",
     location: "乌江方向",
     coordinates: [117.79, 33.04],
-    summary: "汉军追击线压至乌江方向，项羽已无整军突围空间，垓下战役进入悲剧终点。",
-    detail: "动画不把乌江位置画成考古级精确点，只用东南追击方向表现最后压力来源。",
+    summary: "项羽小股继续向乌江方向退走，汉军追击线压在后方，已无整军突围空间。",
+    detail: "动画不把乌江位置画成考古级精确点，只用东南追逃关系表现最后压力来源：前方是项羽小股退走线，后方是汉骑追逼线。",
     significance: "没有后续追击，垓下便不足以解释项羽终局；追击线补上了军事因果。",
-    routeIds: ["han-cavalry-pursuit-wujiang"],
+    routeIds: ["chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang"],
     cue: "melee"
   }
 ];

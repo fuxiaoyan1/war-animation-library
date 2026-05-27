@@ -1525,6 +1525,21 @@ function expectGaixiaRouteWindow(routeId: string, expectation: { start?: string;
   }
 }
 
+function routeCoordinate(routeId: string, index: number) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  const point = route!.points[index < 0 ? route!.points.length + index : index];
+  expect(point, `gaixia route ${routeId} point ${index} exists`).toBeTruthy();
+  return point;
+}
+
+function expectRouteEndsBehind(frontRouteId: string, rearRouteId: string) {
+  const front = routeCoordinate(frontRouteId, -1);
+  const rear = routeCoordinate(rearRouteId, -1);
+  expect(front[0], `${frontRouteId} should end farther east than ${rearRouteId}`).toBeGreaterThan(rear[0]);
+  expect(front[1], `${frontRouteId} should end farther south than ${rearRouteId}`).toBeLessThan(rear[1]);
+}
+
 function expectRouteNearEvent(
   campaignName: string,
   data: CampaignDataModule,
@@ -2098,7 +2113,10 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaEventHasRoutes("west-counterpush-yield", ["chu-west-counterpush", "han-west-fallback"]);
   expectGaixiaEventHasRoutes("han-counterpress-east-gap", ["han-west-counterpress", "chu-east-counterpush", "han-east-cavalry-yield"]);
   expectGaixiaEventHasRoutes("ten-sided-ring", ["han-east-counterpress", "chu-probe-east-gap", "han-west-counterpress"]);
+  expectGaixiaEventHasRoutes("songs-of-chu", ["chu-night-breakout-check", "han-night-east-gap-block"]);
   expectGaixiaEventHasRoutes("farewell", ["chu-camp-array-center", "chu-camp-fragmentation"]);
+  expectGaixiaEventHasRoutes("wujiang-end", ["chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang"]);
+  expectGaixiaRouteWindow("chu-retreat-gaixia", { unitVisibleUntil: "BCE-0202-12-01T18:19" });
   expectGaixiaRouteWindow("chu-camp-array-center", { start: "BCE-0202-12-01T18:00", visibleUntil: "BCE-0202-12-02T04:20" });
   expectGaixiaRouteWindow("chu-west-counterpush", { start: "BCE-0202-12-01T19:20", end: "BCE-0202-12-01T20:10" });
   expectGaixiaRouteWindow("han-west-fallback", { start: "BCE-0202-12-01T20:05", end: "BCE-0202-12-01T20:45" });
@@ -2111,7 +2129,11 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRouteWindow("han-dawn-assault-west", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:05" });
   expectGaixiaRouteWindow("han-dawn-cavalry-cutoff", { start: "BCE-0202-12-02T03:20", end: "BCE-0202-12-02T05:20" });
   expectGaixiaRouteWindow("han-cavalry-pursuit-yinling", { start: "BCE-0202-12-02T04:45", end: "BCE-0202-12-02T06:30" });
+  expectGaixiaRouteWindow("chu-breakout-southeast", { end: "BCE-0202-12-02T06:20", unitVisibleUntil: "BCE-0202-12-02T06:20" });
+  expectGaixiaRouteWindow("chu-dongcheng-last-stand", { start: "BCE-0202-12-02T06:20", unitVisibleUntil: "BCE-0202-12-02T07:05" });
+  expectGaixiaRouteWindow("chu-wujiang-final-flight", { start: "BCE-0202-12-02T07:05", end: "BCE-0202-12-02T08:00" });
   expectGaixiaRouteWindow("han-cavalry-pursuit-wujiang", { start: "BCE-0202-12-02T06:10", end: "BCE-0202-12-02T07:50" });
+  expectRouteEndsBehind("chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang");
   const dawnEventTime = toTime(gaixiaData.battleEvents.find((event) => event.id === "dawn-assault")!.date);
   for (const routeId of ["han-dawn-assault-north", "han-dawn-assault-south", "han-dawn-assault-west", "han-dawn-cavalry-cutoff"]) {
     const route = gaixiaData.routes.find((item) => item.id === routeId)!;
@@ -2744,6 +2766,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await page.getByTestId("event-list").getByRole("button", { name: /楚军布成垓下营阵/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("楚军布成垓下营阵");
   await expect(page.getByTestId("active-event-card")).toContainText("先以步卒收拢中军");
+  await expect(page.getByTestId("gaixia-route-unit-chu-retreat-gaixia-0")).toHaveCount(0);
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-array-east")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-array-south")).toBeVisible();
@@ -2836,8 +2859,10 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("active-event-card")).toContainText("四面楚歌瓦解军心");
   await expect(page.getByTestId("active-event-card")).toContainText("营阵开始动摇");
   await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-song-cordons")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-han-night-east-gap-block-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toHaveCount(0);
   await expect(page.locator(".gaixia-route[data-route-kind='song']")).toHaveCount(1);
@@ -2871,13 +2896,16 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await page.getByTestId("event-list").getByRole("button", { name: /东城快战与汉骑追逼/ }).click();
   await expect(page.getByTestId("gaixia-route-chu-dongcheng-last-stand")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-cavalry-pursuit-wujiang")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-dongcheng-last-stand-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-dongcheng")).toContainText("东城");
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
   await expectGaixiaPointInsideMapStage(page, "dongcheng");
 
   await page.getByTestId("event-list").getByRole("button", { name: /乌江方向终局/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("乌江方向终局");
+  await expect(page.getByTestId("gaixia-route-chu-wujiang-final-flight")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-cavalry-pursuit-wujiang")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-wujiang-final-flight-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
   await expectGaixiaPointInsideMapStage(page, "wujiang-road");
 
