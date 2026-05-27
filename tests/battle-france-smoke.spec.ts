@@ -188,7 +188,7 @@ function collectFailures(page: Page) {
 
 async function expectCurrentEventInsideMapCore(page: Page) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
-  const eventBox = await page.locator(".event-pin.is-current").first().boundingBox();
+  const eventBox = await page.locator(".event-pin.is-current > circle").first().boundingBox();
 
   expect(mapBox).not.toBeNull();
   expect(eventBox).not.toBeNull();
@@ -441,8 +441,8 @@ async function expectGaixiaExpandedBattlefield(page: Page) {
   expect(viewport).not.toBeNull();
   expect(mapBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
   expect(svgBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
-  expect(cameraTransform.scale).toBeGreaterThan(1.05);
-  expect(Math.abs(cameraTransform.x)).toBeGreaterThan(20);
+  expect(cameraTransform.scale).toBeGreaterThan(1.15);
+  expect(Math.abs(cameraTransform.x)).toBeGreaterThan(40);
   await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 2816");
   await expect(gaixiaMap).toHaveAttribute("preserveAspectRatio", "xMidYMid slice");
   await expectCurrentEventInsideMapCore(page);
@@ -471,8 +471,8 @@ async function expectGaixiaBattlefieldFillsWideStage(page: Page) {
   });
 
   expect(spread).not.toBeNull();
-  expect(spread?.visibleCount).toBeGreaterThan(12);
-  expect(spread?.widthRatio).toBeGreaterThan(0.62);
+  expect(spread?.visibleCount).toBeGreaterThanOrEqual(12);
+  expect(spread?.widthRatio).toBeGreaterThan(0.72);
 }
 
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
@@ -487,6 +487,73 @@ async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
   expect(centerX).toBeLessThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.88);
   expect(centerY).toBeGreaterThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.16);
   expect(centerY).toBeLessThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.88);
+}
+
+async function expectGaixiaCompletedRoutesRemainColored(page: Page) {
+  const states = await page.evaluate(() =>
+    Array.from(document.querySelectorAll<SVGGElement>(".gaixia-route.is-complete")).map((route) => {
+      const line = route.querySelector<SVGPathElement>(".gaixia-route-line");
+      const unit = route.querySelector<SVGGElement>(".gaixia-unit-holder");
+      const lineStyle = line ? window.getComputedStyle(line) : null;
+      const unitStyle = unit ? window.getComputedStyle(unit) : null;
+      return {
+        id: route.getAttribute("data-route-id"),
+        routeOpacity: Number(window.getComputedStyle(route).opacity),
+        lineOpacity: lineStyle ? Number(lineStyle.strokeOpacity) : 1,
+        unitOpacity: unitStyle ? Number(unitStyle.opacity) : null,
+        unitVisible: route.getAttribute("data-unit-visible") === "true"
+      };
+    })
+  );
+
+  expect(states.length, "gaixia should keep prior colored tactical routes as context").toBeGreaterThan(0);
+  for (const state of states) {
+    expect(state.routeOpacity, `${state.id} should not turn into a grey destroyed-route ghost`).toBeGreaterThanOrEqual(0.95);
+    expect(state.lineOpacity, `${state.id} line should remain readable and faction-colored`).toBeGreaterThanOrEqual(0.6);
+    if (state.unitVisible) {
+      expect(state.unitOpacity, `${state.id} unit should stay fully colored while retained`).toBeGreaterThanOrEqual(0.95);
+    }
+  }
+}
+
+async function expectGaixiaMeleeEffectBetweenVisibleUnits(page: Page) {
+  const alignment = await page.evaluate(() => {
+    const effect = document.querySelector<SVGGElement>('[data-testid="gaixia-melee-effect"]');
+    if (!effect) {
+      return null;
+    }
+    const hanRouteId = effect.getAttribute("data-han-route") ?? "";
+    const chuRouteId = effect.getAttribute("data-chu-route") ?? "";
+    const hanUnit = document.querySelector<SVGGElement>(`[data-testid^="gaixia-route-unit-${hanRouteId}-"]`);
+    const chuUnit = document.querySelector<SVGGElement>(`[data-testid^="gaixia-route-unit-${chuRouteId}-"]`);
+    const pointFromMatrix = (element: SVGGElement | null) => {
+      const matrix = element?.getScreenCTM();
+      return matrix ? { x: matrix.e, y: matrix.f } : null;
+    };
+    const point = pointFromMatrix(effect);
+    const han = pointFromMatrix(hanUnit);
+    const chu = pointFromMatrix(chuUnit);
+    if (!hanRouteId || !chuRouteId || !point || !han || !chu) {
+      return null;
+    }
+
+    const midpoint = {
+      x: (han.x + chu.x) / 2,
+      y: (han.y + chu.y) / 2
+    };
+    return {
+      chuRouteId,
+      distanceFromMidpoint: Math.hypot(point.x - midpoint.x, point.y - midpoint.y),
+      hanRouteId,
+      source: effect.getAttribute("data-effect-source")
+    };
+  });
+
+  expect(alignment, "gaixia melee effect should bind to visible Han and Chu units").not.toBeNull();
+  expect(alignment?.source).toBe("route-contact");
+  expect(alignment?.hanRouteId).not.toBe("");
+  expect(alignment?.chuRouteId).not.toBe("");
+  expect(alignment?.distanceFromMidpoint).toBeLessThan(6);
 }
 
 async function expectRealisticUnitIcon(
@@ -2039,6 +2106,17 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRouteWindow("chu-east-counterpush", { start: "BCE-0202-12-01T20:40", end: "BCE-0202-12-01T21:20" });
   expectGaixiaRouteWindow("han-east-cavalry-yield", { start: "BCE-0202-12-01T20:45", end: "BCE-0202-12-01T21:30" });
   expectGaixiaRouteWindow("han-east-counterpress", { start: "BCE-0202-12-01T21:30", visibleUntil: "BCE-0202-12-02T04:20" });
+  expectGaixiaRouteWindow("han-dawn-assault-north", { start: "BCE-0202-12-02T03:05", end: "BCE-0202-12-02T04:50" });
+  expectGaixiaRouteWindow("han-dawn-assault-south", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:00" });
+  expectGaixiaRouteWindow("han-dawn-assault-west", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:05" });
+  expectGaixiaRouteWindow("han-dawn-cavalry-cutoff", { start: "BCE-0202-12-02T03:20", end: "BCE-0202-12-02T05:20" });
+  expectGaixiaRouteWindow("han-cavalry-pursuit-yinling", { start: "BCE-0202-12-02T04:45", end: "BCE-0202-12-02T06:30" });
+  expectGaixiaRouteWindow("han-cavalry-pursuit-wujiang", { start: "BCE-0202-12-02T06:10", end: "BCE-0202-12-02T07:50" });
+  const dawnEventTime = toTime(gaixiaData.battleEvents.find((event) => event.id === "dawn-assault")!.date);
+  for (const routeId of ["han-dawn-assault-north", "han-dawn-assault-south", "han-dawn-assault-west", "han-dawn-cavalry-cutoff"]) {
+    const route = gaixiaData.routes.find((item) => item.id === routeId)!;
+    expect(toTime(route.start), `gaixia route ${routeId} should enter before dawn assault event`).toBeLessThan(dawnEventTime);
+  }
   expect(toTime(gaixiaData.battleEvents.find((event) => event.id === "chu-forms-camp-array")!.date)).toBeLessThan(
     toTime(gaixiaData.battleEvents.find((event) => event.id === "west-counterpush-yield")!.date)
   );
@@ -2727,6 +2805,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectGaixiaRouteStaysInMapStage(page, "han-west-counterpress");
   await expectGaixiaRouteStaysInMapStage(page, "chu-east-counterpush");
   await expectGaixiaRouteStaysInMapStage(page, "han-east-cavalry-yield");
+  await expectGaixiaMeleeEffectBetweenVisibleUnits(page);
+  await expectGaixiaCompletedRoutesRemainColored(page);
 
   await page.getByTestId("event-list").getByRole("button", { name: /十面伏兵完成闭合/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("东口诱隙被弩骑反压回去");
@@ -2749,6 +2829,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectGaixiaRouteStaysInMapStage(page, "han-south-infantry");
   await expectGaixiaRouteStaysInMapStage(page, "han-southeast-cavalry");
   await expectGaixiaRouteStaysInMapStage(page, "chu-probe-east-gap");
+  await expectGaixiaMeleeEffectBetweenVisibleUnits(page);
 
   await page.getByTestId("event-list").getByRole("button", { name: /四面楚歌瓦解军心/ }).click();
   await expect(page.getByTestId("gaixia-song-effect")).toBeVisible();
@@ -2775,10 +2856,11 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-south")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-west")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-cavalry-cutoff")).toBeVisible();
-  await expectGaixiaVisibleRouteCount(page, 6);
-  await expectGaixiaVisibleUnitCount(page, 12);
+  await expectGaixiaVisibleRouteCount(page, 12);
+  await expectGaixiaVisibleUnitCount(page, 20);
   await expectGaixiaRouteStaysInMapStage(page, "han-dawn-assault-west");
   await expectGaixiaRouteStaysInMapStage(page, "han-dawn-cavalry-cutoff");
+  await expectGaixiaMeleeEffectBetweenVisibleUnits(page);
 
   await page.getByTestId("event-list").getByRole("button", { name: /项羽率骑兵东南突围/ }).click();
   await expect(page.getByTestId("gaixia-route-chu-breakout-southeast")).toBeVisible();

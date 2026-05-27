@@ -475,7 +475,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "ambush",
     start: "BCE-0202-12-01T18:20",
     end: "BCE-0202-12-01T22:30",
-    visibleUntil: "BCE-0202-12-02T04:00",
+    visibleUntil: "BCE-0202-12-02T05:20",
     unitOffsets: [
       [0, 0],
       [-30, 16],
@@ -497,6 +497,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "ambush",
     start: "BCE-0202-12-01T18:40",
     end: "BCE-0202-12-01T23:00",
+    visibleUntil: "BCE-0202-12-02T05:00",
     unitOffsets: [
       [0, 0],
       [24, 16]
@@ -516,6 +517,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "ambush",
     start: "BCE-0202-12-01T19:00",
     end: "BCE-0202-12-02T00:30",
+    visibleUntil: "BCE-0202-12-02T06:40",
     labelOffset: [18, 22],
     unitOffsets: [
       [0, 0],
@@ -799,18 +801,19 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-dawn-assault-north",
-    label: "黎明北路合击",
+    label: "北岸弩阵转入黎明合击",
     faction: "han",
     unitKind: "han-crossbow",
     routeKind: "advance",
-    start: "BCE-0202-12-02T03:40",
+    start: "BCE-0202-12-02T03:05",
     end: "BCE-0202-12-02T04:50",
     unitOffsets: [
       [0, 0],
       [24, -14]
     ],
     points: [
-      [117.52, 33.43],
+      [117.47, 33.45],
+      [117.51, 33.42],
       [117.51, 33.39],
       [117.5, 33.35],
       [117.48, 33.32]
@@ -818,17 +821,19 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-dawn-assault-south",
-    label: "黎明南路合击",
+    label: "南路伏兵转入黎明合击",
     faction: "han",
     unitKind: "han-infantry",
     routeKind: "advance",
-    start: "BCE-0202-12-02T03:50",
+    start: "BCE-0202-12-02T03:10",
     end: "BCE-0202-12-02T05:00",
     unitOffsets: [
       [0, 0],
       [-22, 14]
     ],
     points: [
+      [117.42, 33.08],
+      [117.42, 33.14],
       [117.42, 33.2],
       [117.44, 33.25],
       [117.46, 33.29],
@@ -837,11 +842,11 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-dawn-assault-west",
-    label: "黎明西路割裂楚营",
+    label: "西路压回后割裂楚营",
     faction: "han",
     unitKind: "han-infantry",
     routeKind: "advance",
-    start: "BCE-0202-12-02T03:50",
+    start: "BCE-0202-12-02T03:10",
     end: "BCE-0202-12-02T05:05",
     labelOffset: [-116, 8],
     unitOffsets: [
@@ -849,6 +854,7 @@ export const routes: GaixiaRoute[] = [
       [-24, -14]
     ],
     points: [
+      [117.31, 33.36],
       [117.35, 33.34],
       [117.39, 33.33],
       [117.43, 33.32],
@@ -857,11 +863,11 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-dawn-cavalry-cutoff",
-    label: "东南骑兵截断退路",
+    label: "东南伏骑转入截断退路",
     faction: "han",
     unitKind: "han-cavalry",
     routeKind: "ambush",
-    start: "BCE-0202-12-02T04:00",
+    start: "BCE-0202-12-02T03:20",
     end: "BCE-0202-12-02T05:20",
     visibleUntil: "BCE-0202-12-02T06:40",
     labelOffset: [14, -24],
@@ -870,6 +876,8 @@ export const routes: GaixiaRoute[] = [
       [-30, 16]
     ],
     points: [
+      [117.74, 33.12],
+      [117.68, 33.18],
       [117.64, 33.24],
       [117.6, 33.24],
       [117.55, 33.28],
@@ -879,11 +887,11 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-cavalry-pursuit-yinling",
-    label: "汉骑追至阴陵",
+    label: "东南截骑续追至阴陵",
     faction: "han",
     unitKind: "han-cavalry",
     routeKind: "pursuit",
-    start: "BCE-0202-12-02T05:10",
+    start: "BCE-0202-12-02T04:45",
     end: "BCE-0202-12-02T06:30",
     unitOffsets: [
       [0, 0],
@@ -891,7 +899,8 @@ export const routes: GaixiaRoute[] = [
       [-58, -12]
     ],
     points: [
-      [117.5, 33.31],
+      [117.49, 33.3],
+      [117.55, 33.28],
       [117.56, 33.27],
       [117.62, 33.21],
       [117.68, 33.14],
@@ -920,18 +929,18 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "han-cavalry-pursuit-wujiang",
-    label: "汉骑追逼乌江方向",
+    label: "阴陵追骑续逼乌江方向",
     faction: "han",
     unitKind: "han-cavalry",
     routeKind: "pursuit",
-    start: "BCE-0202-12-02T06:35",
+    start: "BCE-0202-12-02T06:10",
     end: "BCE-0202-12-02T07:50",
     unitOffsets: [
       [0, 0],
       [-28, 16]
     ],
     points: [
-      [117.66, 33.16],
+      [117.68, 33.14],
       [117.72, 33.1],
       [117.74, 33.08],
       [117.76, 33.07],

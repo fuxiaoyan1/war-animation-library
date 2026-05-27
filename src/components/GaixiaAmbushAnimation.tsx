@@ -15,6 +15,7 @@ import {
   terrainContours,
   terrainLabels,
   type GaixiaEvent,
+  type GaixiaRoute,
   type GaixiaUnitKind
 } from "../data/gaixiaAmbush";
 import { createCampaignProjection, projectPoint } from "../lib/geoMap";
@@ -28,14 +29,30 @@ const mapWidth = 1180;
 const projectionHeight = 1408;
 const tacticalYScale = 2;
 const mapHeight = projectionHeight * tacticalYScale;
-const gaixiaMapScale = 1.08;
+const gaixiaMapScale = 1.2;
 const gaixiaViewportCenterY = mapHeight / 2;
+const gaixiaViewportCenterX = mapWidth / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
+
+const eventMapScale: Partial<Record<string, number>> = {
+  "chu-arrives-gaixia": 1.18,
+  "chu-forms-camp-array": 1.28,
+  "hanxin-deploys": 1.16,
+  "west-counterpush-yield": 1.22,
+  "han-counterpress-east-gap": 1.28,
+  "ten-sided-ring": 1.14,
+  "songs-of-chu": 1.26,
+  farewell: 1.3,
+  "dawn-assault": 1.16,
+  "xiangyu-breakout": 1.22,
+  "dongcheng-last-stand": 1.28,
+  "wujiang-end": 1.32
+};
 
 const eventFocusY: Partial<Record<string, number>> = {
   "chu-arrives-gaixia": 1130,
   "chu-forms-camp-array": 1260,
-  "hanxin-deploys": 1150,
+  "hanxin-deploys": 970,
   "west-counterpush-yield": 1220,
   "han-counterpress-east-gap": 1280,
   "ten-sided-ring": 1450,
@@ -152,14 +169,16 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
 
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
   const focusY = eventFocusY[event.id] ?? activePoint[1];
+  const focusX = activePoint[0];
+  const scale = eventMapScale[event.id] ?? gaixiaMapScale;
   return {
-    scale: gaixiaMapScale,
-    x: (mapWidth * (1 - gaixiaMapScale)) / 2,
-    y: gaixiaViewportCenterY - focusY * gaixiaMapScale
+    scale,
+    x: gaixiaViewportCenterX - focusX * scale,
+    y: gaixiaViewportCenterY - focusY * scale
   };
 }
 
-function routeUnitOffsets(route: (typeof routes)[number]) {
+function routeUnitOffsets(route: GaixiaRoute) {
   if (route.unitOffsets) {
     return route.unitOffsets;
   }
@@ -181,7 +200,7 @@ function routeUnitOffsets(route: (typeof routes)[number]) {
   return [[0, 0]];
 }
 
-function routeShouldRender(route: (typeof routes)[number], progress: number, activeRouteIds: Set<string>) {
+function routeShouldRender(route: GaixiaRoute, progress: number, activeRouteIds: Set<string>) {
   const routeStartProgress = timeline.dateToProgress(route.start);
   const routeEndProgress = timeline.dateToProgress(route.end);
   const isLinkedToActiveEvent = activeRouteIds.has(route.id);
@@ -191,10 +210,94 @@ function routeShouldRender(route: (typeof routes)[number], progress: number, act
   return isLinkedToActiveEvent || isActive || isWithinRetainedWindow;
 }
 
-function routeUnitShouldRender(route: (typeof routes)[number], progress: number) {
+function routeUnitShouldRender(route: GaixiaRoute, progress: number) {
   const routeStartProgress = timeline.dateToProgress(route.start);
   const unitVisibleEnd = route.unitVisibleUntil ? timeline.dateToProgress(route.unitVisibleUntil) : route.visibleUntil ? timeline.dateToProgress(route.visibleUntil) : 1;
   return progress >= routeStartProgress && progress <= unitVisibleEnd && route.routeKind !== "song";
+}
+
+type ProjectedGaixiaRoute = {
+  active: boolean;
+  facingX: 1 | -1;
+  isComplete: boolean;
+  isVisible: boolean;
+  labelPoint: [number, number];
+  markerPoint: [number, number];
+  projected: Array<[number, number]>;
+  route: GaixiaRoute;
+  routeProgress: number;
+  showUnits: boolean;
+  visiblePoints: Array<[number, number]>;
+};
+
+type ActiveEffectPlacement = {
+  chuPoint?: [number, number];
+  chuRouteId?: string;
+  hanPoint?: [number, number];
+  hanRouteId?: string;
+  point: [number, number];
+  source: "event" | "route-contact" | "route-unit";
+};
+
+function distance(a: [number, number], b: [number, number]) {
+  return Math.hypot(a[0] - b[0], a[1] - b[1]);
+}
+
+function midpoint(a: [number, number], b: [number, number]) {
+  return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] as [number, number];
+}
+
+function routeStatePriority(state: ProjectedGaixiaRoute) {
+  if (state.active) {
+    return 0;
+  }
+  if (state.showUnits) {
+    return 1;
+  }
+  return 2;
+}
+
+function activeEffectPlacementForEvent(event: GaixiaEvent, projectedRoutes: ProjectedGaixiaRoute[], fallbackPoint: [number, number]): ActiveEffectPlacement {
+  if (event.cue === "song") {
+    const songRoute = projectedRoutes.find((state) => event.routeIds.includes(state.route.id) && state.route.routeKind === "song" && state.isVisible);
+    return {
+      point: songRoute?.markerPoint ?? fallbackPoint,
+      source: songRoute ? "route-unit" : "event"
+    };
+  }
+
+  const candidates = projectedRoutes
+    .filter((state) => event.routeIds.includes(state.route.id) && state.isVisible && state.showUnits && state.route.routeKind !== "song")
+    .sort((a, b) => routeStatePriority(a) - routeStatePriority(b));
+  const hanRoutes = candidates.filter((state) => state.route.faction === "han");
+  const chuRoutes = candidates.filter((state) => state.route.faction === "chu");
+
+  if (hanRoutes.length > 0 && chuRoutes.length > 0) {
+    const bestPair = hanRoutes
+      .flatMap((hanRoute) =>
+        chuRoutes.map((chuRoute) => ({
+          chuRoute,
+          distance: distance(hanRoute.markerPoint, chuRoute.markerPoint),
+          hanRoute
+        }))
+      )
+      .sort((a, b) => a.distance - b.distance)[0];
+
+    return {
+      chuPoint: bestPair.chuRoute.markerPoint,
+      chuRouteId: bestPair.chuRoute.route.id,
+      hanPoint: bestPair.hanRoute.markerPoint,
+      hanRouteId: bestPair.hanRoute.route.id,
+      point: midpoint(bestPair.hanRoute.markerPoint, bestPair.chuRoute.markerPoint),
+      source: "route-contact"
+    };
+  }
+
+  const singleRoute = candidates[0];
+  return {
+    point: singleRoute?.markerPoint ?? fallbackPoint,
+    source: singleRoute ? "route-unit" : "event"
+  };
 }
 
 function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKind }) {
@@ -236,10 +339,16 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
   );
 }
 
-function ActiveEffect({ event, point }: { event: GaixiaEvent; point: [number, number] }) {
+function ActiveEffect({ event, placement }: { event: GaixiaEvent; placement: ActiveEffectPlacement }) {
+  const point = placement.point;
   if (event.cue === "song") {
     return (
-      <g className="gaixia-song-effect" data-testid="gaixia-song-effect" transform={`translate(${point[0]} ${point[1]})`}>
+      <g
+        className="gaixia-song-effect"
+        data-effect-source={placement.source}
+        data-testid="gaixia-song-effect"
+        transform={`translate(${point[0]} ${point[1]})`}
+      >
         <circle r="42" />
         <circle r="76" />
         <path d="M -70 -8 C -38 -36 32 -36 74 -2" />
@@ -252,7 +361,17 @@ function ActiveEffect({ event, point }: { event: GaixiaEvent; point: [number, nu
   }
 
   return (
-    <g className="gaixia-melee-effect" data-testid="gaixia-melee-effect" transform={`translate(${point[0]} ${point[1]})`}>
+    <g
+      className="gaixia-melee-effect"
+      data-chu-route={placement.chuRouteId ?? ""}
+      data-effect-source={placement.source}
+      data-han-route={placement.hanRouteId ?? ""}
+      data-testid="gaixia-melee-effect"
+      transform={`translate(${point[0]} ${point[1]})`}
+    >
+      {placement.hanPoint && placement.chuPoint && (
+        <path className="gaixia-contact-tether" d={buildPath([placement.hanPoint, point, placement.chuPoint])} />
+      )}
       <circle r="28" />
       <circle r="48" />
       <path d="M -24 -24 L 24 24 M 24 -24 L -24 24" />
@@ -277,6 +396,41 @@ export function GaixiaAmbushAnimation() {
   const projection = useMemo(() => createCampaignProjection(mapWidth, projectionHeight, "gaixiaBattle"), []);
   const activePoint = projectTacticalPoint(projection, activeEvent.coordinates);
   const activeMapView = useMemo(() => mapViewForEvent(activeEvent, activePoint), [activeEvent.id, activePoint[0], activePoint[1]]);
+  const projectedRoutes = useMemo<ProjectedGaixiaRoute[]>(
+    () =>
+      routes.map((route) => {
+        const projected = projectLine(projection, route.points);
+        const routeProgress = lineProgress(route.start, route.end, progress);
+        const routeEndProgress = timeline.dateToProgress(route.end);
+        const isComplete = progress >= routeEndProgress;
+        const isVisible = routeShouldRender(route, progress, activeRouteIds);
+        const visiblePoints = linePointsUntil(projected, isComplete ? 1 : routeProgress);
+        const markerPoint = interpolateRoute(projected, routeProgress);
+        const facingX = routeFacing(projected, routeProgress);
+        const active = routeProgress > 0 && routeProgress < 1;
+        const labelPoint = visiblePoints.at(-1) ?? markerPoint;
+        const showUnits = routeUnitShouldRender(route, progress);
+
+        return {
+          active,
+          facingX,
+          isComplete,
+          isVisible,
+          labelPoint,
+          markerPoint,
+          projected,
+          route,
+          routeProgress,
+          showUnits,
+          visiblePoints
+        };
+      }),
+    [activeRouteIds, progress, projection]
+  );
+  const activeEffectPlacement = useMemo(
+    () => activeEffectPlacementForEvent(activeEvent, projectedRoutes, activePoint),
+    [activeEvent, activePoint, projectedRoutes]
+  );
   const {
     canZoomIn,
     canZoomOut,
@@ -570,29 +724,21 @@ export function GaixiaAmbushAnimation() {
               </g>
 
               <g className="gaixia-routes">
-                {routes.map((route) => {
-                  const projected = projectLine(projection, route.points);
-                  const routeProgress = lineProgress(route.start, route.end, progress);
-                  const routeEndProgress = timeline.dateToProgress(route.end);
-                  const isComplete = progress >= routeEndProgress;
-                  const isVisible = routeShouldRender(route, progress, activeRouteIds);
+                {projectedRoutes.map((state) => {
+                  const { active, facingX, isComplete, isVisible, labelPoint, markerPoint, route, routeProgress, showUnits, visiblePoints } = state;
                   if (!isVisible) {
                     return null;
                   }
-                  const visiblePoints = linePointsUntil(projected, isComplete ? 1 : routeProgress);
-                  const markerPoint = interpolateRoute(projected, routeProgress);
-                  const facingX = routeFacing(projected, routeProgress);
-                  const active = routeProgress > 0 && routeProgress < 1;
-                  const labelPoint = visiblePoints.at(-1) ?? markerPoint;
                   const labelOffset = route.labelOffset ?? [10, -12];
-                  const showUnits = routeUnitShouldRender(route, progress);
                   return (
                     <g
                       key={route.id}
                       className={`gaixia-route gaixia-route-${route.faction} gaixia-route-${route.routeKind} ${active ? "is-active" : isComplete ? "is-complete" : "is-forming"}`}
+                      data-route-complete={isComplete ? "true" : "false"}
                       data-route-id={route.id}
                       data-route-kind={route.routeKind}
                       data-route-current={activeRouteIds.has(route.id) ? "true" : "false"}
+                      data-unit-visible={showUnits ? "true" : "false"}
                       data-testid={`gaixia-route-${route.id}`}
                     >
                       <path className="gaixia-route-shadow" d={buildPath(visiblePoints)} />
@@ -646,7 +792,7 @@ export function GaixiaAmbushAnimation() {
                   const [x, y] = projectTacticalPoint(projection, event.coordinates);
                   return (
                     <g key={event.id} className={`event-pin ${passed ? "passed" : ""} ${isCurrent ? "is-current" : ""}`}>
-                      {isCurrent && <ActiveEffect event={event} point={[x, y]} />}
+                      {isCurrent && <ActiveEffect event={event} placement={activeEffectPlacement} />}
                       <circle cx={x} cy={y} r={isCurrent ? 7 : 4.2} />
                       {isCurrent && (
                         <text x={x + 16} y={y + 5} className="active-event-label">
