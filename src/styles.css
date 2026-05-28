@@ -1730,6 +1730,42 @@ h1 {
   stroke-width: 3px;
 }
 
+.nianzhuang-battle .fortified-line-layer {
+  pointer-events: none;
+}
+
+.nianzhuang-battle .fortified-line polyline {
+  fill: none;
+  stroke: rgba(77, 54, 34, 0.74);
+  stroke-dasharray: 11 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .fortified-line-second-defense polyline {
+  stroke: rgba(96, 67, 39, 0.64);
+  stroke-dasharray: 7 6;
+  stroke-width: 2.7;
+}
+
+.nianzhuang-battle .fortified-line-final-core polyline {
+  stroke: rgba(141, 62, 46, 0.72);
+  stroke-dasharray: 5 5;
+  stroke-width: 2.5;
+}
+
+.nianzhuang-battle .fortified-line text {
+  fill: rgba(62, 42, 23, 0.84);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(238, 224, 184, 0.88);
+  stroke-width: 3px;
+}
+
 .nianzhuang-battle .river {
   stroke: rgba(64, 123, 150, 0.72);
   stroke-width: 4;
@@ -1834,13 +1870,13 @@ h1 {
 }
 
 .nianzhuang-battle .line-label {
-  font-size: 11px;
-  stroke-width: 3.5px;
+  font-size: 8px;
+  stroke-width: 3px;
 }
 
 .nianzhuang-battle .formation-unit-label {
-  font-size: 8px;
-  stroke-width: 2.5px;
+  font-size: 5.8px;
+  stroke-width: 1.9px;
 }
 
 .nianzhuang-battle .unit-marker-communist {
@@ -1855,12 +1891,27 @@ h1 {
     drop-shadow(0 4px 7px rgba(60, 35, 18, 0.36));
 }
 
+.nianzhuang-battle .infantry-marker,
+.nianzhuang-battle .infantry-pva-marker {
+  transform: scale(0.42);
+}
+
 .nianzhuang-battle .tank-korean-marker {
-  transform: scale(0.98);
+  transform: scale(0.48);
 }
 
 .nianzhuang-battle .cannon-marker {
-  transform: scale(0.92);
+  transform: scale(0.42);
+}
+
+.nianzhuang-battle .unit-faction-badge circle {
+  r: 5.5;
+  stroke-width: 1.3;
+}
+
+.nianzhuang-battle .unit-faction-badge text {
+  font-size: 4.8px;
+  letter-spacing: 0;
 }
 
 .tank-marker,

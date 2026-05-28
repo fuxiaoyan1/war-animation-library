@@ -1950,8 +1950,45 @@ async function expectRouteVisible(page: Page, routeId: string) {
   await expect(page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`)).toBeVisible();
 }
 
+async function expectNianzhuangLargeBattlefield(page: Page) {
+  const viewBox = await page.locator(".nianzhuang-battle .battle-map").getAttribute("viewBox");
+  expect(viewBox).toBe("0 0 2400 1440");
+  await expect(page.getByTestId("fortified-line-layer")).toBeVisible();
+  await expect(page.getByTestId("fortified-line-outer-defense")).toContainText("第一道村落防线");
+  await expect(page.getByTestId("fortified-line-second-defense")).toContainText("第二道内围防线");
+  await expect(page.getByTestId("fortified-line-final-core")).toContainText("最后内核");
+}
+
+async function expectNianzhuangCompactIcons(page: Page) {
+  const sizes = await page.locator(".nianzhuang-battle .unit-marker").evaluateAll((markers) =>
+    markers.map((marker) => {
+      const box = marker.getBoundingClientRect();
+      return { height: box.height, width: box.width };
+    })
+  );
+
+  expect(sizes.length).toBeGreaterThan(0);
+  for (const size of sizes) {
+    expect(size.width).toBeLessThan(56);
+    expect(size.height).toBeLessThan(58);
+  }
+}
+
 async function jumpToEventByName(page: Page, name: RegExp) {
   await page.getByTestId("event-list").getByRole("button", { name }).click();
+}
+
+async function jumpNianzhuangTimelineTo(page: Page, date: string) {
+  const timeline = createCampaignTimeline({
+    activeSpans: nianzhuangData.frontLines.map(({ end, start }) => ({ end, start })),
+    campaignEnd: nianzhuangData.campaignEnd,
+    campaignStart: nianzhuangData.campaignStart,
+    events: nianzhuangData.battleEvents,
+    inactiveGapDisplayDays: 0.12,
+    points: nianzhuangData.mapPoints,
+    timingMode: "compressed"
+  });
+  await page.getByTestId("timeline").fill(String(Math.round(timeline.dateToProgress(date) * 1000)));
 }
 
 async function expectAncientEventClickPlaysMeleeCue(page: Page, clickEvent: () => Promise<void>) {
@@ -2229,11 +2266,18 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expect(nianzhuangEvent("campaign-opens").date).toBe("1948-11-06T18:00");
   expect(nianzhuangEvent("huang-withdraws").date).toBe("1948-11-07T06:00");
   expect(nianzhuangEvent("hold-and-relief").date).toBe("1948-11-11T12:00");
+  expect(nianzhuangEvent("preliminary-attacks").date).toBe("1948-11-13T06:00");
   expect(nianzhuangEvent("trench-approach").date).toBe("1948-11-15T02:00");
   expect(nianzhuangEvent("general-assault").date).toBe("1948-11-19T10:00");
   expect(nianzhuangEvent("first-line-broken").date).toBe("1948-11-19T22:00");
   expect(nianzhuangEvent("huang-end").date).toBe("1948-11-22T10:00");
   expectNianzhuangEventFocus("hold-and-relief", ["huang-nianzhuang-defense-ring", "xuzhou-relief-east", "pla-relief-block-line"]);
+  expectNianzhuangEventFocus("preliminary-attacks", [
+    "pla-4th-preliminary-daxingzhuang",
+    "pla-13th-preliminary-songzhuang",
+    "pla-6th-preliminary-pengzhuang",
+    "huang-preliminary-counterattack"
+  ]);
   expectNianzhuangEventFocus("relief-blocked", ["xuzhou-relief-east", "pla-relief-block-line", "daxujia"]);
   expectNianzhuangEventFocus("trench-approach", ["pla-west-trench-approach", "pla-north-trench-approach", "huang-nianzhuang-defense-ring"]);
   expectNianzhuangEventFocus("general-assault", ["pla-artillery-zhoujiazhai", "pla-general-assault-west", "huang-nianzhuang-defense-ring"]);
@@ -2256,6 +2300,10 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     unitVisibleUntil: "1948-11-22T10:00"
   });
   expectNianzhuangRouteWindow("pla-west-trench-approach", { start: "1948-11-15T02:00", end: "1948-11-19T09:30" });
+  expectNianzhuangRouteWindow("pla-4th-preliminary-daxingzhuang", { start: "1948-11-11T20:00", end: "1948-11-13T23:00" });
+  expectNianzhuangRouteWindow("pla-13th-preliminary-songzhuang", { start: "1948-11-11T20:00", end: "1948-11-13T23:00" });
+  expectNianzhuangRouteWindow("pla-6th-preliminary-pengzhuang", { start: "1948-11-13T06:00", end: "1948-11-15T20:00" });
+  expectNianzhuangRouteWindow("pla-9th-southeast-advance", { start: "1948-11-13T06:00", end: "1948-11-17T20:00" });
   expectNianzhuangRouteWindow("pla-general-assault-west", { start: "1948-11-19T09:45", end: "1948-11-19T22:00" });
   expectNianzhuangRouteWindow("huang-nizhuang-final-flight", {
     start: "1948-11-21T18:00",
@@ -2265,6 +2313,10 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectNianzhuangRouteUsesSource("huang-xinan-west-withdrawal", "xinanzhen", "nianzhuang", 4);
   expectNianzhuangRouteUsesSource("xuzhou-relief-east", "xuzhou", "relief-forward-edge", 4);
   expectNianzhuangRouteUsesSource("pla-relief-block-line", "northwest-block-entry", "southwest-block-entry", 4);
+  expectNianzhuangRouteUsesSource("pla-4th-preliminary-daxingzhuang", "nianzhuang-north", "daxingzhuang", 2);
+  expectNianzhuangRouteUsesSource("pla-13th-preliminary-songzhuang", "nianzhuang-west", "songzhuang-large", 2);
+  expectNianzhuangRouteUsesSource("pla-6th-preliminary-pengzhuang", "wangjiaji", "pengzhuang", 2);
+  expectNianzhuangRouteUsesSource("pla-9th-southeast-advance", "qianbanqiao", "xujingwa", 1);
   expectNianzhuangRouteUsesSource("huang-nizhuang-final-flight", "inner-pocket", "nizhuang", 1);
   expectNianzhuangRouteUsesSource("pla-nizhuang-pursuit", "inner-pocket", "nizhuang", 1);
   const reliefEnd = nianzhuangData.mapPoints.find((point) => point.id === nianzhuangRoute("xuzhou-relief-east").to)!;
@@ -2275,6 +2327,19 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
       toTime("1948-11-15T02:00")
     );
   }
+  for (const routeId of [
+    "pla-general-assault-west",
+    "pla-general-assault-north",
+    "pla-general-assault-south",
+    "pla-general-assault-east",
+    "pla-general-assault-northeast",
+    "pla-general-assault-southeast"
+  ]) {
+    expect(toTime(nianzhuangRoute(routeId).start), `nianzhuang assault route ${routeId} should start around general assault`).toBeGreaterThanOrEqual(
+      toTime("1948-11-19T09:45")
+    );
+  }
+  expect(nianzhuangData.fortifiedLines.map((line) => line.id)).toEqual(["outer-defense", "second-defense", "final-core"]);
   expectNianzhuangEffectUsesRoutes("relief-blocked-salvo", "pla-relief-block-line", "xuzhou-relief-east");
   expectNianzhuangEffectUsesRoutes("opening-assault-salvo", "pla-artillery-zhoujiazhai", "huang-nianzhuang-defense-ring");
   expectNianzhuangEffectUsesRoutes("first-line-break-salvo", "pla-general-assault-west", "huang-inner-recoil");
@@ -3746,12 +3811,17 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expect(page.locator(".nianzhuang-battle .river-yunhe-water-net")).toBeVisible();
   await expect(page.locator(".nianzhuang-battle .river-nianzhuang-ditches")).toBeVisible();
   await expect(page.locator(".nianzhuang-battle .battle-map")).toHaveCSS("background-color", /rgb\(213, 195, 145\)/);
+  await expectNianzhuangLargeBattlefield(page);
   await expectRouteVisibleWithUnit(page, "pla-east-pursuit-main");
+  await expectNianzhuangCompactIcons(page);
 
   await jumpToEventByName(page, /黄百韬兵团西撤/);
+  await jumpNianzhuangTimelineTo(page, "1948-11-09T12:00");
   await expectRouteVisibleWithUnit(page, "huang-xinan-west-withdrawal");
   await expectRouteVisibleWithUnit(page, "pla-east-pursuit-main");
   await expectRouteVisibleWithUnit(page, "pla-north-pursuit");
+  await expectRouteVisibleWithUnit(page, "pla-south-pursuit");
+  await expectRoutesUseReadableBattleArea(page, ".nianzhuang-battle", ["huang-xinan-west-withdrawal", "pla-east-pursuit-main", "pla-north-pursuit"], 0.26, 0.14);
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", ["xuzhou-relief-east", "pla-west-trench-approach"]);
 
   await jumpToEventByName(page, /固守待援与徐州东援/);
@@ -3761,6 +3831,32 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expect(page.getByTestId("tank-korean-marker").first()).toBeVisible();
   await expect(page.getByTestId("infantry-pva-marker").first()).toBeVisible();
   await expectNoUnitBadgeLabels(page, ["黄维"]);
+  await expect(page.getByTestId("nianzhuang-force-scale-note")).toContainText("黄兵团约10万人被围");
+
+  await jumpToEventByName(page, /试攻受挫，转入攻坚判断/);
+  await expectRouteVisibleWithUnit(page, "pla-4th-preliminary-daxingzhuang");
+  await expectRouteVisibleWithUnit(page, "pla-13th-preliminary-songzhuang");
+  await expectRouteVisibleWithUnit(page, "pla-6th-preliminary-pengzhuang");
+  await expectRouteVisibleWithUnit(page, "pla-8th-east-fix-youfang");
+  await expectRouteVisibleWithUnit(page, "pla-9th-southeast-advance");
+  await expectRouteVisibleWithUnit(page, "huang-preliminary-counterattack");
+  await expect(page.getByTestId("map-point-daxingzhuang")).toContainText("大兴庄");
+  await expect(page.getByTestId("map-point-songzhuang-large")).toContainText("大宋庄");
+  await expect(page.getByTestId("map-point-pengzhuang")).toContainText("彭庄");
+  await expect(page.getByTestId("map-point-luliang-line")).toContainText("鲁楼-梁庄线");
+  await expectRoutesUseReadableBattleArea(
+    page,
+    ".nianzhuang-battle",
+    [
+      "pla-4th-preliminary-daxingzhuang",
+      "pla-13th-preliminary-songzhuang",
+      "pla-6th-preliminary-pengzhuang",
+      "pla-8th-east-fix-youfang",
+      "pla-9th-southeast-advance"
+    ],
+    0.16,
+    0.15
+  );
 
   await jumpToEventByName(page, /大许家阻援线钉住东援/);
   await expectRouteVisibleWithUnit(page, "xuzhou-relief-east");
@@ -3780,11 +3876,19 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
 
   await jumpToEventByName(page, /粟裕下达总攻令/);
   await expectRouteVisibleWithUnit(page, "pla-artillery-zhoujiazhai");
-  for (const routeId of ["pla-general-assault-west", "pla-general-assault-north", "pla-general-assault-south", "pla-general-assault-east"]) {
+  for (const routeId of [
+    "pla-general-assault-west",
+    "pla-general-assault-north",
+    "pla-general-assault-south",
+    "pla-general-assault-east",
+    "pla-general-assault-northeast",
+    "pla-general-assault-southeast"
+  ]) {
     await expectRouteVisibleWithUnit(page, routeId);
   }
   await expectRouteVisibleWithUnit(page, "huang-nianzhuang-defense-ring");
   await expect(page.getByTestId("nianzhuang-effect-general-assault")).toBeVisible();
+  await expect(page.getByTestId("nianzhuang-assault-axis-note")).toContainText("华野5个纵队四面向心突击");
 
   await jumpToEventByName(page, /第一道防线被突破/);
   await expectRouteVisibleWithUnit(page, "huang-inner-recoil");
@@ -3793,6 +3897,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
 
   await jumpToEventByName(page, /碾庄内核被压缩/);
   await expectRouteVisibleWithUnit(page, "pla-final-compression-ring");
+  await expectRouteVisibleWithUnit(page, "pla-final-compression-south");
+  await expectRouteVisibleWithUnit(page, "pla-final-compression-west");
   await expectRouteVisibleWithUnit(page, "huang-inner-recoil");
   await expectRouteVisibleWithUnit(page, "xuzhou-relief-east");
   await expect(page.getByTestId("nianzhuang-effect-final-pocket")).toBeVisible();

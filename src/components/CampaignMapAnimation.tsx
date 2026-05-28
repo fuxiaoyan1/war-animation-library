@@ -28,9 +28,12 @@ type FocusTransitionState = {
 };
 
 type GeoLine = {
+  className?: string;
   id: string;
   label: string;
   points: Array<[number, number]>;
+  revealAt?: string;
+  testId?: string;
 };
 
 export type MapOverlayElement =
@@ -121,6 +124,7 @@ type CampaignMapAnimationProps = {
   frontLines: FrontLine[];
   focusSteps: FocusStep[];
   focusTransitionProgress?: number;
+  fortifiedLines?: GeoLine[];
   gapScale?: number;
   gapOverrides?: Array<{
     displayDays: number;
@@ -132,6 +136,10 @@ type CampaignMapAnimationProps = {
   legendAxis?: string;
   legendPrimary?: string;
   legendSecondary?: string;
+  mapDimensions?: {
+    height: number;
+    width: number;
+  };
   mapPoints: MapPoint[];
   mapOverlays?: MapOverlayElement[];
   maxGapDays?: number;
@@ -164,8 +172,8 @@ type CampaignMapAnimationProps = {
   unitIcon?: UnitIconKind;
 };
 
-const mapWidth = 1180;
-const mapHeight = 704;
+const defaultMapWidth = 1180;
+const defaultMapHeight = 704;
 const cuePulseThreshold = 0.82;
 
 const cinematicSpecks = Array.from({ length: 34 }, (_, index) => ({
@@ -652,6 +660,7 @@ export function CampaignMapAnimation({
   frontLines,
   focusSteps,
   focusTransitionProgress = 0,
+  fortifiedLines = [],
   gapScale,
   gapOverrides,
   historicalRegions = [],
@@ -659,6 +668,7 @@ export function CampaignMapAnimation({
   legendAxis = "战役轴线",
   legendPrimary = "主攻推进",
   legendSecondary = "反击/联军行动",
+  mapDimensions,
   mapPoints,
   mapOverlays = [],
   maxGapDays,
@@ -690,6 +700,8 @@ export function CampaignMapAnimation({
   const scoreRef = useRef<WarScore | null>(null);
   const lastCueEventRef = useRef<string | null>(null);
   const playbackSpeed = 1 / playbackDurationSeconds;
+  const mapWidth = mapDimensions?.width ?? defaultMapWidth;
+  const mapHeight = mapDimensions?.height ?? defaultMapHeight;
 
   const timeline = useMemo(
     () =>
@@ -1272,6 +1284,30 @@ export function CampaignMapAnimation({
                   <polyline key={river.id} points={projectLine(river.points)} className={`river river-${river.id}`} />
                 ))}
               </g>
+              {fortifiedLines.length > 0 && (
+                <g className="fortified-line-layer" data-testid="fortified-line-layer">
+                  {fortifiedLines.map((line) => {
+                    if (line.revealAt && progress < timeline.dateToProgress(line.revealAt)) {
+                      return null;
+                    }
+
+                    const labelPoint = line.points[Math.max(0, Math.floor(line.points.length / 3))] ?? line.points[0];
+                    const [x, y] = projectPoint(projection, labelPoint);
+                    return (
+                      <g
+                        key={line.id}
+                        className={`fortified-line fortified-line-${line.id} ${line.className ?? ""}`}
+                        data-testid={line.testId ?? `fortified-line-${line.id}`}
+                      >
+                        <polyline points={projectLine(line.points)} />
+                        <text x={x} y={y - 10}>
+                          {line.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </g>
+              )}
               <g className="terrain-layer">
                 {terrainZones.map((zone) => {
                   const [cx, cy] = projectPoint(projection, zone.coordinates);
