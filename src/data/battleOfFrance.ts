@@ -41,7 +41,9 @@ export type FrontLine = {
 export type FormationUnit = {
   badgeLabel?: string;
   className?: string;
+  coordinates?: [number, number];
   faction?: Faction;
+  facingX?: -1 | 1;
   hiddenFrom?: string;
   hiddenUntil?: string;
   icon?: UnitIconKind;

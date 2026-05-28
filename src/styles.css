@@ -1664,6 +1664,12 @@ h1 {
   background: #d5c391;
 }
 
+.nianzhuang-battle .map-stage {
+  height: calc(100vh - 104px);
+  min-height: calc(100vh - 104px);
+  border-radius: 18px;
+}
+
 .nianzhuang-battle .map-base {
   fill: #d9c795;
 }
@@ -1742,6 +1748,12 @@ h1 {
   stroke-linejoin: round;
   stroke-width: 3.2;
   vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .fortified-line-pla-encirclement polyline {
+  stroke: rgba(170, 49, 34, 0.74);
+  stroke-dasharray: 18 8;
+  stroke-width: 3.4;
 }
 
 .nianzhuang-battle .fortified-line-second-defense polyline {
@@ -1853,6 +1865,14 @@ h1 {
   filter: drop-shadow(0 2px 4px rgba(68, 45, 20, 0.2));
 }
 
+.nianzhuang-battle .front-line .front-halo {
+  stroke-opacity: 0.18;
+}
+
+.nianzhuang-battle .front-line .front-direction {
+  stroke-opacity: 0.82;
+}
+
 .nianzhuang-battle .front-line.is-complete .front-route {
   stroke-opacity: 0.82;
 }
@@ -1875,8 +1895,8 @@ h1 {
 }
 
 .nianzhuang-battle .formation-unit-label {
-  font-size: 5.8px;
-  stroke-width: 1.9px;
+  font-size: 9.4px;
+  stroke-width: 2.8px;
 }
 
 .nianzhuang-battle .unit-marker-communist {
@@ -1893,24 +1913,24 @@ h1 {
 
 .nianzhuang-battle .infantry-marker,
 .nianzhuang-battle .infantry-pva-marker {
-  transform: scale(0.42);
+  transform: scale(4.75);
 }
 
 .nianzhuang-battle .tank-korean-marker {
-  transform: scale(0.48);
+  transform: scale(4.5);
 }
 
 .nianzhuang-battle .cannon-marker {
-  transform: scale(0.42);
+  transform: scale(4.45);
 }
 
 .nianzhuang-battle .unit-faction-badge circle {
-  r: 5.5;
-  stroke-width: 1.3;
+  r: 8;
+  stroke-width: 1.6;
 }
 
 .nianzhuang-battle .unit-faction-badge text {
-  font-size: 4.8px;
+  font-size: 6.6px;
   letter-spacing: 0;
 }
 
@@ -3840,6 +3860,11 @@ body:has(.gaixia-ambush) {
     min-height: 72vh;
   }
 
+  .nianzhuang-battle .map-stage,
+  .nianzhuang-battle .battle-map {
+    min-height: 72vh;
+  }
+
   .outcome-panel {
     bottom: 58px;
     max-width: calc(100% - 28px);
@@ -3955,6 +3980,11 @@ body:has(.gaixia-ambush) {
   }
 
   .battle-map {
+    min-height: 70vh;
+  }
+
+  .nianzhuang-battle .map-stage,
+  .nianzhuang-battle .battle-map {
     min-height: 70vh;
   }
 

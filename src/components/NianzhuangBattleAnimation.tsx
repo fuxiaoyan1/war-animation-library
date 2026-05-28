@@ -48,7 +48,7 @@ const narrationCues: NarrationCue[] = [
     start: "1948-11-11T12:00",
     end: "1948-11-14T20:00",
     title: "第二幕 / 固守与阻援",
-    text: "黄兵团约10万人在碾庄圩村落水网中固守待援，邱清泉、李弥从徐州东援；华野外围纵队转入村落攻坚，徐东阻援集团把东援钉在大许家一线。"
+    text: "黄兵团约10万人在碾庄圩村落水网中固守待援，核心圈按师级守点展开，华野纵队形成外层包围；邱清泉、李弥从徐州东援，被徐东阻援集团钉在大许家一线。"
   },
   {
     id: "trench",
@@ -62,7 +62,7 @@ const narrationCues: NarrationCue[] = [
     start: "1948-11-19T10:00",
     end: "1948-11-21T18:00",
     title: "第四幕 / 总攻压缩",
-    text: "19日10时总攻开始，4、6、8、9、13纵队分向突击，晚10时突破第一道防线；守军由外圈退入内核。"
+    text: "19日10时总攻开始，4、6、8、9、13纵队分向突击，晚10时突破第一道防线；守军师级阵地分段收缩、破裂，残部退入内核。"
   },
   {
     id: "ending",
@@ -89,7 +89,7 @@ export function NianzhuangBattleAnimation() {
       cueEvents={cueEventIds}
       eyebrow="战争动画藏书馆 / 解放战争"
       focusSteps={[
-        { fromProgress: 0, focus: "nianzhuangWide" },
+        { fromProgress: 0, focus: "nianzhuangPursuit" },
         { fromProgress: timeline.dateToProgress("1948-11-10T20:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-11T12:00"), focus: "nianzhuangRelief" },
         { fromProgress: timeline.dateToProgress("1948-11-13T06:00"), focus: "nianzhuangPocket" },
@@ -97,7 +97,7 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-19T10:00"), focus: "nianzhuangFinal" },
         { fromProgress: timeline.dateToProgress("1948-11-21T18:00"), focus: "nianzhuangFinal" }
       ]}
-      focusTransitionProgress={0.035}
+      focusTransitionProgress={0.02}
       frontLines={semanticFrontLines}
       fortifiedLines={fortifiedLines}
       historicalRegions={historicalRegions}
@@ -105,7 +105,7 @@ export function NianzhuangBattleAnimation() {
       legendAxis="追击 / 围歼 / 阻援 / 对壕攻坚"
       legendPrimary="华东野战军"
       legendSecondary="国民党军"
-      mapDimensions={{ width: 2400, height: 1440 }}
+      mapDimensions={{ width: 4800, height: 2880 }}
       mapOverlays={mapOverlays}
       mapPoints={mapPoints}
       musicSource={publicPath("/audio/wikimedia-the-thunderer-us-army.ogg")}
@@ -114,19 +114,19 @@ export function NianzhuangBattleAnimation() {
         { label: "战斗持续", value: "17天" },
         { label: "核心目标", value: "黄百韬第七兵团约10万人" },
         { label: "关键支线", value: "徐东阻援" },
-        { label: "战术单位", value: "纵队 / 军 / 村落阵地" }
+        { label: "战术单位", value: "华野纵队 / 黄兵团师" }
       ]}
       playbackDurationSeconds={300}
       regionLabels={[
         { label: "XUZHOU", coordinates: [117.2, 34.35] },
-        { label: "NIANZHUANG POCKET", coordinates: [117.89, 34.4] },
+        { label: "NIANZHUANG POCKET", coordinates: [117.88, 34.43] },
         { label: "XIN'ANZHEN", coordinates: [118.34, 34.45] },
-        { label: "CANAL WATER NET", coordinates: [118.08, 34.22] }
+        { label: "CANAL WATER NET", coordinates: [118.08, 34.2] }
       ]}
       rivers={rivers}
       shellClassName="nianzhuang-battle modern-war chinese-civil-war"
       sfxProfile="ww2"
-      subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、徐州东援受阻、试攻受挫、对壕近迫、19日多纵队总攻、第一道防线突破、内核压缩与倪庄终局。"
+      subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、师级布防、华野外层包围、徐州东援受阻、试攻受挫、对壕近迫、19日多纵队总攻、第一道防线突破、内核压缩与倪庄终局。"
       tacticalRouteRetention
       terrainZones={terrainZones}
       testId="nianzhuang-app"

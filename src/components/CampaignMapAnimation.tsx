@@ -34,6 +34,7 @@ type GeoLine = {
   points: Array<[number, number]>;
   revealAt?: string;
   testId?: string;
+  visibleUntil?: string;
 };
 
 export type MapOverlayElement =
@@ -1291,6 +1292,10 @@ export function CampaignMapAnimation({
                       return null;
                     }
 
+                    if (line.visibleUntil && progress > timeline.dateToProgress(line.visibleUntil)) {
+                      return null;
+                    }
+
                     const labelPoint = line.points[Math.max(0, Math.floor(line.points.length / 3))] ?? line.points[0];
                     const [x, y] = projectPoint(projection, labelPoint);
                     return (
@@ -1412,7 +1417,7 @@ export function CampaignMapAnimation({
                 const routeState = isActive ? "is-active" : isComplete ? "is-complete" : "is-forming";
                 const hasRouteStarted = progress >= lineStartProgress;
                 const isWithinRouteVisibleWindow = !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil);
-                const isVisible = hasRouteStarted && (tacticalRouteRetention || isWithinRouteVisibleWindow);
+                const isVisible = hasRouteStarted && isWithinRouteVisibleWindow;
                 const participatesInRetainedSeaGroup =
                   retainSeaUnitsAfterRouteEnd &&
                   line.routeKind === "sea" &&
@@ -1487,12 +1492,22 @@ export function CampaignMapAnimation({
                             return null;
                           }
 
-                          const placement = formationUnitPlacement(
-                            formationRoutePoints,
-                            formationSegmentProgress,
-                            formationUnit.offset ?? [0, 0],
-                            formationOffsetScale
-                          );
+                          const placement = formationUnit.coordinates
+                            ? {
+                                facingX: formationUnit.facingX ?? facingX,
+                                point: routeLocalOffset(
+                                  projectPoint(projection, formationUnit.coordinates),
+                                  routeDirection,
+                                  [0, (formationUnit.offset?.[1] ?? 0) * formationOffsetScale]
+                                ),
+                                routeProgress: segmentProgress
+                              }
+                            : formationUnitPlacement(
+                                formationRoutePoints,
+                                formationSegmentProgress,
+                                formationUnit.offset ?? [0, 0],
+                                formationOffsetScale
+                              );
                           const [markerX, markerY] = placement.point;
                           const markerFaction = formationUnit.faction ?? line.faction;
                           const markerIcon = formationUnit.icon ?? icon;
