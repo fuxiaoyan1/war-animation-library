@@ -5,6 +5,7 @@ import {
   campaignStart,
   cueEventIds,
   cueEventKinds,
+  fragmentedLines,
   fortifiedLines,
   frontLines,
   historicalRegions,
@@ -94,12 +95,13 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-11T12:00"), focus: "nianzhuangRelief" },
         { fromProgress: timeline.dateToProgress("1948-11-13T06:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-15T02:00"), focus: "nianzhuangPocket" },
-        { fromProgress: timeline.dateToProgress("1948-11-19T10:00"), focus: "nianzhuangFinal" },
+        { fromProgress: timeline.dateToProgress("1948-11-19T10:00"), focus: "nianzhuangBreakthrough" },
+        { fromProgress: timeline.dateToProgress("1948-11-20T12:00"), focus: "nianzhuangCompression" },
         { fromProgress: timeline.dateToProgress("1948-11-21T18:00"), focus: "nianzhuangFinal" }
       ]}
       focusTransitionProgress={0.02}
       frontLines={semanticFrontLines}
-      fortifiedLines={fortifiedLines}
+      fortifiedLines={[...fortifiedLines, ...fragmentedLines]}
       historicalRegions={historicalRegions}
       inactiveGapDisplayDays={0.12}
       legendAxis="追击 / 围歼 / 阻援 / 对壕攻坚"

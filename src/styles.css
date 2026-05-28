@@ -1678,6 +1678,12 @@ h1 {
   opacity: 0.42;
 }
 
+.nianzhuang-battle .map-point text,
+.nianzhuang-battle .active-event-label {
+  font-size: 42px;
+  stroke-width: 9px;
+}
+
 .nianzhuang-battle.cinematic-mode .map-stage {
   background:
     linear-gradient(180deg, #e3d2a1, #cbb880 58%, #bba66e);
@@ -1728,12 +1734,12 @@ h1 {
 
 .nianzhuang-battle .historical-region-name {
   fill: rgba(55, 43, 24, 0.68);
-  font-size: 13px;
+  font-size: 42px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
   stroke: rgba(234, 220, 176, 0.82);
-  stroke-width: 3px;
+  stroke-width: 9px;
 }
 
 .nianzhuang-battle .fortified-line-layer {
@@ -1768,14 +1774,30 @@ h1 {
   stroke-width: 2.5;
 }
 
+.nianzhuang-battle .fragmented-line-breach polyline,
+.nianzhuang-battle .fortified-line-outer-defense-north-fragment polyline,
+.nianzhuang-battle .fortified-line-outer-defense-east-fragment polyline,
+.nianzhuang-battle .fortified-line-outer-defense-south-fragment polyline {
+  stroke: rgba(119, 52, 42, 0.86);
+  stroke-dasharray: 4 14;
+  stroke-width: 4.2;
+}
+
+.nianzhuang-battle .fragmented-line-breach text,
+.nianzhuang-battle .fortified-line-outer-defense-north-fragment text,
+.nianzhuang-battle .fortified-line-outer-defense-east-fragment text,
+.nianzhuang-battle .fortified-line-outer-defense-south-fragment text {
+  fill: rgba(98, 36, 28, 0.9);
+}
+
 .nianzhuang-battle .fortified-line text {
   fill: rgba(62, 42, 23, 0.84);
-  font-size: 11px;
+  font-size: 42px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
   stroke: rgba(238, 224, 184, 0.88);
-  stroke-width: 3px;
+  stroke-width: 9px;
 }
 
 .nianzhuang-battle .river {
@@ -1816,15 +1838,15 @@ h1 {
 .nianzhuang-battle .terrain-label,
 .nianzhuang-battle .region-labels text {
   fill: rgba(64, 47, 24, 0.66);
-  font-size: 13px;
+  font-size: 40px;
   letter-spacing: 0;
   paint-order: stroke;
   stroke: rgba(235, 220, 178, 0.72);
-  stroke-width: 3px;
+  stroke-width: 9px;
 }
 
 .nianzhuang-battle .region-labels text {
-  font-size: 12px;
+  font-size: 34px;
   opacity: 0.78;
 }
 
@@ -1838,12 +1860,12 @@ h1 {
 .nianzhuang-battle .wind-overlay.rail-overlay text,
 .nianzhuang-battle .annotation-marker text {
   fill: rgba(50, 38, 22, 0.88);
-  font-size: 12px;
+  font-size: 38px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
   stroke: rgba(238, 223, 180, 0.86);
-  stroke-width: 3px;
+  stroke-width: 8px;
 }
 
 .nianzhuang-battle .annotation-marker circle {
@@ -1856,7 +1878,7 @@ h1 {
 }
 
 .nianzhuang-battle .annotation-subtitle {
-  font-size: 10px;
+  font-size: 30px;
   opacity: 0.88;
 }
 
@@ -1890,13 +1912,23 @@ h1 {
 }
 
 .nianzhuang-battle .line-label {
-  font-size: 8px;
-  stroke-width: 3px;
+  font-size: 34px;
+  stroke-width: 8px;
 }
 
 .nianzhuang-battle .formation-unit-label {
-  font-size: 9.4px;
-  stroke-width: 2.8px;
+  font-size: 64px;
+  stroke-width: 5px;
+  transform: translateY(-74px);
+}
+
+.nianzhuang-battle .battle-salvo-effect.nianzhuang-fragment-impact .salvo-label,
+.nianzhuang-battle .battle-salvo-effect[data-testid="nianzhuang-effect-first-line"] .salvo-label,
+.nianzhuang-battle .battle-salvo-effect[data-testid="nianzhuang-effect-final-pocket"] .salvo-label {
+  fill: #5b2b20;
+  font-size: 34px;
+  stroke: rgba(242, 224, 178, 0.88);
+  stroke-width: 8px;
 }
 
 .nianzhuang-battle .unit-marker-communist {
@@ -1913,15 +1945,15 @@ h1 {
 
 .nianzhuang-battle .infantry-marker,
 .nianzhuang-battle .infantry-pva-marker {
-  transform: scale(4.75);
+  transform: scale(1.58);
 }
 
 .nianzhuang-battle .tank-korean-marker {
-  transform: scale(4.5);
+  transform: scale(1.5);
 }
 
 .nianzhuang-battle .cannon-marker {
-  transform: scale(4.45);
+  transform: scale(1.48);
 }
 
 .nianzhuang-battle .unit-faction-badge circle {
