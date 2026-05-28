@@ -54,23 +54,30 @@ const narrationCues: NarrationCue[] = [
   {
     id: "trench",
     start: "1948-11-15T02:00",
-    end: "1948-11-19T09:45",
+    end: "1948-11-19T10:00",
     title: "第三幕 / 对壕近迫",
     text: "华野由运动战转入攻坚战，利用夜间挖壕隐藏接近，沿村落、水沟和水塘间隙逐点靠近防御圈。"
   },
   {
     id: "assault",
     start: "1948-11-19T10:00",
-    end: "1948-11-21T18:00",
-    title: "第四幕 / 总攻压缩",
-    text: "19日10时总攻开始，4、6、8、9、13纵队分向突击，晚10时突破第一道防线；守军师级阵地分段收缩、破裂，残部退入内核。"
+    end: "1948-11-20T05:30",
+    title: "第四幕 / 夜攻破墙",
+    text: "19日10时下达总攻令，白天炮火准备；21时15分后步兵夜攻展开，22时30分突破第一道围墙，20日凌晨突破第二道围墙并突入内圩。"
+  },
+  {
+    id: "inner-pocket",
+    start: "1948-11-20T05:30",
+    end: "1948-11-22T16:00",
+    title: "第五幕 / 残点清剿",
+    text: "内圩核心失守后，黄兵团残部退向东侧村落残点；华野分北、东、南、西逐村压缩，徐州东援仍被阻在大许家一线。"
   },
   {
     id: "ending",
-    start: "1948-11-21T18:00",
-    end: "1948-11-22T12:00",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T20:00",
     title: "终幕 / 倪庄终局",
-    text: "黄百韬残部从碾庄内核向倪庄逃散，追击部队压上，淮海战役第一阶段取得决定性胜利。"
+    text: "黄百韬残部从东侧村落残点向倪庄逃散，追击部队压上，淮海战役第一阶段取得决定性胜利。"
   }
 ];
 
@@ -96,8 +103,9 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-13T06:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-15T02:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-19T10:00"), focus: "nianzhuangBreakthrough" },
-        { fromProgress: timeline.dateToProgress("1948-11-20T12:00"), focus: "nianzhuangCompression" },
-        { fromProgress: timeline.dateToProgress("1948-11-21T18:00"), focus: "nianzhuangFinal" }
+        { fromProgress: timeline.dateToProgress("1948-11-19T22:30"), focus: "nianzhuangCompression" },
+        { fromProgress: timeline.dateToProgress("1948-11-20T05:30"), focus: "nianzhuangFinal" },
+        { fromProgress: timeline.dateToProgress("1948-11-22T16:00"), focus: "nianzhuangFinal" }
       ]}
       focusTransitionProgress={0.02}
       frontLines={semanticFrontLines}
@@ -128,12 +136,12 @@ export function NianzhuangBattleAnimation() {
       rivers={rivers}
       shellClassName="nianzhuang-battle modern-war chinese-civil-war"
       sfxProfile="ww2"
-      subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、师级布防、华野外层包围、徐州东援受阻、试攻受挫、对壕近迫、19日多纵队总攻、第一道防线突破、内核压缩与倪庄终局。"
+      subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、师级布防、华野外层包围、徐州东援受阻、试攻受挫、对壕近迫、19日总攻令、夜攻突破第一道围墙、20日凌晨突破第二道围墙、内圩核心失守、东侧残点清剿与倪庄终局。"
       tacticalRouteRetention
       terrainZones={terrainZones}
       testId="nianzhuang-app"
       timeCounterLabel="天"
-      timeStepDays={1}
+      timeStepDays={1 / 96}
       timingMode="compressed"
       timelineTitle="1948年11月6日至22日 碾庄圩围歼战"
       title="淮海战役：碾庄圩围歼战"

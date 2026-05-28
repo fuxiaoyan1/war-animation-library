@@ -108,9 +108,15 @@ export class WarScore {
     }
 
     if (kind === "aircraft" || kind === "dive" || kind === "airCombat" || kind === "combined") {
-      this.scheduleCue(140, () => {
+      const playAircraft = () => {
         void this.playClip("aircraft");
-      }, "aircraft");
+      };
+
+      if (kind === "aircraft" || kind === "dive" || kind === "airCombat") {
+        playAircraft();
+      } else {
+        this.scheduleCue(140, playAircraft, "aircraft");
+      }
     }
 
     if (kind === "airCombat" || kind === "strafing" || kind === "combined") {

@@ -1038,7 +1038,7 @@ export function CampaignMapAnimation({
 
   const jumpToEvent = (event: BattleEvent) => {
     setProgress(timeline.dateToProgress(event.date));
-    window.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+    stageRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
     playEventCue(event.id);
   };
 
@@ -1109,6 +1109,7 @@ export function CampaignMapAnimation({
                 key={event.id}
                 type="button"
                 className={event.id === activeEvent.id ? "active" : ""}
+                data-event-id={event.id}
                 style={{ left: `${timeline.dateToProgress(event.date) * 100}%` }}
                 onClick={() => jumpToEvent(event)}
                 aria-label={`跳到${event.title}`}
