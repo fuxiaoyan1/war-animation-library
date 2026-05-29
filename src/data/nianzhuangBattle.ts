@@ -4,6 +4,35 @@ import type { HistoricalRegion } from "../types/maps";
 
 export const campaignStart = "1948-11-06T18:00";
 export const campaignEnd = "1948-11-22T20:00";
+export const timelineInactiveGapDisplayDays = 0.1;
+export const timelineActiveSpans = [
+  { start: "1948-11-19T10:00", end: "1948-11-22T20:00" }
+];
+export const timelineGapOverrides = [
+  { start: "1948-11-06T18:00", end: "1948-11-07T06:00", displayDays: 0.45 },
+  { start: "1948-11-07T06:00", end: "1948-11-10T20:00", displayDays: 1.1 },
+  { start: "1948-11-10T20:00", end: "1948-11-11T12:00", displayDays: 0.75 },
+  { start: "1948-11-11T12:00", end: "1948-11-13T06:00", displayDays: 0.95 },
+  { start: "1948-11-13T06:00", end: "1948-11-13T18:00", displayDays: 0.5 },
+  { start: "1948-11-13T18:00", end: "1948-11-15T02:00", displayDays: 0.8 },
+  { start: "1948-11-15T02:00", end: "1948-11-17T20:00", displayDays: 0.9 },
+  { start: "1948-11-17T20:00", end: "1948-11-19T10:00", displayDays: 0.81 },
+  { start: "1948-11-19T10:00", end: "1948-11-19T21:15", displayDays: 0.45 },
+  { start: "1948-11-19T21:15", end: "1948-11-19T22:30", displayDays: 0.6 },
+  { start: "1948-11-19T22:30", end: "1948-11-20T03:30", displayDays: 0.9 },
+  { start: "1948-11-20T03:30", end: "1948-11-20T05:15", displayDays: 0.72 },
+  { start: "1948-11-20T05:15", end: "1948-11-20T05:30", displayDays: 0.08 },
+  { start: "1948-11-20T05:30", end: "1948-11-20T18:00", displayDays: 0.8 },
+  { start: "1948-11-20T18:00", end: "1948-11-21T08:00", displayDays: 0.55 },
+  { start: "1948-11-21T08:00", end: "1948-11-21T18:00", displayDays: 0.45 },
+  { start: "1948-11-21T18:00", end: "1948-11-21T22:00", displayDays: 0.25 },
+  { start: "1948-11-21T22:00", end: "1948-11-22T10:00", displayDays: 0.48 },
+  { start: "1948-11-22T10:00", end: "1948-11-22T16:00", displayDays: 0.32 },
+  { start: "1948-11-22T16:00", end: "1948-11-22T16:20", displayDays: 0.12 },
+  { start: "1948-11-22T16:20", end: "1948-11-22T18:00", displayDays: 0.55 },
+  { start: "1948-11-22T18:00", end: "1948-11-22T18:50", displayDays: 0.24 },
+  { start: "1948-11-22T18:50", end: "1948-11-22T20:00", displayDays: 0.15 }
+];
 
 export const mapPoints: MapPoint[] = [
   { id: "xuzhou", label: "徐州", coordinates: [117.1848, 34.2618], kind: "city" },
@@ -39,10 +68,10 @@ export const mapPoints: MapPoint[] = [
   { id: "nianzhuang-south", label: "南侧村落阵地", coordinates: [117.855, 34.235], kind: "front", revealAt: "1948-11-11T12:00" },
   { id: "nianzhuang-west", label: "西侧第一道防线", coordinates: [117.775, 34.285], kind: "front", revealAt: "1948-11-11T12:00" },
   { id: "inner-pocket", label: "碾庄内圩", coordinates: [117.872, 34.292], kind: "objective", revealAt: "1948-11-20T05:30" },
-  { id: "remnant-north-village", label: "尤家湖残点", coordinates: [117.89, 34.342], kind: "front", revealAt: "1948-11-21T08:00" },
-  { id: "east-remnant-pocket", label: "小院上-吴庄残点", coordinates: [117.952, 34.302], kind: "front", revealAt: "1948-11-21T08:00" },
-  { id: "remnant-south-village", label: "三里庄残点", coordinates: [117.916, 34.238], kind: "front", revealAt: "1948-11-21T08:00" },
-  { id: "remnant-southwest-block", label: "南侧封锁残点", coordinates: [117.888, 34.258], kind: "front", revealAt: "1948-11-21T08:00" },
+  { id: "remnant-north-village", label: "尤家湖据点", coordinates: [117.89, 34.342], kind: "front", revealAt: "1948-11-21T08:00" },
+  { id: "east-remnant-pocket", label: "小院上-吴庄据点", coordinates: [117.952, 34.302], kind: "front", revealAt: "1948-11-21T08:00" },
+  { id: "remnant-south-village", label: "三里庄据点", coordinates: [117.916, 34.238], kind: "front", revealAt: "1948-11-21T08:00" },
+  { id: "remnant-southwest-block", label: "南侧封锁点", coordinates: [117.888, 34.258], kind: "front", revealAt: "1948-11-21T08:00" },
   { id: "nizhuang", label: "倪庄", coordinates: [117.905, 34.25], kind: "objective", revealAt: "1948-11-22T16:00" },
   { id: "xinanzhen", label: "新安镇", coordinates: [118.34, 34.37], kind: "city" },
   { id: "pizhou-east", label: "邳州以东追击线", coordinates: [118.12, 34.33], kind: "front" },
@@ -116,6 +145,11 @@ const plaAssaultUnits: FormationUnit[] = [
   { id: "assault-a", label: "", icon: "infantryPva", offset: [0, -24] }
 ];
 
+const plaCounterpressUnits: FormationUnit[] = [
+  { id: "counterpress-a", label: "", badgeLabel: "压", icon: "infantryPva", offset: [0, -28] },
+  { id: "counterpress-b", label: "", badgeLabel: "炮", icon: "cannon", offset: [-70, 24] }
+];
+
 const plaMopUpUnits: FormationUnit[] = [{ id: "mop-up", label: "", icon: "infantryPva", offset: [0, -20] }];
 
 const plaMopUpEastUnits: FormationUnit[] = [{ id: "mop-up-east", label: "", icon: "infantryPva", offset: [0, -46] }];
@@ -180,6 +214,11 @@ const huangFirstLineFragments: FormationUnit[] = [
   { id: "command-inner", label: "黄兵团部内缩", badgeLabel: "黄", icon: "infantry", coordinates: [117.876, 34.292], facingX: -1, offset: [0, 0] }
 ];
 
+const huangCounterpushUnits: FormationUnit[] = [
+  { id: "counter-infantry", label: "守军反扑", badgeLabel: "反", icon: "infantry", offset: [0, -24] },
+  { id: "counter-gun", label: "", badgeLabel: "炮", icon: "cannon", offset: [-64, 24] }
+];
+
 const huangSecondWallFragments: FormationUnit[] = [
   { id: "25-second-north", label: "25军退守二道北段", badgeLabel: "25", icon: "infantry", coordinates: [117.873, 34.306], facingX: -1, offset: [0, -10] },
   { id: "64-second-east", label: "64军二道东段回缩", badgeLabel: "64", icon: "infantry", coordinates: [117.89, 34.295], facingX: 1, offset: [0, 10] },
@@ -204,16 +243,33 @@ const huangFinalCoreUnits: FormationUnit[] = [
 ];
 
 const huangEastRemnantUnits: FormationUnit[] = [
-  { id: "64-east-yard", label: "64军大院上残点", badgeLabel: "64", icon: "infantry", coordinates: [117.952, 34.302], facingX: -1, offset: [0, -8] },
-  { id: "25-north-remnant", label: "25军尤家湖残点", badgeLabel: "25", icon: "infantry", coordinates: [117.89, 34.342], facingX: -1, offset: [0, 8] },
-  { id: "159-south-remnant", label: "64军159师三里庄残点", badgeLabel: "159", icon: "infantry", coordinates: [117.916, 34.238], facingX: -1, offset: [0, -8] },
-  { id: "huang-remnant-command", label: "黄部东撤残队", badgeLabel: "黄", icon: "infantry", coordinates: [117.936, 34.286], facingX: -1, offset: [0, 0] }
+  { id: "64-east-yard", label: "64军东侧据点", badgeLabel: "64", icon: "infantry", coordinates: [117.952, 34.302], facingX: -1, offset: [0, -8] },
+  { id: "25-north-remnant", label: "25军北侧据点", badgeLabel: "25", icon: "infantry", coordinates: [117.89, 34.342], facingX: -1, offset: [0, 8] },
+  { id: "159-south-remnant", label: "159师南侧据点", badgeLabel: "159", icon: "infantry", coordinates: [117.916, 34.238], facingX: -1, offset: [0, -8] },
+  { id: "44-south-remnant", label: "44军南侧据点", badgeLabel: "44", icon: "infantry", coordinates: [117.904, 34.252], facingX: -1, offset: [0, 12] },
+  { id: "100-southwest-remnant", label: "100军西南据点", badgeLabel: "100", icon: "infantry", coordinates: [117.888, 34.258], facingX: -1, offset: [0, -12] },
+  { id: "huang-remnant-command", label: "黄部东侧据点", badgeLabel: "黄", icon: "infantry", coordinates: [117.936, 34.286], facingX: -1, offset: [0, 0] }
 ];
 
 const huangRemnantFallbackUnits: FormationUnit[] = [
   { id: "command-fallback", label: "黄部由内圩东撤", badgeLabel: "黄", icon: "infantry", offset: [0, -28] },
   { id: "64-fallback", label: "", badgeLabel: "64", icon: "infantry", offset: [-92, 28] },
-  { id: "25-fallback", label: "", badgeLabel: "25", icon: "infantry", offset: [-184, -26] }
+  { id: "25-fallback", label: "", badgeLabel: "25", icon: "infantry", offset: [-184, -26] },
+  { id: "44-fallback", label: "", badgeLabel: "44", icon: "infantry", offset: [-276, 26] },
+  { id: "100-fallback", label: "", badgeLabel: "100", icon: "infantry", offset: [-368, -24] }
+];
+
+const huangFinalNorthUnits: FormationUnit[] = [
+  { id: "25-final-north", label: "25军残部", badgeLabel: "25", icon: "infantry", offset: [0, -18] }
+];
+
+const huangFinalEastUnits: FormationUnit[] = [
+  { id: "64-final-east", label: "64军残部", badgeLabel: "64", icon: "infantry", offset: [0, -18] }
+];
+
+const huangFinalSouthUnits: FormationUnit[] = [
+  { id: "44-final-south", label: "44军残部", badgeLabel: "44", icon: "infantry", offset: [0, -22] },
+  { id: "100-final-south", label: "100军残部", badgeLabel: "100", icon: "infantry", offset: [-76, 22] }
 ];
 
 export const frontLines: FrontLine[] = [
@@ -235,8 +291,8 @@ export const frontLines: FrontLine[] = [
       [117.94, 34.3],
       [117.88, 34.292]
     ],
-    visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-10T19:59"
+    visibleUntil: "1948-11-10T22:00",
+    unitVisibleUntil: "1948-11-10T22:00"
   },
   {
     id: "huang-nianzhuang-defense-ring",
@@ -261,7 +317,7 @@ export const frontLines: FrontLine[] = [
       [117.775, 34.285]
     ],
     visibleUntil: "1948-11-19T22:29",
-    unitVisibleUntil: "1948-11-19T22:29"
+    unitVisibleUntil: "1948-11-19T22:30"
   },
   {
     id: "huang-deploy-north",
@@ -417,8 +473,8 @@ export const frontLines: FrontLine[] = [
       [118.02, 34.305],
       [117.95, 34.292]
     ],
-    visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-10T19:59"
+    visibleUntil: "1948-11-10T22:00",
+    unitVisibleUntil: "1948-11-10T22:00"
   },
   {
     id: "pla-north-pursuit",
@@ -436,8 +492,8 @@ export const frontLines: FrontLine[] = [
       [118.0, 34.39],
       [117.9, 34.36]
     ],
-    visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-10T19:59"
+    visibleUntil: "1948-11-10T22:00",
+    unitVisibleUntil: "1948-11-10T22:00"
   },
   {
     id: "pla-south-pursuit",
@@ -455,8 +511,8 @@ export const frontLines: FrontLine[] = [
       [117.94, 34.215],
       [117.87, 34.238]
     ],
-    visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-10T19:59"
+    visibleUntil: "1948-11-10T22:00",
+    unitVisibleUntil: "1948-11-10T22:00"
   },
   {
     id: "pla-southwest-closing-line",
@@ -474,8 +530,8 @@ export const frontLines: FrontLine[] = [
       [117.7, 34.235],
       [117.76, 34.282]
     ],
-    visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-10T19:59"
+    visibleUntil: "1948-11-10T22:00",
+    unitVisibleUntil: "1948-11-10T22:00"
   },
   {
     id: "xuzhou-relief-east",
@@ -532,7 +588,7 @@ export const frontLines: FrontLine[] = [
       [117.62, 34.285]
     ],
     visibleUntil: "1948-11-22T20:00",
-    unitVisibleUntil: "1948-11-20T18:00"
+    unitVisibleUntil: "1948-11-22T20:00"
   },
   {
     id: "pla-4th-preliminary-daxingzhuang",
@@ -551,7 +607,7 @@ export const frontLines: FrontLine[] = [
       [117.834, 34.36]
     ],
     visibleUntil: "1948-11-17T20:00",
-    unitVisibleUntil: "1948-11-14T20:00"
+    unitVisibleUntil: "1948-11-17T20:00"
   },
   {
     id: "pla-13th-preliminary-songzhuang",
@@ -569,7 +625,7 @@ export const frontLines: FrontLine[] = [
       [117.805, 34.322]
     ],
     visibleUntil: "1948-11-17T20:00",
-    unitVisibleUntil: "1948-11-14T20:00"
+    unitVisibleUntil: "1948-11-17T20:00"
   },
   {
     id: "pla-6th-preliminary-pengzhuang",
@@ -587,7 +643,7 @@ export const frontLines: FrontLine[] = [
       [117.792, 34.305]
     ],
     visibleUntil: "1948-11-19T10:00",
-    unitVisibleUntil: "1948-11-18T06:00"
+    unitVisibleUntil: "1948-11-19T10:00"
   },
   {
     id: "pla-8th-east-fix-youfang",
@@ -607,7 +663,7 @@ export const frontLines: FrontLine[] = [
       [117.915, 34.323]
     ],
     visibleUntil: "1948-11-17T20:00",
-    unitVisibleUntil: "1948-11-14T20:00"
+    unitVisibleUntil: "1948-11-17T20:00"
   },
   {
     id: "pla-9th-southeast-advance",
@@ -648,6 +704,96 @@ export const frontLines: FrontLine[] = [
     ],
     visibleUntil: "1948-11-17T20:00",
     unitVisibleUntil: "1948-11-14T20:00"
+  },
+  {
+    id: "huang-west-counterpush",
+    faction: "nationalist",
+    label: "100军西侧反扑压出壕线",
+    from: "nianzhuang-west",
+    to: "pengzhuang",
+    routeKind: "land",
+    start: "1948-11-15T08:00",
+    end: "1948-11-15T20:00",
+    unitIcon: "infantry",
+    formationUnits: huangCounterpushUnits,
+    waypoints: [
+      [117.795, 34.292],
+      [117.792, 34.305]
+    ],
+    visibleUntil: "1948-11-17T20:00",
+    unitVisibleUntil: "1948-11-15T20:00"
+  },
+  {
+    id: "pla-west-yield-and-hold",
+    faction: "communist",
+    label: "13纵壕线后撤稳住西侧",
+    from: "pengzhuang",
+    to: "zhaozhuang",
+    routeKind: "land",
+    start: "1948-11-15T18:00",
+    end: "1948-11-16T08:00",
+    unitIcon: "infantryPva",
+    formationUnits: trenchWorkerUnits,
+    waypoints: [
+      [117.785, 34.303],
+      [117.765, 34.315]
+    ],
+    visibleUntil: "1948-11-17T20:00",
+    unitVisibleUntil: "1948-11-16T08:00"
+  },
+  {
+    id: "pla-west-counterpress",
+    faction: "communist",
+    label: "13纵重新压回彭庄西缘",
+    from: "zhaozhuang",
+    to: "pengzhuang",
+    routeKind: "land",
+    start: "1948-11-16T08:00",
+    end: "1948-11-17T20:00",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.772, 34.314],
+      [117.792, 34.305]
+    ],
+    visibleUntil: "1948-11-19T10:00",
+    unitVisibleUntil: "1948-11-19T10:00"
+  },
+  {
+    id: "huang-east-counterpush",
+    faction: "nationalist",
+    label: "64军东侧水沟反扑",
+    from: "nianzhuang-east",
+    to: "luliang-line",
+    routeKind: "land",
+    start: "1948-11-16T20:00",
+    end: "1948-11-17T08:00",
+    unitIcon: "infantry",
+    formationUnits: huangCounterpushUnits,
+    waypoints: [
+      [117.928, 34.298],
+      [117.935, 34.305]
+    ],
+    visibleUntil: "1948-11-19T10:00",
+    unitVisibleUntil: "1948-11-17T08:00"
+  },
+  {
+    id: "pla-east-counterpress",
+    faction: "communist",
+    label: "8纵水沟间再压东侧",
+    from: "luliang-line",
+    to: "nianzhuang-east",
+    routeKind: "land",
+    start: "1948-11-17T08:00",
+    end: "1948-11-19T09:30",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.926, 34.306],
+      [117.935, 34.29]
+    ],
+    visibleUntil: "1948-11-19T22:29",
+    unitVisibleUntil: "1948-11-19T09:30"
   },
   {
     id: "pla-west-trench-approach",
@@ -748,7 +894,8 @@ export const frontLines: FrontLine[] = [
       [117.818, 34.288],
       [117.835, 34.29]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-general-assault-north",
@@ -766,7 +913,8 @@ export const frontLines: FrontLine[] = [
       [117.852, 34.322],
       [117.862, 34.315]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-general-assault-south",
@@ -784,7 +932,8 @@ export const frontLines: FrontLine[] = [
       [117.86, 34.258],
       [117.872, 34.268]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-general-assault-east",
@@ -802,7 +951,8 @@ export const frontLines: FrontLine[] = [
       [117.912, 34.292],
       [117.902, 34.292]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-general-assault-northeast",
@@ -820,7 +970,8 @@ export const frontLines: FrontLine[] = [
       [117.88, 34.32],
       [117.884, 34.309]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-general-assault-southeast",
@@ -838,7 +989,8 @@ export const frontLines: FrontLine[] = [
       [117.904, 34.268],
       [117.892, 34.272]
     ],
-    visibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "pla-second-wall-west",
@@ -858,7 +1010,7 @@ export const frontLines: FrontLine[] = [
     ],
     visibleUntil: "1948-11-20T05:29",
     unitVisibleFrom: "1948-11-19T22:31",
-    unitVisibleUntil: "1948-11-20T03:30"
+    unitVisibleUntil: "1948-11-20T05:29"
   },
   {
     id: "pla-second-wall-north",
@@ -878,7 +1030,7 @@ export const frontLines: FrontLine[] = [
     ],
     visibleUntil: "1948-11-20T05:29",
     unitVisibleFrom: "1948-11-19T22:31",
-    unitVisibleUntil: "1948-11-20T03:30"
+    unitVisibleUntil: "1948-11-20T05:29"
   },
   {
     id: "pla-second-wall-south",
@@ -898,7 +1050,7 @@ export const frontLines: FrontLine[] = [
     ],
     visibleUntil: "1948-11-20T05:29",
     unitVisibleFrom: "1948-11-19T22:31",
-    unitVisibleUntil: "1948-11-20T03:30"
+    unitVisibleUntil: "1948-11-20T05:29"
   },
   {
     id: "pla-second-wall-east",
@@ -918,7 +1070,79 @@ export const frontLines: FrontLine[] = [
     ],
     visibleUntil: "1948-11-20T05:29",
     unitVisibleFrom: "1948-11-19T22:31",
-    unitVisibleUntil: "1948-11-20T03:30"
+    unitVisibleUntil: "1948-11-20T05:29"
+  },
+  {
+    id: "huang-west-night-counterattack",
+    faction: "nationalist",
+    label: "100军夜间反扑西侧破口",
+    from: "final-west-core",
+    to: "inner-west-line",
+    routeKind: "land",
+    start: "1948-11-19T23:15",
+    end: "1948-11-20T00:40",
+    unitIcon: "infantry",
+    formationUnits: huangCounterpushUnits,
+    waypoints: [
+      [117.85, 34.29],
+      [117.842, 34.292]
+    ],
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T00:40"
+  },
+  {
+    id: "pla-west-night-counterpress",
+    faction: "communist",
+    label: "13纵再压回西侧破口",
+    from: "inner-west-line",
+    to: "final-west-core",
+    routeKind: "land",
+    start: "1948-11-20T00:40",
+    end: "1948-11-20T03:30",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.846, 34.292],
+      [117.858, 34.288]
+    ],
+    visibleUntil: "1948-11-20T05:29",
+    unitVisibleUntil: "1948-11-20T05:29"
+  },
+  {
+    id: "huang-east-night-counterattack",
+    faction: "nationalist",
+    label: "64军夜间反扑东侧破口",
+    from: "final-east-core",
+    to: "inner-east-line",
+    routeKind: "land",
+    start: "1948-11-20T00:20",
+    end: "1948-11-20T02:00",
+    unitIcon: "infantry",
+    formationUnits: huangCounterpushUnits,
+    waypoints: [
+      [117.898, 34.294],
+      [117.902, 34.292]
+    ],
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T02:20"
+  },
+  {
+    id: "pla-east-night-counterpress",
+    faction: "communist",
+    label: "8纵再压东侧第二道",
+    from: "inner-east-line",
+    to: "final-east-core",
+    routeKind: "land",
+    start: "1948-11-20T02:00",
+    end: "1948-11-20T03:30",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.9, 34.292],
+      [117.893, 34.292]
+    ],
+    visibleUntil: "1948-11-20T05:29",
+    unitVisibleUntil: "1948-11-20T05:29"
   },
   {
     id: "huang-inner-recoil",
@@ -935,8 +1159,8 @@ export const frontLines: FrontLine[] = [
       [117.846, 34.292],
       [117.858, 34.288]
     ],
-    visibleUntil: "1948-11-20T03:29",
-    unitVisibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "huang-north-fragment-recoil",
@@ -953,8 +1177,8 @@ export const frontLines: FrontLine[] = [
       [117.868, 34.312],
       [117.875, 34.306]
     ],
-    visibleUntil: "1948-11-20T03:29",
-    unitVisibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "huang-east-fragment-recoil",
@@ -971,8 +1195,8 @@ export const frontLines: FrontLine[] = [
       [117.898, 34.297],
       [117.893, 34.292]
     ],
-    visibleUntil: "1948-11-20T03:29",
-    unitVisibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "huang-south-fragment-recoil",
@@ -989,8 +1213,8 @@ export const frontLines: FrontLine[] = [
       [117.874, 34.27],
       [117.872, 34.274]
     ],
-    visibleUntil: "1948-11-20T03:29",
-    unitVisibleUntil: "1948-11-20T03:29"
+    visibleUntil: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T03:30"
   },
   {
     id: "huang-final-core-defense",
@@ -1010,9 +1234,9 @@ export const frontLines: FrontLine[] = [
       [117.856, 34.286],
       [117.872, 34.292]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "huang-second-wall-collapse",
@@ -1030,9 +1254,9 @@ export const frontLines: FrontLine[] = [
       [117.884, 34.292],
       [117.876, 34.288]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "pla-final-compression-ring",
@@ -1041,7 +1265,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-north-line",
     to: "final-east-core",
     routeKind: "land",
-    start: "1948-11-20T03:31",
+    start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
     formationUnits: plaMopUpUnits,
@@ -1050,9 +1274,9 @@ export const frontLines: FrontLine[] = [
       [117.888, 34.302],
       [117.893, 34.292]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "pla-final-compression-south",
@@ -1061,7 +1285,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-south-line",
     to: "final-south-core",
     routeKind: "land",
-    start: "1948-11-20T03:31",
+    start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
     formationUnits: plaMopUpUnits,
@@ -1070,9 +1294,9 @@ export const frontLines: FrontLine[] = [
       [117.878, 34.272],
       [117.872, 34.274]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "pla-final-compression-west",
@@ -1081,7 +1305,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-west-line",
     to: "final-west-core",
     routeKind: "land",
-    start: "1948-11-20T03:31",
+    start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
     formationUnits: plaMopUpUnits,
@@ -1090,9 +1314,9 @@ export const frontLines: FrontLine[] = [
       [117.852, 34.29],
       [117.858, 34.288]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "pla-final-compression-east",
@@ -1101,7 +1325,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-east-line",
     to: "final-east-core",
     routeKind: "land",
-    start: "1948-11-20T03:31",
+    start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
     formationUnits: plaMopUpUnits,
@@ -1110,14 +1334,14 @@ export const frontLines: FrontLine[] = [
       [117.898, 34.292],
       [117.893, 34.292]
     ],
-    visibleUntil: "1948-11-20T05:29",
-    unitVisibleFrom: "1948-11-20T03:31",
-    unitVisibleUntil: "1948-11-20T05:15"
+    visibleUntil: "1948-11-20T05:30",
+    unitVisibleFrom: "1948-11-20T03:30",
+    unitVisibleUntil: "1948-11-20T05:30"
   },
   {
     id: "huang-east-remnant-defense",
     faction: "nationalist",
-    label: "黄部残点退守东侧村落",
+    label: "黄部东侧村落据点防御",
     from: "east-remnant-pocket",
     to: "east-remnant-pocket",
     routeKind: "land",
@@ -1169,7 +1393,8 @@ export const frontLines: FrontLine[] = [
       [117.878, 34.322],
       [117.888, 34.338]
     ],
-    visibleUntil: "1948-11-22T20:00"
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T16:20"
   },
   {
     id: "pla-remnant-mop-up-east",
@@ -1187,7 +1412,8 @@ export const frontLines: FrontLine[] = [
       [117.936, 34.298],
       [117.944, 34.301]
     ],
-    visibleUntil: "1948-11-22T20:00"
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T16:20"
   },
   {
     id: "pla-remnant-mop-up-south",
@@ -1204,7 +1430,8 @@ export const frontLines: FrontLine[] = [
       [117.89, 34.262],
       [117.91, 34.244]
     ],
-    visibleUntil: "1948-11-22T20:00"
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T16:20"
   },
   {
     id: "pla-remnant-mop-up-west",
@@ -1223,7 +1450,134 @@ export const frontLines: FrontLine[] = [
       [117.908, 34.272],
       [117.892, 34.26]
     ],
-    visibleUntil: "1948-11-22T20:00"
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T16:20"
+  },
+  {
+    id: "huang-north-remnant-sortie",
+    faction: "nationalist",
+    label: "25军尤家湖残部短促外突",
+    from: "remnant-north-village",
+    to: "final-north-core",
+    routeKind: "land",
+    start: "1948-11-21T08:00",
+    end: "1948-11-21T12:00",
+    unitIcon: "infantry",
+    formationUnits: huangFinalNorthUnits,
+    waypoints: [
+      [117.884, 34.334],
+      [117.875, 34.306]
+    ],
+    visibleUntil: "1948-11-21T18:00",
+    unitVisibleUntil: "1948-11-21T12:30"
+  },
+  {
+    id: "pla-north-remnant-counterpress",
+    faction: "communist",
+    label: "北线反压回尤家湖",
+    from: "final-north-core",
+    to: "remnant-north-village",
+    routeKind: "land",
+    start: "1948-11-21T12:00",
+    end: "1948-11-21T18:00",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.882, 34.322],
+      [117.888, 34.338]
+    ],
+    visibleUntil: "1948-11-22T16:20",
+    unitVisibleUntil: "1948-11-22T16:20"
+  },
+  {
+    id: "huang-south-remnant-sortie",
+    faction: "nationalist",
+    label: "44/100军南侧残部反扑",
+    from: "remnant-south-village",
+    to: "final-south-core",
+    routeKind: "land",
+    start: "1948-11-21T18:00",
+    end: "1948-11-21T22:00",
+    unitIcon: "infantry",
+    formationUnits: huangFinalSouthUnits,
+    waypoints: [
+      [117.906, 34.248],
+      [117.872, 34.274]
+    ],
+    visibleUntil: "1948-11-22T10:00",
+    unitVisibleUntil: "1948-11-21T22:30"
+  },
+  {
+    id: "pla-south-remnant-counterpress",
+    faction: "communist",
+    label: "南线再压三里庄据点",
+    from: "final-south-core",
+    to: "remnant-south-village",
+    routeKind: "land",
+    start: "1948-11-21T22:00",
+    end: "1948-11-22T10:00",
+    unitIcon: "infantryPva",
+    formationUnits: plaCounterpressUnits,
+    waypoints: [
+      [117.888, 34.26],
+      [117.91, 34.244]
+    ],
+    visibleUntil: "1948-11-22T16:20",
+    unitVisibleUntil: "1948-11-22T16:20"
+  },
+  {
+    id: "huang-final-north-collapse",
+    faction: "nationalist",
+    label: "25军残部退守尤家湖终点",
+    from: "remnant-north-village",
+    to: "remnant-north-village",
+    routeKind: "land",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    unitIcon: "infantry",
+    formationUnits: huangFinalNorthUnits,
+    waypoints: [
+      [117.896, 34.336],
+      [117.89, 34.342]
+    ],
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T18:00"
+  },
+  {
+    id: "huang-final-east-collapse",
+    faction: "nationalist",
+    label: "64军残部退守小院上吴庄终点",
+    from: "east-remnant-pocket",
+    to: "east-remnant-pocket",
+    routeKind: "land",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    unitIcon: "infantry",
+    formationUnits: huangFinalEastUnits,
+    waypoints: [
+      [117.944, 34.296],
+      [117.952, 34.302]
+    ],
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T18:00"
+  },
+  {
+    id: "huang-final-south-collapse",
+    faction: "nationalist",
+    label: "44/100军残部退守南侧终点",
+    from: "remnant-southwest-block",
+    to: "remnant-south-village",
+    routeKind: "land",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    unitIcon: "infantry",
+    formationUnits: huangFinalSouthUnits,
+    waypoints: [
+      [117.896, 34.252],
+      [117.908, 34.244]
+    ],
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-22T18:00"
   },
   {
     id: "huang-nizhuang-final-flight",
@@ -1257,6 +1611,21 @@ export const frontLines: FrontLine[] = [
     visibleUntil: "1948-11-22T20:00"
   }
 ];
+
+const timelineActiveStart = timelineActiveSpans[0]?.start ?? campaignStart;
+const timelineActiveStartTime = Date.parse(timelineActiveStart);
+const timelineDiscreteAnchors = new Set(timelineGapOverrides.flatMap((gap) => [gap.start, gap.end]));
+
+export const timelineDateAnchors = Array.from(
+  new Set([
+    ...timelineGapOverrides.flatMap((gap) => [gap.start, gap.end]),
+    ...frontLines
+      .flatMap((line) => [line.start, line.end, line.visibleUntil, line.unitVisibleFrom, line.unitVisibleUntil])
+      .filter((date): date is string => Boolean(date))
+      .filter((date) => Date.parse(date) >= timelineActiveStartTime)
+      .filter((date) => timelineDiscreteAnchors.has(date))
+  ])
+);
 
 export const historicalRegions: HistoricalRegion[] = [
   {
@@ -1549,6 +1918,46 @@ export const mapOverlays: MapOverlayElement[] = [
     coordinates: [117.69, 34.37],
     revealAt: "1948-11-19T10:00",
     testId: "nianzhuang-assault-axis-note"
+  },
+  {
+    id: "destroyed-site-25",
+    type: "marker",
+    label: "25军残部被歼地",
+    subtitle: "尤家湖方向",
+    coordinates: [117.89, 34.342],
+    revealAt: "1948-11-22T18:00",
+    className: "destruction-site-marker",
+    testId: "nianzhuang-destruction-site-25"
+  },
+  {
+    id: "destroyed-site-64",
+    type: "marker",
+    label: "64军残部被歼地",
+    subtitle: "小院上-吴庄方向",
+    coordinates: [117.952, 34.302],
+    revealAt: "1948-11-22T18:00",
+    className: "destruction-site-marker",
+    testId: "nianzhuang-destruction-site-64"
+  },
+  {
+    id: "destroyed-site-44-100",
+    type: "marker",
+    label: "44/100军残部被歼地",
+    subtitle: "南侧村落方向",
+    coordinates: [117.916, 34.238],
+    revealAt: "1948-11-22T18:00",
+    className: "destruction-site-marker",
+    testId: "nianzhuang-destruction-site-44-100"
+  },
+  {
+    id: "destroyed-site-command",
+    type: "marker",
+    label: "兵团部终局点",
+    subtitle: "倪庄附近",
+    coordinates: [117.905, 34.25],
+    revealAt: "1948-11-22T18:00",
+    className: "destruction-site-marker command-destruction-site",
+    testId: "nianzhuang-destruction-site-command"
   }
 ];
 
@@ -1684,6 +2093,45 @@ export const battleEffects: BattleEffectElement[] = [
     label: "残点清剿",
     showShellTraces: false,
     testId: "nianzhuang-effect-remnant-village"
+  },
+  {
+    id: "north-destruction-salvo",
+    type: "salvo",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    from: [117.888, 34.338],
+    to: [117.89, 34.342],
+    fromRouteId: "pla-remnant-mop-up-north",
+    toRouteId: "huang-final-north-collapse",
+    label: "25军终局",
+    showShellTraces: false,
+    testId: "nianzhuang-effect-north-destruction"
+  },
+  {
+    id: "east-destruction-salvo",
+    type: "salvo",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    from: [117.944, 34.301],
+    to: [117.952, 34.302],
+    fromRouteId: "pla-remnant-mop-up-east",
+    toRouteId: "huang-final-east-collapse",
+    label: "64军终局",
+    showShellTraces: false,
+    testId: "nianzhuang-effect-east-destruction"
+  },
+  {
+    id: "south-destruction-salvo",
+    type: "salvo",
+    start: "1948-11-22T16:00",
+    end: "1948-11-22T18:00",
+    from: [117.892, 34.26],
+    to: [117.916, 34.238],
+    fromRouteId: "pla-remnant-mop-up-west",
+    toRouteId: "huang-final-south-collapse",
+    label: "44/100军终局",
+    showShellTraces: false,
+    testId: "nianzhuang-effect-south-destruction"
   }
 ];
 
@@ -1720,7 +2168,7 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [117.86, 34.29],
     phase: "合围",
     summary: "黄百韬兵团约10万人被压入距徐州不到50公里的碾庄圩一带，华野多路形成包围。",
-    detail: "撤退纵队先进入碾庄圩，再由25军、64军、44军、100军等分路转向北、东、南、西各村落阵地；圈外侧后部队被截断，但此时尚不是已经覆灭的结果。",
+    detail: "撤退纵队先进入碾庄圩，再由25军、64军、44军、100军等分路转向北、东、南、西各村落阵地；圈外侧后部队被截断，但此时尚不是已经结束的结果。",
     significance: "这是运动战转入攻坚战的分界点，也解释后面完整防御阵地不是突然摊开。",
     mapFocus: [
       "huang-deploy-north",
@@ -1788,9 +2236,17 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [117.88, 34.275],
     phase: "逐点争夺",
     summary: "村落、水塘、水沟有利于防守，外围阵地反复争夺，华野继续把壕沟推近。",
-    detail: "这一段不让双方互相穿过：华野壕线停在外围，黄兵团防御圈仍可见，炮火和战斗效果只在双方路线相接处出现。",
+    detail: "这一段不让双方互相穿过：西侧和东侧都显示守军短促反扑、华野壕线后撤稳住、再重新压回的交错路线；黄兵团防御圈仍可见，炮火和战斗效果只在双方路线相接处出现。",
     significance: "表现碾庄圩之战艰苦、迟滞和攻坚属性，而不是一次简单平推。",
-    mapFocus: ["nianzhuang", "pla-east-trench-approach", "huang-nianzhuang-defense-ring"]
+    mapFocus: [
+      "nianzhuang",
+      "huang-west-counterpush",
+      "pla-west-yield-and-hold",
+      "pla-west-counterpress",
+      "huang-east-counterpush",
+      "pla-east-counterpress",
+      "huang-nianzhuang-defense-ring"
+    ]
   },
   {
     id: "general-assault",
@@ -1816,6 +2272,10 @@ export const battleEvents: BattleEvent[] = [
     significance: "先突破第一道围墙，再压向第二道围墙，避免把多层防线画成一次平推。",
     mapFocus: [
       "pla-general-assault-west",
+      "huang-west-night-counterattack",
+      "pla-west-night-counterpress",
+      "huang-east-night-counterattack",
+      "pla-east-night-counterpress",
       "huang-inner-recoil",
       "huang-north-fragment-recoil",
       "huang-east-fragment-recoil",
@@ -1851,13 +2311,17 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [117.872, 34.292],
     phase: "清剿残点",
     summary: "20日清晨后，兵团部和25军军部等内圩核心相继失守，残部退向东侧村落据点继续顽抗，救援仍被阻在西侧。",
-    detail: "画面先显示内圩核心破碎和黄部向大院上、吴庄方向连续后撤，21日起再显示尤家湖、小院上-吴庄、三里庄等残点；华野不再沿一条线直插核心，而是分北、东、南、西四路逐村压缩。",
+    detail: "画面先显示内圩核心破碎和黄部向大院上、吴庄方向连续后撤，再显示尤家湖、小院上-吴庄、三里庄等据点；北侧和南侧残部还会短促外突，华野再反压回据点。华野不再沿一条线直插核心，而是分北、东、南、西四路逐村压缩。",
     significance: "内圩核心失守不等于所有敌军立即消失，后续清剿必须有残点、路线和时间。",
     mapFocus: [
       "pla-remnant-mop-up-north",
       "pla-remnant-mop-up-east",
       "pla-remnant-mop-up-south",
       "pla-remnant-mop-up-west",
+      "huang-north-remnant-sortie",
+      "pla-north-remnant-counterpress",
+      "huang-south-remnant-sortie",
+      "pla-south-remnant-counterpress",
       "huang-remnant-fallback-east",
       "huang-east-remnant-defense",
       "xuzhou-relief-east"
@@ -1871,9 +2335,16 @@ export const battleEvents: BattleEvent[] = [
     coordinates: [117.905, 34.25],
     phase: "终局",
     summary: "22日下午至黄昏，黄百韬逃至倪庄附近，在彻底绝望中自戕；碾庄圩围歼战结束。",
-    detail: "最终路线从东侧残点连续通向倪庄，解放军追击线在后方压上；除终局被歼灭的残部外，其他作战线保持可读的历史轨迹。",
+    detail: "最终路线从东侧据点连续通向倪庄，北、东、南各军级残部同时退到晚显标注点，解放军追击线在后方压上；除最终消灭的残部外，其他作战线保持可读的历史轨迹。",
     significance: "碾庄圩之战完成淮海战役第一阶段决定性胜利，徐州集团东侧主力被切除。",
-    mapFocus: ["huang-nizhuang-final-flight", "pla-nizhuang-pursuit", "nizhuang"]
+    mapFocus: [
+      "huang-final-north-collapse",
+      "huang-final-east-collapse",
+      "huang-final-south-collapse",
+      "huang-nizhuang-final-flight",
+      "pla-nizhuang-pursuit",
+      "nizhuang"
+    ]
   }
 ];
 

@@ -120,6 +120,7 @@ type CampaignMapAnimationProps = {
   countryClassName: (country: CountryFeature) => string;
   cueEvents: Set<string>;
   cueEventKinds?: Partial<Record<string, BattleCueKind>>;
+  dateAnchors?: string[];
   diveCueEvents?: Set<string>;
   eyebrow: string;
   frontLines: FrontLine[];
@@ -656,6 +657,7 @@ export function CampaignMapAnimation({
   countryClassName,
   cueEvents,
   cueEventKinds = {},
+  dateAnchors = [],
   diveCueEvents = new Set(),
   eyebrow,
   frontLines,
@@ -710,6 +712,7 @@ export function CampaignMapAnimation({
         campaignStart,
         campaignEnd,
         activeSpans,
+        dateAnchors,
         gapScale,
         gapOverrides,
         inactiveGapDisplayDays,
@@ -723,6 +726,7 @@ export function CampaignMapAnimation({
       battleEvents,
       campaignEnd,
       campaignStart,
+      dateAnchors,
       gapScale,
       gapOverrides,
       inactiveGapDisplayDays,

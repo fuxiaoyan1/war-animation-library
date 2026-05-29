@@ -9,6 +9,10 @@ import {
   fortifiedLines,
   frontLines,
   historicalRegions,
+  timelineActiveSpans,
+  timelineDateAnchors,
+  timelineGapOverrides,
+  timelineInactiveGapDisplayDays,
   mapOverlays,
   mapPoints,
   rivers,
@@ -20,13 +24,14 @@ import { publicPath } from "../lib/publicPath";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
-const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
 const timeline = createCampaignTimeline({
-  activeSpans,
+  activeSpans: timelineActiveSpans,
   campaignEnd,
   campaignStart,
+  dateAnchors: timelineDateAnchors,
   events: battleEvents,
-  inactiveGapDisplayDays: 0.12,
+  gapOverrides: timelineGapOverrides,
+  inactiveGapDisplayDays: timelineInactiveGapDisplayDays,
   points: mapPoints,
   timingMode: "compressed"
 });
@@ -84,7 +89,7 @@ const narrationCues: NarrationCue[] = [
 export function NianzhuangBattleAnimation() {
   return (
     <CampaignMapAnimation
-      activeSpans={activeSpans}
+      activeSpans={timelineActiveSpans}
       ariaLabel="淮海战役碾庄圩围歼战动态地图"
       battleEffects={battleEffects}
       battleEvents={battleEvents}
@@ -95,6 +100,7 @@ export function NianzhuangBattleAnimation() {
       countryClassName={nianzhuangCountryClassName}
       cueEventKinds={cueEventKinds}
       cueEvents={cueEventIds}
+      dateAnchors={timelineDateAnchors}
       eyebrow="战争动画藏书馆 / 解放战争"
       focusSteps={[
         { fromProgress: 0, focus: "nianzhuangPursuit" },
@@ -111,7 +117,8 @@ export function NianzhuangBattleAnimation() {
       frontLines={semanticFrontLines}
       fortifiedLines={[...fortifiedLines, ...fragmentedLines]}
       historicalRegions={historicalRegions}
-      inactiveGapDisplayDays={0.12}
+      gapOverrides={timelineGapOverrides}
+      inactiveGapDisplayDays={timelineInactiveGapDisplayDays}
       legendAxis="追击 / 围歼 / 阻援 / 对壕攻坚"
       legendPrimary="华东野战军"
       legendSecondary="国民党军"

@@ -1890,6 +1890,28 @@ h1 {
   opacity: 0.88;
 }
 
+.nianzhuang-battle .destruction-site-marker circle {
+  fill: rgba(116, 34, 28, 0.92);
+  stroke: rgba(255, 239, 194, 0.96);
+}
+
+.nianzhuang-battle .destruction-site-marker path {
+  stroke: rgba(255, 239, 194, 0.96);
+  stroke-width: 3;
+}
+
+.nianzhuang-battle .destruction-site-marker text {
+  fill: rgba(107, 30, 25, 0.94);
+  stroke: rgba(244, 226, 182, 0.92);
+  stroke-width: 12px;
+}
+
+.nianzhuang-battle .destruction-site-marker .annotation-subtitle {
+  fill: rgba(80, 51, 28, 0.9);
+  font-size: 38px;
+  stroke-width: 8px;
+}
+
 .nianzhuang-battle .front-line .front-route {
   stroke-opacity: 0.98;
   filter: drop-shadow(0 2px 4px rgba(68, 45, 20, 0.2));
