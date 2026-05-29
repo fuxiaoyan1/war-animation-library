@@ -16,6 +16,7 @@ import {
   mapOverlays,
   mapPoints,
   rivers,
+  tacticalTerrainFeatures,
   terrainZones
 } from "../data/nianzhuangBattle";
 import { createCampaignTimeline } from "../lib/campaignTimeline";
@@ -113,7 +114,7 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-20T05:30"), focus: "nianzhuangFinal" },
         { fromProgress: timeline.dateToProgress("1948-11-22T16:00"), focus: "nianzhuangFinal" }
       ]}
-      focusTransitionProgress={0.02}
+      focusTransitionProgress={0.055}
       frontLines={semanticFrontLines}
       fortifiedLines={[...fortifiedLines, ...fragmentedLines]}
       historicalRegions={historicalRegions}
@@ -140,11 +141,19 @@ export function NianzhuangBattleAnimation() {
         { label: "XIN'ANZHEN", coordinates: [118.34, 34.45] },
         { label: "CANAL WATER NET", coordinates: [118.08, 34.2] }
       ]}
+      raisedUnitMarkers
       rivers={rivers}
       shellClassName="nianzhuang-battle modern-war chinese-civil-war"
       sfxProfile="ww2"
       subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、师级布防、华野外层包围、徐州东援受阻、试攻受挫、对壕近迫、19日总攻令、夜攻突破第一道围墙、20日凌晨突破第二道围墙、内圩核心失守、东侧残点清剿与倪庄终局。"
       tacticalRouteRetention
+      tacticalMapReference={{
+        datumLabel: "战术示意 / 坐标近似",
+        grid: true,
+        gridSpacing: 480,
+        scaleLabel: "约10公里"
+      }}
+      tacticalTerrainFeatures={tacticalTerrainFeatures}
       terrainZones={terrainZones}
       testId="nianzhuang-app"
       timeCounterLabel="天"

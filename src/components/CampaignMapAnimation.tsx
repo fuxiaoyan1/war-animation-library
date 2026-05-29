@@ -37,6 +37,28 @@ type GeoLine = {
   visibleUntil?: string;
 };
 
+export type TacticalMapReference = {
+  datumLabel?: string;
+  grid?: boolean;
+  gridSpacing?: number;
+  northLabel?: string;
+  scaleLabel?: string;
+};
+
+export type TacticalTerrainFeature = {
+  className?: string;
+  height?: number;
+  id: string;
+  kind: "contour" | "ditch" | "lowland" | "relief" | "village";
+  label?: string;
+  labelCoordinates?: [number, number];
+  points: Array<[number, number]>;
+  revealAt?: string;
+  testId?: string;
+  type: "area" | "line";
+  visibleUntil?: string;
+};
+
 export type MapOverlayElement =
   | {
       className?: string;
@@ -152,11 +174,14 @@ type CampaignMapAnimationProps = {
   playbackDurationSeconds: number;
   regionLabels: Array<{ label: string; coordinates: [number, number] }>;
   retainSeaUnitsAfterRouteEnd?: boolean;
+  raisedUnitMarkers?: boolean;
   rivers?: GeoLine[];
   shellClassName?: string;
   sfxProfile?: "ancient" | "gunpowder" | "ww2";
   subtitle: string;
   tacticalRouteRetention?: boolean;
+  tacticalMapReference?: TacticalMapReference;
+  tacticalTerrainFeatures?: TacticalTerrainFeature[];
   terrainZones?: Array<{
     className?: string;
     coordinates: [number, number];
@@ -176,6 +201,7 @@ type CampaignMapAnimationProps = {
 
 const defaultMapWidth = 1180;
 const defaultMapHeight = 704;
+const defaultTacticalGridSpacing = 400;
 const cuePulseThreshold = 0.82;
 
 const cinematicSpecks = Array.from({ length: 34 }, (_, index) => ({
@@ -290,6 +316,15 @@ function buildCurvedPath(points: Array<[number, number]>) {
   const controlX = (from[0] + to[0]) / 2;
   const controlY = (from[1] + to[1]) / 2 - curve;
   return `M ${from[0]} ${from[1]} Q ${controlX} ${controlY} ${to[0]} ${to[1]}`;
+}
+
+function buildTerrainFeaturePath(points: Array<[number, number]>, closePath: boolean) {
+  if (points.length === 0) {
+    return "";
+  }
+
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(" ");
+  return closePath ? `${path} Z` : path;
 }
 
 function frontStrokeWidth(faction: string) {
@@ -407,6 +442,43 @@ function interpolateRoute(points: Array<[number, number]>, progress: number) {
   }
 
   return points.at(-1)!;
+}
+
+function forceMarkerLabel(label: string | undefined, faction: string) {
+  if (label && label.length <= 3) {
+    return label;
+  }
+
+  if (label) {
+    return label.slice(0, 3);
+  }
+
+  if (faction === "communist") {
+    return "华";
+  }
+
+  if (faction === "nationalist") {
+    return "國";
+  }
+
+  return faction.slice(0, 2).toUpperCase();
+}
+
+function RaisedForceMarker({ faction, label, testId }: { faction: string; label?: string; testId: string }) {
+  const displayLabel = forceMarkerLabel(label, faction);
+
+  return (
+    <g className={`force-echelon-marker force-echelon-${faction}`} data-testid={testId} aria-hidden="true">
+      <ellipse className="force-echelon-shadow" cx="4" cy="23" rx="54" ry="10" />
+      <path className="force-echelon-side" d="M -48 -4 H 26 L 46 12 V 22 H -48 Z" />
+      <path className="force-echelon-face" d="M -52 -20 H 25 L 50 0 L 25 20 H -52 Z" />
+      <path className="force-echelon-top" d="M -52 -20 H 25 L 50 0 L -29 -2 Z" />
+      <path className="force-echelon-cut" d="M 25 -20 L 50 0 L 25 20" />
+      <text className="force-echelon-label" x="-8" y="8">
+        {displayLabel}
+      </text>
+    </g>
+  );
 }
 
 function routePointsUntil(points: Array<[number, number]>, progress: number) {
@@ -681,11 +753,14 @@ export function CampaignMapAnimation({
   playbackDurationSeconds,
   regionLabels,
   retainSeaUnitsAfterRouteEnd = false,
+  raisedUnitMarkers = false,
   rivers = [],
   shellClassName = "",
   sfxProfile = "ww2",
   subtitle,
   tacticalRouteRetention = false,
+  tacticalMapReference,
+  tacticalTerrainFeatures = [],
   terrainZones = [],
   testId,
   timeCounterLabel = "周",
@@ -1285,6 +1360,64 @@ export function CampaignMapAnimation({
                   </g>
                 </g>
               )}
+              {tacticalMapReference?.grid && (
+                <g className="tactical-grid-layer" data-testid="tactical-grid-layer" aria-hidden="true">
+                  {Array.from(
+                    { length: Math.floor(mapWidth / (tacticalMapReference.gridSpacing ?? defaultTacticalGridSpacing)) + 1 },
+                    (_, index) => index * (tacticalMapReference.gridSpacing ?? defaultTacticalGridSpacing)
+                  ).map((x) => (
+                    <line key={`grid-x-${x}`} x1={x} x2={x} y1={0} y2={mapHeight} />
+                  ))}
+                  {Array.from(
+                    { length: Math.floor(mapHeight / (tacticalMapReference.gridSpacing ?? defaultTacticalGridSpacing)) + 1 },
+                    (_, index) => index * (tacticalMapReference.gridSpacing ?? defaultTacticalGridSpacing)
+                  ).map((y) => (
+                    <line key={`grid-y-${y}`} x1={0} x2={mapWidth} y1={y} y2={y} />
+                  ))}
+                </g>
+              )}
+              {tacticalTerrainFeatures.length > 0 && (
+                <g className="tactical-terrain-layer" data-testid="tactical-terrain-layer">
+                  {tacticalTerrainFeatures.map((feature) => {
+                    if (feature.revealAt && progress < timeline.dateToProgress(feature.revealAt)) {
+                      return null;
+                    }
+
+                    if (feature.visibleUntil && progress > timeline.dateToProgress(feature.visibleUntil)) {
+                      return null;
+                    }
+
+                    const featurePoints = feature.points.map((coordinates) => projectPoint(projection, coordinates));
+                    const labelPoint = feature.labelCoordinates
+                      ? projectPoint(projection, feature.labelCoordinates)
+                      : featurePoints[Math.max(0, Math.floor(featurePoints.length / 2))] ?? [0, 0];
+                    const featureHeight = feature.height ?? (feature.type === "area" ? 32 : 10);
+                    const featurePath = buildTerrainFeaturePath(featurePoints, feature.type === "area");
+                    const shadowOffset = `translate(${(featureHeight * 0.78).toFixed(1)} ${(featureHeight * 1.08).toFixed(1)})`;
+                    const highlightOffset = `translate(${(-featureHeight * 0.18).toFixed(1)} ${(-featureHeight * 0.26).toFixed(1)})`;
+
+                    return (
+                      <g
+                        key={feature.id}
+                        className={`tactical-terrain-feature tactical-terrain-${feature.kind} ${feature.className ?? ""}`}
+                        data-terrain-height={featureHeight.toFixed(1)}
+                        data-terrain-kind={feature.kind}
+                        data-testid={feature.testId ?? `tactical-terrain-${feature.id}`}
+                      >
+                        <path className="tactical-terrain-shadow" d={featurePath} transform={shadowOffset} />
+                        {feature.type === "area" && <path className="tactical-terrain-wall" d={featurePath} transform={shadowOffset} />}
+                        <path className="tactical-terrain-highlight" d={featurePath} transform={highlightOffset} />
+                        <path className="tactical-terrain-surface" d={featurePath} />
+                        {feature.label && (
+                          <text className="tactical-terrain-label" x={labelPoint[0]} y={labelPoint[1]}>
+                            {feature.label}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+              )}
               <g className="river-layer">
                 {rivers.map((river) => (
                   <polyline key={river.id} points={projectLine(river.points)} className={`river river-${river.id}`} />
@@ -1520,7 +1653,7 @@ export function CampaignMapAnimation({
                           return (
                             <g
                               key={formationUnit.id}
-                              className={`unit-icon-orientation formation-unit ${formationUnit.className ?? ""}`}
+                              className={`unit-icon-orientation formation-unit ${raisedUnitMarkers ? "has-force-echelon" : ""} ${formationUnit.className ?? ""}`}
                               data-facing-x={placement.facingX}
                               data-ship-label={formationUnit.label}
                               data-route-progress={segmentProgress.toFixed(4)}
@@ -1529,6 +1662,13 @@ export function CampaignMapAnimation({
                               data-testid={`formation-unit-${line.id}-${formationUnit.id}`}
                               transform={`translate(${markerX} ${markerY})`}
                             >
+                              {raisedUnitMarkers && (
+                                <RaisedForceMarker
+                                  faction={markerFaction}
+                                  label={formationUnit.badgeLabel ?? line.unitBadgeLabel}
+                                  testId={`force-echelon-${line.id}-${formationUnit.id}`}
+                                />
+                              )}
                               <UnitIcon
                                 badgeLabel={formationUnit.badgeLabel ?? line.unitBadgeLabel}
                                 icon={markerIcon}
@@ -1676,6 +1816,14 @@ export function CampaignMapAnimation({
                   {stat.label}
                 </span>
               ))}
+            </div>
+          )}
+
+          {tacticalMapReference && (
+            <div className="tactical-reference-panel" data-testid="tactical-reference-panel" aria-label="战术地图参考">
+              <span className="north-arrow">{tacticalMapReference.northLabel ?? "N"}</span>
+              {tacticalMapReference.scaleLabel && <span className="scale-ruler">{tacticalMapReference.scaleLabel}</span>}
+              {tacticalMapReference.datumLabel && <span>{tacticalMapReference.datumLabel}</span>}
             </div>
           )}
         </article>

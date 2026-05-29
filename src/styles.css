@@ -1742,6 +1742,161 @@ h1 {
   stroke-width: 15px;
 }
 
+.nianzhuang-battle .tactical-grid-layer {
+  pointer-events: none;
+}
+
+.nianzhuang-battle .tactical-grid-layer line {
+  stroke: rgba(76, 58, 34, 0.16);
+  stroke-dasharray: 8 18;
+  stroke-width: 1.1;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .tactical-terrain-layer {
+  pointer-events: none;
+}
+
+.nianzhuang-battle .tactical-terrain-feature path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .tactical-terrain-shadow {
+  fill: rgba(42, 29, 14, 0.18);
+  stroke: rgba(42, 29, 14, 0.14);
+  stroke-width: 10px;
+  filter: blur(4px);
+  opacity: 0.72;
+}
+
+.nianzhuang-battle .tactical-terrain-wall {
+  fill: rgba(82, 56, 28, 0.32);
+  stroke: rgba(57, 38, 19, 0.28);
+  stroke-width: 2.6;
+  opacity: 0.88;
+}
+
+.nianzhuang-battle .tactical-terrain-highlight {
+  fill: rgba(255, 245, 202, 0.12);
+  stroke: rgba(255, 244, 199, 0.64);
+  stroke-width: 3.2;
+  opacity: 0.75;
+}
+
+.nianzhuang-battle .tactical-terrain-surface {
+  fill: rgba(127, 112, 72, 0.24);
+  stroke: rgba(68, 51, 24, 0.46);
+  stroke-width: 2;
+}
+
+.nianzhuang-battle .tactical-terrain-relief .tactical-terrain-shadow {
+  fill: rgba(66, 43, 18, 0.24);
+  stroke: rgba(66, 43, 18, 0.2);
+  filter: blur(5px);
+}
+
+.nianzhuang-battle .tactical-terrain-relief .tactical-terrain-wall {
+  fill: rgba(111, 78, 38, 0.38);
+  stroke: rgba(72, 47, 22, 0.34);
+}
+
+.nianzhuang-battle .tactical-terrain-relief .tactical-terrain-surface {
+  fill: rgba(156, 132, 79, 0.28);
+  stroke: rgba(78, 57, 28, 0.5);
+}
+
+.nianzhuang-battle .tactical-terrain-lowland .tactical-terrain-shadow {
+  fill: rgba(36, 78, 89, 0.14);
+  stroke: rgba(34, 74, 86, 0.12);
+  filter: blur(3px);
+  opacity: 0.56;
+}
+
+.nianzhuang-battle .tactical-terrain-lowland .tactical-terrain-wall {
+  fill: rgba(44, 96, 111, 0.22);
+  stroke: rgba(35, 86, 104, 0.22);
+}
+
+.nianzhuang-battle .tactical-terrain-lowland .tactical-terrain-highlight {
+  fill: rgba(190, 232, 225, 0.1);
+  stroke: rgba(194, 232, 224, 0.5);
+}
+
+.nianzhuang-battle .tactical-terrain-lowland .tactical-terrain-surface {
+  fill: rgba(78, 137, 145, 0.24);
+  stroke: rgba(45, 100, 118, 0.5);
+}
+
+.nianzhuang-battle .tactical-terrain-village .tactical-terrain-wall {
+  fill: rgba(83, 59, 31, 0.36);
+  stroke: rgba(68, 46, 23, 0.36);
+}
+
+.nianzhuang-battle .tactical-terrain-village .tactical-terrain-highlight {
+  stroke: rgba(255, 229, 174, 0.62);
+  stroke-dasharray: 7 7;
+}
+
+.nianzhuang-battle .tactical-terrain-village .tactical-terrain-surface {
+  fill: rgba(121, 92, 50, 0.22);
+  stroke: rgba(82, 58, 30, 0.54);
+  stroke-dasharray: 6 8;
+  stroke-width: 2.3;
+}
+
+.nianzhuang-battle .tactical-terrain-contour .tactical-terrain-shadow,
+.nianzhuang-battle .tactical-terrain-ditch .tactical-terrain-shadow {
+  fill: none;
+  stroke: rgba(42, 29, 14, 0.18);
+  stroke-width: 5.6;
+  filter: blur(2px);
+}
+
+.nianzhuang-battle .tactical-terrain-contour .tactical-terrain-highlight {
+  fill: none;
+  stroke: rgba(255, 242, 197, 0.54);
+  stroke-dasharray: 18 12;
+  stroke-width: 2.3;
+}
+
+.nianzhuang-battle .tactical-terrain-contour .tactical-terrain-surface {
+  fill: none;
+  stroke: rgba(72, 58, 34, 0.44);
+  stroke-dasharray: 18 12;
+  stroke-width: 1.7;
+}
+
+.nianzhuang-battle .tactical-terrain-ditch .tactical-terrain-shadow {
+  stroke: rgba(24, 57, 68, 0.24);
+}
+
+.nianzhuang-battle .tactical-terrain-ditch .tactical-terrain-highlight {
+  fill: none;
+  stroke: rgba(188, 230, 229, 0.58);
+  stroke-dasharray: 8 7;
+  stroke-width: 3.6;
+}
+
+.nianzhuang-battle .tactical-terrain-ditch .tactical-terrain-surface {
+  fill: none;
+  stroke: rgba(42, 100, 121, 0.7);
+  stroke-dasharray: 8 7;
+  stroke-width: 2.5;
+}
+
+.nianzhuang-battle .tactical-terrain-label {
+  fill: rgba(64, 47, 24, 0.52);
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(235, 220, 178, 0.72);
+  stroke-width: 9px;
+}
+
 .nianzhuang-battle .fortified-line-layer {
   pointer-events: none;
 }
@@ -1890,6 +2045,28 @@ h1 {
   opacity: 0.88;
 }
 
+.nianzhuang-battle .tactical-callout-marker circle {
+  fill: rgba(52, 42, 28, 0.9);
+  stroke: rgba(255, 239, 194, 0.95);
+  stroke-width: 2.6;
+}
+
+.nianzhuang-battle .tactical-callout-marker path {
+  stroke-width: 2.6;
+}
+
+.nianzhuang-battle .tug-of-war-callout circle {
+  fill: rgba(96, 54, 45, 0.9);
+}
+
+.nianzhuang-battle .assault-callout circle {
+  fill: rgba(146, 42, 30, 0.92);
+}
+
+.nianzhuang-battle .echelon-callout circle {
+  fill: rgba(56, 68, 49, 0.92);
+}
+
 .nianzhuang-battle .destruction-site-marker circle {
   fill: rgba(116, 34, 28, 0.92);
   stroke: rgba(255, 239, 194, 0.96);
@@ -1978,6 +2155,76 @@ h1 {
     drop-shadow(0 4px 7px rgba(60, 35, 18, 0.36));
 }
 
+.nianzhuang-battle .formation-unit.has-force-echelon {
+  filter: drop-shadow(10px 18px 12px rgba(52, 34, 17, 0.24));
+}
+
+.nianzhuang-battle .force-echelon-marker {
+  opacity: 0.92;
+}
+
+.nianzhuang-battle .force-echelon-shadow {
+  fill: rgba(42, 28, 14, 0.26);
+}
+
+.nianzhuang-battle .force-echelon-face,
+.nianzhuang-battle .force-echelon-side,
+.nianzhuang-battle .force-echelon-top,
+.nianzhuang-battle .force-echelon-cut {
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .force-echelon-face {
+  fill: rgba(192, 70, 47, 0.96);
+  stroke: rgba(106, 33, 24, 0.86);
+  stroke-width: 1.7;
+}
+
+.nianzhuang-battle .force-echelon-side {
+  fill: rgba(129, 42, 32, 0.96);
+  stroke: rgba(96, 31, 24, 0.72);
+  stroke-width: 1.2;
+}
+
+.nianzhuang-battle .force-echelon-top {
+  fill: rgba(228, 107, 77, 0.74);
+  stroke: rgba(128, 45, 32, 0.54);
+  stroke-width: 1.1;
+}
+
+.nianzhuang-battle .force-echelon-cut {
+  fill: none;
+  stroke: rgba(255, 224, 178, 0.34);
+  stroke-width: 1.1;
+}
+
+.nianzhuang-battle .force-echelon-nationalist .force-echelon-face {
+  fill: rgba(50, 111, 190, 0.96);
+  stroke: rgba(21, 61, 124, 0.9);
+}
+
+.nianzhuang-battle .force-echelon-nationalist .force-echelon-side {
+  fill: rgba(25, 70, 137, 0.96);
+  stroke: rgba(15, 47, 94, 0.76);
+}
+
+.nianzhuang-battle .force-echelon-nationalist .force-echelon-top {
+  fill: rgba(102, 157, 225, 0.78);
+  stroke: rgba(33, 78, 145, 0.58);
+}
+
+.nianzhuang-battle .force-echelon-label {
+  fill: rgba(255, 246, 215, 0.96);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(40, 26, 14, 0.62);
+  stroke-width: 4px;
+  text-anchor: middle;
+}
+
 .nianzhuang-battle .infantry-marker,
 .nianzhuang-battle .infantry-pva-marker {
   transform: scale(1.58);
@@ -2017,6 +2264,52 @@ h1 {
   color: #3a2717;
   font-size: 0.68rem;
   line-height: 1.1;
+}
+
+.nianzhuang-battle .tactical-reference-panel {
+  position: absolute;
+  left: 16px;
+  bottom: 108px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(84, 61, 31, 0.24);
+  border-radius: 10px;
+  background: rgba(241, 225, 177, 0.7);
+  color: #3a2717;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+.nianzhuang-battle .north-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(58, 39, 23, 0.42);
+  border-radius: 50%;
+}
+
+.nianzhuang-battle .scale-ruler {
+  position: relative;
+  padding-top: 8px;
+}
+
+.nianzhuang-battle .scale-ruler::before {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  width: 72px;
+  height: 5px;
+  border-right: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
 }
 
 .nianzhuang-battle .event-rail button[data-event-id="first-line-broken"],

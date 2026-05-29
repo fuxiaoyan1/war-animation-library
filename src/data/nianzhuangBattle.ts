@@ -1,5 +1,5 @@
 import type { BattleEvent, FormationUnit, FrontLine, MapPoint } from "./battleOfFrance";
-import type { BattleEffectElement, MapOverlayElement } from "../components/CampaignMapAnimation";
+import type { BattleEffectElement, MapOverlayElement, TacticalTerrainFeature } from "../components/CampaignMapAnimation";
 import type { HistoricalRegion } from "../types/maps";
 
 export const campaignStart = "1948-11-06T18:00";
@@ -454,6 +454,7 @@ export const frontLines: FrontLine[] = [
       [117.68, 34.255],
       [117.775, 34.285]
     ],
+    unitVisibleFrom: "1948-11-11T12:00",
     visibleUntil: "1948-11-22T20:00"
   },
   {
@@ -473,8 +474,8 @@ export const frontLines: FrontLine[] = [
       [118.02, 34.305],
       [117.95, 34.292]
     ],
-    visibleUntil: "1948-11-10T22:00",
-    unitVisibleUntil: "1948-11-10T22:00"
+    visibleUntil: "1948-11-11T12:00",
+    unitVisibleUntil: "1948-11-11T12:00"
   },
   {
     id: "pla-north-pursuit",
@@ -492,8 +493,8 @@ export const frontLines: FrontLine[] = [
       [118.0, 34.39],
       [117.9, 34.36]
     ],
-    visibleUntil: "1948-11-10T22:00",
-    unitVisibleUntil: "1948-11-10T22:00"
+    visibleUntil: "1948-11-11T12:00",
+    unitVisibleUntil: "1948-11-11T12:00"
   },
   {
     id: "pla-south-pursuit",
@@ -511,8 +512,8 @@ export const frontLines: FrontLine[] = [
       [117.94, 34.215],
       [117.87, 34.238]
     ],
-    visibleUntil: "1948-11-10T22:00",
-    unitVisibleUntil: "1948-11-10T22:00"
+    visibleUntil: "1948-11-11T12:00",
+    unitVisibleUntil: "1948-11-11T12:00"
   },
   {
     id: "pla-southwest-closing-line",
@@ -530,8 +531,8 @@ export const frontLines: FrontLine[] = [
       [117.7, 34.235],
       [117.76, 34.282]
     ],
-    visibleUntil: "1948-11-10T22:00",
-    unitVisibleUntil: "1948-11-10T22:00"
+    visibleUntil: "1948-11-11T12:00",
+    unitVisibleUntil: "1948-11-11T12:00"
   },
   {
     id: "xuzhou-relief-east",
@@ -1907,9 +1908,31 @@ export const mapOverlays: MapOverlayElement[] = [
     id: "force-scale-note",
     type: "marker",
     label: "黄兵团师级阵地展开",
+    subtitle: "一线村落、二道围墙、内圩核心",
     coordinates: [117.875, 34.365],
     revealAt: "1948-11-10T20:00",
+    className: "tactical-callout-marker echelon-callout",
     testId: "nianzhuang-force-scale-note"
+  },
+  {
+    id: "west-tug-note",
+    type: "marker",
+    label: "西侧拉锯：反扑-稳住-再压回",
+    subtitle: "100军与13纵围绕彭庄壕线反复争夺",
+    coordinates: [117.792, 34.316],
+    revealAt: "1948-11-15T18:00",
+    className: "tactical-callout-marker tug-of-war-callout",
+    testId: "nianzhuang-west-tug-note"
+  },
+  {
+    id: "east-tug-note",
+    type: "marker",
+    label: "东侧水沟拉锯",
+    subtitle: "64军短促外突，8纵沿水沟再压回",
+    coordinates: [117.938, 34.318],
+    revealAt: "1948-11-17T08:00",
+    className: "tactical-callout-marker tug-of-war-callout",
+    testId: "nianzhuang-east-tug-note"
   },
   {
     id: "assault-axis-note",
@@ -1917,7 +1940,28 @@ export const mapOverlays: MapOverlayElement[] = [
     label: "华野5个纵队四面向心突击",
     coordinates: [117.69, 34.37],
     revealAt: "1948-11-19T10:00",
+    className: "tactical-callout-marker assault-callout",
     testId: "nianzhuang-assault-axis-note"
+  },
+  {
+    id: "night-breakthrough-note",
+    type: "marker",
+    label: "夜战破口仍有反扑",
+    subtitle: "突破线、二道线和守军回缩线同步显示",
+    coordinates: [117.872, 34.322],
+    revealAt: "1948-11-19T22:30",
+    className: "tactical-callout-marker tug-of-war-callout",
+    testId: "nianzhuang-night-breakthrough-note"
+  },
+  {
+    id: "remnant-tug-note",
+    type: "marker",
+    label: "残点清剿不是单向推进",
+    subtitle: "北侧、南侧残部外突后被反压回据点",
+    coordinates: [117.93, 34.264],
+    revealAt: "1948-11-21T12:00",
+    className: "tactical-callout-marker tug-of-war-callout",
+    testId: "nianzhuang-remnant-tug-note"
   },
   {
     id: "destroyed-site-25",
@@ -1985,6 +2029,154 @@ export const terrainZones = [
     labelCoordinates: [117.49, 34.305] as [number, number],
     rx: 86,
     ry: 88
+  }
+];
+
+export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
+  {
+    id: "nianzhuang-relief-shelf",
+    type: "area",
+    kind: "relief",
+    height: 54,
+    label: "微起伏村台",
+    labelCoordinates: [117.84, 34.372],
+    points: [
+      [117.72, 34.25],
+      [117.79, 34.37],
+      [117.91, 34.39],
+      [118.0, 34.32],
+      [117.97, 34.22],
+      [117.84, 34.2],
+      [117.73, 34.23]
+    ],
+    testId: "nianzhuang-relief-shelf"
+  },
+  {
+    id: "daxujia-relief-ridge",
+    type: "area",
+    kind: "relief",
+    height: 46,
+    label: "阻援高地边缘",
+    labelCoordinates: [117.47, 34.39],
+    points: [
+      [117.35, 34.12],
+      [117.45, 34.42],
+      [117.62, 34.38],
+      [117.64, 34.22],
+      [117.52, 34.1]
+    ],
+    testId: "nianzhuang-daxujia-relief-ridge"
+  },
+  {
+    id: "waterlogged-lowland",
+    type: "area",
+    kind: "lowland",
+    height: 28,
+    label: "低洼水网",
+    labelCoordinates: [118.075, 34.24],
+    points: [
+      [117.88, 34.17],
+      [118.05, 34.19],
+      [118.16, 34.29],
+      [118.08, 34.39],
+      [117.94, 34.36],
+      [117.86, 34.28]
+    ],
+    testId: "nianzhuang-waterlogged-lowland"
+  },
+  {
+    id: "outer-village-worksites",
+    type: "area",
+    kind: "village",
+    height: 38,
+    label: "村落群工事",
+    labelCoordinates: [117.79, 34.232],
+    points: [
+      [117.76, 34.302],
+      [117.81, 34.35],
+      [117.88, 34.36],
+      [117.95, 34.325],
+      [117.96, 34.274],
+      [117.91, 34.235],
+      [117.815, 34.236],
+      [117.755, 34.282]
+    ],
+    revealAt: "1948-11-10T20:00",
+    visibleUntil: "1948-11-20T05:30",
+    testId: "nianzhuang-outer-village-worksites"
+  },
+  {
+    id: "north-contour",
+    type: "line",
+    kind: "contour",
+    height: 12,
+    points: [
+      [117.72, 34.365],
+      [117.81, 34.398],
+      [117.94, 34.39],
+      [118.04, 34.335]
+    ],
+    testId: "nianzhuang-contour-north"
+  },
+  {
+    id: "center-contour",
+    type: "line",
+    kind: "contour",
+    height: 12,
+    points: [
+      [117.72, 34.292],
+      [117.805, 34.326],
+      [117.9, 34.318],
+      [117.99, 34.286]
+    ],
+    testId: "nianzhuang-contour-center"
+  },
+  {
+    id: "south-contour",
+    type: "line",
+    kind: "contour",
+    height: 12,
+    points: [
+      [117.72, 34.215],
+      [117.82, 34.246],
+      [117.92, 34.238],
+      [118.02, 34.205]
+    ],
+    testId: "nianzhuang-contour-south"
+  },
+  {
+    id: "west-trench-line",
+    type: "line",
+    kind: "ditch",
+    height: 16,
+    label: "西侧交通壕",
+    labelCoordinates: [117.756, 34.274],
+    points: [
+      [117.74, 34.238],
+      [117.758, 34.264],
+      [117.772, 34.286],
+      [117.795, 34.306]
+    ],
+    revealAt: "1948-11-15T02:00",
+    visibleUntil: "1948-11-19T22:30",
+    testId: "nianzhuang-west-trench-line"
+  },
+  {
+    id: "east-water-ditch-line",
+    type: "line",
+    kind: "ditch",
+    height: 16,
+    label: "东侧水沟壕线",
+    labelCoordinates: [117.946, 34.292],
+    points: [
+      [117.918, 34.326],
+      [117.936, 34.306],
+      [117.94, 34.286],
+      [117.926, 34.262]
+    ],
+    revealAt: "1948-11-15T02:00",
+    visibleUntil: "1948-11-20T05:30",
+    testId: "nianzhuang-east-water-ditch-line"
   }
 ];
 
