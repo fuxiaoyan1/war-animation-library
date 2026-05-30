@@ -3348,6 +3348,81 @@ body:has(.gaixia-ambush) {
   pointer-events: none;
 }
 
+.gaixia-relief-layer {
+  filter: url("#gaixiaTerrainShadow");
+}
+
+.gaixia-relief-surface path {
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-relief-shadow {
+  fill: rgba(28, 34, 24, 0.18);
+  transform: translate(22px, 24px);
+}
+
+.gaixia-relief-wall {
+  fill: rgba(78, 68, 43, 0.36);
+  stroke: rgba(70, 59, 38, 0.2);
+  stroke-width: 1.4;
+}
+
+.gaixia-relief-top {
+  fill: rgba(154, 139, 82, 0.28);
+  stroke: rgba(92, 76, 46, 0.32);
+  stroke-width: 2.2;
+}
+
+.gaixia-relief-rim {
+  fill: none;
+  stroke: rgba(250, 229, 153, 0.52);
+  stroke-width: 1.2;
+}
+
+.gaixia-relief-ridge .gaixia-relief-top {
+  fill: rgba(141, 132, 78, 0.32);
+}
+
+.gaixia-relief-slope .gaixia-relief-top {
+  fill: rgba(159, 139, 82, 0.24);
+}
+
+.gaixia-relief-lowland .gaixia-relief-top {
+  fill: rgba(67, 126, 126, 0.18);
+}
+
+.gaixia-relief-corridor .gaixia-relief-top {
+  fill: rgba(90, 139, 88, 0.2);
+}
+
+.gaixia-relief-role-avenue .gaixia-relief-rim {
+  stroke: rgba(218, 224, 151, 0.66);
+  stroke-dasharray: 9 7;
+}
+
+.gaixia-relief-role-obstacle .gaixia-relief-rim {
+  stroke: rgba(96, 155, 168, 0.56);
+  stroke-dasharray: 4 7;
+}
+
+.gaixia-relief-surface text,
+.gaixia-tactical-graphic text {
+  font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: rgba(238, 225, 188, 0.88);
+  stroke-width: 3px;
+  text-anchor: middle;
+}
+
+.gaixia-relief-surface text {
+  fill: rgba(67, 58, 35, 0.82);
+  font-size: 12px;
+}
+
 .gaixia-contour-buffer,
 .gaixia-contour-line {
   fill: none;
@@ -3433,6 +3508,59 @@ body:has(.gaixia-ambush) {
 .gaixia-terrain-label-camp {
   fill: rgba(122, 52, 36, 0.86);
   font-size: 14px;
+}
+
+.gaixia-tactical-graphics {
+  pointer-events: none;
+}
+
+.gaixia-tactical-graphic path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-tactical-graphic-key-terrain path {
+  stroke: rgba(77, 61, 36, 0.62);
+  stroke-dasharray: 5 6;
+  stroke-width: 2.4;
+}
+
+.gaixia-tactical-graphic-key-terrain circle {
+  fill: rgba(255, 232, 146, 0.72);
+  stroke: rgba(76, 55, 31, 0.7);
+  stroke-width: 1.5;
+}
+
+.gaixia-tactical-graphic-obstacle path {
+  stroke: rgba(50, 112, 132, 0.62);
+  stroke-dasharray: 3 8;
+  stroke-width: 4;
+}
+
+.gaixia-tactical-graphic-avenue path {
+  stroke: rgba(63, 135, 76, 0.66);
+  stroke-dasharray: 16 8;
+  stroke-width: 5;
+}
+
+.gaixia-tactical-graphic-engagement-area path {
+  fill: rgba(179, 63, 43, 0.08);
+  stroke: rgba(172, 59, 42, 0.58);
+  stroke-dasharray: 8 6;
+  stroke-width: 2.2;
+}
+
+.gaixia-tactical-graphic-blocking-line path {
+  stroke: rgba(34, 102, 145, 0.72);
+  stroke-dasharray: 2 6;
+  stroke-width: 5;
+}
+
+.gaixia-tactical-graphic text {
+  fill: rgba(43, 55, 38, 0.86);
+  font-size: 10.5px;
 }
 
 .gaixia-region path {
@@ -3584,9 +3712,9 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-route-shadow {
-  stroke: rgba(57, 42, 24, 0.22);
-  stroke-width: 13;
-  transform: translate(0, 9px);
+  stroke: rgba(43, 34, 23, 0.26);
+  stroke-width: 15;
+  transform: translate(14px, 15px);
 }
 
 .gaixia-route-line {
@@ -3685,6 +3813,18 @@ body:has(.gaixia-ambush) {
 
 .gaixia-unit-shadow {
   fill: rgba(55, 38, 23, 0.28);
+}
+
+.gaixia-unit-ground-shadow {
+  fill: rgba(30, 25, 17, 0.34);
+}
+
+.gaixia-unit-stem {
+  fill: none;
+  stroke: rgba(45, 33, 22, 0.34);
+  stroke-linecap: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .gaixia-unit-holder .gaixia-unit {

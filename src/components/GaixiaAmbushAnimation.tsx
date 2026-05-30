@@ -12,10 +12,14 @@ import {
   narrationCues,
   rivers,
   routes,
+  tacticalGraphics,
   terrainContours,
   terrainLabels,
+  terrainReliefSurfaces,
   type GaixiaEvent,
+  type GaixiaReliefSurface,
   type GaixiaRoute,
+  type GaixiaTacticalGraphic,
   type GaixiaUnitKind
 } from "../data/gaixiaAmbush";
 import { createCampaignProjection, projectPoint } from "../lib/geoMap";
@@ -167,6 +171,45 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   return next[0] - previous[0] < -0.01 ? -1 : 1;
 }
 
+function reliefLift(surface: GaixiaReliefSurface) {
+  return Math.max(2, (surface.elevation - surface.baseElevation) * 2.1);
+}
+
+function reliefSkew(surface: GaixiaReliefSurface) {
+  const roleBias = surface.tacticalRole === "avenue" ? 0.55 : surface.tacticalRole === "obstacle" ? 0.2 : 0.75;
+  return Math.max(3, reliefLift(surface) * roleBias);
+}
+
+function reliefRaisedPoints(points: Array<[number, number]>, surface: GaixiaReliefSurface) {
+  const lift = reliefLift(surface);
+  const skew = reliefSkew(surface);
+  return points.map(([x, y]) => [x - skew, y - lift] as [number, number]);
+}
+
+function reliefSideWallPath(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
+  const startIndex = Math.max(1, Math.floor(basePoints.length * 0.46));
+  const baseEdge = basePoints.slice(startIndex);
+  const raisedEdge = raisedPoints.slice(startIndex).reverse();
+  return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
+}
+
+function reliefElevationAtPoint(point: [number, number]) {
+  const distances = terrainReliefSurfaces.map((surface) => {
+    const surfacePoints = surface.points;
+    const distanceToSurface = surfacePoints.reduce((minimum, surfacePoint) => {
+      const distanceToPoint = Math.hypot(surfacePoint[0] - point[0], surfacePoint[1] - point[1]);
+      return Math.min(minimum, distanceToPoint);
+    }, Number.POSITIVE_INFINITY);
+    return { distance: distanceToSurface, surface };
+  });
+  const nearest = distances.sort((a, b) => a.distance - b.distance)[0]?.surface;
+  return nearest?.elevation ?? 30;
+}
+
+function isTacticalGraphicVisible(graphic: GaixiaTacticalGraphic, progress: number) {
+  return !graphic.revealAt || progress >= timeline.dateToProgress(graphic.revealAt);
+}
+
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
   const focusY = eventFocusY[event.id] ?? activePoint[1];
   const focusX = activePoint[0];
@@ -179,25 +222,52 @@ function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): Map
 }
 
 function routeUnitOffsets(route: GaixiaRoute) {
+  const addDepth = (offsets: Array<[number, number]>, additions: Array<[number, number]>) => {
+    const occupied = new Set(offsets.map((offset) => `${offset[0]},${offset[1]}`));
+    return [...offsets, ...additions.filter((offset) => !occupied.has(`${offset[0]},${offset[1]}`))];
+  };
+
   if (route.unitOffsets) {
-    return route.unitOffsets;
+    if (route.unitKind.includes("cavalry")) {
+      return addDepth(route.unitOffsets, [
+        [-58, 30],
+        [34, -24]
+      ]);
+    }
+
+    if (route.unitKind.includes("crossbow")) {
+      return addDepth(route.unitOffsets, [
+        [-34, 26],
+        [38, -28]
+      ]);
+    }
+
+    return addDepth(route.unitOffsets, [
+      [-38, 28],
+      [36, -24]
+    ]);
   }
 
   if (route.unitKind.includes("cavalry")) {
     return [
       [0, 0],
-      [-30, 14]
+      [-30, 14],
+      [-58, 30]
     ];
   }
 
   if (route.unitKind.includes("crossbow")) {
     return [
       [0, 0],
-      [22, -12]
+      [22, -12],
+      [-34, 26]
     ];
   }
 
-  return [[0, 0]];
+  return [
+    [0, 0],
+    [-38, 28]
+  ];
 }
 
 function routeShouldRender(route: GaixiaRoute, progress: number, activeRouteIds: Set<string>) {
@@ -316,6 +386,8 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
 
   return (
     <g className={`gaixia-unit gaixia-unit-${faction} gaixia-unit-${kind}`} data-testid={`gaixia-unit-${kind}`} data-facing-x={facingX}>
+      <ellipse className="gaixia-unit-ground-shadow" cx="13" cy={config.height * 0.38} rx={config.width * 0.45} ry="9" />
+      <path className="gaixia-unit-stem" d={`M 0 ${config.height * 0.18} L 12 ${config.height * 0.42}`} />
       <ellipse className="gaixia-unit-shadow" cx="0" cy={config.height * 0.32} rx={config.width * 0.34} ry="7" />
       <g transform={`scale(${facingX} 1)`}>
         <image
@@ -335,6 +407,44 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
           {config.label}
         </text>
       </g>
+    </g>
+  );
+}
+
+function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof createCampaignProjection>; surface: GaixiaReliefSurface }) {
+  const basePoints = projectLine(projection, surface.points);
+  const raisedPoints = reliefRaisedPoints(basePoints, surface);
+  const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates);
+  const labelLift = reliefLift(surface) + 10;
+  return (
+    <g
+      className={`gaixia-relief-surface gaixia-relief-${surface.kind} gaixia-relief-role-${surface.tacticalRole}`}
+      data-elevation={surface.elevation}
+      data-base-elevation={surface.baseElevation}
+      data-testid={`gaixia-relief-${surface.id}`}
+    >
+      <path className="gaixia-relief-shadow" d={`${buildPath(basePoints)} Z`} />
+      <path className="gaixia-relief-wall" d={reliefSideWallPath(basePoints, raisedPoints)} />
+      <path className="gaixia-relief-top" d={`${buildPath(raisedPoints)} Z`} />
+      <path className="gaixia-relief-rim" d={`${buildPath(raisedPoints)} Z`} />
+      <text x={labelPoint[0] - reliefSkew(surface)} y={labelPoint[1] - labelLift}>
+        {surface.label} {surface.elevation}m
+      </text>
+    </g>
+  );
+}
+
+function TacticalGraphic({ graphic, projection }: { graphic: GaixiaTacticalGraphic; projection: ReturnType<typeof createCampaignProjection> }) {
+  const points = projectLine(projection, graphic.points);
+  const labelPoint = projectTacticalPoint(projection, graphic.labelCoordinates);
+  const isArea = graphic.kind === "engagement-area";
+  return (
+    <g className={`gaixia-tactical-graphic gaixia-tactical-graphic-${graphic.kind}`} data-testid={`gaixia-tactical-graphic-${graphic.id}`}>
+      <path d={`${buildPath(points)}${isArea ? " Z" : ""}`} />
+      {graphic.kind === "key-terrain" && points.map((point, index) => <circle key={`${graphic.id}-${index}`} cx={point[0]} cy={point[1]} r="4.5" />)}
+      <text x={labelPoint[0]} y={labelPoint[1] - 10}>
+        {graphic.label}
+      </text>
     </g>
   );
 }
@@ -636,6 +746,11 @@ export function GaixiaAmbushAnimation() {
               <rect className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" x="0" y="0" width={mapWidth} height={mapHeight} />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <rect x="0" y="0" width={mapWidth} height={mapHeight} />
+                <g className="gaixia-relief-layer" data-testid="gaixia-relief-terrain-layer">
+                  {terrainReliefSurfaces.map((surface) => (
+                    <ReliefSurface key={surface.id} projection={projection} surface={surface} />
+                  ))}
+                </g>
                 <g className="gaixia-contour-layer" data-testid="gaixia-contour-layer">
                   {terrainContours.map((contour) => {
                     const points = projectLine(projection, contour.points);
@@ -661,6 +776,14 @@ export function GaixiaAmbushAnimation() {
                     );
                   })}
                 </g>
+              </g>
+
+              <g className="gaixia-tactical-graphics" data-testid="gaixia-tactical-graphics-layer">
+                {tacticalGraphics
+                  .filter((graphic) => isTacticalGraphicVisible(graphic, progress))
+                  .map((graphic) => (
+                    <TacticalGraphic key={graphic.id} graphic={graphic} projection={projection} />
+                  ))}
               </g>
 
               <g className="gaixia-regions">
@@ -739,6 +862,7 @@ export function GaixiaAmbushAnimation() {
                       data-route-kind={route.routeKind}
                       data-route-current={activeRouteIds.has(route.id) ? "true" : "false"}
                       data-unit-visible={showUnits ? "true" : "false"}
+                      data-ground-elevation={reliefElevationAtPoint(route.points[Math.min(route.points.length - 1, Math.max(0, Math.round(routeProgress * (route.points.length - 1))))]).toFixed(0)}
                       data-testid={`gaixia-route-${route.id}`}
                     >
                       <path className="gaixia-route-shadow" d={buildPath(visiblePoints)} />
@@ -756,6 +880,7 @@ export function GaixiaAmbushAnimation() {
                           <g
                             key={`${route.id}-unit-${index}`}
                             className="gaixia-unit-holder"
+                            data-ground-elevation={reliefElevationAtPoint(interpolateRoute(route.points, routeProgress)).toFixed(0)}
                             data-testid={`gaixia-route-unit-${route.id}-${index}`}
                             transform={`translate(${markerPoint[0] + offset[0]} ${markerPoint[1] + offset[1]})`}
                           >

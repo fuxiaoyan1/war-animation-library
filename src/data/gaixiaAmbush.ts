@@ -28,6 +28,26 @@ export type GaixiaTerrainLabel = {
   kind: "high-ground" | "lowland" | "old-channel" | "camp" | "approach";
 };
 
+export type GaixiaReliefSurface = {
+  id: string;
+  label: string;
+  kind: "ridge" | "slope" | "lowland" | "corridor";
+  elevation: number;
+  baseElevation: number;
+  points: Array<[number, number]>;
+  labelCoordinates: [number, number];
+  tacticalRole: "key-terrain" | "obstacle" | "avenue" | "camp-shelf";
+};
+
+export type GaixiaTacticalGraphic = {
+  id: string;
+  label: string;
+  kind: "key-terrain" | "obstacle" | "avenue" | "engagement-area" | "blocking-line";
+  points: Array<[number, number]>;
+  labelCoordinates: [number, number];
+  revealAt?: string;
+};
+
 export type GaixiaFortification = {
   id: string;
   label: string;
@@ -186,6 +206,209 @@ export const terrainContours: Array<{ id: string; elevation: number; kind: "ridg
   { id: "south-lowland", elevation: 28, kind: "lowland", label: "南侧洼地", points: [[117.18, 33.13], [117.36, 33.19], [117.58, 33.16], [117.78, 33.09]] },
   { id: "east-breakout-corridor", elevation: 32, kind: "corridor", label: "东口通道", points: [[117.52, 33.3], [117.6, 33.26], [117.68, 33.18], [117.76, 33.1]] },
   { id: "yinling-pursuit-corridor", elevation: 30, kind: "corridor", label: "阴陵追击道", points: [[117.58, 33.22], [117.66, 33.16], [117.74, 33.08], [117.79, 33.04]] }
+];
+
+export const terrainReliefSurfaces: GaixiaReliefSurface[] = [
+  {
+    id: "north-bank-ridge",
+    label: "北岸弩阵高地",
+    kind: "ridge",
+    elevation: 38,
+    baseElevation: 27,
+    tacticalRole: "key-terrain",
+    labelCoordinates: [117.39, 33.52],
+    points: [
+      [117.14, 33.45],
+      [117.23, 33.56],
+      [117.47, 33.58],
+      [117.69, 33.5],
+      [117.58, 33.42],
+      [117.31, 33.4]
+    ]
+  },
+  {
+    id: "gaixia-west-ridge",
+    label: "西岗步兵压迫面",
+    kind: "ridge",
+    elevation: 40,
+    baseElevation: 28,
+    tacticalRole: "key-terrain",
+    labelCoordinates: [117.34, 33.37],
+    points: [
+      [117.23, 33.29],
+      [117.29, 33.43],
+      [117.44, 33.45],
+      [117.49, 33.37],
+      [117.41, 33.29],
+      [117.31, 33.25]
+    ]
+  },
+  {
+    id: "gaixia-east-ridge",
+    label: "东岗弩骑控口面",
+    kind: "ridge",
+    elevation: 42,
+    baseElevation: 28,
+    tacticalRole: "key-terrain",
+    labelCoordinates: [117.57, 33.33],
+    points: [
+      [117.48, 33.43],
+      [117.63, 33.39],
+      [117.66, 33.27],
+      [117.57, 33.2],
+      [117.48, 33.26],
+      [117.45, 33.36]
+    ]
+  },
+  {
+    id: "camp-slope",
+    label: "霸王城营垒台地",
+    kind: "slope",
+    elevation: 36,
+    baseElevation: 28,
+    tacticalRole: "camp-shelf",
+    labelCoordinates: [117.45, 33.34],
+    points: [
+      [117.34, 33.29],
+      [117.4, 33.39],
+      [117.51, 33.39],
+      [117.59, 33.31],
+      [117.51, 33.23],
+      [117.39, 33.24]
+    ]
+  },
+  {
+    id: "south-lowland",
+    label: "南侧河汊低地",
+    kind: "lowland",
+    elevation: 28,
+    baseElevation: 26,
+    tacticalRole: "obstacle",
+    labelCoordinates: [117.43, 33.15],
+    points: [
+      [117.14, 33.08],
+      [117.34, 33.2],
+      [117.58, 33.18],
+      [117.8, 33.1],
+      [117.78, 33.02],
+      [117.38, 33.04]
+    ]
+  },
+  {
+    id: "east-breakout-corridor",
+    label: "东口诱隙通道",
+    kind: "corridor",
+    elevation: 32,
+    baseElevation: 27,
+    tacticalRole: "avenue",
+    labelCoordinates: [117.62, 33.23],
+    points: [
+      [117.49, 33.31],
+      [117.57, 33.28],
+      [117.66, 33.19],
+      [117.77, 33.09],
+      [117.73, 33.05],
+      [117.58, 33.17],
+      [117.5, 33.26]
+    ]
+  },
+  {
+    id: "yinling-pursuit-corridor",
+    label: "阴陵追击走廊",
+    kind: "corridor",
+    elevation: 30,
+    baseElevation: 26,
+    tacticalRole: "avenue",
+    labelCoordinates: [117.71, 33.09],
+    points: [
+      [117.58, 33.21],
+      [117.67, 33.15],
+      [117.79, 33.05],
+      [117.81, 33.02],
+      [117.75, 33.0],
+      [117.64, 33.1],
+      [117.55, 33.17]
+    ]
+  }
+];
+
+export const tacticalGraphics: GaixiaTacticalGraphic[] = [
+  {
+    id: "key-north-crossbow-ridge",
+    label: "K1 北岸弩阵可控河岸",
+    kind: "key-terrain",
+    labelCoordinates: [117.44, 33.49],
+    points: [
+      [117.31, 33.5],
+      [117.4, 33.49],
+      [117.51, 33.44]
+    ]
+  },
+  {
+    id: "obstacle-old-channel",
+    label: "O1 旧河汊限制南撤",
+    kind: "obstacle",
+    labelCoordinates: [117.5, 33.2],
+    points: [
+      [117.25, 33.23],
+      [117.36, 33.27],
+      [117.49, 33.25],
+      [117.62, 33.18],
+      [117.77, 33.12]
+    ]
+  },
+  {
+    id: "avenue-east-gap",
+    label: "AA 东口突围通道",
+    kind: "avenue",
+    labelCoordinates: [117.63, 33.26],
+    points: [
+      [117.5, 33.32],
+      [117.58, 33.29],
+      [117.66, 33.2],
+      [117.74, 33.1]
+    ]
+  },
+  {
+    id: "ea-east-gap",
+    label: "EA 东口弩骑杀伤区",
+    kind: "engagement-area",
+    labelCoordinates: [117.58, 33.3],
+    points: [
+      [117.51, 33.34],
+      [117.57, 33.36],
+      [117.64, 33.29],
+      [117.59, 33.25],
+      [117.51, 33.28]
+    ],
+    revealAt: "BCE-0202-12-01T21:00"
+  },
+  {
+    id: "bl-south-mouth",
+    label: "BL 南口封锁线",
+    kind: "blocking-line",
+    labelCoordinates: [117.43, 33.25],
+    points: [
+      [117.39, 33.17],
+      [117.43, 33.24],
+      [117.46, 33.3]
+    ],
+    revealAt: "BCE-0202-12-01T21:50"
+  },
+  {
+    id: "ea-dawn-pocket",
+    label: "EA 黎明合击切割区",
+    kind: "engagement-area",
+    labelCoordinates: [117.47, 33.32],
+    points: [
+      [117.4, 33.36],
+      [117.49, 33.38],
+      [117.54, 33.31],
+      [117.48, 33.27],
+      [117.41, 33.3]
+    ],
+    revealAt: "BCE-0202-12-02T03:20"
+  }
 ];
 
 export const terrainLabels: GaixiaTerrainLabel[] = [

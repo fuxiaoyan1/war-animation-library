@@ -2774,6 +2774,17 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRouteWindow("chu-wujiang-final-flight", { start: "BCE-0202-12-02T07:05", end: "BCE-0202-12-02T08:00" });
   expectGaixiaRouteWindow("han-cavalry-pursuit-wujiang", { start: "BCE-0202-12-02T06:10", end: "BCE-0202-12-02T07:50" });
   expectRouteEndsBehind("chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang");
+  expect(gaixiaData.terrainReliefSurfaces, "gaixia should model terrain as raised tactical surfaces").toHaveLength(7);
+  expect(gaixiaData.terrainReliefSurfaces.every((surface) => surface.elevation >= surface.baseElevation)).toBe(true);
+  expect(gaixiaData.terrainReliefSurfaces.map((surface) => surface.tacticalRole)).toEqual(
+    expect.arrayContaining(["key-terrain", "obstacle", "avenue", "camp-shelf"])
+  );
+  expect(gaixiaData.tacticalGraphics.map((graphic) => graphic.kind)).toEqual(
+    expect.arrayContaining(["key-terrain", "obstacle", "avenue", "engagement-area", "blocking-line"])
+  );
+  for (const graphic of gaixiaData.tacticalGraphics.filter((item) => item.revealAt)) {
+    expectDateWithinRange(`gaixia tactical graphic ${graphic.id} revealAt`, graphic.revealAt!, gaixiaData.campaignStart, gaixiaData.campaignEnd);
+  }
   const dawnEventTime = toTime(gaixiaData.battleEvents.find((event) => event.id === "dawn-assault")!.date);
   for (const routeId of ["han-dawn-assault-north", "han-dawn-assault-south", "han-dawn-assault-west", "han-dawn-cavalry-cutoff"]) {
     const route = gaixiaData.routes.find((item) => item.id === routeId)!;
@@ -4059,6 +4070,17 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
+  await expect(page.getByTestId("gaixia-relief-terrain-layer")).toBeVisible();
+  await expect(page.locator(".gaixia-relief-surface")).toHaveCount(7);
+  await expect(page.locator(".gaixia-relief-wall")).toHaveCount(7);
+  await expect(page.locator(".gaixia-relief-shadow")).toHaveCount(7);
+  await expect(page.getByTestId("gaixia-relief-gaixia-east-ridge")).toHaveAttribute("data-elevation", "42");
+  await expect(page.getByTestId("gaixia-relief-east-breakout-corridor")).toContainText("东口诱隙通道");
+  await expect(page.getByTestId("gaixia-tactical-graphics-layer")).toBeVisible();
+  await expect(page.getByTestId("gaixia-tactical-graphic-key-north-crossbow-ridge")).toContainText("K1");
+  await expect(page.getByTestId("gaixia-tactical-graphic-obstacle-old-channel")).toContainText("O1");
+  await expect(page.getByTestId("gaixia-tactical-graphic-avenue-east-gap")).toContainText("AA");
+  await expect(page.getByTestId("gaixia-tactical-graphic-ea-east-gap")).toHaveCount(0);
   await expect(page.getByTestId("gaixia-terrain-north-bank-ridge")).toContainText("北岸岗脊");
   await expect(page.getByTestId("gaixia-terrain-gaixia-east-ridge")).toContainText("垓下东岗 42m");
   await expect(page.getByTestId("gaixia-terrain-south-lowland")).toContainText("南侧洼地");
@@ -4078,7 +4100,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-point-east-gap")).toContainText("东口诱隙");
   await expect(page.getByTestId("gaixia-point-south-marsh-mouth")).toContainText("南侧洼地口");
   await expect(page.getByTestId("gaixia-route-chu-retreat-gaixia")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-retreat-gaixia")).toHaveAttribute("data-ground-elevation", /\d+/);
   await expect(page.getByTestId("gaixia-unit-chu-command").first()).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-retreat-gaixia-0")).toHaveAttribute("data-ground-elevation", /\d+/);
   await expect(page.getByTestId("gaixia-unit-chu-command").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-chu-command.webp");
   for (const icon of ["chu-command", "chu-cavalry", "chu-infantry", "han-cavalry", "han-crossbow", "han-infantry"]) {
     const response = await page.request.head(`/assets/unit-icons/gaixia-${icon}.webp`);
@@ -4144,6 +4168,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-chu-east-counterpush")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-east-cavalry-yield")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-feigned-gap-east")).toBeVisible();
+  await expect(page.getByTestId("gaixia-tactical-graphic-ea-east-gap")).toContainText("EA 东口弩骑杀伤区");
   await expect(page.getByTestId("gaixia-route-unit-han-west-counterpress-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-chu-east-counterpush-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-han-east-cavalry-yield-0")).toBeVisible();
@@ -4169,6 +4194,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-tighten-north")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-south-screen-recoil")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-south-locking-line")).toBeVisible();
+  await expect(page.getByTestId("gaixia-tactical-graphic-bl-south-mouth")).toContainText("BL 南口封锁线");
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-south-0")).toHaveCount(0);
   await expect(page.getByTestId("gaixia-route-unit-chu-south-screen-recoil-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-han-south-locking-line-0")).toBeVisible();
@@ -4211,6 +4237,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-south")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-west")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-cavalry-cutoff")).toBeVisible();
+  await expect(page.getByTestId("gaixia-tactical-graphic-ea-dawn-pocket")).toContainText("EA 黎明合击切割区");
   await expectGaixiaVisibleRouteCount(page, 12);
   await expectGaixiaVisibleUnitCount(page, 20);
   await expectGaixiaRouteStaysInMapStage(page, "han-dawn-assault-west");
