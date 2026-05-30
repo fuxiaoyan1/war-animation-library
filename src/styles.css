@@ -3309,7 +3309,7 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-map {
-  background: #cfc39f;
+  background: #d9c99d;
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
 }
@@ -3335,7 +3335,7 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-grid {
-  fill: rgba(79, 87, 68, 0.08);
+  fill: rgba(222, 207, 159, 0.18);
   background: transparent;
 }
 
@@ -3345,7 +3345,7 @@ body:has(.gaixia-ambush) {
 
 .gaixia-sandbox-top {
   fill: url("#gaixiaSandTexture");
-  stroke: rgba(120, 95, 57, 0.38);
+  stroke: none;
   stroke-linejoin: round;
   stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
@@ -3372,10 +3372,10 @@ body:has(.gaixia-ambush) {
 
 .gaixia-sandbox-grid-line {
   fill: none;
-  stroke: rgba(125, 105, 68, 0.2);
+  stroke: rgba(125, 105, 68, 0.1);
   stroke-dasharray: 10 12;
   stroke-linecap: round;
-  stroke-width: 1.1;
+  stroke-width: 0.8;
   vector-effect: non-scaling-stroke;
 }
 
@@ -3393,7 +3393,7 @@ body:has(.gaixia-ambush) {
 
 .gaixia-ground-material {
   stroke-linejoin: round;
-  stroke-width: 1.4;
+  stroke-width: 0;
   vector-effect: non-scaling-stroke;
 }
 
@@ -3437,33 +3437,33 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-relief-shadow {
-  fill: rgba(96, 72, 42, 0.028);
-  transform: translate(10px, 14px);
+  fill: none;
 }
 
 .gaixia-relief-back-wall {
-  fill: #cbb36d;
-  stroke: rgba(116, 90, 50, 0.26);
-  stroke-width: 1.2;
+  fill: none;
+  stroke: rgba(116, 90, 50, 0.18);
+  stroke-width: 0.8;
 }
 
 .gaixia-relief-wall {
-  fill: #ad7e47;
-  stroke: rgba(98, 72, 39, 0.26);
-  stroke-width: 1.8;
-}
-
-.gaixia-relief-edge-face {
-  stroke: rgba(117, 91, 53, 0.16);
+  fill: none;
+  stroke: rgba(98, 72, 39, 0.2);
   stroke-width: 1;
 }
 
+.gaixia-relief-edge-face {
+  fill: none;
+  stroke: rgba(117, 91, 53, 0.16);
+  stroke-width: 0.8;
+}
+
 .gaixia-relief-edge-face-lit {
-  fill: #dfc77e;
+  fill: none;
 }
 
 .gaixia-relief-edge-face-shade {
-  fill: #aa7b44;
+  fill: none;
 }
 
 .gaixia-relief-underside {
@@ -3500,8 +3500,8 @@ body:has(.gaixia-ambush) {
 
 .gaixia-relief-rim {
   fill: none;
-  stroke: rgba(255, 238, 162, 0.74);
-  stroke-width: 1.8;
+  stroke: rgba(103, 83, 47, 0.38);
+  stroke-width: 1.2;
 }
 
 .gaixia-relief-ridge .gaixia-relief-top {

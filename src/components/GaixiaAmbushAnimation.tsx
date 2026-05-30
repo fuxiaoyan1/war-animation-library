@@ -42,10 +42,10 @@ const gaixiaMinMapScale = 0.82;
 const gaixiaViewportCenterY = mapHeight / 2;
 const gaixiaViewportCenterX = mapWidth / 2;
 const gaixiaSandboxBaseElevation = 26;
-const gaixiaSandboxElevationScale = 5.8;
-const gaixiaSandboxYScale = 0.72;
-const gaixiaSandboxXScale = 0.92;
-const gaixiaSandboxShear = 0.06;
+const gaixiaSandboxElevationScale = 0.55;
+const gaixiaSandboxYScale = 1;
+const gaixiaSandboxXScale = 1;
+const gaixiaSandboxShear = 0;
 const gaixiaSandboxCenterX = mapWidth / 2;
 const gaixiaSandboxCenterY = mapHeight / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
@@ -56,7 +56,7 @@ const eventMapScale: Partial<Record<string, number>> = {
   "hanxin-deploys": 0.93,
   "west-counterpush-yield": 0.96,
   "han-counterpress-east-gap": 0.99,
-  "ten-sided-ring": 0.88,
+  "ten-sided-ring": 0.82,
   "songs-of-chu": 0.98,
   farewell: 1.0,
   "dawn-assault": 0.94,
@@ -65,19 +65,19 @@ const eventMapScale: Partial<Record<string, number>> = {
   "wujiang-end": 1.02
 };
 
-const eventFocusYOffset: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 18,
-  "chu-forms-camp-array": 36,
-  "hanxin-deploys": -210,
-  "west-counterpush-yield": 18,
-  "han-counterpress-east-gap": 26,
-  "ten-sided-ring": 56,
-  "songs-of-chu": 30,
-  farewell: 36,
-  "dawn-assault": 58,
-  "xiangyu-breakout": 86,
-  "dongcheng-last-stand": 96,
-  "wujiang-end": 108
+const eventFocusY: Partial<Record<string, number>> = {
+  "chu-arrives-gaixia": 1130,
+  "chu-forms-camp-array": 1260,
+  "hanxin-deploys": 970,
+  "west-counterpush-yield": 1220,
+  "han-counterpress-east-gap": 1280,
+  "ten-sided-ring": 1360,
+  "songs-of-chu": 1260,
+  farewell: 1300,
+  "dawn-assault": 1500,
+  "xiangyu-breakout": 1840,
+  "dongcheng-last-stand": 1975,
+  "wujiang-end": 2080
 };
 
 const eventPoints = battleEvents.map((event) => ({
@@ -428,7 +428,7 @@ function formationRankGuides(points: Array<[number, number]>, rows: number, spac
 }
 
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
-  const focusY = activePoint[1] + (eventFocusYOffset[event.id] ?? 0);
+  const focusY = eventFocusY[event.id] ?? activePoint[1];
   const focusX = activePoint[0];
   const scale = eventMapScale[event.id] ?? gaixiaMapScale;
   return {
@@ -630,16 +630,12 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
 
 function SandboxDeck() {
   const deckCorners: Array<[number, number]> = [
-    [72, 104],
-    [1100, 104],
-    [1140, 2690],
-    [42, 2690]
+    [0, 0],
+    [mapWidth, 0],
+    [mapWidth, mapHeight],
+    [0, mapHeight]
   ];
   const top = deckCorners.map((point) => projectSandboxFlatPoint(point, gaixiaSandboxBaseElevation));
-  const underside = deckCorners.map((point) => projectSandboxFlatPoint(point, gaixiaSandboxBaseElevation - 7));
-  const rightWall = [top[1], top[2], underside[2], underside[1]];
-  const frontWall = [top[2], top[3], underside[3], underside[2]];
-  const leftWall = [top[3], top[0], underside[0], underside[3]];
   const xGridLines = Array.from({ length: 8 }, (_, index) => {
     const x = 170 + index * 118;
     return [
@@ -656,17 +652,13 @@ function SandboxDeck() {
   });
 
   return (
-    <g className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" data-projection="elevated-isometric">
-      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-left" d={`${buildPath(leftWall)} Z`} />
-      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-right" d={`${buildPath(rightWall)} Z`} />
-      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-front" d={`${buildPath(frontWall)} Z`} />
+    <g className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" data-projection="topographic-relief">
       <path className="gaixia-sandbox-top" d={`${buildPath(top)} Z`} />
       <g className="gaixia-sandbox-grid" aria-hidden="true">
         {[...xGridLines, ...yGridLines].map((line, index) => (
           <path key={`sandbox-grid-${index}`} className="gaixia-sandbox-grid-line" d={buildPath(line)} />
         ))}
       </g>
-      <path className="gaixia-sandbox-rim" d={`${buildPath(top)} Z`} />
     </g>
   );
 }
@@ -1219,7 +1211,7 @@ export function GaixiaAmbushAnimation() {
             </defs>
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
-            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" data-projection="elevated-isometric" transform={mapTransform}>
+            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" data-projection="topographic-relief" transform={mapTransform}>
               <SandboxDeck />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <TerrainMaterialLayer projection={projection} />

@@ -4097,10 +4097,10 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
-  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "elevated-isometric");
-  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "elevated-isometric");
+  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "topographic-relief");
+  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "topographic-relief");
   await expect(page.locator(".gaixia-sandbox-top")).toHaveCount(1);
-  await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(3);
+  await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(0);
   await expect.poll(async () => page.locator(".gaixia-sandbox-grid-line").count()).toBeGreaterThanOrEqual(18);
   await expect(page.getByTestId("gaixia-ground-material-layer")).toBeVisible();
   await expect(page.locator(".gaixia-ground-material")).toHaveCount(6);
@@ -4120,6 +4120,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.locator(".gaixia-relief-layer")).toHaveCSS("filter", "none");
   await expect.poll(async () =>
     page.locator(".gaixia-relief-top").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
+  ).toBe(true);
+  await expect.poll(async () =>
+    page.locator(".gaixia-relief-edge-face").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
   ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-gaixia-east-ridge")).toHaveAttribute("data-elevation", "42");
   await expect(page.getByTestId("gaixia-relief-east-breakout-corridor")).toContainText("东口诱隙通道");
