@@ -4106,6 +4106,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.locator(".gaixia-ground-material")).toHaveCount(6);
   await expect(page.locator(".gaixia-ground-material-grass")).toHaveCount(2);
   await expect(page.locator(".gaixia-ground-material-camp")).toHaveCount(1);
+  await expect.poll(async () =>
+    page.locator(".gaixia-ground-material").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).opacity === "1"))
+  ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-terrain-layer")).toBeVisible();
   await expect(page.locator(".gaixia-relief-surface")).toHaveCount(7);
   await expect(page.locator(".gaixia-relief-wall")).toHaveCount(7);
@@ -4115,6 +4118,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.locator(".gaixia-relief-shadow")).toHaveCount(7);
   await expect.poll(async () => page.locator(".gaixia-relief-edge-face").count()).toBeGreaterThanOrEqual(40);
   await expect(page.locator(".gaixia-relief-layer")).toHaveCSS("filter", "none");
+  await expect.poll(async () =>
+    page.locator(".gaixia-relief-top").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
+  ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-gaixia-east-ridge")).toHaveAttribute("data-elevation", "42");
   await expect(page.getByTestId("gaixia-relief-east-breakout-corridor")).toContainText("东口诱隙通道");
   await expect(page.getByTestId("gaixia-tactical-graphics-layer")).toBeVisible();
@@ -4136,6 +4142,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-region-sishui-commandery")).toContainText("秦属泗水郡旧界");
   await expect(page.getByTestId("gaixia-region-han-outer-ring")).toContainText("汉军合围态势");
   await expect(page.getByTestId("gaixia-region-chu-pocket")).toContainText("楚军垓下营垒");
+  await expect.poll(async () =>
+    page.locator(".gaixia-region path").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
+  ).toBe(true);
   await expect(page.getByTestId("gaixia-fortification-layer")).toContainText("霸王城");
   await expect(page.getByTestId("gaixia-fieldwork-layer")).toBeVisible();
   await expect(page.getByTestId("gaixia-fieldwork-bawangcheng-outer-rampart")).toContainText("外土垒");
