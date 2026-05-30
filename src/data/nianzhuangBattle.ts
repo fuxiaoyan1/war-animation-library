@@ -166,17 +166,31 @@ const plaCounterpressUnits: FormationUnit[] = [
 
 const plaMopUpUnits: FormationUnit[] = [{ id: "mop-up", label: "", icon: "infantryPva", offset: [0, -20] }];
 
-const plaMopUpEastUnits: FormationUnit[] = [{ id: "mop-up-east", label: "", icon: "infantryPva", offset: [0, -46] }];
+const plaMopUpEastUnits: FormationUnit[] = [
+  { id: "east-assault", label: "东线突击组", badgeLabel: "突", icon: "infantryPva", offset: [0, -54] },
+  { id: "east-gun", label: "东线直瞄火力", badgeLabel: "炮", icon: "cannon", offset: [-82, 34] },
+  { id: "east-block", label: "东线封控组", badgeLabel: "封", icon: "infantryPva", offset: [-150, -18] }
+];
 
-const plaMopUpWestUnits: FormationUnit[] = [{ id: "mop-up-west", label: "", icon: "infantryPva", offset: [0, 46] }];
+const plaMopUpWestUnits: FormationUnit[] = [
+  { id: "west-block", label: "西南封控组", badgeLabel: "封", icon: "infantryPva", offset: [0, 54] },
+  { id: "west-assault", label: "西南突击组", badgeLabel: "突", icon: "infantryPva", offset: [-82, -34] },
+  { id: "west-gun", label: "西南支援火力", badgeLabel: "炮", icon: "cannon", offset: [-150, 18] }
+];
 
 const plaAssaultNorthUnits: FormationUnit[] = [{ id: "assault-north", label: "", icon: "infantryPva", offset: [0, -56] }];
 
 const plaAssaultSouthUnits: FormationUnit[] = [{ id: "assault-south", label: "", icon: "infantryPva", offset: [0, 56] }];
 
-const plaMopUpNorthUnits: FormationUnit[] = [{ id: "mop-up-north", label: "", icon: "infantryPva", offset: [0, -70] }];
+const plaMopUpNorthUnits: FormationUnit[] = [
+  { id: "north-assault", label: "北线突击组", badgeLabel: "突", icon: "infantryPva", offset: [0, -70] },
+  { id: "north-gun", label: "北线支援火力", badgeLabel: "炮", icon: "cannon", offset: [-76, 24] }
+];
 
-const plaMopUpSouthUnits: FormationUnit[] = [{ id: "mop-up-south", label: "", icon: "infantryPva", offset: [0, 70] }];
+const plaMopUpSouthUnits: FormationUnit[] = [
+  { id: "south-assault", label: "南线突击组", badgeLabel: "突", icon: "infantryPva", offset: [0, 70] },
+  { id: "south-block", label: "南线封控组", badgeLabel: "封", icon: "infantryPva", offset: [-76, -24] }
+];
 
 const plaGunUnits: FormationUnit[] = [
   { id: "battery-a", label: "华野炮兵", icon: "cannon", offset: [0, -28] },
@@ -2494,9 +2508,9 @@ export const battleEffects: BattleEffectElement[] = [
     type: "salvo",
     start: "1948-11-21T08:00",
     end: "1948-11-22T16:00",
-    from: [117.91, 34.29],
+    from: [117.936, 34.298],
     to: [117.94, 34.286],
-    fromRouteId: "pla-remnant-mop-up-west",
+    fromRouteId: "pla-remnant-mop-up-east",
     toRouteId: "huang-east-remnant-defense",
     label: "残点清剿",
     showShellTraces: false,

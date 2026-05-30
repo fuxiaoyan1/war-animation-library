@@ -3361,6 +3361,10 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   );
   expectNianzhuangRouteHasBadges("huang-remnant-fallback-east", ["25", "44", "64", "100", "黄"]);
   expectNianzhuangRouteHasBadges("huang-east-remnant-defense", ["25", "44", "64", "100", "黄"]);
+  expectNianzhuangRouteHasBadges("pla-remnant-mop-up-north", ["突", "炮"]);
+  expectNianzhuangRouteHasBadges("pla-remnant-mop-up-east", ["突", "炮", "封"]);
+  expectNianzhuangRouteHasBadges("pla-remnant-mop-up-south", ["突", "封"]);
+  expectNianzhuangRouteHasBadges("pla-remnant-mop-up-west", ["封", "突", "炮"]);
   expectNianzhuangRouteHasBadges("huang-north-remnant-sortie", ["25"]);
   expectNianzhuangRouteHasBadges("pla-north-remnant-counterpress", ["压", "炮"]);
   expectNianzhuangRouteHasBadges("huang-south-remnant-sortie", ["44", "100"]);
@@ -3399,7 +3403,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectNianzhuangEffectUsesRoutes("east-fragment-break-salvo", "pla-general-assault-east", "huang-east-fragment-recoil");
   expectNianzhuangEffectUsesRoutes("south-fragment-break-salvo", "pla-general-assault-south", "huang-south-fragment-recoil");
   expectNianzhuangEffectUsesRoutes("final-pocket-salvo", "pla-remnant-mop-up-east", "huang-remnant-fallback-east");
-  expectNianzhuangEffectUsesRoutes("remnant-village-salvo", "pla-remnant-mop-up-west", "huang-east-remnant-defense");
+  expectNianzhuangEffectUsesRoutes("remnant-village-salvo", "pla-remnant-mop-up-east", "huang-east-remnant-defense");
   expectNianzhuangEffectUsesRoutes("north-destruction-salvo", "pla-remnant-mop-up-north", "huang-final-north-collapse");
   expectNianzhuangEffectUsesRoutes("east-destruction-salvo", "pla-remnant-mop-up-east", "huang-final-east-collapse");
   expectNianzhuangEffectUsesRoutes("south-destruction-salvo", "pla-remnant-mop-up-west", "huang-final-south-collapse");
@@ -5311,6 +5315,10 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-east");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-south");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-west");
+  await expectRouteBadgeLabels(page, "pla-remnant-mop-up-east", ["突", "炮", "封"]);
+  await expectRouteBadgeLabels(page, "pla-remnant-mop-up-west", ["封", "突", "炮"]);
+  await expectRouteBadgeLabels(page, "huang-east-remnant-defense", ["64", "25", "159", "44", "100", "黄"]);
+  await expect(page.getByTestId("nianzhuang-effect-remnant-village")).toBeVisible();
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", [
     "huang-final-north-collapse",
     "huang-final-east-collapse",
