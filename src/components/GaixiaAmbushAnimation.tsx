@@ -177,11 +177,11 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
 }
 
 function reliefLift(surface: GaixiaReliefSurface) {
-  return Math.max(10, (surface.elevation - surface.baseElevation) * 4.8);
+  return Math.max(16, (surface.elevation - surface.baseElevation) * 6.0);
 }
 
 function reliefSkew(surface: GaixiaReliefSurface) {
-  const roleBias = surface.tacticalRole === "avenue" ? 0.55 : surface.tacticalRole === "obstacle" ? 0.2 : 0.75;
+  const roleBias = surface.tacticalRole === "avenue" ? 0.68 : surface.tacticalRole === "obstacle" ? 0.36 : 0.88;
   return Math.max(8, reliefLift(surface) * roleBias);
 }
 
@@ -203,6 +203,13 @@ function reliefBackWallPath(basePoints: Array<[number, number]>, raisedPoints: A
   const baseEdge = basePoints.slice(0, endIndex);
   const raisedEdge = raisedPoints.slice(0, endIndex).reverse();
   return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
+}
+
+function reliefEdgeWallPaths(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
+  return basePoints.map((point, index) => {
+    const nextIndex = (index + 1) % basePoints.length;
+    return `${buildPath([point, basePoints[nextIndex], raisedPoints[nextIndex], raisedPoints[index]])} Z`;
+  });
 }
 
 function reliefElevationAtPoint(point: [number, number]) {
@@ -526,12 +533,13 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
 function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof createCampaignProjection>; surface: GaixiaReliefSurface }) {
   const basePoints = projectLine(projection, surface.points);
   const raisedPoints = reliefRaisedPoints(basePoints, surface);
+  const edgeWallPaths = reliefEdgeWallPaths(basePoints, raisedPoints);
   const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates);
   const labelLift = reliefLift(surface) + 10;
-  const ridgeLines = [0.26, 0.5, 0.74].map((ratio) =>
+  const ridgeLines = [0.16, 0.32, 0.5, 0.68, 0.84].map((ratio) =>
     raisedPoints.map(([x, y], index) => {
-      const wave = Math.sin(index * 1.7 + ratio * Math.PI) * 7;
-      return [x + wave, y + reliefLift(surface) * (ratio - 0.5) * 0.18] as [number, number];
+      const wave = Math.sin(index * 1.7 + ratio * Math.PI) * 5;
+      return [x + wave, y + reliefLift(surface) * (ratio - 0.5) * 0.16] as [number, number];
     })
   );
   return (
@@ -543,6 +551,9 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
     >
       <path className="gaixia-relief-drop" d={`${buildPath(basePoints)} Z`} />
       <path className="gaixia-relief-shadow" d={`${buildPath(basePoints)} Z`} />
+      {edgeWallPaths.map((wallPath, index) => (
+        <path key={`${surface.id}-edge-${index}`} className={`gaixia-relief-edge-face gaixia-relief-edge-face-${index % 2 === 0 ? "lit" : "shade"}`} d={wallPath} />
+      ))}
       <path className="gaixia-relief-back-wall" d={reliefBackWallPath(basePoints, raisedPoints)} />
       <path className="gaixia-relief-wall" d={reliefSideWallPath(basePoints, raisedPoints)} />
       <path className="gaixia-relief-underside" d={`${buildPath(basePoints)} Z`} />

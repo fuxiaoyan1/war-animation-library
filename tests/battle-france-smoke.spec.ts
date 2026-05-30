@@ -4104,6 +4104,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.locator(".gaixia-relief-underside")).toHaveCount(7);
   await expect(page.locator(".gaixia-relief-shade")).toHaveCount(7);
   await expect(page.locator(".gaixia-relief-shadow")).toHaveCount(7);
+  await expect.poll(async () => page.locator(".gaixia-relief-edge-face").count()).toBeGreaterThanOrEqual(40);
+  await expect(page.locator(".gaixia-relief-layer")).toHaveCSS("filter", "none");
   await expect(page.getByTestId("gaixia-relief-gaixia-east-ridge")).toHaveAttribute("data-elevation", "42");
   await expect(page.getByTestId("gaixia-relief-east-breakout-corridor")).toContainText("东口诱隙通道");
   await expect(page.getByTestId("gaixia-tactical-graphics-layer")).toBeVisible();
