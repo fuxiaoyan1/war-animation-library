@@ -145,6 +145,8 @@ export function NianzhuangBattleAnimation() {
       rivers={rivers}
       shellClassName="nianzhuang-battle modern-war chinese-civil-war"
       sfxProfile="ww2"
+      smoothSceneContentTransitions
+      sceneContentTransitionProgress={0.006}
       subtitle="按5分钟播放设计：新安镇西撤、碾庄合围、师级布防、华野外层包围、徐州东援受阻、试攻受挫、对壕近迫、19日总攻令、夜攻突破第一道围墙、20日凌晨突破第二道围墙、内圩核心失守、东侧残点清剿与倪庄终局。"
       tacticalRouteRetention
       tacticalMapReference={{

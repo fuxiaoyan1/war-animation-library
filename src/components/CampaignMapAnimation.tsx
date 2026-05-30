@@ -1,5 +1,6 @@
 import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { BattleEvent, FrontLine, MapPoint } from "../data/battleOfFrance";
 import { UnitIcon, type HorizontalFacing } from "./UnitIcon";
 import type { UnitIconKind } from "../types/units";
@@ -24,7 +25,10 @@ type FocusStep = {
 type FocusTransitionState = {
   fromFocus: string;
   focus: string;
+  isTransitioning: boolean;
   ratio: number;
+  rawRatio: number;
+  transitionProgress: number;
 };
 
 type GeoLine = {
@@ -147,6 +151,8 @@ type CampaignMapAnimationProps = {
   eyebrow: string;
   frontLines: FrontLine[];
   focusSteps: FocusStep[];
+  smoothSceneContentTransitions?: boolean;
+  sceneContentTransitionProgress?: number;
   focusTransitionProgress?: number;
   fortifiedLines?: GeoLine[];
   gapScale?: number;
@@ -203,6 +209,8 @@ const defaultMapWidth = 1180;
 const defaultMapHeight = 704;
 const defaultTacticalGridSpacing = 400;
 const cuePulseThreshold = 0.82;
+const sceneTransitionMinimumOpacity = 0.16;
+const sceneTransitionExitingOpacity = 0.58;
 
 const cinematicSpecks = Array.from({ length: 34 }, (_, index) => ({
   delay: `${(index % 9) * 0.34}s`,
@@ -246,6 +254,69 @@ function smoothStep(value: number) {
   return clamped * clamped * (3 - 2 * clamped);
 }
 
+function opacityStyle(opacity: number): CSSProperties | undefined {
+  return opacity < 0.999 ? { opacity } : undefined;
+}
+
+function sceneElementVisibility(
+  progress: number,
+  visibleFromProgress: number,
+  visibleUntilProgress: number,
+  transitionProgress: number
+) {
+  const hasFiniteEnd = Number.isFinite(visibleUntilProgress);
+
+  if (progress < visibleFromProgress) {
+    return {
+      isDrawn: false,
+      isNominalVisible: false,
+      opacity: 0,
+      phase: "hidden-before"
+    };
+  }
+
+  const isPastVisibleEnd =
+    hasFiniteEnd &&
+    (transitionProgress > 0 ? progress >= visibleUntilProgress + transitionProgress : progress > visibleUntilProgress);
+  if (isPastVisibleEnd) {
+    return {
+      isDrawn: false,
+      isNominalVisible: false,
+      opacity: 0,
+      phase: "hidden-after"
+    };
+  }
+
+  const isNominalVisible = progress >= visibleFromProgress && (!hasFiniteEnd || progress <= visibleUntilProgress);
+
+  if (transitionProgress > 0 && progress < visibleFromProgress + transitionProgress) {
+    const ratio = smoothStep((progress - visibleFromProgress) / transitionProgress);
+    return {
+      isDrawn: true,
+      isNominalVisible,
+      opacity: sceneTransitionMinimumOpacity + (1 - sceneTransitionMinimumOpacity) * ratio,
+      phase: "entering"
+    };
+  }
+
+  if (transitionProgress > 0 && hasFiniteEnd && progress > visibleUntilProgress) {
+    const ratio = smoothStep((progress - visibleUntilProgress) / transitionProgress);
+    return {
+      isDrawn: true,
+      isNominalVisible,
+      opacity: sceneTransitionExitingOpacity * (1 - ratio),
+      phase: "exiting"
+    };
+  }
+
+  return {
+    isDrawn: true,
+    isNominalVisible,
+    opacity: 1,
+    phase: "present"
+  };
+}
+
 function focusTransitionState(
   focusSteps: FocusStep[],
   progress: number,
@@ -260,15 +331,25 @@ function focusTransitionState(
   });
   const activeStep = sortedSteps[activeIndex] ?? sortedSteps[0] ?? { focus: "north", fromProgress: 0 };
   const previousStep = sortedSteps[activeIndex - 1] ?? activeStep;
-  const rawRatio =
+  const nextStep = sortedSteps[activeIndex + 1];
+  const availableProgressBeforeNextStep = nextStep ? Math.max(0, nextStep.fromProgress - activeStep.fromProgress) : transitionProgress;
+  const effectiveTransitionProgress =
     transitionProgress > 0 && previousStep.focus !== activeStep.focus
-      ? (progress - activeStep.fromProgress) / transitionProgress
+      ? Math.max(0.001, Math.min(transitionProgress, availableProgressBeforeNextStep || transitionProgress))
+      : 0;
+  const rawRatio =
+    effectiveTransitionProgress > 0
+      ? (progress - activeStep.fromProgress) / effectiveTransitionProgress
       : 1;
+  const isTransitioning = previousStep.focus !== activeStep.focus && rawRatio < 1;
 
   return {
     focus: activeStep.focus,
-    fromFocus: rawRatio < 1 ? previousStep.focus : activeStep.focus,
-    ratio: smoothStep(rawRatio)
+    fromFocus: isTransitioning ? previousStep.focus : activeStep.focus,
+    isTransitioning,
+    ratio: smoothStep(rawRatio),
+    rawRatio: Math.min(1, Math.max(0, rawRatio)),
+    transitionProgress: effectiveTransitionProgress
   };
 }
 
@@ -768,6 +849,8 @@ export function CampaignMapAnimation({
   eyebrow,
   frontLines,
   focusSteps,
+  smoothSceneContentTransitions = false,
+  sceneContentTransitionProgress,
   focusTransitionProgress = 0,
   fortifiedLines = [],
   gapScale,
@@ -859,6 +942,10 @@ export function CampaignMapAnimation({
     () => focusTransitionState(focusSteps, progress, focusTransitionProgress),
     [focusSteps, focusTransitionProgress, progress]
   );
+  const contentTransitionProgress =
+    smoothSceneContentTransitions && focusTransitionProgress > 0
+      ? Math.max(0, sceneContentTransitionProgress ?? focusTransitionProgress * 0.62)
+      : 0;
   const mapFocus = focusState.focus;
   const {
     canZoomIn,
@@ -1328,8 +1415,12 @@ export function CampaignMapAnimation({
               className="camera-layer"
               data-focus-from={focusState.fromFocus}
               data-formation-offset-scale={formationOffsetScale.toFixed(3)}
+              data-focus-transition-active={focusState.isTransitioning}
+              data-focus-transition-progress={focusState.transitionProgress.toFixed(3)}
+              data-focus-transition-raw-ratio={focusState.rawRatio.toFixed(3)}
               data-focus-transition-ratio={focusState.ratio.toFixed(3)}
               data-map-focus={mapFocus}
+              data-scene-content-transition-progress={contentTransitionProgress.toFixed(3)}
               data-testid="camera-layer"
               transform={mapTransform}
             >
@@ -1413,11 +1504,13 @@ export function CampaignMapAnimation({
               {tacticalTerrainFeatures.length > 0 && (
                 <g className="tactical-terrain-layer" data-testid="tactical-terrain-layer">
                   {tacticalTerrainFeatures.map((feature) => {
-                    if (feature.revealAt && progress < timeline.dateToProgress(feature.revealAt)) {
-                      return null;
-                    }
-
-                    if (feature.visibleUntil && progress > timeline.dateToProgress(feature.visibleUntil)) {
+                    const featureVisibility = sceneElementVisibility(
+                      progress,
+                      feature.revealAt ? timeline.dateToProgress(feature.revealAt) : 0,
+                      feature.visibleUntil ? timeline.dateToProgress(feature.visibleUntil) : Number.POSITIVE_INFINITY,
+                      contentTransitionProgress
+                    );
+                    if (!featureVisibility.isDrawn) {
                       return null;
                     }
 
@@ -1436,7 +1529,9 @@ export function CampaignMapAnimation({
                         className={`tactical-terrain-feature tactical-terrain-${feature.kind} ${feature.className ?? ""}`}
                         data-terrain-height={featureHeight.toFixed(1)}
                         data-terrain-kind={feature.kind}
+                        data-scene-transition-phase={featureVisibility.phase}
                         data-testid={feature.testId ?? `tactical-terrain-${feature.id}`}
+                        style={opacityStyle(featureVisibility.opacity)}
                       >
                         <path className="tactical-terrain-shadow" d={featurePath} transform={shadowOffset} />
                         {feature.type === "area" && <path className="tactical-terrain-wall" d={featurePath} transform={shadowOffset} />}
@@ -1460,11 +1555,13 @@ export function CampaignMapAnimation({
               {fortifiedLines.length > 0 && (
                 <g className="fortified-line-layer" data-testid="fortified-line-layer">
                   {fortifiedLines.map((line) => {
-                    if (line.revealAt && progress < timeline.dateToProgress(line.revealAt)) {
-                      return null;
-                    }
-
-                    if (line.visibleUntil && progress > timeline.dateToProgress(line.visibleUntil)) {
+                    const lineVisibility = sceneElementVisibility(
+                      progress,
+                      line.revealAt ? timeline.dateToProgress(line.revealAt) : 0,
+                      line.visibleUntil ? timeline.dateToProgress(line.visibleUntil) : Number.POSITIVE_INFINITY,
+                      contentTransitionProgress
+                    );
+                    if (!lineVisibility.isDrawn) {
                       return null;
                     }
 
@@ -1474,7 +1571,9 @@ export function CampaignMapAnimation({
                       <g
                         key={line.id}
                         className={`fortified-line fortified-line-${line.id} ${line.className ?? ""}`}
+                        data-scene-transition-phase={lineVisibility.phase}
                         data-testid={line.testId ?? `fortified-line-${line.id}`}
+                        style={opacityStyle(lineVisibility.opacity)}
                       >
                         <polyline points={projectLine(line.points)} />
                         <text x={x} y={y - 10}>
@@ -1513,7 +1612,13 @@ export function CampaignMapAnimation({
               {mapOverlays.length > 0 && (
                 <g className="map-overlay-elements" data-testid="map-overlay-elements">
                   {mapOverlays.map((overlay) => {
-                    if (overlay.revealAt && progress < timeline.dateToProgress(overlay.revealAt)) {
+                    const overlayVisibility = sceneElementVisibility(
+                      progress,
+                      overlay.revealAt ? timeline.dateToProgress(overlay.revealAt) : 0,
+                      Number.POSITIVE_INFINITY,
+                      contentTransitionProgress
+                    );
+                    if (!overlayVisibility.isDrawn) {
                       return null;
                     }
 
@@ -1524,7 +1629,9 @@ export function CampaignMapAnimation({
                         <g
                           key={overlay.id}
                           className={`wind-overlay ${overlay.className ?? ""}`}
+                          data-scene-transition-phase={overlayVisibility.phase}
                           data-testid={overlay.testId ?? `wind-overlay-${overlay.id}`}
+                          style={opacityStyle(overlayVisibility.opacity)}
                         >
                           <path d={`M ${x1} ${y1} L ${x2} ${y2}`} markerEnd="url(#arrow-wind)" />
                           <text x={(x1 + x2) / 2 + 12} y={(y1 + y2) / 2 - 10}>
@@ -1539,7 +1646,9 @@ export function CampaignMapAnimation({
                       <g
                         key={overlay.id}
                         className={`annotation-marker ${overlay.className ?? ""}`}
+                        data-scene-transition-phase={overlayVisibility.phase}
                         data-testid={overlay.testId ?? `annotation-marker-${overlay.id}`}
+                        style={opacityStyle(overlayVisibility.opacity)}
                         transform={`translate(${x} ${y})`}
                       >
                         <circle r="8" />
@@ -1595,8 +1704,13 @@ export function CampaignMapAnimation({
                 const hasRouteStarted = progress >= visibleFromProgress;
                 const unitStartProgress = line.unitVisibleFrom ? timeline.dateToProgress(line.unitVisibleFrom) : lineStartProgress;
                 const hasUnitStarted = progress >= unitStartProgress;
-                const isWithinRouteVisibleWindow = !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil);
-                const isVisible = hasRouteStarted && isWithinRouteVisibleWindow;
+                const routeVisibleUntilProgress = line.visibleUntil ? timeline.dateToProgress(line.visibleUntil) : Number.POSITIVE_INFINITY;
+                const routeVisibility = sceneElementVisibility(
+                  progress,
+                  visibleFromProgress,
+                  routeVisibleUntilProgress,
+                  contentTransitionProgress
+                );
                 const participatesInRetainedSeaGroup =
                   retainSeaUnitsAfterRouteEnd &&
                   line.routeKind === "sea" &&
@@ -1604,12 +1718,23 @@ export function CampaignMapAnimation({
                   Boolean(line.unitGroupId);
                 const retainsSeaUnit =
                   participatesInRetainedSeaGroup && visibleRetainedSeaUnitGroups.has(line.id);
+                const unitVisibleUntilProgress = line.unitVisibleUntil ? timeline.dateToProgress(line.unitVisibleUntil) : Number.POSITIVE_INFINITY;
+                const unitVisibility = sceneElementVisibility(
+                  progress,
+                  unitStartProgress,
+                  unitVisibleUntilProgress,
+                  contentTransitionProgress
+                );
                 const isUnitVisible =
                   !line.hideUnit &&
                   hasUnitStarted &&
                   (!line.unitVisibleFrom || progress >= timeline.dateToProgress(line.unitVisibleFrom)) &&
                   (!participatesInRetainedSeaGroup || retainsSeaUnit) &&
                   (retainsSeaUnit || !line.unitVisibleUntil || progress <= timeline.dateToProgress(line.unitVisibleUntil));
+                const isUnitDrawn =
+                  !line.hideUnit &&
+                  unitVisibility.isDrawn &&
+                  (!participatesInRetainedSeaGroup || retainsSeaUnit || !unitVisibility.isNominalVisible);
                 const routePath = buildCurvedPath(visibleRoutePoints);
                 const directionAnchorPoint = interpolateRoute(projectedRoutePoints, Math.max(0, segmentProgress - 0.018));
                 const labelPoint =
@@ -1632,7 +1757,7 @@ export function CampaignMapAnimation({
                         }
                       ];
 
-                if (!isVisible) {
+                if (!routeVisibility.isDrawn) {
                   return null;
                 }
 
@@ -1648,10 +1773,15 @@ export function CampaignMapAnimation({
                     data-route-end={line.end}
                     data-route-start={line.start}
                     data-route-to={line.to}
+                    data-scene-transition-opacity={routeVisibility.opacity.toFixed(3)}
+                    data-scene-transition-phase={routeVisibility.phase}
                     data-route-visible-from={line.visibleFrom ?? ""}
                     data-route-visible-until={line.visibleUntil ?? ""}
+                    data-unit-transition-opacity={isUnitDrawn ? unitVisibility.opacity.toFixed(3) : "0.000"}
+                    data-unit-transition-phase={unitVisibility.phase}
                     data-unit-visible-until={line.unitVisibleUntil ?? ""}
                     data-unit-visible={isUnitVisible}
+                    style={opacityStyle(routeVisibility.opacity)}
                   >
                     <path className="front-halo" d={routePath} strokeWidth={frontStrokeWidth(line.faction) + 7} />
                     <path
@@ -1661,8 +1791,8 @@ export function CampaignMapAnimation({
                     />
                     <path className="front-direction" d={routePath} strokeWidth={1.4} />
                     <circle cx={currentPoint[0]} cy={currentPoint[1]} r={isActive ? 4.6 : 3.2} />
-                    {isUnitVisible && (
-                      <g className="formation-units">
+                    {isUnitDrawn && (
+                      <g className="formation-units" style={opacityStyle(isUnitVisible ? 1 : unitVisibility.opacity)}>
                         {formationUnits.map((formationUnit) => {
                           if (formationUnit.hiddenUntil && progress < timeline.dateToProgress(formationUnit.hiddenUntil)) {
                             return null;
@@ -1787,7 +1917,13 @@ export function CampaignMapAnimation({
                   return null;
                 }
 
-                if (point.revealAt && progress < timeline.dateToProgress(point.revealAt)) {
+                const pointVisibility = sceneElementVisibility(
+                  progress,
+                  point.revealAt ? timeline.dateToProgress(point.revealAt) : 0,
+                  Number.POSITIVE_INFINITY,
+                  contentTransitionProgress
+                );
+                if (!pointVisibility.isDrawn) {
                   return null;
                 }
 
@@ -1797,7 +1933,9 @@ export function CampaignMapAnimation({
                   <g
                     key={point.id}
                     className={`map-point point-${point.kind} ${isFocused ? "focused" : ""}`}
+                    data-scene-transition-phase={pointVisibility.phase}
                     data-testid={`map-point-${point.id}`}
+                    style={opacityStyle(pointVisibility.opacity)}
                   >
                     <circle cx={x} cy={y} r={isFocused ? 5.2 : 3.2} />
                     <text x={x + 8} y={y + 4}>
