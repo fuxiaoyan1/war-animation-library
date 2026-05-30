@@ -110,11 +110,11 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-13T06:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-15T02:00"), focus: "nianzhuangPocket" },
         { fromProgress: timeline.dateToProgress("1948-11-19T10:00"), focus: "nianzhuangBreakthrough" },
-        { fromProgress: timeline.dateToProgress("1948-11-19T22:30"), focus: "nianzhuangCompression" },
+        { fromProgress: timeline.dateToProgress("1948-11-19T21:15"), focus: "nianzhuangCompression" },
         { fromProgress: timeline.dateToProgress("1948-11-20T05:30"), focus: "nianzhuangFinal" },
         { fromProgress: timeline.dateToProgress("1948-11-22T16:00"), focus: "nianzhuangFinal" }
       ]}
-      focusTransitionProgress={0.085}
+      focusTransitionProgress={0.062}
       frontLines={semanticFrontLines}
       fortifiedLines={[...fortifiedLines, ...fragmentedLines]}
       historicalRegions={historicalRegions}
