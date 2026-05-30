@@ -6,9 +6,14 @@ export type MapView = {
   y: number;
 };
 
+export type MapInteractionOptions = {
+  maxScale?: number;
+  minScale?: number;
+};
+
 const defaultMapView: MapView = { scale: 1, x: 0, y: 0 };
-const minScale = 1;
-const maxScale = 2.65;
+const defaultMinScale = 1;
+const defaultMaxScale = 2.65;
 const horizontalPanAllowanceRatio = 0.42;
 const verticalPanAllowanceRatio = 0.42;
 
@@ -25,7 +30,13 @@ function clampOffset(value: number, scale: number, size: number, baseAllowance =
   return clamp(value, -overflow - baseAllowance, baseAllowance);
 }
 
-export function useMapInteraction(width: number, height: number, resetKey?: string | number, initialMapView: MapView = defaultMapView) {
+export function useMapInteraction(
+  width: number,
+  height: number,
+  resetKey?: string | number,
+  initialMapView: MapView = defaultMapView,
+  options: MapInteractionOptions = {}
+) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<{
@@ -37,6 +48,8 @@ export function useMapInteraction(width: number, height: number, resetKey?: stri
   } | null>(null);
   const [mapView, setMapView] = useState<MapView>(initialMapView);
   const [isMapDragging, setIsMapDragging] = useState(false);
+  const minScale = options.minScale ?? defaultMinScale;
+  const maxScale = options.maxScale ?? defaultMaxScale;
 
   const clampView = useCallback(
     (view: MapView) => {
@@ -47,7 +60,7 @@ export function useMapInteraction(width: number, height: number, resetKey?: stri
         y: clampOffset(view.y, scale, height, height * verticalPanAllowanceRatio)
       };
     },
-    [height, width]
+    [height, maxScale, minScale, width]
   );
 
   useEffect(() => {

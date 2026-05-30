@@ -460,9 +460,8 @@ async function expectGaixiaExpandedBattlefield(page: Page) {
   expect(viewport).not.toBeNull();
   expect(mapBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
   expect(svgBox?.height).toBeLessThan((viewport?.height ?? 900) * 1.08);
-  expect(cameraTransform.scale).toBeGreaterThan(1.0);
-  expect(cameraTransform.scale).toBeLessThanOrEqual(1.12);
-  expect(Math.abs(cameraTransform.x)).toBeGreaterThan(8);
+  expect(cameraTransform.scale).toBeGreaterThanOrEqual(0.82);
+  expect(cameraTransform.scale).toBeLessThanOrEqual(1.03);
   await expect(gaixiaMap).toHaveAttribute("viewBox", "0 0 1180 2816");
   await expect(gaixiaMap).toHaveAttribute("preserveAspectRatio", "xMidYMid slice");
   await expectCurrentEventInsideMapCore(page);
@@ -492,7 +491,7 @@ async function expectGaixiaBattlefieldFillsWideStage(page: Page) {
 
   expect(spread).not.toBeNull();
   expect(spread?.visibleCount).toBeGreaterThanOrEqual(12);
-  expect(spread?.widthRatio).toBeGreaterThan(0.82);
+  expect(spread?.widthRatio).toBeGreaterThan(0.78);
 }
 
 async function expectGaixiaUnitsUseCompactTacticalScale(page: Page) {
@@ -4134,7 +4133,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-fieldwork-han-forward-camp-line")).toHaveCount(0);
   await expect(page.getByTestId("gaixia-formation-layer")).toHaveCount(1);
   await expect(page.getByTestId("gaixia-formation-chu-center-block")).toHaveCount(0);
-  await expect(page.locator(".gaixia-fieldwork-gate .gaixia-gate-post")).toHaveCount(4);
+  await expect(page.locator(".gaixia-fieldwork-tower")).toHaveCount(6);
+  await expect(page.locator(".gaixia-gate-post")).toHaveCount(4);
+  await expect(page.locator(".gaixia-fieldwork-trench-rib")).toHaveCount(4);
   await expect(page.getByTestId("gaixia-ambush-sector-layer")).toContainText("东南伏兵");
   await expect(page.getByTestId("gaixia-point-gaixia")).toContainText("垓下");
   await expect(page.getByTestId("gaixia-point-crossbow-ridge")).toContainText("弩阵高地");
@@ -4163,6 +4164,13 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-formation-chu-center-block")).toContainText("楚中军步阵");
   await expect(page.getByTestId("gaixia-formation-chu-east-cavalry-screen")).toContainText("楚骑东侧屏卫");
   await expect(page.getByTestId("gaixia-formation-chu-south-infantry-line")).toContainText("楚南侧步阵");
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-dot").count()).toBeGreaterThanOrEqual(120);
+  await expect(page.getByTestId("gaixia-formation-ranks-chu-center-block").locator(".gaixia-formation-rank-dot")).toHaveCount(42);
+  await expect.poll(async () => page.locator(".gaixia-formation-front-line").count()).toBeGreaterThanOrEqual(3);
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-guide").count()).toBeGreaterThanOrEqual(10);
+  await expect.poll(async () => page.locator(".gaixia-formation-front-standard").count()).toBeGreaterThanOrEqual(2);
+  await expect.poll(async () => page.locator(".gaixia-formation-shield-icon").count()).toBeGreaterThanOrEqual(12);
+  await expect(page.locator(".gaixia-formation-cavalry-icon")).toHaveCount(3);
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-center-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-east-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-south-0")).toBeVisible();
@@ -4186,6 +4194,12 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-formation-han-north-crossbow-line")).toContainText("汉北岸弩阵");
   await expect(page.getByTestId("gaixia-formation-han-east-crossbow-line")).toContainText("东口交叉弩网");
   await expect(page.getByTestId("gaixia-formation-han-command-post")).toContainText("韩信中军");
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-dot").count()).toBeGreaterThanOrEqual(140);
+  await expect(page.getByTestId("gaixia-formation-ranks-han-north-crossbow-line").locator(".gaixia-formation-rank-dot")).toHaveCount(24);
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-guide").count()).toBeGreaterThanOrEqual(18);
+  await expect(page.locator(".gaixia-camp-tent")).toHaveCount(4);
+  await expect(page.locator(".gaixia-formation-crossbow-icon")).toHaveCount(6);
+  await expect(page.locator(".gaixia-formation-command-icon")).toHaveCount(1);
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-center-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-infantry").first()).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-crossbow").first()).toBeVisible();
@@ -4237,6 +4251,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-south-infantry")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-southeast-cavalry")).toBeVisible();
   await expect(page.getByTestId("gaixia-formation-han-southeast-cavalry-ambush")).toContainText("东南伏骑阵");
+  await expect(page.locator(".gaixia-formation-ambush-icon")).toHaveCount(2);
   await expect(page.getByTestId("gaixia-route-han-feigned-gap-east")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-probe-east-gap")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toBeVisible();

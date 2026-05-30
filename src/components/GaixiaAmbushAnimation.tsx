@@ -37,24 +37,25 @@ const mapWidth = 1180;
 const projectionHeight = 1408;
 const tacticalYScale = 2;
 const mapHeight = projectionHeight * tacticalYScale;
-const gaixiaMapScale = 1.02;
+const gaixiaMapScale = 0.94;
+const gaixiaMinMapScale = 0.82;
 const gaixiaViewportCenterY = mapHeight / 2;
 const gaixiaViewportCenterX = mapWidth / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventMapScale: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 1.04,
-  "chu-forms-camp-array": 1.1,
-  "hanxin-deploys": 1.02,
-  "west-counterpush-yield": 1.06,
-  "han-counterpress-east-gap": 1.1,
-  "ten-sided-ring": 1.0,
-  "songs-of-chu": 1.08,
-  farewell: 1.1,
-  "dawn-assault": 1.02,
-  "xiangyu-breakout": 1.06,
-  "dongcheng-last-stand": 1.1,
-  "wujiang-end": 1.12
+  "chu-arrives-gaixia": 0.94,
+  "chu-forms-camp-array": 0.98,
+  "hanxin-deploys": 0.93,
+  "west-counterpush-yield": 0.96,
+  "han-counterpress-east-gap": 0.99,
+  "ten-sided-ring": 0.88,
+  "songs-of-chu": 0.98,
+  farewell: 1.0,
+  "dawn-assault": 0.94,
+  "xiangyu-breakout": 0.98,
+  "dongcheng-last-stand": 1.0,
+  "wujiang-end": 1.02
 };
 
 const eventFocusY: Partial<Record<string, number>> = {
@@ -63,7 +64,7 @@ const eventFocusY: Partial<Record<string, number>> = {
   "hanxin-deploys": 970,
   "west-counterpush-yield": 1220,
   "han-counterpress-east-gap": 1280,
-  "ten-sided-ring": 1450,
+  "ten-sided-ring": 1500,
   "songs-of-chu": 1260,
   farewell: 1300,
   "dawn-assault": 1500,
@@ -229,6 +230,96 @@ function isFormationVisible(formation: GaixiaFormation, progress: number) {
   const start = timeline.dateToProgress(formation.start);
   const end = formation.end ? timeline.dateToProgress(formation.end) : 1;
   return progress >= start && progress <= end;
+}
+
+function pointAtRatio(points: Array<[number, number]>, ratio: number) {
+  if (points.length < 2) {
+    return points[0] ?? [0, 0];
+  }
+
+  return interpolateRoute(points, ratio);
+}
+
+function normalAtRatio(points: Array<[number, number]>, ratio: number) {
+  const previous = pointAtRatio(points, Math.max(0, ratio - 0.02));
+  const next = pointAtRatio(points, Math.min(1, ratio + 0.02));
+  const dx = next[0] - previous[0];
+  const dy = next[1] - previous[1];
+  const length = Math.hypot(dx, dy) || 1;
+  return [-dy / length, dx / length] as [number, number];
+}
+
+function formationFrontSamples(points: Array<[number, number]>, count: number) {
+  if (points.length < 2) {
+    return points;
+  }
+
+  return Array.from({ length: count }, (_, index) => pointAtRatio(points, count === 1 ? 0 : index / (count - 1)));
+}
+
+function formationGridPoints(points: Array<[number, number]>, rows: number, columns: number) {
+  if (points.length < 3) {
+    return formationFrontSamples(points, rows * columns);
+  }
+
+  const xs = points.map((point) => point[0]);
+  const ys = points.map((point) => point[1]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const width = maxX - minX;
+  const height = maxY - minY;
+  return Array.from({ length: rows * columns }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const xRatio = columns === 1 ? 0.5 : column / (columns - 1);
+    const yRatio = rows === 1 ? 0.5 : row / (rows - 1);
+    const stagger = row % 2 === 0 ? 0 : width / Math.max(16, columns * 4);
+    return [minX + width * (0.18 + xRatio * 0.64) + stagger, minY + height * (0.18 + yRatio * 0.64)] as [number, number];
+  });
+}
+
+function formationDepthRows(points: Array<[number, number]>, rows: number, columns: number, spacing = 13) {
+  const front = formationFrontSamples(points, columns);
+  return Array.from({ length: rows * columns }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const frontRatio = columns === 1 ? 0.5 : column / (columns - 1);
+    const stagger = row % 2 === 0 ? 0 : 0.035;
+    const normal = normalAtRatio(points, clamp(frontRatio + stagger, 0, 1));
+    const depth = (row - (rows - 1) / 2) * spacing;
+    return [front[column][0] + normal[0] * depth, front[column][1] + normal[1] * depth] as [number, number];
+  });
+}
+
+function formationArcPoints(points: Array<[number, number]>, count: number, depth = 18) {
+  const samples = formationFrontSamples(points, count);
+  const center = samples.reduce(
+    (sum, point) => [sum[0] + point[0] / samples.length, sum[1] + point[1] / samples.length] as [number, number],
+    [0, 0]
+  );
+  return samples.map((point, index) => {
+    const ratio = count === 1 ? 0 : index / (count - 1);
+    const bow = Math.sin(ratio * Math.PI) * depth;
+    const direction = point[0] < center[0] ? -1 : 1;
+    return [point[0] + direction * bow * 0.2, point[1] - bow] as [number, number];
+  });
+}
+
+function formationRankGuides(points: Array<[number, number]>, rows: number, spacing = 14) {
+  if (points.length < 2 || rows < 2) {
+    return [];
+  }
+
+  return Array.from({ length: rows }, (_, index) => {
+    const depth = (index - (rows - 1) / 2) * spacing;
+    return formationFrontSamples(points, 16).map((point, sampleIndex) => {
+      const ratio = sampleIndex / 15;
+      const normal = normalAtRatio(points, ratio);
+      return [point[0] + normal[0] * depth, point[1] + normal[1] * depth] as [number, number];
+    });
+  });
 }
 
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
@@ -437,6 +528,12 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
   const raisedPoints = reliefRaisedPoints(basePoints, surface);
   const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates);
   const labelLift = reliefLift(surface) + 10;
+  const ridgeLines = [0.26, 0.5, 0.74].map((ratio) =>
+    raisedPoints.map(([x, y], index) => {
+      const wave = Math.sin(index * 1.7 + ratio * Math.PI) * 7;
+      return [x + wave, y + reliefLift(surface) * (ratio - 0.5) * 0.18] as [number, number];
+    })
+  );
   return (
     <g
       className={`gaixia-relief-surface gaixia-relief-${surface.kind} gaixia-relief-role-${surface.tacticalRole}`}
@@ -451,6 +548,9 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
       <path className="gaixia-relief-underside" d={`${buildPath(basePoints)} Z`} />
       <path className="gaixia-relief-top" d={`${buildPath(raisedPoints)} Z`} />
       <path className="gaixia-relief-shade" d={`${buildPath(raisedPoints)} Z`} />
+      {ridgeLines.map((line, index) => (
+        <path key={`${surface.id}-facet-${index}`} className="gaixia-relief-facet" d={buildPath(line)} />
+      ))}
       <path className="gaixia-relief-rim" d={`${buildPath(raisedPoints)} Z`} />
       <text x={labelPoint[0] - reliefSkew(surface)} y={labelPoint[1] - labelLift}>
         {surface.label} {surface.elevation}m
@@ -478,17 +578,42 @@ function Fieldwork({ fieldwork, projection }: { fieldwork: GaixiaFieldwork; proj
   const points = projectLine(projection, fieldwork.coordinates);
   const labelPoint = projectTacticalPoint(projection, fieldwork.labelCoordinates);
   const isClosed = fieldwork.kind === "earthwork";
+  const cornerPoints = isClosed ? points.filter((_, index) => index % 2 === 0) : [];
+  const midpoints = points.slice(0, -1).map((point, index) => midpoint(point, points[index + 1]));
   return (
     <g className={`gaixia-fieldwork gaixia-fieldwork-${fieldwork.kind}`} data-testid={`gaixia-fieldwork-${fieldwork.id}`}>
       <path className="gaixia-fieldwork-shadow" d={`${buildPath(points)}${isClosed ? " Z" : ""}`} />
+      {fieldwork.kind === "earthwork" && <path className="gaixia-fieldwork-wall-face" d={`${buildPath(points.map(([x, y]) => [x + 10, y + 13] as [number, number]))} Z`} />}
       <path className="gaixia-fieldwork-body" d={`${buildPath(points)}${isClosed ? " Z" : ""}`} />
+      {fieldwork.kind === "earthwork" &&
+        cornerPoints.map((point, index) => (
+          <g key={`${fieldwork.id}-tower-${index}`} className="gaixia-fieldwork-icon gaixia-fieldwork-tower" transform={`translate(${point[0]} ${point[1]})`}>
+            <path d="M -9 8 L 0 -7 L 9 8 Z" />
+            <rect x="-6" y="3" width="12" height="9" />
+          </g>
+        ))}
+      {fieldwork.kind === "ditch" &&
+        midpoints.map((point, index) => (
+          <path key={`${fieldwork.id}-trench-${index}`} className="gaixia-fieldwork-trench-rib" d={`M ${point[0] - 8} ${point[1] + 6} L ${point[0] + 8} ${point[1] - 6}`} />
+        ))}
       {fieldwork.kind === "gate" && (
         <>
           {points.map((point, index) => (
-            <rect key={`${fieldwork.id}-post-${index}`} className="gaixia-gate-post" x={point[0] - 4} y={point[1] - 9} width="8" height="18" />
+            <g key={`${fieldwork.id}-post-${index}`} className="gaixia-fieldwork-icon gaixia-gate-post" transform={`translate(${point[0]} ${point[1]})`}>
+              <rect x="-5" y="-13" width="10" height="22" />
+              <path d="M -7 -13 L 0 -20 L 7 -13 Z" />
+              <path d="M -5 9 L 5 9 L 9 15 L -1 15 Z" />
+            </g>
           ))}
         </>
       )}
+      {fieldwork.kind === "camp-line" &&
+        midpoints.map((point, index) => (
+          <g key={`${fieldwork.id}-tent-${index}`} className="gaixia-fieldwork-icon gaixia-camp-tent" transform={`translate(${point[0]} ${point[1]})`}>
+            <path d="M -10 9 L 0 -10 L 10 9 Z" />
+            <path d="M 0 -10 L 0 9" />
+          </g>
+        ))}
       <text x={labelPoint[0]} y={labelPoint[1] - 10}>
         {fieldwork.label}
       </text>
@@ -500,6 +625,36 @@ function Formation({ formation, projection }: { formation: GaixiaFormation; proj
   const points = projectLine(projection, formation.coordinates);
   const labelPoint = projectTacticalPoint(projection, formation.labelCoordinates);
   const isArea = formation.kind === "infantry-block" || formation.kind === "command-post";
+  const iconPoints = isArea ? points : points.slice(0, -1).map((point, index) => midpoint(point, points[index + 1]));
+  const frontPoints = formation.kind === "infantry-block" ? points.slice(0, 2) : points;
+  const formationDepth =
+    formation.kind === "infantry-block"
+      ? formation.faction === "chu"
+        ? { columns: 7, rows: 6, spacing: 11 }
+        : { columns: 6, rows: 4, spacing: 10 }
+      : formation.kind === "crossbow-line"
+        ? { columns: 12, rows: 2, spacing: 12 }
+        : formation.kind === "cavalry-screen"
+          ? { columns: 8, rows: 2, spacing: 16 }
+          : formation.kind === "ambush-line"
+            ? { columns: 9, rows: 2, spacing: 15 }
+            : { columns: 4, rows: 2, spacing: 10 };
+  const rankPoints =
+    formation.kind === "infantry-block"
+      ? formationDepthRows(frontPoints, formationDepth.rows, formationDepth.columns, formationDepth.spacing)
+      : formation.kind === "crossbow-line"
+        ? formationDepthRows(points, formationDepth.rows, formationDepth.columns, formationDepth.spacing)
+        : formation.kind === "cavalry-screen"
+          ? formationArcPoints(points, 8, 28)
+          : formation.kind === "ambush-line"
+            ? formationArcPoints(points, 9, 24)
+            : formationGridPoints(points, 2, 4);
+  const rankGuides =
+    formation.kind === "infantry-block"
+      ? formationRankGuides(frontPoints, formationDepth.rows, formationDepth.spacing)
+      : formation.kind === "crossbow-line"
+        ? formationRankGuides(points, 2, 12)
+        : [];
   return (
     <g
       className={`gaixia-formation gaixia-formation-${formation.faction} gaixia-formation-${formation.kind}`}
@@ -507,15 +662,64 @@ function Formation({ formation, projection }: { formation: GaixiaFormation; proj
       data-testid={`gaixia-formation-${formation.id}`}
     >
       <path className="gaixia-formation-shadow" d={`${buildPath(points)}${isArea ? " Z" : ""}`} />
+      {isArea && <path className="gaixia-formation-wall-face" d={`${buildPath(points.map(([x, y]) => [x + 11, y + 12] as [number, number]))} Z`} />}
       <path className="gaixia-formation-body" d={`${buildPath(points)}${isArea ? " Z" : ""}`} />
+      <path className="gaixia-formation-front-line" d={buildPath(frontPoints)} />
+      {rankGuides.map((guide, index) => (
+        <path key={`${formation.id}-guide-${index}`} className="gaixia-formation-rank-guide" d={buildPath(guide)} />
+      ))}
+      <g className="gaixia-formation-ranks" data-testid={`gaixia-formation-ranks-${formation.id}`}>
+        {rankPoints.map((point, index) => (
+          <circle
+            key={`${formation.id}-rank-${index}`}
+            className={`gaixia-formation-rank-dot gaixia-formation-rank-dot-${formation.kind}`}
+            cx={point[0]}
+            cy={point[1]}
+            r={formation.kind === "infantry-block" ? 2.8 : formation.kind === "crossbow-line" ? 2.4 : 3}
+          />
+        ))}
+      </g>
+      {formation.kind === "infantry-block" && (
+        <g className="gaixia-formation-icon gaixia-formation-front-standard" transform={`translate(${frontPoints[0][0]} ${frontPoints[0][1] - 12})`}>
+          <path d="M 0 -18 L 0 16" />
+          <path d="M 0 -18 L 15 -12 L 0 -6 Z" />
+        </g>
+      )}
       {formation.kind === "crossbow-line" &&
         points.map((point, index) => (
-          <path key={`${formation.id}-chevron-${index}`} className="gaixia-formation-chevron" d={`M ${point[0] - 8} ${point[1] + 6} L ${point[0]} ${point[1] - 6} L ${point[0] + 8} ${point[1] + 6}`} />
+          <g key={`${formation.id}-crossbow-${index}`} className="gaixia-formation-icon gaixia-formation-crossbow-icon" transform={`translate(${point[0]} ${point[1]})`}>
+            <path className="gaixia-formation-chevron" d="M -11 5 L 0 -7 L 11 5" />
+            <path d="M -12 2 L 12 2 M 0 -8 L 0 10 M -6 8 L 6 8" />
+          </g>
         ))}
       {formation.kind === "cavalry-screen" &&
         points.map((point, index) => (
-          <circle key={`${formation.id}-screen-${index}`} className="gaixia-formation-node" cx={point[0]} cy={point[1]} r="5" />
+          <g key={`${formation.id}-screen-${index}`} className="gaixia-formation-icon gaixia-formation-cavalry-icon" transform={`translate(${point[0]} ${point[1]})`}>
+            <path d="M -12 7 L 7 -10 L 14 1 L 1 11 Z" />
+            <circle cx="-3" cy="4" r="3" />
+          </g>
         ))}
+      {formation.kind === "ambush-line" &&
+        iconPoints.map((point, index) => (
+          <g key={`${formation.id}-ambush-${index}`} className="gaixia-formation-icon gaixia-formation-ambush-icon" transform={`translate(${point[0]} ${point[1]})`}>
+            <path d="M -13 8 L 0 -11 L 13 8 Z" />
+            <path d="M -7 5 L 0 -3 L 7 5" />
+          </g>
+        ))}
+      {formation.kind === "infantry-block" &&
+        iconPoints.map((point, index) => (
+          <g key={`${formation.id}-shield-${index}`} className="gaixia-formation-icon gaixia-formation-shield-icon" transform={`translate(${point[0]} ${point[1]})`}>
+            <path d="M -7 -9 L 7 -9 L 8 1 Q 0 12 -8 1 Z" />
+            <path d="M -4 -2 L 4 -2" />
+          </g>
+        ))}
+      {formation.kind === "command-post" && (
+        <g className="gaixia-formation-icon gaixia-formation-command-icon" transform={`translate(${labelPoint[0]} ${labelPoint[1]})`}>
+          <path d="M 0 -18 L 0 12" />
+          <path d="M 0 -18 L 18 -10 L 0 -2 Z" />
+          <circle cx="0" cy="14" r="5" />
+        </g>
+      )}
       <text x={labelPoint[0]} y={labelPoint[1] - 12}>
         {formation.label}
       </text>
@@ -626,7 +830,7 @@ export function GaixiaAmbushAnimation() {
     svgRef,
     zoomIn,
     zoomOut
-  } = useMapInteraction(mapWidth, mapHeight, activeEvent.id, activeMapView);
+  } = useMapInteraction(mapWidth, mapHeight, activeEvent.id, activeMapView, { minScale: gaixiaMinMapScale });
   const activeNarrationCue = narrationCues.find((cue, index) => {
     const start = timeline.dateToProgress(cue.start);
     const end = timeline.dateToProgress(cue.end);
