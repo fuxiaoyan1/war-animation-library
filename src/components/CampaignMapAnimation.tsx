@@ -506,6 +506,40 @@ function routePointsUntil(points: Array<[number, number]>, progress: number) {
   return visible;
 }
 
+function routePointsFrom(points: Array<[number, number]>, progress: number) {
+  if (points.length < 2) {
+    return points;
+  }
+
+  const clampedProgress = Math.min(1, Math.max(0, progress));
+  if (clampedProgress <= 0) {
+    return points;
+  }
+
+  if (clampedProgress >= 1) {
+    return [points.at(-1)!];
+  }
+
+  const startPoint = interpolateRoute(points, clampedProgress);
+  const segmentLengths = points.slice(0, -1).map((point, index) => Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]));
+  const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
+  let consumed = totalLength * clampedProgress;
+  const visible: Array<[number, number]> = [startPoint];
+
+  for (let index = 0; index < segmentLengths.length; index += 1) {
+    const length = segmentLengths[index];
+    if (consumed >= length) {
+      consumed -= length;
+      continue;
+    }
+
+    visible.push(...points.slice(index + 1));
+    break;
+  }
+
+  return visible;
+}
+
 function ActiveEventEffect({
   kind,
   pulse,
@@ -1548,12 +1582,19 @@ export function CampaignMapAnimation({
                 const lineEndProgress = timeline.dateToProgress(line.end);
                 const isComplete = progress >= lineEndProgress;
                 const drawnProgress = tacticalRouteRetention && isComplete ? 1 : segmentProgress;
-                const visibleRoutePoints = routePointsUntil(projectedRoutePoints, drawnProgress);
+                const routeTailStartProgress =
+                  tacticalRouteRetention && isComplete && line.retainRouteTailRatio
+                    ? Math.max(0, 1 - line.retainRouteTailRatio)
+                    : 0;
+                const visibleRoutePoints = routePointsFrom(routePointsUntil(projectedRoutePoints, drawnProgress), routeTailStartProgress);
                 const movingPoint = interpolateRoute(projectedRoutePoints, segmentProgress);
                 const currentPoint = tacticalRouteRetention && isComplete ? (visibleRoutePoints.at(-1) ?? startPoint) : movingPoint;
                 const isActive = segmentProgress > 0 && segmentProgress < 1;
                 const routeState = isActive ? "is-active" : isComplete ? "is-complete" : "is-forming";
-                const hasRouteStarted = progress >= lineStartProgress;
+                const visibleFromProgress = line.visibleFrom ? timeline.dateToProgress(line.visibleFrom) : lineStartProgress;
+                const hasRouteStarted = progress >= visibleFromProgress;
+                const unitStartProgress = line.unitVisibleFrom ? timeline.dateToProgress(line.unitVisibleFrom) : lineStartProgress;
+                const hasUnitStarted = progress >= unitStartProgress;
                 const isWithinRouteVisibleWindow = !line.visibleUntil || progress <= timeline.dateToProgress(line.visibleUntil);
                 const isVisible = hasRouteStarted && isWithinRouteVisibleWindow;
                 const participatesInRetainedSeaGroup =
@@ -1565,7 +1606,7 @@ export function CampaignMapAnimation({
                   participatesInRetainedSeaGroup && visibleRetainedSeaUnitGroups.has(line.id);
                 const isUnitVisible =
                   !line.hideUnit &&
-                  hasRouteStarted &&
+                  hasUnitStarted &&
                   (!line.unitVisibleFrom || progress >= timeline.dateToProgress(line.unitVisibleFrom)) &&
                   (!participatesInRetainedSeaGroup || retainsSeaUnit) &&
                   (retainsSeaUnit || !line.unitVisibleUntil || progress <= timeline.dateToProgress(line.unitVisibleUntil));
@@ -1607,6 +1648,7 @@ export function CampaignMapAnimation({
                     data-route-end={line.end}
                     data-route-start={line.start}
                     data-route-to={line.to}
+                    data-route-visible-from={line.visibleFrom ?? ""}
                     data-route-visible-until={line.visibleUntil ?? ""}
                     data-unit-visible-until={line.unitVisibleUntil ?? ""}
                     data-unit-visible={isUnitVisible}
@@ -1741,6 +1783,10 @@ export function CampaignMapAnimation({
               })}
 
               {mapPoints.map((point) => {
+                if (point.hidden) {
+                  return null;
+                }
+
                 if (point.revealAt && progress < timeline.dateToProgress(point.revealAt)) {
                   return null;
                 }

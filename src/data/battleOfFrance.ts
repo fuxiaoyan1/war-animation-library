@@ -23,6 +23,8 @@ export type FrontLine = {
   end: string;
   hideUnit?: boolean;
   retainUnitAfterRouteEnd?: boolean;
+  retainRouteTailRatio?: number;
+  visibleFrom?: string;
   unitVisibleFrom?: string;
   visibleUntil?: string;
   unitVisibleUntil?: string;
@@ -70,6 +72,7 @@ export type MapPoint = {
   id: string;
   label: string;
   coordinates: [number, number];
+  hidden?: boolean;
   kind: "city" | "front" | "objective" | "port" | "forest" | "capital";
   revealAt?: string;
 };

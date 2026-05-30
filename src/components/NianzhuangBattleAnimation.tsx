@@ -114,7 +114,7 @@ export function NianzhuangBattleAnimation() {
         { fromProgress: timeline.dateToProgress("1948-11-20T05:30"), focus: "nianzhuangFinal" },
         { fromProgress: timeline.dateToProgress("1948-11-22T16:00"), focus: "nianzhuangFinal" }
       ]}
-      focusTransitionProgress={0.055}
+      focusTransitionProgress={0.085}
       frontLines={semanticFrontLines}
       fortifiedLines={[...fortifiedLines, ...fragmentedLines]}
       historicalRegions={historicalRegions}
