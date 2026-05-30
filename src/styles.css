@@ -3334,18 +3334,97 @@ body:has(.gaixia-ambush) {
   line-height: 1.1;
 }
 
-.gaixia-tactical-ground {
-  fill: #d9d1ae;
-}
-
 .gaixia-grid {
   fill: rgba(79, 87, 68, 0.08);
   background: transparent;
 }
 
-.gaixia-terrain-base rect {
-  fill: rgba(255, 249, 222, 0.16);
+.gaixia-tactical-ground {
   pointer-events: none;
+}
+
+.gaixia-sandbox-top {
+  fill: url("#gaixiaSandTexture");
+  stroke: rgba(120, 95, 57, 0.38);
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-sandbox-side-wall {
+  stroke: rgba(119, 90, 52, 0.22);
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-sandbox-side-wall-left {
+  fill: rgba(207, 184, 119, 0.28);
+}
+
+.gaixia-sandbox-side-wall-right {
+  fill: rgba(179, 143, 82, 0.28);
+}
+
+.gaixia-sandbox-side-wall-front {
+  fill: rgba(161, 124, 72, 0.3);
+}
+
+.gaixia-sandbox-grid-line {
+  fill: none;
+  stroke: rgba(125, 105, 68, 0.2);
+  stroke-dasharray: 10 12;
+  stroke-linecap: round;
+  stroke-width: 1.1;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-sandbox-rim {
+  fill: none;
+  stroke: rgba(255, 239, 178, 0.76);
+  stroke-linejoin: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-ground-materials {
+  pointer-events: none;
+}
+
+.gaixia-ground-material {
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.gaixia-ground-material-sand {
+  fill: url("#gaixiaSandTexture");
+  opacity: 0.72;
+  stroke: rgba(171, 132, 75, 0.2);
+}
+
+.gaixia-ground-material-grass {
+  fill: url("#gaixiaGrassTexture");
+  opacity: 0.76;
+  stroke: rgba(79, 113, 50, 0.22);
+}
+
+.gaixia-ground-material-marsh {
+  fill: url("#gaixiaMarshTexture");
+  opacity: 0.7;
+  stroke: rgba(60, 124, 126, 0.22);
+}
+
+.gaixia-ground-material-approach {
+  fill: url("#gaixiaApproachTexture");
+  opacity: 0.62;
+  stroke: rgba(106, 131, 68, 0.22);
+}
+
+.gaixia-ground-material-camp {
+  fill: url("#gaixiaCampTexture");
+  opacity: 0.62;
+  stroke: rgba(136, 72, 45, 0.24);
 }
 
 .gaixia-relief-layer {
@@ -3358,24 +3437,24 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-relief-drop {
-  fill: rgba(88, 68, 40, 0.045);
+  fill: none;
   transform: translate(18px, 22px);
 }
 
 .gaixia-relief-shadow {
-  fill: rgba(104, 78, 45, 0.055);
+  fill: rgba(96, 72, 42, 0.028);
   transform: translate(10px, 14px);
 }
 
 .gaixia-relief-back-wall {
-  fill: rgba(190, 165, 102, 0.32);
-  stroke: rgba(116, 90, 50, 0.2);
+  fill: rgba(211, 187, 119, 0.42);
+  stroke: rgba(116, 90, 50, 0.22);
   stroke-width: 1.2;
 }
 
 .gaixia-relief-wall {
-  fill: rgba(157, 123, 69, 0.26);
-  stroke: rgba(98, 72, 39, 0.2);
+  fill: rgba(176, 133, 73, 0.34);
+  stroke: rgba(98, 72, 39, 0.22);
   stroke-width: 1.8;
 }
 
@@ -3385,28 +3464,28 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-relief-edge-face-lit {
-  fill: rgba(223, 199, 134, 0.3);
+  fill: rgba(229, 206, 139, 0.42);
 }
 
 .gaixia-relief-edge-face-shade {
-  fill: rgba(148, 111, 63, 0.18);
+  fill: rgba(171, 127, 70, 0.3);
 }
 
 .gaixia-relief-underside {
-  fill: rgba(123, 94, 56, 0.035);
+  fill: none;
   stroke: none;
 }
 
 .gaixia-relief-top {
-  fill: rgba(226, 211, 154, 0.32);
-  stroke: rgba(130, 102, 58, 0.46);
+  fill: rgba(231, 218, 157, 0.5);
+  stroke: rgba(130, 102, 58, 0.5);
   stroke-width: 2.2;
 }
 
 .gaixia-relief-shade {
-  fill: rgba(255, 255, 255, 0.12);
+  fill: rgba(255, 255, 255, 0.16);
   mix-blend-mode: screen;
-  transform: translate(-8px, -10px);
+  transform: translate(-4px, -5px);
 }
 
 .gaixia-relief-facet {
@@ -3433,19 +3512,19 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-relief-ridge .gaixia-relief-top {
-  fill: rgba(214, 202, 132, 0.36);
+  fill: rgba(226, 211, 132, 0.54);
 }
 
 .gaixia-relief-slope .gaixia-relief-top {
-  fill: rgba(226, 203, 145, 0.3);
+  fill: rgba(230, 205, 145, 0.44);
 }
 
 .gaixia-relief-lowland .gaixia-relief-top {
-  fill: rgba(130, 184, 190, 0.18);
+  fill: rgba(148, 193, 197, 0.28);
 }
 
 .gaixia-relief-corridor .gaixia-relief-top {
-  fill: rgba(150, 184, 130, 0.18);
+  fill: rgba(164, 196, 139, 0.3);
 }
 
 .gaixia-relief-role-avenue .gaixia-relief-rim {
@@ -3674,12 +3753,26 @@ body:has(.gaixia-ambush) {
 
 .gaixia-river path {
   fill: none;
-  stroke: rgba(58, 128, 153, 0.68);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 7;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 2px 2px rgba(31, 71, 88, 0.18));
+}
+
+.gaixia-river-bank {
+  stroke: rgba(89, 142, 111, 0.5);
+  stroke-width: 22;
+}
+
+.gaixia-river-water {
+  filter: drop-shadow(0 2px 2px rgba(31, 71, 88, 0.16));
+  stroke: rgba(52, 164, 181, 0.78);
+  stroke-width: 9;
+}
+
+.gaixia-river-highlight {
+  stroke: rgba(201, 247, 230, 0.72);
+  stroke-dasharray: 24 14;
+  stroke-width: 2.4;
 }
 
 .gaixia-camp-fortification path {

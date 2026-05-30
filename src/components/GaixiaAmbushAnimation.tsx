@@ -41,6 +41,13 @@ const gaixiaMapScale = 0.94;
 const gaixiaMinMapScale = 0.82;
 const gaixiaViewportCenterY = mapHeight / 2;
 const gaixiaViewportCenterX = mapWidth / 2;
+const gaixiaSandboxBaseElevation = 26;
+const gaixiaSandboxElevationScale = 5.8;
+const gaixiaSandboxYScale = 0.72;
+const gaixiaSandboxXScale = 0.92;
+const gaixiaSandboxShear = 0.06;
+const gaixiaSandboxCenterX = mapWidth / 2;
+const gaixiaSandboxCenterY = mapHeight / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventMapScale: Partial<Record<string, number>> = {
@@ -58,19 +65,19 @@ const eventMapScale: Partial<Record<string, number>> = {
   "wujiang-end": 1.02
 };
 
-const eventFocusY: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 1130,
-  "chu-forms-camp-array": 1260,
-  "hanxin-deploys": 970,
-  "west-counterpush-yield": 1220,
-  "han-counterpress-east-gap": 1280,
-  "ten-sided-ring": 1500,
-  "songs-of-chu": 1260,
-  farewell: 1300,
-  "dawn-assault": 1500,
-  "xiangyu-breakout": 1840,
-  "dongcheng-last-stand": 1975,
-  "wujiang-end": 2080
+const eventFocusYOffset: Partial<Record<string, number>> = {
+  "chu-arrives-gaixia": 18,
+  "chu-forms-camp-array": 36,
+  "hanxin-deploys": -210,
+  "west-counterpush-yield": 18,
+  "han-counterpress-east-gap": 26,
+  "ten-sided-ring": 56,
+  "songs-of-chu": 30,
+  farewell: 36,
+  "dawn-assault": 58,
+  "xiangyu-breakout": 86,
+  "dongcheng-last-stand": 96,
+  "wujiang-end": 108
 };
 
 const eventPoints = battleEvents.map((event) => ({
@@ -92,6 +99,96 @@ const timeline = createCampaignTimeline({
   timingMode: "calendar"
 });
 
+type GaixiaGroundMaterial = {
+  id: string;
+  kind: "sand" | "grass" | "marsh" | "approach" | "camp";
+  elevation: number;
+  points: Array<[number, number]>;
+};
+
+const groundMaterials: GaixiaGroundMaterial[] = [
+  {
+    id: "west-river-grass",
+    kind: "grass",
+    elevation: 28,
+    points: [
+      [117.05, 33.62],
+      [117.31, 33.6],
+      [117.34, 33.48],
+      [117.28, 33.33],
+      [117.24, 33.13],
+      [117.1, 32.97],
+      [117.05, 32.97]
+    ]
+  },
+  {
+    id: "north-bank-grass",
+    kind: "grass",
+    elevation: 29,
+    points: [
+      [117.19, 33.57],
+      [117.52, 33.6],
+      [117.75, 33.48],
+      [117.64, 33.4],
+      [117.35, 33.39],
+      [117.19, 33.45]
+    ]
+  },
+  {
+    id: "central-dry-field",
+    kind: "sand",
+    elevation: 30,
+    points: [
+      [117.29, 33.42],
+      [117.52, 33.45],
+      [117.71, 33.35],
+      [117.68, 33.16],
+      [117.46, 33.1],
+      [117.24, 33.2]
+    ]
+  },
+  {
+    id: "south-marsh-floor",
+    kind: "marsh",
+    elevation: 27,
+    points: [
+      [117.17, 33.16],
+      [117.37, 33.22],
+      [117.61, 33.17],
+      [117.82, 33.08],
+      [117.79, 32.98],
+      [117.38, 33.02]
+    ]
+  },
+  {
+    id: "east-breakout-road-floor",
+    kind: "approach",
+    elevation: 31,
+    points: [
+      [117.51, 33.31],
+      [117.6, 33.29],
+      [117.76, 33.12],
+      [117.82, 33.04],
+      [117.74, 33.01],
+      [117.58, 33.18],
+      [117.49, 33.26]
+    ]
+  },
+  {
+    id: "bawangcheng-beaten-earth",
+    kind: "camp",
+    elevation: 36,
+    points: [
+      [117.36, 33.3],
+      [117.42, 33.41],
+      [117.52, 33.39],
+      [117.55, 33.32],
+      [117.49, 33.25],
+      [117.39, 33.26]
+    ]
+  }
+];
+
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
 }
@@ -106,13 +203,29 @@ function buildPath(points: Array<[number, number]>) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(" ");
 }
 
-function projectTacticalPoint(projection: ReturnType<typeof createCampaignProjection>, point: [number, number]) {
+function projectFlatTacticalPoint(projection: ReturnType<typeof createCampaignProjection>, point: [number, number]) {
   const [x, y] = projectPoint(projection, point);
   return [x, y * tacticalYScale] as [number, number];
 }
 
+function projectSandboxFlatPoint(point: [number, number], elevation = gaixiaSandboxBaseElevation) {
+  const z = Math.max(-4, elevation - gaixiaSandboxBaseElevation) * gaixiaSandboxElevationScale;
+  return [
+    gaixiaSandboxCenterX + (point[0] - gaixiaSandboxCenterX) * gaixiaSandboxXScale + (point[1] - gaixiaSandboxCenterY) * gaixiaSandboxShear,
+    gaixiaSandboxCenterY + (point[1] - gaixiaSandboxCenterY) * gaixiaSandboxYScale - z
+  ] as [number, number];
+}
+
+function projectTacticalPoint(projection: ReturnType<typeof createCampaignProjection>, point: [number, number], elevation = reliefElevationAtPoint(point)) {
+  return projectSandboxFlatPoint(projectFlatTacticalPoint(projection, point), elevation);
+}
+
 function projectLine(projection: ReturnType<typeof createCampaignProjection>, points: Array<[number, number]>) {
   return points.map((point) => projectTacticalPoint(projection, point));
+}
+
+function projectLineAtElevation(projection: ReturnType<typeof createCampaignProjection>, points: Array<[number, number]>, elevation: number) {
+  return points.map((point) => projectTacticalPoint(projection, point, elevation));
 }
 
 function routeLength(points: Array<[number, number]>) {
@@ -174,21 +287,6 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   const previous = interpolateRoute(points, Math.max(0, progress - 0.025));
   const next = interpolateRoute(points, Math.min(1, progress + 0.025));
   return next[0] - previous[0] < -0.01 ? -1 : 1;
-}
-
-function reliefLift(surface: GaixiaReliefSurface) {
-  return Math.max(16, (surface.elevation - surface.baseElevation) * 6.0);
-}
-
-function reliefSkew(surface: GaixiaReliefSurface) {
-  const roleBias = surface.tacticalRole === "avenue" ? 0.68 : surface.tacticalRole === "obstacle" ? 0.36 : 0.88;
-  return Math.max(8, reliefLift(surface) * roleBias);
-}
-
-function reliefRaisedPoints(points: Array<[number, number]>, surface: GaixiaReliefSurface) {
-  const lift = reliefLift(surface);
-  const skew = reliefSkew(surface);
-  return points.map(([x, y]) => [x - skew, y - lift] as [number, number]);
 }
 
 function reliefSideWallPath(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
@@ -330,7 +428,7 @@ function formationRankGuides(points: Array<[number, number]>, rows: number, spac
 }
 
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
-  const focusY = eventFocusY[event.id] ?? activePoint[1];
+  const focusY = activePoint[1] + (eventFocusYOffset[event.id] ?? 0);
   const focusX = activePoint[0];
   const scale = eventMapScale[event.id] ?? gaixiaMapScale;
   return {
@@ -530,16 +628,77 @@ function GaixiaUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: GaixiaUnitKi
   );
 }
 
+function SandboxDeck() {
+  const deckCorners: Array<[number, number]> = [
+    [72, 104],
+    [1100, 104],
+    [1140, 2690],
+    [42, 2690]
+  ];
+  const top = deckCorners.map((point) => projectSandboxFlatPoint(point, gaixiaSandboxBaseElevation));
+  const underside = deckCorners.map((point) => projectSandboxFlatPoint(point, gaixiaSandboxBaseElevation - 7));
+  const rightWall = [top[1], top[2], underside[2], underside[1]];
+  const frontWall = [top[2], top[3], underside[3], underside[2]];
+  const leftWall = [top[3], top[0], underside[0], underside[3]];
+  const xGridLines = Array.from({ length: 8 }, (_, index) => {
+    const x = 170 + index * 118;
+    return [
+      projectSandboxFlatPoint([x, 170], gaixiaSandboxBaseElevation + 0.2),
+      projectSandboxFlatPoint([x + 34, 2620], gaixiaSandboxBaseElevation + 0.2)
+    ] as Array<[number, number]>;
+  });
+  const yGridLines = Array.from({ length: 11 }, (_, index) => {
+    const y = 260 + index * 210;
+    return [
+      projectSandboxFlatPoint([92, y], gaixiaSandboxBaseElevation + 0.2),
+      projectSandboxFlatPoint([1106, y + 18], gaixiaSandboxBaseElevation + 0.2)
+    ] as Array<[number, number]>;
+  });
+
+  return (
+    <g className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" data-projection="elevated-isometric">
+      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-left" d={`${buildPath(leftWall)} Z`} />
+      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-right" d={`${buildPath(rightWall)} Z`} />
+      <path className="gaixia-sandbox-side-wall gaixia-sandbox-side-wall-front" d={`${buildPath(frontWall)} Z`} />
+      <path className="gaixia-sandbox-top" d={`${buildPath(top)} Z`} />
+      <g className="gaixia-sandbox-grid" aria-hidden="true">
+        {[...xGridLines, ...yGridLines].map((line, index) => (
+          <path key={`sandbox-grid-${index}`} className="gaixia-sandbox-grid-line" d={buildPath(line)} />
+        ))}
+      </g>
+      <path className="gaixia-sandbox-rim" d={`${buildPath(top)} Z`} />
+    </g>
+  );
+}
+
+function TerrainMaterialLayer({ projection }: { projection: ReturnType<typeof createCampaignProjection> }) {
+  return (
+    <g className="gaixia-ground-materials" data-testid="gaixia-ground-material-layer">
+      {groundMaterials.map((material) => {
+        const points = projectLineAtElevation(projection, material.points, material.elevation + 0.4);
+        return (
+          <path
+            key={material.id}
+            className={`gaixia-ground-material gaixia-ground-material-${material.kind}`}
+            data-ground-material-kind={material.kind}
+            data-testid={`gaixia-ground-material-${material.id}`}
+            d={`${buildPath(points)} Z`}
+          />
+        );
+      })}
+    </g>
+  );
+}
+
 function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof createCampaignProjection>; surface: GaixiaReliefSurface }) {
-  const basePoints = projectLine(projection, surface.points);
-  const raisedPoints = reliefRaisedPoints(basePoints, surface);
+  const basePoints = projectLineAtElevation(projection, surface.points, surface.baseElevation);
+  const raisedPoints = projectLineAtElevation(projection, surface.points, surface.elevation);
   const edgeWallPaths = reliefEdgeWallPaths(basePoints, raisedPoints);
-  const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates);
-  const labelLift = reliefLift(surface) + 10;
+  const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates, surface.elevation + 2);
   const ridgeLines = [0.16, 0.32, 0.5, 0.68, 0.84].map((ratio) =>
     raisedPoints.map(([x, y], index) => {
       const wave = Math.sin(index * 1.7 + ratio * Math.PI) * 5;
-      return [x + wave, y + reliefLift(surface) * (ratio - 0.5) * 0.16] as [number, number];
+      return [x + wave, y + (surface.elevation - surface.baseElevation) * (ratio - 0.5) * 0.8] as [number, number];
     })
   );
   return (
@@ -563,7 +722,7 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
         <path key={`${surface.id}-facet-${index}`} className="gaixia-relief-facet" d={buildPath(line)} />
       ))}
       <path className="gaixia-relief-rim" d={`${buildPath(raisedPoints)} Z`} />
-      <text x={labelPoint[0] - reliefSkew(surface)} y={labelPoint[1] - labelLift}>
+      <text x={labelPoint[0]} y={labelPoint[1] - 12}>
         {surface.label} {surface.elevation}m
       </text>
     </g>
@@ -1015,6 +1174,35 @@ export function GaixiaAmbushAnimation() {
             {...mapInteractionProps}
           >
             <defs>
+              <pattern id="gaixiaSandTexture" patternUnits="userSpaceOnUse" width="86" height="86">
+                <rect width="86" height="86" fill="#dfc895" />
+                <circle cx="12" cy="18" r="1.7" fill="#c9a979" opacity="0.36" />
+                <circle cx="47" cy="11" r="1.1" fill="#f1ddb0" opacity="0.58" />
+                <circle cx="72" cy="38" r="1.4" fill="#b99564" opacity="0.28" />
+                <path d="M 6 66 C 26 58 48 62 78 50" fill="none" stroke="#c6a776" strokeWidth="1.1" opacity="0.22" />
+                <path d="M 0 32 C 24 26 46 32 86 20" fill="none" stroke="#f2ddb0" strokeWidth="1.2" opacity="0.24" />
+              </pattern>
+              <pattern id="gaixiaGrassTexture" patternUnits="userSpaceOnUse" width="72" height="72">
+                <rect width="72" height="72" fill="#8cae57" />
+                <path d="M 8 16 L 17 6 M 31 28 L 42 16 M 54 61 L 66 47 M 4 58 L 15 45" stroke="#5f863a" strokeWidth="2" opacity="0.36" />
+                <path d="M 12 42 C 26 36 41 39 63 30" fill="none" stroke="#b6cb73" strokeWidth="2.2" opacity="0.34" />
+                <circle cx="52" cy="13" r="2.4" fill="#c9d990" opacity="0.26" />
+              </pattern>
+              <pattern id="gaixiaMarshTexture" patternUnits="userSpaceOnUse" width="78" height="78">
+                <rect width="78" height="78" fill="#9bbd91" />
+                <path d="M 6 18 C 24 10 42 18 62 8 M 10 48 C 32 42 48 51 72 40" fill="none" stroke="#5b9aa1" strokeWidth="3" opacity="0.28" />
+                <path d="M 17 68 L 24 53 M 39 28 L 47 13 M 58 66 L 66 51" stroke="#4e7d4a" strokeWidth="2.2" opacity="0.32" />
+              </pattern>
+              <pattern id="gaixiaApproachTexture" patternUnits="userSpaceOnUse" width="84" height="84">
+                <rect width="84" height="84" fill="#c5c286" />
+                <path d="M -4 44 C 20 32 42 32 88 22" fill="none" stroke="#ece0a4" strokeWidth="5" opacity="0.34" />
+                <path d="M 8 55 C 30 45 50 45 76 34" fill="none" stroke="#8f9b58" strokeWidth="2.2" strokeDasharray="8 9" opacity="0.3" />
+              </pattern>
+              <pattern id="gaixiaCampTexture" patternUnits="userSpaceOnUse" width="64" height="64">
+                <rect width="64" height="64" fill="#c89468" />
+                <path d="M 2 18 H 62 M 12 42 H 56" stroke="#a8704d" strokeWidth="2" opacity="0.32" />
+                <path d="M 22 6 L 28 20 M 46 31 L 52 48" stroke="#e0b185" strokeWidth="2" opacity="0.38" />
+              </pattern>
               <filter id="gaixiaTerrainShadow" x="-15%" y="-15%" width="130%" height="130%">
                 <feDropShadow dx="-22" dy="30" stdDeviation="12" floodColor="#06110f" floodOpacity="0.52" />
               </filter>
@@ -1031,10 +1219,10 @@ export function GaixiaAmbushAnimation() {
             </defs>
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
-            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" transform={mapTransform}>
-              <rect className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" x="0" y="0" width={mapWidth} height={mapHeight} />
+            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" data-projection="elevated-isometric" transform={mapTransform}>
+              <SandboxDeck />
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
-                <rect x="0" y="0" width={mapWidth} height={mapHeight} />
+                <TerrainMaterialLayer projection={projection} />
                 <g className="gaixia-relief-layer" data-testid="gaixia-relief-terrain-layer">
                   {terrainReliefSurfaces.map((surface) => (
                     <ReliefSurface key={surface.id} projection={projection} surface={surface} />
@@ -1092,11 +1280,13 @@ export function GaixiaAmbushAnimation() {
 
               <g className="gaixia-rivers" data-testid="gaixia-river-layer">
                 {rivers.map((river) => {
-                  const points = projectLine(projection, river.points);
+                  const points = projectLineAtElevation(projection, river.points, 28.5);
                   const labelPoint = points[Math.floor(points.length / 2)] ?? points[0];
                   return (
                     <g key={river.id} className="gaixia-river">
-                      <path d={buildPath(points)} />
+                      <path className="gaixia-river-bank" d={buildPath(points)} />
+                      <path className="gaixia-river-water" d={buildPath(points)} />
+                      <path className="gaixia-river-highlight" d={buildPath(points)} />
                       <text x={labelPoint[0] + 10} y={labelPoint[1] - 8}>
                         {river.label}
                       </text>

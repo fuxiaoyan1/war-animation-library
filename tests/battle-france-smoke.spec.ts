@@ -4097,6 +4097,15 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
+  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "elevated-isometric");
+  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "elevated-isometric");
+  await expect(page.locator(".gaixia-sandbox-top")).toHaveCount(1);
+  await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(3);
+  await expect.poll(async () => page.locator(".gaixia-sandbox-grid-line").count()).toBeGreaterThanOrEqual(18);
+  await expect(page.getByTestId("gaixia-ground-material-layer")).toBeVisible();
+  await expect(page.locator(".gaixia-ground-material")).toHaveCount(6);
+  await expect(page.locator(".gaixia-ground-material-grass")).toHaveCount(2);
+  await expect(page.locator(".gaixia-ground-material-camp")).toHaveCount(1);
   await expect(page.getByTestId("gaixia-relief-terrain-layer")).toBeVisible();
   await expect(page.locator(".gaixia-relief-surface")).toHaveCount(7);
   await expect(page.locator(".gaixia-relief-wall")).toHaveCount(7);
@@ -4122,6 +4131,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-terrain-layer")).toContainText("垓下高地");
   await expect(page.getByTestId("gaixia-terrain-layer")).toContainText("旧河汊低地");
   await expect(page.getByTestId("gaixia-river-layer")).toContainText("沱河");
+  await expect(page.locator(".gaixia-river-bank")).toHaveCount(2);
+  await expect(page.locator(".gaixia-river-water")).toHaveCount(2);
   await expect(page.getByTestId("gaixia-region-sishui-commandery")).toContainText("秦属泗水郡旧界");
   await expect(page.getByTestId("gaixia-region-han-outer-ring")).toContainText("汉军合围态势");
   await expect(page.getByTestId("gaixia-region-chu-pocket")).toContainText("楚军垓下营垒");
