@@ -55,6 +55,26 @@ export type GaixiaFortification = {
   labelCoordinates: [number, number];
 };
 
+export type GaixiaFieldwork = {
+  id: string;
+  label: string;
+  kind: "earthwork" | "ditch" | "gate" | "camp-line";
+  coordinates: Array<[number, number]>;
+  labelCoordinates: [number, number];
+  revealAt?: string;
+};
+
+export type GaixiaFormation = {
+  id: string;
+  label: string;
+  faction: Exclude<GaixiaFaction, "terrain">;
+  kind: "infantry-block" | "cavalry-screen" | "crossbow-line" | "command-post" | "ambush-line";
+  coordinates: Array<[number, number]>;
+  labelCoordinates: [number, number];
+  start: string;
+  end?: string;
+};
+
 export type GaixiaAmbushSector = {
   id: string;
   label: string;
@@ -446,6 +466,199 @@ export const campFortifications: GaixiaFortification[] = [
       [117.512, 33.318],
       [117.468, 33.289],
       [117.42, 33.295]
+    ]
+  }
+];
+
+export const fieldworks: GaixiaFieldwork[] = [
+  {
+    id: "bawangcheng-outer-rampart",
+    label: "外土垒",
+    kind: "earthwork",
+    labelCoordinates: [117.42, 33.397],
+    coordinates: [
+      [117.365, 33.302],
+      [117.425, 33.415],
+      [117.515, 33.392],
+      [117.548, 33.316],
+      [117.482, 33.252],
+      [117.395, 33.265]
+    ]
+  },
+  {
+    id: "chu-inner-rampart",
+    label: "内营土垒",
+    kind: "earthwork",
+    labelCoordinates: [117.455, 33.357],
+    coordinates: [
+      [117.407, 33.319],
+      [117.442, 33.372],
+      [117.497, 33.36],
+      [117.512, 33.318],
+      [117.468, 33.289],
+      [117.42, 33.295]
+    ]
+  },
+  {
+    id: "west-camp-gate",
+    label: "西营门",
+    kind: "gate",
+    labelCoordinates: [117.382, 33.35],
+    coordinates: [
+      [117.372, 33.348],
+      [117.395, 33.36]
+    ]
+  },
+  {
+    id: "east-gap-gate",
+    label: "东口营门",
+    kind: "gate",
+    labelCoordinates: [117.535, 33.326],
+    coordinates: [
+      [117.52, 33.34],
+      [117.552, 33.315]
+    ]
+  },
+  {
+    id: "old-channel-ditch",
+    label: "旧河汊壕沟",
+    kind: "ditch",
+    labelCoordinates: [117.49, 33.236],
+    coordinates: [
+      [117.25, 33.23],
+      [117.36, 33.27],
+      [117.48, 33.25],
+      [117.6, 33.19],
+      [117.77, 33.13]
+    ]
+  },
+  {
+    id: "han-forward-camp-line",
+    label: "汉军前出营线",
+    kind: "camp-line",
+    labelCoordinates: [117.34, 33.41],
+    coordinates: [
+      [117.2, 33.36],
+      [117.3, 33.41],
+      [117.45, 33.44],
+      [117.57, 33.39],
+      [117.66, 33.31]
+    ],
+    revealAt: "BCE-0202-12-01T19:00"
+  }
+];
+
+export const formations: GaixiaFormation[] = [
+  {
+    id: "chu-center-block",
+    label: "楚中军步阵",
+    faction: "chu",
+    kind: "infantry-block",
+    start: "BCE-0202-12-01T18:00",
+    end: "BCE-0202-12-02T04:10",
+    labelCoordinates: [117.455, 33.333],
+    coordinates: [
+      [117.42, 33.355],
+      [117.462, 33.375],
+      [117.497, 33.34],
+      [117.468, 33.3],
+      [117.425, 33.314]
+    ]
+  },
+  {
+    id: "chu-east-cavalry-screen",
+    label: "楚骑东侧屏卫",
+    faction: "chu",
+    kind: "cavalry-screen",
+    start: "BCE-0202-12-01T18:10",
+    end: "BCE-0202-12-02T03:30",
+    labelCoordinates: [117.535, 33.325],
+    coordinates: [
+      [117.5, 33.365],
+      [117.535, 33.338],
+      [117.555, 33.29]
+    ]
+  },
+  {
+    id: "chu-south-infantry-line",
+    label: "楚南侧步阵",
+    faction: "chu",
+    kind: "infantry-block",
+    start: "BCE-0202-12-01T18:20",
+    end: "BCE-0202-12-01T22:00",
+    labelCoordinates: [117.456, 33.268],
+    coordinates: [
+      [117.43, 33.294],
+      [117.458, 33.282],
+      [117.474, 33.25],
+      [117.438, 33.244]
+    ]
+  },
+  {
+    id: "han-west-infantry-block",
+    label: "汉西路步阵",
+    faction: "han",
+    kind: "infantry-block",
+    start: "BCE-0202-12-01T17:00",
+    labelCoordinates: [117.32, 33.365],
+    coordinates: [
+      [117.24, 33.335],
+      [117.33, 33.385],
+      [117.39, 33.365],
+      [117.31, 33.325]
+    ]
+  },
+  {
+    id: "han-north-crossbow-line",
+    label: "汉北岸弩阵",
+    faction: "han",
+    kind: "crossbow-line",
+    start: "BCE-0202-12-01T17:30",
+    labelCoordinates: [117.405, 33.49],
+    coordinates: [
+      [117.3, 33.52],
+      [117.38, 33.5],
+      [117.5, 33.44]
+    ]
+  },
+  {
+    id: "han-east-crossbow-line",
+    label: "东口交叉弩网",
+    faction: "han",
+    kind: "crossbow-line",
+    start: "BCE-0202-12-01T18:10",
+    labelCoordinates: [117.61, 33.35],
+    coordinates: [
+      [117.68, 33.38],
+      [117.61, 33.35],
+      [117.51, 33.33]
+    ]
+  },
+  {
+    id: "han-southeast-cavalry-ambush",
+    label: "东南伏骑阵",
+    faction: "han",
+    kind: "ambush-line",
+    start: "BCE-0202-12-01T19:00",
+    labelCoordinates: [117.63, 33.195],
+    coordinates: [
+      [117.75, 33.09],
+      [117.67, 33.16],
+      [117.58, 33.23]
+    ]
+  },
+  {
+    id: "han-command-post",
+    label: "韩信中军",
+    faction: "han",
+    kind: "command-post",
+    start: "BCE-0202-12-01T18:00",
+    labelCoordinates: [117.31, 33.25],
+    coordinates: [
+      [117.29, 33.235],
+      [117.335, 33.26],
+      [117.31, 33.285],
+      [117.265, 33.26]
     ]
   }
 ];

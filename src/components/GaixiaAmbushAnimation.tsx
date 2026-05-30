@@ -7,6 +7,8 @@ import {
   campaignEnd,
   campaignStart,
   cueEventIds,
+  fieldworks,
+  formations,
   historicalRegions,
   mapPoints,
   narrationCues,
@@ -17,6 +19,8 @@ import {
   terrainLabels,
   terrainReliefSurfaces,
   type GaixiaEvent,
+  type GaixiaFieldwork,
+  type GaixiaFormation,
   type GaixiaReliefSurface,
   type GaixiaRoute,
   type GaixiaTacticalGraphic,
@@ -33,24 +37,24 @@ const mapWidth = 1180;
 const projectionHeight = 1408;
 const tacticalYScale = 2;
 const mapHeight = projectionHeight * tacticalYScale;
-const gaixiaMapScale = 1.2;
+const gaixiaMapScale = 1.02;
 const gaixiaViewportCenterY = mapHeight / 2;
 const gaixiaViewportCenterX = mapWidth / 2;
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
 const eventMapScale: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 1.18,
-  "chu-forms-camp-array": 1.28,
-  "hanxin-deploys": 1.16,
-  "west-counterpush-yield": 1.22,
-  "han-counterpress-east-gap": 1.28,
-  "ten-sided-ring": 1.14,
-  "songs-of-chu": 1.26,
-  farewell: 1.3,
-  "dawn-assault": 1.16,
-  "xiangyu-breakout": 1.22,
-  "dongcheng-last-stand": 1.28,
-  "wujiang-end": 1.32
+  "chu-arrives-gaixia": 1.04,
+  "chu-forms-camp-array": 1.1,
+  "hanxin-deploys": 1.02,
+  "west-counterpush-yield": 1.06,
+  "han-counterpress-east-gap": 1.1,
+  "ten-sided-ring": 1.0,
+  "songs-of-chu": 1.08,
+  farewell: 1.1,
+  "dawn-assault": 1.02,
+  "xiangyu-breakout": 1.06,
+  "dongcheng-last-stand": 1.1,
+  "wujiang-end": 1.12
 };
 
 const eventFocusY: Partial<Record<string, number>> = {
@@ -172,12 +176,12 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
 }
 
 function reliefLift(surface: GaixiaReliefSurface) {
-  return Math.max(2, (surface.elevation - surface.baseElevation) * 2.1);
+  return Math.max(10, (surface.elevation - surface.baseElevation) * 4.8);
 }
 
 function reliefSkew(surface: GaixiaReliefSurface) {
   const roleBias = surface.tacticalRole === "avenue" ? 0.55 : surface.tacticalRole === "obstacle" ? 0.2 : 0.75;
-  return Math.max(3, reliefLift(surface) * roleBias);
+  return Math.max(8, reliefLift(surface) * roleBias);
 }
 
 function reliefRaisedPoints(points: Array<[number, number]>, surface: GaixiaReliefSurface) {
@@ -190,6 +194,13 @@ function reliefSideWallPath(basePoints: Array<[number, number]>, raisedPoints: A
   const startIndex = Math.max(1, Math.floor(basePoints.length * 0.46));
   const baseEdge = basePoints.slice(startIndex);
   const raisedEdge = raisedPoints.slice(startIndex).reverse();
+  return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
+}
+
+function reliefBackWallPath(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
+  const endIndex = Math.max(2, Math.floor(basePoints.length * 0.5));
+  const baseEdge = basePoints.slice(0, endIndex);
+  const raisedEdge = raisedPoints.slice(0, endIndex).reverse();
   return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
 }
 
@@ -208,6 +219,16 @@ function reliefElevationAtPoint(point: [number, number]) {
 
 function isTacticalGraphicVisible(graphic: GaixiaTacticalGraphic, progress: number) {
   return !graphic.revealAt || progress >= timeline.dateToProgress(graphic.revealAt);
+}
+
+function isFieldworkVisible(fieldwork: GaixiaFieldwork, progress: number) {
+  return !fieldwork.revealAt || progress >= timeline.dateToProgress(fieldwork.revealAt);
+}
+
+function isFormationVisible(formation: GaixiaFormation, progress: number) {
+  const start = timeline.dateToProgress(formation.start);
+  const end = formation.end ? timeline.dateToProgress(formation.end) : 1;
+  return progress >= start && progress <= end;
 }
 
 function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
@@ -423,9 +444,13 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
       data-base-elevation={surface.baseElevation}
       data-testid={`gaixia-relief-${surface.id}`}
     >
+      <path className="gaixia-relief-drop" d={`${buildPath(basePoints)} Z`} />
       <path className="gaixia-relief-shadow" d={`${buildPath(basePoints)} Z`} />
+      <path className="gaixia-relief-back-wall" d={reliefBackWallPath(basePoints, raisedPoints)} />
       <path className="gaixia-relief-wall" d={reliefSideWallPath(basePoints, raisedPoints)} />
+      <path className="gaixia-relief-underside" d={`${buildPath(basePoints)} Z`} />
       <path className="gaixia-relief-top" d={`${buildPath(raisedPoints)} Z`} />
+      <path className="gaixia-relief-shade" d={`${buildPath(raisedPoints)} Z`} />
       <path className="gaixia-relief-rim" d={`${buildPath(raisedPoints)} Z`} />
       <text x={labelPoint[0] - reliefSkew(surface)} y={labelPoint[1] - labelLift}>
         {surface.label} {surface.elevation}m
@@ -444,6 +469,55 @@ function TacticalGraphic({ graphic, projection }: { graphic: GaixiaTacticalGraph
       {graphic.kind === "key-terrain" && points.map((point, index) => <circle key={`${graphic.id}-${index}`} cx={point[0]} cy={point[1]} r="4.5" />)}
       <text x={labelPoint[0]} y={labelPoint[1] - 10}>
         {graphic.label}
+      </text>
+    </g>
+  );
+}
+
+function Fieldwork({ fieldwork, projection }: { fieldwork: GaixiaFieldwork; projection: ReturnType<typeof createCampaignProjection> }) {
+  const points = projectLine(projection, fieldwork.coordinates);
+  const labelPoint = projectTacticalPoint(projection, fieldwork.labelCoordinates);
+  const isClosed = fieldwork.kind === "earthwork";
+  return (
+    <g className={`gaixia-fieldwork gaixia-fieldwork-${fieldwork.kind}`} data-testid={`gaixia-fieldwork-${fieldwork.id}`}>
+      <path className="gaixia-fieldwork-shadow" d={`${buildPath(points)}${isClosed ? " Z" : ""}`} />
+      <path className="gaixia-fieldwork-body" d={`${buildPath(points)}${isClosed ? " Z" : ""}`} />
+      {fieldwork.kind === "gate" && (
+        <>
+          {points.map((point, index) => (
+            <rect key={`${fieldwork.id}-post-${index}`} className="gaixia-gate-post" x={point[0] - 4} y={point[1] - 9} width="8" height="18" />
+          ))}
+        </>
+      )}
+      <text x={labelPoint[0]} y={labelPoint[1] - 10}>
+        {fieldwork.label}
+      </text>
+    </g>
+  );
+}
+
+function Formation({ formation, projection }: { formation: GaixiaFormation; projection: ReturnType<typeof createCampaignProjection> }) {
+  const points = projectLine(projection, formation.coordinates);
+  const labelPoint = projectTacticalPoint(projection, formation.labelCoordinates);
+  const isArea = formation.kind === "infantry-block" || formation.kind === "command-post";
+  return (
+    <g
+      className={`gaixia-formation gaixia-formation-${formation.faction} gaixia-formation-${formation.kind}`}
+      data-formation-kind={formation.kind}
+      data-testid={`gaixia-formation-${formation.id}`}
+    >
+      <path className="gaixia-formation-shadow" d={`${buildPath(points)}${isArea ? " Z" : ""}`} />
+      <path className="gaixia-formation-body" d={`${buildPath(points)}${isArea ? " Z" : ""}`} />
+      {formation.kind === "crossbow-line" &&
+        points.map((point, index) => (
+          <path key={`${formation.id}-chevron-${index}`} className="gaixia-formation-chevron" d={`M ${point[0] - 8} ${point[1] + 6} L ${point[0]} ${point[1] - 6} L ${point[0] + 8} ${point[1] + 6}`} />
+        ))}
+      {formation.kind === "cavalry-screen" &&
+        points.map((point, index) => (
+          <circle key={`${formation.id}-screen-${index}`} className="gaixia-formation-node" cx={point[0]} cy={point[1]} r="5" />
+        ))}
+      <text x={labelPoint[0]} y={labelPoint[1] - 12}>
+        {formation.label}
       </text>
     </g>
   );
@@ -727,7 +801,7 @@ export function GaixiaAmbushAnimation() {
           >
             <defs>
               <filter id="gaixiaTerrainShadow" x="-15%" y="-15%" width="130%" height="130%">
-                <feDropShadow dx="-14" dy="18" stdDeviation="9" floodColor="#0b1815" floodOpacity="0.42" />
+                <feDropShadow dx="-22" dy="30" stdDeviation="12" floodColor="#06110f" floodOpacity="0.52" />
               </filter>
               <filter id="gaixiaUnitGlow" x="-60%" y="-70%" width="220%" height="230%">
                 <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#ffd36f" floodOpacity="0.44" />
@@ -829,6 +903,22 @@ export function GaixiaAmbushAnimation() {
                     </g>
                   );
                 })}
+              </g>
+
+              <g className="gaixia-fieldworks" data-testid="gaixia-fieldwork-layer">
+                {fieldworks
+                  .filter((fieldwork) => isFieldworkVisible(fieldwork, progress))
+                  .map((fieldwork) => (
+                    <Fieldwork key={fieldwork.id} fieldwork={fieldwork} projection={projection} />
+                  ))}
+              </g>
+
+              <g className="gaixia-formations" data-testid="gaixia-formation-layer">
+                {formations
+                  .filter((formation) => isFormationVisible(formation, progress))
+                  .map((formation) => (
+                    <Formation key={formation.id} formation={formation} projection={projection} />
+                  ))}
               </g>
 
               <g className="gaixia-ambush-sectors" data-testid="gaixia-ambush-sector-layer">
