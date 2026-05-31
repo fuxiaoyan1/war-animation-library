@@ -100,6 +100,9 @@ const cachedTerrainTileZoom = 14;
 const minCachedTileZoom = 10;
 const terrainExaggeration = 1;
 const hillshadeExaggeration = 0.08;
+const cameraTransitionDurationMs = 1100;
+const tacticalCameraBearing = -23;
+const tacticalCameraPitch = 54;
 const terrainTileUrl = "/assets/maps/gaixia-real-terrain/terrarium/{z}/{x}-{y}.png";
 const imageryTileUrl = "/assets/maps/gaixia-real-terrain/imagery/{z}/{x}-{y}.jpg";
 const historicalBaseBounds: TacticalPoint[] = [
@@ -163,7 +166,7 @@ const historicalTerrainBaseData = featureCollection([
 const historicalWaterData = featureCollection(rivers.map((river) => lineFeature(river.id, river.points)));
 const historicalContourData = featureCollection(terrainContours.map((contour) => lineFeature(contour.id, contour.points, { elevation: contour.elevation, kind: contour.kind })));
 
-function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinates: TacticalPoint, focusRoutePoints: TacticalPoint[], map?: maplibregl.Map | null) {
+function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinates: TacticalPoint, focusRoutePoints: TacticalPoint[]) {
   const hasRouteContext = focusRoutePoints.length > 1;
   const longitudes = focusRoutePoints.map((point) => point[0]);
   const latitudes = focusRoutePoints.map((point) => point[1]);
@@ -173,30 +176,6 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
         (Math.min(...latitudes) + Math.max(...latitudes)) / 2
       ] as TacticalPoint)
     : focusCoordinates;
-  const fittedZoom =
-    hasRouteContext && map
-      ? (() => {
-          const rawWest = Math.min(...longitudes);
-          const rawEast = Math.max(...longitudes);
-          const rawSouth = Math.min(...latitudes);
-          const rawNorth = Math.max(...latitudes);
-          const west = Math.max(gaixiaBounds[0][0], rawWest - 0.085);
-          const east = Math.min(gaixiaBounds[1][0], rawEast + 0.15);
-          const south = Math.max(gaixiaBounds[0][1], rawSouth - 0.085);
-          const north = Math.min(gaixiaBounds[1][1], rawNorth + 0.085);
-          return map.cameraForBounds(
-            [
-              [west, south],
-              [east, north]
-            ],
-            {
-              bearing: -23,
-              padding: { bottom: 158, left: 210, right: 300, top: 168 },
-              pitch: 60
-            }
-          )?.zoom;
-        })()
-      : undefined;
   const fittedCenter = blendCameraCenter(focusCoordinates, envelopeCenter, focusRoutePoints);
   const userPanX = mapView.x - mapBaseView.x;
   const userPanY = mapView.y - mapBaseView.y;
@@ -205,19 +184,18 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
     fittedCenter[0] - userPanX / 10000 / Math.max(mapView.scale, 0.1),
     fittedCenter[1] + userPanY / 13800 / Math.max(mapView.scale, 0.1)
   ];
-  const baseZoom = hasRouteContext ? highResolutionZoomForRouteSpan(focusRoutePoints) : 13;
+  const stageZoom = stableZoomForRouteSpan(focusRoutePoints);
+  const clampedStageZoom = Math.max(10.75, Math.min(12.05, stageZoom));
 
   return {
-    bearing: -23,
+    bearing: tacticalCameraBearing,
     center: [Math.max(117.12, Math.min(117.8, center[0])), Math.max(33.02, Math.min(33.56, center[1]))] as [number, number],
-    pitch: 60,
+    pitch: tacticalCameraPitch,
     zoom: Math.max(
       10.15,
       Math.min(
         15.25,
-        Math.max(minimumZoomForRouteSpan(focusRoutePoints), Math.min(baseZoom, fittedZoom ?? baseZoom) + detailZoomBoostForRouteSpan(focusRoutePoints)) +
-          (mapBaseView.scale - 0.94) * 0.55 +
-          userZoomDelta * 1.65
+        clampedStageZoom + (mapBaseView.scale - 0.9) * 0.55 + userZoomDelta * 1.55
       )
     )
   };
@@ -243,69 +221,29 @@ function routeSpan(points: TacticalPoint[]) {
   return Math.max(Math.max(...longitudes) - Math.min(...longitudes), Math.max(...latitudes) - Math.min(...latitudes));
 }
 
-function highResolutionZoomForRouteSpan(points: TacticalPoint[]) {
+function stableZoomForRouteSpan(points: TacticalPoint[]) {
   const span = routeSpan(points);
   if (span <= 0.13) {
-    return 15.45;
-  }
-  if (span <= 0.18) {
-    return 14.55;
-  }
-  if (span <= 0.22) {
-    return 13.45;
-  }
-  if (span <= 0.3) {
-    return 13.55;
-  }
-  if (span <= 0.4) {
-    return 12.95;
-  }
-  return 11.35;
-}
-
-function minimumZoomForRouteSpan(points: TacticalPoint[]) {
-  const span = routeSpan(points);
-  if (span <= 0.13) {
-    return 14.95;
-  }
-  if (span <= 0.18) {
-    return 14.05;
-  }
-  if (span <= 0.22) {
-    return 13.05;
-  }
-  if (span <= 0.3) {
-    return 13.05;
-  }
-  if (span <= 0.4) {
     return 12.35;
   }
-  return 10.95;
-}
-
-function detailZoomBoostForRouteSpan(points: TacticalPoint[]) {
-  const span = routeSpan(points);
-  if (span <= 0.13) {
-    return 0.9;
-  }
   if (span <= 0.18) {
-    return 0.58;
+    return 12.2;
   }
   if (span <= 0.22) {
-    return 0.22;
+    return 12.05;
   }
   if (span <= 0.3) {
-    return 0.18;
+    return 11.8;
   }
   if (span <= 0.4) {
-    return 0.1;
+    return 11.45;
   }
-  return 0;
+  return 10.85;
 }
 
 function blendCameraCenter(eventCenter: TacticalPoint, fittedCenter: TacticalPoint, points: TacticalPoint[]) {
   const span = routeSpan(points);
-  const fittedWeight = span <= 0.22 ? 0.12 : span <= 0.3 ? 0.22 : span <= 0.4 ? 0.54 : 0.82;
+  const fittedWeight = span <= 0.22 ? 0.1 : span <= 0.3 ? 0.18 : span <= 0.4 ? 0.34 : 0.46;
   return [
     eventCenter[0] * (1 - fittedWeight) + fittedCenter[0] * fittedWeight,
     eventCenter[1] * (1 - fittedWeight) + fittedCenter[1] * fittedWeight
@@ -1371,14 +1309,14 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
     if (!map) {
       return;
     }
-    const camera = cameraForMapView(mapView, mapBaseView, focusCoordinates, focusRoutePoints, map);
     const activeEventChanged = lastCameraEventIdRef.current !== activeEvent.id;
     lastCameraEventIdRef.current = activeEvent.id;
+    const camera = cameraForMapView(activeEventChanged ? mapBaseView : mapView, mapBaseView, focusCoordinates, focusRoutePoints);
     if (activeEventChanged) {
       map.easeTo({
         ...camera,
-        duration: 420,
-        easing: (time) => 1 - (1 - time) ** 3
+        duration: cameraTransitionDurationMs,
+        easing: (time) => time * time * (3 - 2 * time)
       });
     } else {
       map.jumpTo(camera);
@@ -1409,6 +1347,10 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       data-reference-imagery-detail-bounds={highResolutionImageryBounds.join(",")}
       data-terrain-tile-cache-zoom={`${cachedTerrainTileZoom}`}
       data-projection="webgl-gis-terrain"
+      data-camera-mode="stable-tactical-stages"
+      data-camera-transition-ms={`${cameraTransitionDurationMs}`}
+      data-camera-pitch={`${tacticalCameraPitch}`}
+      data-route-fit-zoom="disabled"
     >
       {geometry && <GaixiaTacticalOverlay activeEvent={activeEvent} activeRouteIds={activeRouteIds} geometry={geometry} />}
     </div>

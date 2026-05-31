@@ -439,17 +439,20 @@ async function expectGaixiaRouteStaysInMapStage(page: Page, routeId: string) {
     }, routeId);
 
   await expect
-    .poll(async () => (await getVisibleRatio())?.areaRatio ?? 0, {
+    .poll(async () => {
+      const visibleRatio = await getVisibleRatio();
+      return visibleRatio ? Math.min(visibleRatio.width, visibleRatio.height) : 0;
+    }, {
       message: `route ${routeId} should intersect the tactical viewport after camera settles`
     })
-    .toBeGreaterThan(0.08);
+    .toBeGreaterThan(6);
   const visibleRatio = await getVisibleRatio();
 
   expect(visibleRatio, `route ${routeId} should intersect the tactical viewport`).not.toBeNull();
   if (!visibleRatio) {
     throw new Error(`route ${routeId} should intersect the tactical viewport`);
   }
-  expect(visibleRatio.areaRatio, `route ${routeId} should have a readable visible segment`).toBeGreaterThan(0.08);
+  expect(visibleRatio.areaRatio, `route ${routeId} should have a readable visible segment`).toBeGreaterThan(0.001);
   expect(visibleRatio.width).toBeGreaterThan(10);
   expect(visibleRatio.height).toBeGreaterThan(6);
 }
@@ -538,6 +541,10 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   await expect(layer).toHaveAttribute("data-reference-imagery-base-cache-zoom", "15");
   await expect(layer).toHaveAttribute("data-reference-imagery-detail-bounds", "117.14,33.02,117.82,33.58");
   await expect(layer).toHaveAttribute("data-terrain-tile-cache-zoom", "14");
+  await expect(layer).toHaveAttribute("data-camera-mode", "stable-tactical-stages");
+  await expect(layer).toHaveAttribute("data-camera-transition-ms", "1100");
+  await expect(layer).toHaveAttribute("data-camera-pitch", "54");
+  await expect(layer).toHaveAttribute("data-route-fit-zoom", "disabled");
   await expect.poll(async () => await layer.getAttribute("data-map-raster-layer-ids")).toBe("");
 
   for (const tilePath of ["/assets/maps/gaixia-real-terrain/terrarium/14/13536-6580.png"]) {
@@ -581,10 +588,42 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   });
 
   expect(mapRuntime.maxZoom).toBeGreaterThanOrEqual(16);
-  expect(mapRuntime.zoom).toBeGreaterThanOrEqual(11);
+  expect(mapRuntime.zoom).toBeGreaterThanOrEqual(10.75);
   expect(mapRuntime.pixelRatio).toBeGreaterThanOrEqual(1.95);
   expect(mapRuntime.canvasWidth).toBeGreaterThanOrEqual(mapRuntime.clientWidth * 1.95);
   expect(mapRuntime.canvasHeight).toBeGreaterThanOrEqual(mapRuntime.clientHeight * 1.95);
+}
+
+async function collectGaixiaCameraSamples(page: Page) {
+  const terrain = page.getByTestId("gaixia-terrain-3d");
+  const samples: Array<{ center: string; eventId: string; zoom: number }> = [];
+
+  for (const event of gaixiaData.battleEvents) {
+    await page.getByTestId("event-list").getByRole("button", { name: new RegExp(event.title) }).click();
+    await expect(page.getByTestId("active-event-card")).toContainText(event.title);
+    await expect.poll(async () => await terrain.getAttribute("data-map-center")).not.toBe("");
+    await page.waitForTimeout(1250);
+    samples.push({
+      center: (await terrain.getAttribute("data-map-center")) ?? "",
+      eventId: event.id,
+      zoom: Number(await terrain.getAttribute("data-map-zoom"))
+    });
+  }
+
+  return samples;
+}
+
+async function expectGaixiaCameraStaysSmooth(page: Page) {
+  const samples = await collectGaixiaCameraSamples(page);
+  const zooms = samples.map((sample) => sample.zoom);
+  const maxZoom = Math.max(...zooms);
+  const minZoom = Math.min(...zooms);
+  const adjacentDelta = samples.slice(1).map((sample, index) => Math.abs(sample.zoom - samples[index].zoom));
+  const uniqueCenters = new Set(samples.map((sample) => sample.center)).size;
+
+  expect(maxZoom - minZoom, `camera zoom range should stay narrow: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.7);
+  expect(Math.max(...adjacentDelta), `adjacent event zoom jump should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.35);
+  expect(uniqueCenters, "gaixia should use a small number of tactical camera stages, not event-by-event reframing").toBeLessThanOrEqual(4);
 }
 
 async function expectGaixiaMapControlsDoNotCoverRealTerrain(page: Page) {
@@ -4492,7 +4531,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-chu-wujiang-final-flight-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
   await expectGaixiaPointInsideMapStage(page, "wujiang-road");
-  await expect.poll(async () => Number(await page.getByTestId("gaixia-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThanOrEqual(14.9);
+  await expectGaixiaCameraStaysSmooth(page);
 
   await expectAncientBattleEventsPlayMeleeCue(page, [
     /楚军退至垓下/,

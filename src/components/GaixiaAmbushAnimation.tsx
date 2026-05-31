@@ -19,7 +19,7 @@ import { GaixiaTerrain3D, type GaixiaTerrainEffectPlacement, type GaixiaTerrainR
 
 const mapWidth = 1180;
 const mapHeight = 2816;
-const gaixiaMapScale = 0.94;
+const gaixiaMapScale = 0.9;
 const gaixiaMinMapScale = 0.82;
 const gaixiaViewportCenterY = mapHeight / 2;
 const gaixiaViewportCenterX = mapWidth / 2;
@@ -31,34 +31,60 @@ const gaixiaInteractionBounds = {
 };
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
-const eventMapScale: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 0.94,
-  "chu-forms-camp-array": 0.98,
-  "hanxin-deploys": 0.93,
-  "west-counterpush-yield": 0.96,
-  "han-counterpress-east-gap": 0.99,
-  "ten-sided-ring": 0.82,
-  "songs-of-chu": 0.98,
-  farewell: 1.0,
-  "dawn-assault": 0.94,
-  "xiangyu-breakout": 0.98,
-  "dongcheng-last-stand": 1.0,
-  "wujiang-end": 1.02
+type GaixiaCameraStageId = "camp-approach" | "encirclement" | "pursuit";
+
+type GaixiaCameraStage = {
+  center: [number, number];
+  focusRoutePoints: Array<[number, number]>;
+  scale: number;
 };
 
-const eventFocusY: Partial<Record<string, number>> = {
-  "chu-arrives-gaixia": 1130,
-  "chu-forms-camp-array": 1260,
-  "hanxin-deploys": 970,
-  "west-counterpush-yield": 1220,
-  "han-counterpress-east-gap": 1280,
-  "ten-sided-ring": 1360,
-  "songs-of-chu": 1260,
-  farewell: 1300,
-  "dawn-assault": 1500,
-  "xiangyu-breakout": 1840,
-  "dongcheng-last-stand": 1975,
-  "wujiang-end": 2080
+const gaixiaCameraStages: Record<GaixiaCameraStageId, GaixiaCameraStage> = {
+  "camp-approach": {
+    center: [117.43, 33.35],
+    focusRoutePoints: [
+      [117.22, 33.5],
+      [117.32, 33.2],
+      [117.62, 33.2],
+      [117.66, 33.48]
+    ],
+    scale: 0.9
+  },
+  encirclement: {
+    center: [117.53, 33.27],
+    focusRoutePoints: [
+      [117.16, 33.52],
+      [117.2, 33.08],
+      [117.68, 33.17],
+      [117.76, 33.42]
+    ],
+    scale: 0.88
+  },
+  pursuit: {
+    center: [117.75, 32.99],
+    focusRoutePoints: [
+      [117.43, 33.35],
+      [117.5, 33.42],
+      [117.8, 33.04],
+      [117.82, 33.02]
+    ],
+    scale: 0.9
+  }
+};
+
+const eventCameraStage: Record<string, GaixiaCameraStageId> = {
+  "chu-arrives-gaixia": "camp-approach",
+  "chu-forms-camp-array": "camp-approach",
+  "hanxin-deploys": "encirclement",
+  "west-counterpush-yield": "encirclement",
+  "han-counterpress-east-gap": "encirclement",
+  "ten-sided-ring": "encirclement",
+  "songs-of-chu": "encirclement",
+  farewell: "encirclement",
+  "dawn-assault": "encirclement",
+  "xiangyu-breakout": "pursuit",
+  "dongcheng-last-stand": "pursuit",
+  "wujiang-end": "pursuit"
 };
 
 const eventPoints = battleEvents.map((event) => ({
@@ -160,10 +186,14 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   return next[0] - previous[0] < -0.01 ? -1 : 1;
 }
 
-function mapViewForEvent(event: GaixiaEvent, activePoint: [number, number]): MapView {
-  const focusY = eventFocusY[event.id] ?? activePoint[1];
-  const focusX = activePoint[0];
-  const scale = eventMapScale[event.id] ?? gaixiaMapScale;
+function cameraStageForEvent(event: GaixiaEvent) {
+  return gaixiaCameraStages[eventCameraStage[event.id] ?? "encirclement"];
+}
+
+function mapViewForEvent(event: GaixiaEvent): MapView {
+  const stage = cameraStageForEvent(event);
+  const [focusX, focusY] = projectInteractionPoint(stage.center);
+  const scale = stage.scale ?? gaixiaMapScale;
   return {
     scale,
     x: gaixiaViewportCenterX - focusX * scale,
@@ -334,8 +364,8 @@ export function GaixiaAmbushAnimation() {
   const activeRouteIds = useMemo(() => new Set(activeEvent.routeIds), [activeEvent.routeIds]);
   const currentDate = timeline.progressToDate(progress, 1 / (24 * 60));
   const elapsedHours = Math.max(1, Math.round(timeline.displayDaysAtProgress(progress) * 24) + 1);
-  const activePoint = projectInteractionPoint(activeEvent.coordinates);
-  const activeMapView = useMemo(() => mapViewForEvent(activeEvent, activePoint), [activeEvent.id, activePoint[0], activePoint[1]]);
+  const activeCameraStage = useMemo(() => cameraStageForEvent(activeEvent), [activeEvent.id]);
+  const activeMapView = useMemo(() => mapViewForEvent(activeEvent), [activeEvent.id]);
   const geographicRoutes = useMemo<GaixiaTerrainRouteState[]>(
     () =>
       routes.map((route) => {
@@ -370,9 +400,9 @@ export function GaixiaAmbushAnimation() {
     () => activeEffectPlacementForEvent(activeEvent, geographicRoutes, activeEvent.coordinates),
     [activeEvent, geographicRoutes]
   );
-  const activeGeographicFocus = activeEvent.coordinates;
+  const activeGeographicFocus = activeCameraStage.center;
   const activeGeographicFocusRoutePoints = useMemo(
-    () => [activeEvent.coordinates, ...routes.filter((route) => activeEvent.routeIds.includes(route.id)).flatMap((route) => route.points)],
+    () => [activeCameraStage.center, ...activeCameraStage.focusRoutePoints],
     [activeEvent.id]
   );
   const {
