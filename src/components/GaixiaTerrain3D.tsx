@@ -861,12 +861,17 @@ function ActiveEffect({ event, placement }: { event: GaixiaEvent; placement: Gai
   );
 }
 
-function OverlayFieldwork({ fieldwork }: { fieldwork: OverlayGeometry["fieldworks"][number] }) {
+function OverlayFieldwork({ activeAnchorIds, fieldwork }: { activeAnchorIds: Set<string>; fieldwork: OverlayGeometry["fieldworks"][number] }) {
   const isClosed = fieldwork.kind === "earthwork";
+  const isActiveAnchor = activeAnchorIds.has(fieldwork.id);
   const cornerPoints = isClosed ? fieldwork.points.filter((_, index) => index % 2 === 0) : [];
   const midpoints = fieldwork.points.slice(0, -1).map((point, index) => midpoint(point, fieldwork.points[index + 1]));
   return (
-    <g className={`gaixia-fieldwork gaixia-fieldwork-${fieldwork.kind}`} data-testid={`gaixia-fieldwork-${fieldwork.id}`}>
+    <g
+      className={`gaixia-fieldwork gaixia-fieldwork-${fieldwork.kind} ${isActiveAnchor ? "is-route-anchor" : ""}`}
+      data-route-anchor={isActiveAnchor ? "true" : "false"}
+      data-testid={`gaixia-fieldwork-${fieldwork.id}`}
+    >
       <path className="gaixia-fieldwork-shadow" d={`${buildPath(fieldwork.points)}${isClosed ? " Z" : ""}`} />
       <path className="gaixia-fieldwork-body" d={`${buildPath(fieldwork.points)}${isClosed ? " Z" : ""}`} />
       {isClosed &&
@@ -904,12 +909,18 @@ function OverlayFieldwork({ fieldwork }: { fieldwork: OverlayGeometry["fieldwork
   );
 }
 
-function OverlayFormation({ formation }: { formation: OverlayGeometry["formations"][number] }) {
+function OverlayFormation({ activeAnchorIds, formation }: { activeAnchorIds: Set<string>; formation: OverlayGeometry["formations"][number] }) {
   const isArea = formation.kind === "infantry-block" || formation.kind === "command-post";
+  const isActiveAnchor = activeAnchorIds.has(formation.id);
   const iconPoints = isArea ? formation.points : formation.points.slice(0, -1).map((point, index) => midpoint(point, formation.points[index + 1]));
   const frontPoints = formation.kind === "infantry-block" ? formation.points.slice(0, 2) : formation.points;
   return (
-    <g className={`gaixia-formation gaixia-formation-${formation.faction} gaixia-formation-${formation.kind}`} data-formation-kind={formation.kind} data-testid={`gaixia-formation-${formation.id}`}>
+    <g
+      className={`gaixia-formation gaixia-formation-${formation.faction} gaixia-formation-${formation.kind} ${isActiveAnchor ? "is-route-anchor" : ""}`}
+      data-formation-kind={formation.kind}
+      data-route-anchor={isActiveAnchor ? "true" : "false"}
+      data-testid={`gaixia-formation-${formation.id}`}
+    >
       <path className="gaixia-formation-shadow" d={`${buildPath(formation.points)}${isArea ? " Z" : ""}`} />
       <path className="gaixia-formation-body" d={`${buildPath(formation.points)}${isArea ? " Z" : ""}`} />
       <path className="gaixia-formation-front-line" d={buildPath(frontPoints)} />
@@ -986,6 +997,9 @@ function GaixiaTacticalOverlay({
   activeRouteIds: Set<string>;
   geometry: OverlayGeometry;
 }) {
+  const activeAnchorIds = new Set(
+    geometry.routes.filter((state) => state.isVisible && (state.active || activeRouteIds.has(state.route.id))).map((state) => state.route.positionAnchor).filter((anchor): anchor is string => Boolean(anchor))
+  );
   return (
     <svg className="gaixia-maplibre-tactical-overlay" data-testid="gaixia-maplibre-tactical-overlay" data-projection="maplibre-real-terrain" aria-hidden="true">
       <defs>
@@ -1089,13 +1103,13 @@ function GaixiaTacticalOverlay({
 
       <g className="gaixia-fieldworks" data-testid="gaixia-fieldwork-layer">
         {geometry.fieldworks.map((fieldwork) => (
-          <OverlayFieldwork key={fieldwork.id} fieldwork={fieldwork} />
+          <OverlayFieldwork key={fieldwork.id} activeAnchorIds={activeAnchorIds} fieldwork={fieldwork} />
         ))}
       </g>
 
       <g className="gaixia-formations" data-testid="gaixia-formation-layer">
         {geometry.formations.map((formation) => (
-          <OverlayFormation key={formation.id} formation={formation} />
+          <OverlayFormation key={formation.id} activeAnchorIds={activeAnchorIds} formation={formation} />
         ))}
       </g>
 

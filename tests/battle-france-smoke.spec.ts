@@ -1768,6 +1768,37 @@ function expectRouteEndsBehind(frontRouteId: string, rearRouteId: string) {
   expect(front[1], `${frontRouteId} should end farther south than ${rearRouteId}`).toBeLessThan(rear[1]);
 }
 
+function pointInPolygon(point: [number, number], polygon: Array<[number, number]>) {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index, index += 1) {
+    const currentPoint = polygon[index];
+    const previousPoint = polygon[previous];
+    const crosses =
+      currentPoint[1] > point[1] !== previousPoint[1] > point[1] &&
+      point[0] < ((previousPoint[0] - currentPoint[0]) * (point[1] - currentPoint[1])) / (previousPoint[1] - currentPoint[1]) + currentPoint[0];
+    if (crosses) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function expectRouteOutsidePolygon(routeId: string, polygon: Array<[number, number]>, label: string) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  for (const point of route!.points) {
+    expect(pointInPolygon(point, polygon), `${routeId} point ${point.join(",")} should stay outside ${label}`).toBe(false);
+  }
+}
+
+function expectFormationOutsidePolygon(formationId: string, polygon: Array<[number, number]>, label: string) {
+  const formation = gaixiaData.formations.find((item) => item.id === formationId);
+  expect(formation, `gaixia formation ${formationId} exists`).toBeTruthy();
+  for (const point of formation!.coordinates) {
+    expect(pointInPolygon(point, polygon), `${formationId} point ${point.join(",")} should stay outside ${label}`).toBe(false);
+  }
+}
+
 function expectRouteNearEvent(
   campaignName: string,
   data: CampaignDataModule,
@@ -2985,7 +3016,33 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRoutePositionAnchor("han-tighten-east", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-night-east-gap-block", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-dawn-cavalry-cutoff", "han-southeast-cavalry-ambush");
+  const chuInnerRampart = gaixiaData.fieldworks.find((fieldwork) => fieldwork.id === "chu-inner-rampart")!.coordinates;
+  for (const routeId of [
+    "han-west-infantry",
+    "han-northwest-shield",
+    "han-east-crossbow-net",
+    "han-east-cavalry",
+    "han-south-infantry",
+    "han-command-center",
+    "han-feigned-gap-east",
+    "han-west-counterpress",
+    "han-east-counterpress",
+    "han-tighten-west",
+    "han-tighten-north",
+    "han-south-locking-line",
+    "han-tighten-east",
+    "han-night-east-gap-block"
+  ]) {
+    expectRouteOutsidePolygon(routeId, chuInnerRampart, "Chu inner rampart before dawn assault");
+  }
+  for (const formationId of ["han-west-infantry-block", "han-east-crossbow-line", "han-command-post"]) {
+    expectFormationOutsidePolygon(formationId, chuInnerRampart, "Chu inner rampart before dawn assault");
+  }
   expect(routeCoordinate("han-tighten-west", -1)[0], "west compression should halt outside the Chu center").toBeLessThanOrEqual(117.415);
+  expect(routeCoordinate("han-west-infantry", -1)[0], "initial west infantry should stage outside the west camp gate").toBeLessThanOrEqual(117.36);
+  expect(routeCoordinate("han-east-crossbow-net", -1)[0], "initial east crossbow net should stage outside the east gate").toBeGreaterThanOrEqual(117.545);
+  expect(routeCoordinate("han-south-infantry", -1)[1], "initial south infantry should stop outside the southern Chu line").toBeLessThanOrEqual(33.26);
+  expect(routeCoordinate("han-command-center", -1)[0], "Han command center should remain outside the Chu inner camp").toBeLessThanOrEqual(117.4);
   expect(routeCoordinate("han-tighten-north", -1)[1], "north compression should halt on the inner-rampart edge before dawn").toBeGreaterThanOrEqual(33.36);
   expect(routeCoordinate("han-south-locking-line", -1)[1], "south blockade should hold the south mouth rather than enter the camp center").toBeLessThanOrEqual(33.28);
   expect(routeCoordinate("han-tighten-east", -1)[0], "east compression should hold the east gate edge before dawn").toBeGreaterThanOrEqual(117.52);
@@ -4440,6 +4497,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-unit-han-crossbow").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-crossbow.webp");
   await expect(page.getByTestId("gaixia-route-han-west-infantry")).toHaveAttribute("data-position-anchor", "han-west-infantry-block");
   await expect(page.getByTestId("gaixia-route-han-east-crossbow-net")).toHaveAttribute("data-position-anchor", "han-east-crossbow-line");
+  await expect(page.getByTestId("gaixia-formation-han-west-infantry-block")).toHaveAttribute("data-route-anchor", "true");
+  await expect(page.getByTestId("gaixia-formation-han-east-crossbow-line")).toHaveAttribute("data-route-anchor", "true");
+  await expect(page.getByTestId("gaixia-formation-han-command-post")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expectGaixiaVisibleRouteCount(page, 8);
   await expectGaixiaVisibleUnitCount(page, 16);
@@ -4457,6 +4517,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-chu-west-counterpush-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-han-west-fallback-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-west-counterpush")).toHaveAttribute("data-position-anchor", "west-camp-gate");
+  await expect(page.getByTestId("gaixia-fieldwork-west-camp-gate")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expectGaixiaVisibleRouteCount(page, 10);
   await expectGaixiaVisibleUnitCount(page, 20);
@@ -4476,6 +4537,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-han-east-cavalry-yield-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toHaveAttribute("data-position-anchor", "west-camp-gate");
   await expect(page.getByTestId("gaixia-route-chu-east-counterpush")).toHaveAttribute("data-position-anchor", "chu-east-cavalry-screen");
+  await expect(page.getByTestId("gaixia-fieldwork-west-camp-gate")).toHaveAttribute("data-route-anchor", "true");
+  await expect(page.getByTestId("gaixia-formation-chu-east-cavalry-screen")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expectGaixiaVisibleRouteCount(page, 13);
   await expectGaixiaVisibleUnitCount(page, 25);
@@ -4509,6 +4572,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-tighten-north")).toHaveAttribute("data-position-anchor", "chu-inner-rampart");
   await expect(page.getByTestId("gaixia-route-han-south-locking-line")).toHaveAttribute("data-position-anchor", "old-channel-ditch");
   await expect(page.getByTestId("gaixia-route-chu-south-screen-recoil")).toHaveAttribute("data-position-anchor", "chu-south-infantry-line");
+  await expect(page.getByTestId("gaixia-fieldwork-bawangcheng-outer-rampart")).toHaveAttribute("data-route-anchor", "true");
+  await expect(page.getByTestId("gaixia-fieldwork-chu-inner-rampart")).toHaveAttribute("data-route-anchor", "true");
+  await expect(page.getByTestId("gaixia-fieldwork-old-channel-ditch")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first()).toBeVisible();
   await expect(page.getByTestId("gaixia-unit-han-cavalry").first().locator(".gaixia-unit-image")).toHaveAttribute("href", "/assets/unit-icons/gaixia-han-cavalry.webp");
@@ -4533,6 +4599,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-han-night-east-gap-block-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toHaveAttribute("data-position-anchor", "east-gap-gate");
   await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toHaveAttribute("data-position-anchor", "east-gap-gate");
+  await expect(page.getByTestId("gaixia-fieldwork-east-gap-gate")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toHaveCount(0);

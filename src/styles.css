@@ -3856,6 +3856,17 @@ h1 {
   stroke-width: 3.4;
 }
 
+.gaixia-fieldwork.is-route-anchor .gaixia-fieldwork-body {
+  stroke: rgba(235, 205, 95, 0.94);
+  stroke-width: 6.2;
+  filter: drop-shadow(0 0 7px rgba(232, 195, 82, 0.42));
+}
+
+.gaixia-fieldwork.is-route-anchor text {
+  fill: rgba(96, 55, 22, 0.98);
+  opacity: 0.98;
+}
+
 .gaixia-gate-post {
   filter: drop-shadow(5px 8px 4px rgba(42, 29, 20, 0.28));
 }
@@ -3931,6 +3942,17 @@ h1 {
 .gaixia-formation-command-post .gaixia-formation-body {
   fill: rgba(52, 115, 151, 0.14);
   stroke-dasharray: 0;
+}
+
+.gaixia-formation.is-route-anchor .gaixia-formation-body,
+.gaixia-formation.is-route-anchor .gaixia-formation-front-line {
+  stroke: rgba(238, 207, 92, 0.96);
+  stroke-width: 4.8;
+  filter: drop-shadow(0 0 7px rgba(236, 199, 82, 0.4));
+}
+
+.gaixia-formation.is-route-anchor text {
+  opacity: 0.98;
 }
 
 .gaixia-formation-front-line,
