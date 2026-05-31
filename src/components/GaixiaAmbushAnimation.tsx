@@ -373,7 +373,7 @@ export function GaixiaAmbushAnimation() {
   const activeGeographicFocus = activeEvent.coordinates;
   const activeGeographicFocusRoutePoints = useMemo(
     () => [activeEvent.coordinates, ...routes.filter((route) => activeEvent.routeIds.includes(route.id)).flatMap((route) => route.points)],
-    [activeEvent]
+    [activeEvent.id]
   );
   const {
     canZoomIn,
@@ -472,7 +472,7 @@ export function GaixiaAmbushAnimation() {
   };
 
   const jumpToEvent = (event: GaixiaEvent) => {
-    setProgress(timeline.dateToProgress(event.date));
+    setProgress(timeline.clampProgress(timeline.dateToProgress(event.date) + 0.000001));
     window.scrollTo({ left: 0, top: 0, behavior: "auto" });
     if (isScoreEnabled && event.cue === "melee") {
       lastCueEventRef.current = event.id;

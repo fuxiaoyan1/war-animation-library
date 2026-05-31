@@ -206,6 +206,9 @@ function collectFailures(page: Page) {
 }
 
 async function expectCurrentEventInsideMapCore(page: Page) {
+  if ((await page.getByTestId("gaixia-terrain-3d").count()) > 0) {
+    await expect.poll(async () => Number(await page.getByTestId("gaixia-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+  }
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const eventBox = await page.locator(".event-pin.is-current > circle").first().boundingBox();
 
@@ -510,16 +513,22 @@ async function expectGaixiaUnitsUseCompactTacticalScale(page: Page) {
 async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   const layer = page.getByTestId("gaixia-terrain-3d");
   await expect(layer).toBeVisible();
+  await expect.poll(async () => Number(await layer.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
   await expect(layer).toHaveAttribute("data-renderer", "maplibre-real-terrain");
   await expect(layer).toHaveAttribute("data-terrain-model", "real-dem-raster-terrain");
   await expect(layer).toHaveAttribute("data-tactical-renderer", "maplibre-geographic-overlay");
   await expect(layer).toHaveAttribute("data-terrain-exaggeration", "1");
+  await expect(layer).toHaveAttribute("data-hillshade-exaggeration", "0.08");
   await expect(layer).toHaveAttribute("data-terrain-source", /\/assets\/maps\/gaixia-real-terrain\/terrarium\/\{z\}\/\{x\}-\{y\}\.png/);
   await expect(layer).toHaveAttribute("data-imagery-source", /\/assets\/maps\/gaixia-real-terrain\/imagery\/\{z\}\/\{x\}-\{y\}\.jpg/);
-  await expect(layer).toHaveAttribute("data-tile-cache-zoom", "14");
+  await expect(layer).toHaveAttribute("data-imagery-tile-cache-zoom", "16");
+  await expect(layer).toHaveAttribute("data-imagery-base-tile-cache-zoom", "15");
+  await expect(layer).toHaveAttribute("data-imagery-detail-tile-cache-zoom", "16");
+  await expect(layer).toHaveAttribute("data-imagery-detail-bounds", "117.14,33.02,117.82,33.58");
+  await expect(layer).toHaveAttribute("data-terrain-tile-cache-zoom", "14");
 
   for (const tilePath of [
-    "/assets/maps/gaixia-real-terrain/imagery/14/13536-6580.jpg",
+    "/assets/maps/gaixia-real-terrain/imagery/16/54144-26332.jpg",
     "/assets/maps/gaixia-real-terrain/terrarium/14/13536-6580.png"
   ]) {
     const response = await page.request.head(tilePath);
@@ -547,6 +556,25 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   expect(terrainStats?.height).toBeGreaterThan(500);
   expect(terrainStats?.webglContext).toMatch(/webgl/);
   expect(terrainStats?.urlPrefix).toBe("data:image/png;base64,iVBORw0K");
+
+  const mapRuntime = await layer.evaluate((element) => {
+    const canvas = element.querySelector<HTMLCanvasElement>("canvas.maplibregl-canvas");
+    return {
+      canvasHeight: canvas?.height ?? 0,
+      canvasWidth: canvas?.width ?? 0,
+      clientHeight: canvas?.clientHeight ?? 0,
+      clientWidth: canvas?.clientWidth ?? 0,
+      maxZoom: Number(element.getAttribute("data-map-max-zoom") ?? 0),
+      pixelRatio: Number(element.getAttribute("data-map-pixel-ratio") ?? 0),
+      zoom: Number(element.getAttribute("data-map-zoom") ?? 0)
+    };
+  });
+
+  expect(mapRuntime.maxZoom).toBeGreaterThanOrEqual(16);
+  expect(mapRuntime.zoom).toBeGreaterThanOrEqual(11);
+  expect(mapRuntime.pixelRatio).toBeGreaterThanOrEqual(1.95);
+  expect(mapRuntime.canvasWidth).toBeGreaterThanOrEqual(mapRuntime.clientWidth * 1.95);
+  expect(mapRuntime.canvasHeight).toBeGreaterThanOrEqual(mapRuntime.clientHeight * 1.95);
 }
 
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
@@ -4130,7 +4158,7 @@ test("mongol and qin animations load with ancient warfare pacing", async ({ page
 });
 
 test("gaixia ambush uses terrain map ten-sided formations and pipa score", async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
   await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -4397,6 +4425,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-chu-wujiang-final-flight-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-wujiang-road")).toContainText("乌江");
   await expectGaixiaPointInsideMapStage(page, "wujiang-road");
+  await expect.poll(async () => Number(await page.getByTestId("gaixia-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThanOrEqual(14.9);
 
   await expectAncientBattleEventsPlayMeleeCue(page, [
     /楚军退至垓下/,

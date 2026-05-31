@@ -91,8 +91,13 @@ const gaixiaBounds: [[number, number], [number, number]] = [
   [117.88, 33.64]
 ];
 const gaixiaSourceBounds: [number, number, number, number] = [117.05, 32.94, 117.88, 33.64];
-const cachedTileZoom = 14;
+const highResolutionImageryBounds: [number, number, number, number] = [117.14, 33.02, 117.82, 33.58];
+const cachedBaseImageryTileZoom = 15;
+const cachedDetailImageryTileZoom = 16;
+const cachedTerrainTileZoom = 14;
 const minCachedTileZoom = 10;
+const terrainExaggeration = 1;
+const hillshadeExaggeration = 0.08;
 const terrainTileUrl = "/assets/maps/gaixia-real-terrain/terrarium/{z}/{x}-{y}.png";
 const imageryTileUrl = "/assets/maps/gaixia-real-terrain/imagery/{z}/{x}-{y}.jpg";
 
@@ -105,15 +110,17 @@ function parseSvgMapTransform(transform: string) {
   };
 }
 
-function cameraForTransform(transform: string, focusCoordinates: TacticalPoint) {
+function cameraForTransform(transform: string, focusCoordinates: TacticalPoint, options: { usePanOffset?: boolean; useScale?: boolean } = {}) {
   const { x, y, scale } = parseSvgMapTransform(transform);
-  const lng = focusCoordinates[0] - x / 10500 / Math.max(scale, 0.1);
-  const lat = focusCoordinates[1] + y / 14500 / Math.max(scale, 0.1);
+  const usePanOffset = options.usePanOffset ?? true;
+  const cameraScale = options.useScale ?? true ? scale : 0.94;
+  const lng = focusCoordinates[0] - (usePanOffset ? x : 0) / 10500 / Math.max(cameraScale, 0.1);
+  const lat = focusCoordinates[1] + (usePanOffset ? y : 0) / 14500 / Math.max(cameraScale, 0.1);
   return {
     bearing: -23,
     center: [Math.max(117.12, Math.min(117.8, lng)), Math.max(33.02, Math.min(33.56, lat))] as [number, number],
     pitch: 60,
-    zoom: Math.max(11.1, Math.min(13.15, 11.75 + (scale - 0.82) * 2.35))
+    zoom: Math.max(12.7, Math.min(15.65, 13 + (cameraScale - 0.82) * 4.7))
   };
 }
 
@@ -127,6 +134,85 @@ function markMapCanvas(container: HTMLDivElement, map?: maplibregl.Map | null) {
   return true;
 }
 
+function routeSpan(points: TacticalPoint[]) {
+  if (points.length < 2) {
+    return 0;
+  }
+
+  const longitudes = points.map((point) => point[0]);
+  const latitudes = points.map((point) => point[1]);
+  return Math.max(Math.max(...longitudes) - Math.min(...longitudes), Math.max(...latitudes) - Math.min(...latitudes));
+}
+
+function highResolutionZoomForRouteSpan(points: TacticalPoint[]) {
+  const span = routeSpan(points);
+  if (span <= 0.13) {
+    return 15.45;
+  }
+  if (span <= 0.18) {
+    return 14.55;
+  }
+  if (span <= 0.22) {
+    return 13.45;
+  }
+  if (span <= 0.3) {
+    return 13.55;
+  }
+  if (span <= 0.4) {
+    return 12.95;
+  }
+  return 11.35;
+}
+
+function minimumZoomForRouteSpan(points: TacticalPoint[]) {
+  const span = routeSpan(points);
+  if (span <= 0.13) {
+    return 14.95;
+  }
+  if (span <= 0.18) {
+    return 14.05;
+  }
+  if (span <= 0.22) {
+    return 13.05;
+  }
+  if (span <= 0.3) {
+    return 13.05;
+  }
+  if (span <= 0.4) {
+    return 12.35;
+  }
+  return 10.95;
+}
+
+function detailZoomBoostForRouteSpan(points: TacticalPoint[]) {
+  const span = routeSpan(points);
+  if (span <= 0.13) {
+    return 0.9;
+  }
+  if (span <= 0.18) {
+    return 0.58;
+  }
+  if (span <= 0.22) {
+    return 0.22;
+  }
+  if (span <= 0.3) {
+    return 0.18;
+  }
+  if (span <= 0.4) {
+    return 0.1;
+  }
+  return 0;
+}
+
+function blendCameraCenter(eventCenter: TacticalPoint, fittedCenter: TacticalPoint, points: TacticalPoint[]) {
+  const span = routeSpan(points);
+  const fittedWeight = span <= 0.22 ? 0.08 : span <= 0.3 ? 0.12 : span <= 0.4 ? 0.42 : 0.78;
+  return [
+    eventCenter[0] * (1 - fittedWeight) + fittedCenter[0] * fittedWeight,
+    eventCenter[1] * (1 - fittedWeight) + fittedCenter[1] * fittedWeight
+  ] as TacticalPoint;
+}
+
 const gaixiaTerrainStyle: StyleSpecification = {
   version: 8,
   sources: {
@@ -135,7 +221,16 @@ const gaixiaTerrainStyle: StyleSpecification = {
       tiles: [imageryTileUrl],
       bounds: gaixiaSourceBounds,
       minzoom: minCachedTileZoom,
-      maxzoom: cachedTileZoom,
+      maxzoom: cachedBaseImageryTileZoom,
+      tileSize: 256,
+      attribution: "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+    },
+    "gaixia-world-imagery-detail": {
+      type: "raster",
+      tiles: [imageryTileUrl],
+      bounds: highResolutionImageryBounds,
+      minzoom: minCachedTileZoom,
+      maxzoom: cachedDetailImageryTileZoom,
       tileSize: 256,
       attribution: "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
     },
@@ -146,7 +241,7 @@ const gaixiaTerrainStyle: StyleSpecification = {
       encoding: "terrarium",
       tileSize: 256,
       minzoom: minCachedTileZoom,
-      maxzoom: cachedTileZoom,
+      maxzoom: cachedTerrainTileZoom,
       attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
     }
   },
@@ -156,10 +251,27 @@ const gaixiaTerrainStyle: StyleSpecification = {
       type: "raster",
       source: "gaixia-world-imagery",
       paint: {
-        "raster-brightness-min": 0.04,
-        "raster-brightness-max": 0.92,
-        "raster-contrast": 0.14,
-        "raster-saturation": -0.06
+        "raster-brightness-min": 0,
+        "raster-brightness-max": 1,
+        "raster-contrast": 0.22,
+        "raster-fade-duration": 0,
+        "raster-resampling": "linear",
+        "raster-saturation": 0.02
+      }
+    },
+    {
+      id: "gaixia-world-imagery-detail",
+      type: "raster",
+      source: "gaixia-world-imagery-detail",
+      minzoom: 12.8,
+      paint: {
+        "raster-brightness-min": 0,
+        "raster-brightness-max": 1,
+        "raster-contrast": 0.26,
+        "raster-fade-duration": 0,
+        "raster-opacity": 0.94,
+        "raster-resampling": "linear",
+        "raster-saturation": 0.04
       }
     },
     {
@@ -167,16 +279,16 @@ const gaixiaTerrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "gaixia-real-dem",
       paint: {
-        "hillshade-accent-color": "#5f7346",
-        "hillshade-exaggeration": 0.22,
-        "hillshade-highlight-color": "#f7e7b9",
-        "hillshade-shadow-color": "#263325"
+        "hillshade-accent-color": "#7b7f61",
+        "hillshade-exaggeration": hillshadeExaggeration,
+        "hillshade-highlight-color": "#fff2c9",
+        "hillshade-shadow-color": "#4e543f"
       }
     }
   ],
   terrain: {
     source: "gaixia-real-dem",
-    exaggeration: 1
+    exaggeration: terrainExaggeration
   }
 };
 
@@ -968,9 +1080,9 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
   const mapRef = useRef<maplibregl.Map | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [geometry, setGeometry] = useState<OverlayGeometry | null>(null);
-  const latestStateRef = useRef({ activeEffectPlacement, progress, projectedRoutes });
+  const latestStateRef = useRef({ activeEffectPlacement, activeEvent, progress, projectedRoutes });
 
-  latestStateRef.current = { activeEffectPlacement, progress, projectedRoutes };
+  latestStateRef.current = { activeEffectPlacement, activeEvent, progress, projectedRoutes };
 
   const syncOverlayGeometry = useMemo(
     () => () => {
@@ -982,7 +1094,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       setGeometry(
         computeOverlayGeometry({
           activeEffectPlacement: latest.activeEffectPlacement,
-          activeEvent,
+          activeEvent: latest.activeEvent,
           map,
           progress: latest.progress,
           projectedRoutes: latest.projectedRoutes
@@ -1016,8 +1128,9 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       keyboard: false,
       maxBounds: gaixiaBounds,
       maxPitch: 62,
-      maxZoom: 14.3,
+      maxZoom: cachedDetailImageryTileZoom,
       minZoom: 10.6,
+      pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
       pitch: initialCamera.pitch,
       refreshExpiredTiles: false,
       scrollZoom: false,
@@ -1030,13 +1143,19 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
 
     const syncMetadata = () => {
       markMapCanvas(container, map);
+      const canvas = map.getCanvas();
       container.dataset.terrainLoaded = map.loaded() ? "true" : "false";
+      const center = map.getCenter();
+      container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
+      container.dataset.mapZoom = map.getZoom().toFixed(2);
+      container.dataset.mapMaxZoom = map.getMaxZoom().toFixed(2);
+      container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       syncOverlayGeometry();
     };
     markMapCanvas(container, map);
 
     map.once("load", () => {
-      map.setTerrain({ source: "gaixia-real-dem", exaggeration: 1 });
+      map.setTerrain({ source: "gaixia-real-dem", exaggeration: terrainExaggeration });
       syncMetadata();
     });
     map.on("render", syncOverlayGeometry);
@@ -1063,14 +1182,21 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
     if (!map) {
       return;
     }
-    const camera = cameraForTransform(mapTransform, focusCoordinates);
+    const camera = cameraForTransform(mapTransform, focusCoordinates, {
+      usePanOffset: focusRoutePoints.length <= 1,
+      useScale: focusRoutePoints.length <= 1
+    });
     if (focusRoutePoints.length > 1) {
       const longitudes = focusRoutePoints.map((point) => point[0]);
       const latitudes = focusRoutePoints.map((point) => point[1]);
-      const west = Math.max(gaixiaBounds[0][0], Math.min(...longitudes) - 0.085);
-      const east = Math.min(gaixiaBounds[1][0], Math.max(...longitudes) + 0.15);
-      const south = Math.max(gaixiaBounds[0][1], Math.min(...latitudes) - 0.085);
-      const north = Math.min(gaixiaBounds[1][1], Math.max(...latitudes) + 0.085);
+      const rawWest = Math.min(...longitudes);
+      const rawEast = Math.max(...longitudes);
+      const rawSouth = Math.min(...latitudes);
+      const rawNorth = Math.max(...latitudes);
+      const west = Math.max(gaixiaBounds[0][0], rawWest - 0.085);
+      const east = Math.min(gaixiaBounds[1][0], rawEast + 0.15);
+      const south = Math.max(gaixiaBounds[0][1], rawSouth - 0.085);
+      const north = Math.min(gaixiaBounds[1][1], rawNorth + 0.085);
       const boundsCamera = map.cameraForBounds(
         [
           [west, south],
@@ -1078,21 +1204,25 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
         ],
         {
           bearing: camera.bearing,
-          padding: { bottom: 220, left: 230, right: 430, top: 205 },
+          padding: { bottom: 158, left: 210, right: 300, top: 168 },
           pitch: camera.pitch
         }
       );
+      const fittedCenter = [Math.max(117.12, Math.min(117.8, (rawWest + rawEast) / 2)), Math.max(33.02, Math.min(33.56, (rawSouth + rawNorth) / 2))] as TacticalPoint;
       map.jumpTo({
         bearing: camera.bearing,
-        center: boundsCamera?.center ?? camera.center,
+        center: blendCameraCenter(focusCoordinates, fittedCenter, focusRoutePoints),
         pitch: camera.pitch,
-        zoom: Math.max(10.45, Math.min(12.75, (boundsCamera?.zoom ?? camera.zoom) - 0.04))
+        zoom: Math.max(
+          minimumZoomForRouteSpan(focusRoutePoints),
+          Math.min(highResolutionZoomForRouteSpan(focusRoutePoints), (boundsCamera?.zoom ?? camera.zoom) + detailZoomBoostForRouteSpan(focusRoutePoints))
+        )
       });
     } else {
       map.jumpTo(camera);
     }
     syncOverlayGeometry();
-  }, [focusCoordinates, focusRoutePoints, mapTransform, syncOverlayGeometry]);
+  }, [activeEvent.id, focusCoordinates, focusRoutePoints, mapTransform, syncOverlayGeometry]);
 
   useEffect(() => {
     syncOverlayGeometry();
@@ -1106,10 +1236,15 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       data-renderer="maplibre-real-terrain"
       data-tactical-renderer="maplibre-geographic-overlay"
       data-terrain-model="real-dem-raster-terrain"
-      data-terrain-exaggeration="1"
+      data-terrain-exaggeration={`${terrainExaggeration}`}
+      data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-terrain-source={terrainTileUrl}
       data-imagery-source={imageryTileUrl}
-      data-tile-cache-zoom={`${cachedTileZoom}`}
+      data-imagery-tile-cache-zoom={`${cachedDetailImageryTileZoom}`}
+      data-imagery-base-tile-cache-zoom={`${cachedBaseImageryTileZoom}`}
+      data-imagery-detail-tile-cache-zoom={`${cachedDetailImageryTileZoom}`}
+      data-imagery-detail-bounds={highResolutionImageryBounds.join(",")}
+      data-terrain-tile-cache-zoom={`${cachedTerrainTileZoom}`}
       data-projection="webgl-gis-terrain"
     >
       {geometry && <GaixiaTacticalOverlay activeEvent={activeEvent} activeRouteIds={activeRouteIds} geometry={geometry} />}

@@ -16,7 +16,7 @@
 - 地形可视化参考采用 shaded-relief/hillshade 的一般制图原则：高地要有受光面、背光侧壁、投影和等高线共同提示，路线与单位要贴在高程面上，而不是只把图标做成立体。
 - MapLibre GL JS 官方 3D terrain 示例：用于本轮真实地形底层，采用 `raster-dem` source、`setTerrain` 和斜视相机，不再手写高度场：<https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/>。
 - AWS Terrain Tiles Terrarium DEM：用于垓下区域真实高程瓦片，测试样例瓦片元数据来自 `srtm/N34E117.tif` 和 `gmted/30N090E_20101117_gmted_mea075.tif`；前端以 `encoding: "terrarium"` 读取，terrain exaggeration 固定为 `1`。本轮为可复现回放缓存了 z10-z14 到 `public/assets/maps/gaixia-real-terrain/terrarium/`，其中 z14 覆盖 x13519-13556、y6564-6602，避免近景过度放大低级瓦片：<https://registry.opendata.aws/terrain-tiles/>。
-- Esri World Imagery：用于真实遥感底图，前端使用本地缓存的 z10-z14 瓦片，目录为 `public/assets/maps/gaixia-real-terrain/imagery/`，其中 z14 覆盖 x13519-13556、y6564-6602，避免测试/演示依赖在线瓦片，也避免近景用 z12 继续 overzoom 发糊；公开发布前需复核署名、服务条款和再分发边界：<https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer>。
+- Esri World Imagery：用于真实遥感底图，前端使用本地缓存的 z10-z16 瓦片，目录为 `public/assets/maps/gaixia-real-terrain/imagery/`。z15 覆盖 x27038-27113、y13129-13205 作为全战场高清底图；z16 覆盖 x54092-54216、y26271-26393，对应垓下主战术区与东南追击线 `[117.14,33.02,117.82,33.58]`，避免近景继续 overzoom 发糊。公开发布前需复核署名、服务条款和再分发边界：<https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer>。
 
 ## 建模取舍
 
@@ -36,6 +36,8 @@
 - 2026-05-30 八次纠偏放弃硬纸板式等距沙盘：垓下底图切换为 `topographic-relief` 连续地表，取消整张地图倾斜、压缩和台面侧壁；高差只保留几像素的地形浮雕线，避免河道、营寨和兵群被巨大的棕色立面切碎。后续视觉目标以参考视频那种“连续地形底图 + 清楚兵群点阵 + 轻微立体阴影”为准，而不是大块几何沙盘。
 - 2026-05-31 九次三维化纠偏切换为真实 GIS 地形链路：`GaixiaTerrain3D` 改用 MapLibre GL JS，加载本地缓存的 Esri World Imagery 影像底图和 AWS Terrain Tiles Terrarium DEM，`setTerrain({ source: "gaixia-real-dem", exaggeration: 1 })`，保留真实高程比例。垓下位于淮北平原，真实起伏小，因此本轮不再为了立体感人工拔高高地，也不再用 Three.js 手写高度场、SVG 半透明块、SVG 侧壁或纸板沙盘冒充真实地形。瓦片源固定为 z10-z14 本地缓存，MapLibre 可在同一地理相机内按需取更细瓦片，但不得回退到在线瓦片。
 - 2026-05-31 高清底图修正把真实 GIS 缓存从 z12 提升到 z14，并把 MapLibre source `maxzoom`、地图 `maxZoom` 和垓下战术相机同步提升。近景不再把 z12 影像硬拉大，战术路线、阵型、工事、地名和事件 pin 继续在同一个 MapLibre 容器内用 `map.project()` 投影，避免出现“底层地图重做但动画仍贴旧 SVG 图册”的错层。
+- 2026-05-31 二次高清修正把真实影像缓存继续提升到 z15，MapLibre 影像源 `maxzoom` 升至 15，DEM 仍保持 z14 和真实高程比例。相机按当前作战范围自适应进入 z13.3-z14.66，并提高画布像素密度；同时减弱 hillshade 叠加、恢复影像亮度，让清晰度来自真实高分辨率正射图，而不是在模糊底图上堆滤镜。
+- 2026-05-31 三次高清修正新增 z16 核心细节影像源 `gaixia-world-imagery-detail`，只覆盖主战术区和东南追击线，广域镜头仍使用 z15 全战场底图。MapLibre `maxZoom` 提升到 16，近景终局相机可进入 z15+，画布像素比至少 2；hillshade 继续降到 0.08，避免暗色地形层压住影像细节。
 - 早期曾使用 Mapzen/Amazon `elevation-tiles-prod` Terrarium DEM 高程瓦片生成本地 hillshade；2026-05-27 后改为纯矢量地形层，避免底图噪声抢走注意力。淮北平原真实起伏较小，动画中的岗脊、缓坡、洼地和通道用于战术表达，不宣称为精确等高线图。
 - 趋势线做成立体感：每条作战线带下投影、高光线和细虚线，表现伏击线从地形上收束。
 - 作战单位不只图标立体：每条路线和单位会暴露 `data-ground-elevation`，路线阴影向地形背光侧偏移，单位有贴地投影和锚杆，表达“沿地形运动”，不是新场景里重新冒出。
