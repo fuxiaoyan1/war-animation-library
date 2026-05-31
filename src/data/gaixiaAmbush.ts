@@ -90,6 +90,7 @@ export type GaixiaRoute = {
   start: string;
   end: string;
   points: Array<[number, number]>;
+  positionAnchor?: string;
   routeKind: "advance" | "blockade" | "ambush" | "retreat" | "breakout" | "pursuit" | "song";
   labelOffset?: [number, number];
   unitOffsets?: Array<[number, number]>;
@@ -682,6 +683,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T16:00",
     end: "BCE-0202-12-01T18:00",
     unitVisibleUntil: "BCE-0202-12-01T18:19",
+    positionAnchor: "bawangcheng-outer-rampart",
     unitOffsets: [
       [0, 0],
       [-24, 18],
@@ -703,6 +705,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:00",
     end: "BCE-0202-12-01T19:00",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "chu-center-block",
     labelOffset: [-122, -18],
     unitOffsets: [
       [0, 0],
@@ -726,6 +729,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:10",
     end: "BCE-0202-12-01T19:10",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "chu-east-cavalry-screen",
     labelOffset: [16, -24],
     unitOffsets: [
       [0, 0],
@@ -748,6 +752,7 @@ export const routes: GaixiaRoute[] = [
     end: "BCE-0202-12-01T19:20",
     visibleUntil: "BCE-0202-12-02T04:20",
     unitVisibleUntil: "BCE-0202-12-01T21:59",
+    positionAnchor: "chu-south-infantry-line",
     labelOffset: [-118, 22],
     unitOffsets: [
       [0, 0],
@@ -767,6 +772,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T17:00",
     end: "BCE-0202-12-01T21:00",
+    positionAnchor: "han-west-infantry-block",
     unitOffsets: [
       [0, 0],
       [-28, -14],
@@ -788,6 +794,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T19:20",
     end: "BCE-0202-12-01T20:10",
     visibleUntil: "BCE-0202-12-02T00:40",
+    positionAnchor: "west-camp-gate",
     labelOffset: [-130, 18],
     unitOffsets: [
       [0, 0],
@@ -809,6 +816,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T20:05",
     end: "BCE-0202-12-01T20:45",
     visibleUntil: "BCE-0202-12-02T00:40",
+    positionAnchor: "han-west-infantry-block",
     labelOffset: [-124, -22],
     unitOffsets: [
       [0, 0],
@@ -831,6 +839,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T20:45",
     end: "BCE-0202-12-01T22:10",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "west-camp-gate",
     labelOffset: [-112, 24],
     unitOffsets: [
       [0, 0],
@@ -852,6 +861,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "blockade",
     start: "BCE-0202-12-01T17:30",
     end: "BCE-0202-12-01T22:00",
+    positionAnchor: "han-north-crossbow-line",
     unitOffsets: [
       [0, 0],
       [-22, -16],
@@ -872,6 +882,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T17:40",
     end: "BCE-0202-12-01T22:10",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "han-forward-camp-line",
     labelOffset: [-82, -8],
     unitOffsets: [
       [0, 0],
@@ -893,6 +904,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:10",
     end: "BCE-0202-12-01T22:40",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "han-east-crossbow-line",
     labelOffset: [12, -26],
     unitOffsets: [
       [0, 0],
@@ -914,6 +926,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:20",
     end: "BCE-0202-12-01T22:30",
     visibleUntil: "BCE-0202-12-02T05:20",
+    positionAnchor: "east-gap-gate",
     unitOffsets: [
       [0, 0],
       [-30, 16],
@@ -936,6 +949,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T18:40",
     end: "BCE-0202-12-01T23:00",
     visibleUntil: "BCE-0202-12-02T05:00",
+    positionAnchor: "chu-south-infantry-line",
     unitOffsets: [
       [0, 0],
       [24, 16]
@@ -956,6 +970,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T19:00",
     end: "BCE-0202-12-02T00:30",
     visibleUntil: "BCE-0202-12-02T06:40",
+    positionAnchor: "han-southeast-cavalry-ambush",
     labelOffset: [18, 22],
     unitOffsets: [
       [0, 0],
@@ -978,6 +993,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T18:00",
     end: "BCE-0202-12-02T01:00",
+    positionAnchor: "han-command-post",
     unitOffsets: [
       [0, 0],
       [-24, 14]
@@ -998,6 +1014,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T20:50",
     end: "BCE-0202-12-02T00:20",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "east-gap-gate",
     labelOffset: [18, -30],
     unitOffsets: [
       [0, 0],
@@ -1019,6 +1036,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T20:40",
     end: "BCE-0202-12-01T21:20",
     visibleUntil: "BCE-0202-12-02T00:30",
+    positionAnchor: "chu-east-cavalry-screen",
     labelOffset: [18, 22],
     unitOffsets: [
       [0, 0],
@@ -1040,6 +1058,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T20:45",
     end: "BCE-0202-12-01T21:30",
     visibleUntil: "BCE-0202-12-02T00:30",
+    positionAnchor: "east-gap-gate",
     labelOffset: [18, -28],
     unitOffsets: [
       [0, 0],
@@ -1061,6 +1080,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T21:10",
     end: "BCE-0202-12-01T22:30",
     visibleUntil: "BCE-0202-12-02T00:30",
+    positionAnchor: "east-gap-gate",
     labelOffset: [16, 18],
     unitOffsets: [
       [0, 0],
@@ -1083,6 +1103,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T21:30",
     end: "BCE-0202-12-01T22:40",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "han-east-crossbow-line",
     labelOffset: [16, -26],
     unitOffsets: [
       [0, 0],
@@ -1106,6 +1127,7 @@ export const routes: GaixiaRoute[] = [
     end: "BCE-0202-12-02T06:20",
     visibleUntil: "BCE-0202-12-02T06:40",
     unitVisibleUntil: "BCE-0202-12-02T06:20",
+    positionAnchor: "east-breakout-corridor",
     labelOffset: [14, 20],
     unitOffsets: [
       [0, 0],
@@ -1128,6 +1150,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T21:50",
     end: "BCE-0202-12-02T00:30",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "chu-south-infantry-line",
     labelOffset: [-120, 18],
     unitOffsets: [
       [0, 0],
@@ -1148,6 +1171,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-01T22:10",
     end: "BCE-0202-12-02T00:40",
+    positionAnchor: "bawangcheng-outer-rampart",
     unitOffsets: [
       [0, 0],
       [-22, -12]
@@ -1155,8 +1179,8 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.32, 33.39],
       [117.37, 33.38],
-      [117.41, 33.36],
-      [117.44, 33.35]
+      [117.392, 33.366],
+      [117.41, 33.354]
     ]
   },
   {
@@ -1167,6 +1191,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "blockade",
     start: "BCE-0202-12-01T22:20",
     end: "BCE-0202-12-02T00:50",
+    positionAnchor: "chu-inner-rampart",
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -1174,8 +1199,8 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.47, 33.45],
       [117.48, 33.41],
-      [117.48, 33.37],
-      [117.47, 33.34]
+      [117.485, 33.387],
+      [117.49, 33.366]
     ]
   },
   {
@@ -1187,6 +1212,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T21:50",
     end: "BCE-0202-12-02T00:40",
     visibleUntil: "BCE-0202-12-02T05:00",
+    positionAnchor: "old-channel-ditch",
     labelOffset: [-116, 24],
     unitOffsets: [
       [0, 0],
@@ -1197,7 +1223,7 @@ export const routes: GaixiaRoute[] = [
       [117.42, 33.17],
       [117.43, 33.22],
       [117.445, 33.26],
-      [117.455, 33.29]
+      [117.462, 33.274]
     ]
   },
   {
@@ -1209,6 +1235,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T00:20",
     end: "BCE-0202-12-02T02:00",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "east-gap-gate",
     labelOffset: [18, -18],
     unitOffsets: [
       [0, 0],
@@ -1217,8 +1244,8 @@ export const routes: GaixiaRoute[] = [
     points: [
       [117.57, 33.31],
       [117.54, 33.32],
-      [117.51, 33.33],
-      [117.48, 33.34]
+      [117.532, 33.327],
+      [117.522, 33.333]
     ]
   },
   {
@@ -1230,6 +1257,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T00:30",
     end: "BCE-0202-12-02T01:20",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "east-gap-gate",
     labelOffset: [18, 24],
     unitOffsets: [
       [0, 0],
@@ -1239,7 +1267,7 @@ export const routes: GaixiaRoute[] = [
       [117.63, 33.25],
       [117.6, 33.27],
       [117.57, 33.29],
-      [117.54, 33.31]
+      [117.552, 33.315]
     ]
   },
   {
@@ -1251,6 +1279,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T00:40",
     end: "BCE-0202-12-02T02:10",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "east-gap-gate",
     unitOffsets: [
       [0, 0],
       [-22, 14],
@@ -1273,6 +1302,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T01:00",
     end: "BCE-0202-12-02T03:20",
     visibleUntil: "BCE-0202-12-02T04:20",
+    positionAnchor: "han-forward-camp-line",
     labelOffset: [-120, 14],
     points: [
       [117.28, 33.42],
@@ -1290,6 +1320,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T02:20",
     end: "BCE-0202-12-02T04:10",
     visibleUntil: "BCE-0202-12-02T05:10",
+    positionAnchor: "chu-inner-rampart",
     labelOffset: [-118, -18],
     unitOffsets: [
       [0, 0],
@@ -1310,6 +1341,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-02T03:05",
     end: "BCE-0202-12-02T04:50",
+    positionAnchor: "chu-inner-rampart",
     unitOffsets: [
       [0, 0],
       [24, -14]
@@ -1330,6 +1362,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-02T03:10",
     end: "BCE-0202-12-02T05:00",
+    positionAnchor: "chu-south-infantry-line",
     unitOffsets: [
       [0, 0],
       [-22, 14]
@@ -1351,6 +1384,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "advance",
     start: "BCE-0202-12-02T03:10",
     end: "BCE-0202-12-02T05:05",
+    positionAnchor: "west-camp-gate",
     labelOffset: [-116, 8],
     unitOffsets: [
       [0, 0],
@@ -1373,6 +1407,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T03:20",
     end: "BCE-0202-12-02T05:20",
     visibleUntil: "BCE-0202-12-02T06:40",
+    positionAnchor: "han-southeast-cavalry-ambush",
     labelOffset: [14, -24],
     unitOffsets: [
       [0, 0],
@@ -1396,6 +1431,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "pursuit",
     start: "BCE-0202-12-02T04:45",
     end: "BCE-0202-12-02T06:30",
+    positionAnchor: "yinling-pursuit-corridor",
     unitOffsets: [
       [0, 0],
       [-30, 16],
@@ -1420,6 +1456,7 @@ export const routes: GaixiaRoute[] = [
     end: "BCE-0202-12-02T07:10",
     visibleUntil: "BCE-0202-12-02T08:00",
     unitVisibleUntil: "BCE-0202-12-02T07:05",
+    positionAnchor: "yinling-pursuit-corridor",
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -1440,6 +1477,7 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T07:05",
     end: "BCE-0202-12-02T08:00",
     visibleUntil: "BCE-0202-12-02T08:00",
+    positionAnchor: "yinling-pursuit-corridor",
     labelOffset: [16, -18],
     unitOffsets: [
       [0, 0],
@@ -1460,6 +1498,7 @@ export const routes: GaixiaRoute[] = [
     routeKind: "pursuit",
     start: "BCE-0202-12-02T06:10",
     end: "BCE-0202-12-02T07:50",
+    positionAnchor: "yinling-pursuit-corridor",
     unitOffsets: [
       [0, 0],
       [-28, 16]

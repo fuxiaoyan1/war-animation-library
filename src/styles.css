@@ -4144,10 +4144,6 @@ h1 {
   stroke-opacity: 0.58;
 }
 
-.gaixia-route[data-route-current="false"].is-complete .gaixia-route-label {
-  opacity: 0.64;
-}
-
 .gaixia-route[data-unit-visible="true"].is-complete .gaixia-unit-holder {
   opacity: 1;
 }

@@ -1119,6 +1119,8 @@ function GaixiaTacticalOverlay({
             return null;
           }
           const labelOffset = route.labelOffset ?? [10, -12];
+          const isCurrentRoute = activeRouteIds.has(route.id);
+          const showRouteLabel = Boolean(labelPoint && active);
           return (
             <g
               key={route.id}
@@ -1126,7 +1128,8 @@ function GaixiaTacticalOverlay({
               data-route-complete={isComplete ? "true" : "false"}
               data-route-id={route.id}
               data-route-kind={route.routeKind}
-              data-route-current={activeRouteIds.has(route.id) ? "true" : "false"}
+              data-route-current={isCurrentRoute ? "true" : "false"}
+              data-position-anchor={route.positionAnchor ?? ""}
               data-unit-visible={showUnits ? "true" : "false"}
               data-ground-elevation={reliefElevationAtPoint(route.points[Math.min(route.points.length - 1, Math.max(0, Math.round(routeProgress * (route.points.length - 1))))]).toFixed(0)}
               data-testid={`gaixia-route-${route.id}`}
@@ -1147,7 +1150,7 @@ function GaixiaTacticalOverlay({
                     <GaixiaUnitIcon kind={route.unitKind} facingX={facingX} />
                   </g>
                 ))}
-              {labelPoint && (
+              {showRouteLabel && labelPoint && (
                 <text className="gaixia-route-label" x={labelPoint[0] + labelOffset[0]} y={labelPoint[1] + labelOffset[1]}>
                   {route.label}
                 </text>
