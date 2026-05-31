@@ -1,6 +1,20 @@
 import type { BattleEvent, FormationUnit, FrontLine, MapPoint } from "./battleOfFrance";
-import type { BattleEffectElement, MapOverlayElement, TacticalTerrainFeature } from "../components/CampaignMapAnimation";
+import type { BattleEffectElement, GeoLine, MapOverlayElement, TacticalTerrainFeature } from "../components/CampaignMapAnimation";
 import type { HistoricalRegion } from "../types/maps";
+
+export type NianzhuangTacticalFormation = {
+  anchorIds?: string[];
+  columns?: number;
+  coordinates: Array<[number, number]>;
+  end?: string;
+  faction: "communist" | "nationalist";
+  id: string;
+  kind: "assault-echelon" | "blocking-line" | "command-post" | "infantry-block" | "remnant-pocket" | "trench-work";
+  label: string;
+  labelCoordinates: [number, number];
+  rows?: number;
+  start: string;
+};
 
 export const campaignStart = "1948-11-06T18:00";
 export const campaignEnd = "1948-11-22T20:00";
@@ -84,7 +98,7 @@ export const mapPoints: MapPoint[] = [
   { id: "southwest-pla-entry", label: "华野西南封口", coordinates: [117.58, 34.13], kind: "front", revealAt: "1948-11-10T20:00" },
   { id: "pla-east-local-entry", label: "东线接续点", coordinates: [117.985, 34.305], hidden: true, kind: "front" },
   { id: "pla-north-local-entry", label: "北线接续点", coordinates: [117.93, 34.37], hidden: true, kind: "front" },
-  { id: "pla-south-local-entry", label: "南线接续点", coordinates: [117.94, 34.205], hidden: true, kind: "front" },
+  { id: "pla-south-local-entry", label: "南线接续点", coordinates: [117.895, 34.22], hidden: true, kind: "front" },
   { id: "pla-southwest-local-entry", label: "西南接续点", coordinates: [117.705, 34.24], hidden: true, kind: "front" },
   { id: "northwest-block-entry", label: "阻援集团北翼", coordinates: [117.46, 34.39], kind: "front", revealAt: "1948-11-11T12:00" },
   { id: "southwest-block-entry", label: "阻援集团南翼", coordinates: [117.42, 34.13], kind: "front", revealAt: "1948-11-11T12:00" },
@@ -241,9 +255,9 @@ const blockingDepthUnits: FormationUnit[] = [
 ];
 
 const reliefCounterpushUnits: FormationUnit[] = [
-  { id: "counterpush-block", label: "", badgeLabel: "阻", icon: "infantryPva", offset: [0, -38] },
-  { id: "counterpush-assault", label: "", badgeLabel: "反", icon: "infantryPva", offset: [-68, 32] },
-  { id: "counterpush-gun", label: "", badgeLabel: "炮", icon: "cannon", offset: [-136, -8] }
+  { id: "counterpush-block", label: "", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.582, 34.292], facingX: -1, offset: [0, -8] },
+  { id: "counterpush-assault", label: "", badgeLabel: "反", icon: "infantryPva", coordinates: [117.566, 34.286], facingX: -1, offset: [0, 8] },
+  { id: "counterpush-gun", label: "", badgeLabel: "炮", icon: "cannon", coordinates: [117.552, 34.282], facingX: -1, offset: [0, 0] }
 ];
 
 const trenchWorkerUnits: FormationUnit[] = [
@@ -341,6 +355,7 @@ export const frontLines: FrontLine[] = [
     from: "xinanzhen",
     to: "nianzhuang",
     routeKind: "land",
+    positionAnchor: "waterlogged-lowland",
     start: "1948-11-07T06:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantry",
@@ -362,6 +377,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-west",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-11T12:00",
     end: "1948-11-11T18:00",
     visibleFrom: "1948-11-11T11:59",
@@ -389,6 +405,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang",
     to: "nianzhuang-north",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantry",
@@ -408,6 +425,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang",
     to: "nianzhuang-east",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantry",
@@ -427,6 +445,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang",
     to: "nianzhuang-south",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantry",
@@ -446,6 +465,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantry",
@@ -465,6 +485,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang",
     to: "inner-pocket",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantry",
@@ -483,6 +504,7 @@ export const frontLines: FrontLine[] = [
     from: "canal-bridge",
     to: "louzhuang",
     routeKind: "land",
+    positionAnchor: "outer-village-worksites",
     start: "1948-11-10T20:00",
     end: "1948-11-13T18:00",
     unitIcon: "infantry",
@@ -502,6 +524,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-west",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "pla-encirclement",
     start: "1948-11-10T20:00",
     end: "1948-11-11T12:00",
     unitIcon: "infantryPva",
@@ -527,6 +550,7 @@ export const frontLines: FrontLine[] = [
     from: "east-pla-entry",
     to: "nianzhuang-east",
     routeKind: "land",
+    positionAnchor: "waterlogged-lowland",
     start: "1948-11-06T18:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
@@ -547,6 +571,7 @@ export const frontLines: FrontLine[] = [
     from: "north-pla-entry",
     to: "nianzhuang-north",
     routeKind: "land",
+    positionAnchor: "nianzhuang-relief-shelf",
     start: "1948-11-07T06:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
@@ -566,6 +591,7 @@ export const frontLines: FrontLine[] = [
     from: "south-pla-entry",
     to: "nianzhuang-south",
     routeKind: "land",
+    positionAnchor: "waterlogged-lowland",
     start: "1948-11-07T12:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
@@ -585,6 +611,7 @@ export const frontLines: FrontLine[] = [
     from: "southwest-pla-entry",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-09T18:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
@@ -604,6 +631,7 @@ export const frontLines: FrontLine[] = [
     from: "pla-east-local-entry",
     to: "nianzhuang-east",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-10T20:00",
     end: "1948-11-11T06:00",
     unitIcon: "infantryPva",
@@ -626,6 +654,7 @@ export const frontLines: FrontLine[] = [
     from: "pla-north-local-entry",
     to: "nianzhuang-north",
     routeKind: "land",
+    positionAnchor: "outer-village-worksites",
     start: "1948-11-10T20:00",
     end: "1948-11-11T06:00",
     unitIcon: "infantryPva",
@@ -647,17 +676,18 @@ export const frontLines: FrontLine[] = [
     from: "pla-south-local-entry",
     to: "nianzhuang-south",
     routeKind: "land",
+    positionAnchor: "waterlogged-lowland",
     start: "1948-11-10T20:00",
     end: "1948-11-11T06:00",
     unitIcon: "infantryPva",
     formationUnits: plaClosingUnits,
-    waypoints: [[117.895, 34.22]],
+    waypoints: [[117.875, 34.228]],
     formationPrelude: [
       [118.16, 34.16],
       [118.05, 34.185],
       [117.94, 34.215]
     ],
-    retainRouteTailRatio: 0.34,
+    retainRouteTailRatio: 0.22,
     visibleUntil: "1948-11-11T11:59",
     unitVisibleUntil: "1948-11-11T11:59"
   },
@@ -668,6 +698,7 @@ export const frontLines: FrontLine[] = [
     from: "pla-southwest-local-entry",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "nianzhuang-relief-shelf",
     start: "1948-11-10T20:00",
     end: "1948-11-11T06:00",
     unitIcon: "infantryPva",
@@ -689,6 +720,7 @@ export const frontLines: FrontLine[] = [
     from: "xuzhou",
     to: "relief-first-belt",
     routeKind: "land",
+    positionAnchor: "daxujia-relief-ridge",
     start: "1948-11-11T12:00",
     end: "1948-11-13T06:00",
     unitIcon: "tankKorean",
@@ -708,6 +740,7 @@ export const frontLines: FrontLine[] = [
     from: "relief-first-belt",
     to: "relief-forward-edge",
     routeKind: "land",
+    positionAnchor: "relief-forward-sap",
     start: "1948-11-13T06:00",
     end: "1948-11-13T18:00",
     unitIcon: "tankKorean",
@@ -726,6 +759,7 @@ export const frontLines: FrontLine[] = [
     from: "relief-forward-edge",
     to: "relief-stopped-pocket",
     routeKind: "land",
+    positionAnchor: "relief-stop-line",
     start: "1948-11-13T18:00",
     end: "1948-11-14T12:00",
     unitIcon: "tankKorean",
@@ -744,6 +778,7 @@ export const frontLines: FrontLine[] = [
     from: "northwest-block-entry",
     to: "southwest-block-entry",
     routeKind: "land",
+    positionAnchor: "relief-first-line",
     start: "1948-11-11T12:00",
     end: "1948-11-13T18:00",
     unitIcon: "infantryPva",
@@ -764,6 +799,7 @@ export const frontLines: FrontLine[] = [
     from: "relief-second-belt-north",
     to: "relief-second-belt-south",
     routeKind: "land",
+    positionAnchor: "relief-depth-line",
     start: "1948-11-13T06:00",
     end: "1948-11-13T18:00",
     unitIcon: "infantryPva",
@@ -783,6 +819,7 @@ export const frontLines: FrontLine[] = [
     from: "relief-second-belt-north",
     to: "daxujia",
     routeKind: "land",
+    positionAnchor: "relief-depth-line",
     start: "1948-11-13T18:00",
     end: "1948-11-14T12:00",
     unitIcon: "infantryPva",
@@ -802,6 +839,7 @@ export const frontLines: FrontLine[] = [
     from: "relief-second-belt-north",
     to: "relief-stopped-pocket",
     routeKind: "land",
+    positionAnchor: "relief-stop-line",
     start: "1948-11-13T18:00",
     end: "1948-11-20T18:00",
     unitIcon: "infantryPva",
@@ -821,6 +859,7 @@ export const frontLines: FrontLine[] = [
     from: "north-pla-entry",
     to: "daxingzhuang",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-11T20:00",
     end: "1948-11-13T23:00",
     unitIcon: "infantryPva",
@@ -840,6 +879,7 @@ export const frontLines: FrontLine[] = [
     from: "zhaozhuang",
     to: "songzhuang-large",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-11T20:00",
     end: "1948-11-13T23:00",
     unitIcon: "infantryPva",
@@ -858,6 +898,7 @@ export const frontLines: FrontLine[] = [
     from: "zhaozhuang",
     to: "pengzhuang",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-13T06:00",
     end: "1948-11-15T20:00",
     unitIcon: "infantryPva",
@@ -876,6 +917,7 @@ export const frontLines: FrontLine[] = [
     from: "east-pla-entry",
     to: "luliang-line",
     routeKind: "land",
+    positionAnchor: "east-water-ditch-line",
     start: "1948-11-12T12:00",
     end: "1948-11-14T20:00",
     unitIcon: "infantryPva",
@@ -896,6 +938,7 @@ export const frontLines: FrontLine[] = [
     from: "south-pla-entry",
     to: "xujingwa",
     routeKind: "land",
+    positionAnchor: "east-water-ditch-line",
     start: "1948-11-13T06:00",
     end: "1948-11-17T20:00",
     unitIcon: "infantryPva",
@@ -915,6 +958,7 @@ export const frontLines: FrontLine[] = [
     from: "songzhuang-large",
     to: "nianzhuang-north",
     routeKind: "land",
+    positionAnchor: "outer-defense",
     start: "1948-11-12T06:00",
     end: "1948-11-14T12:00",
     unitIcon: "infantry",
@@ -936,6 +980,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-west",
     to: "pengzhuang",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-15T08:00",
     end: "1948-11-15T20:00",
     unitIcon: "infantry",
@@ -954,6 +999,7 @@ export const frontLines: FrontLine[] = [
     from: "pengzhuang",
     to: "zhaozhuang",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-15T18:00",
     end: "1948-11-16T08:00",
     unitIcon: "infantryPva",
@@ -972,6 +1018,7 @@ export const frontLines: FrontLine[] = [
     from: "zhaozhuang",
     to: "pengzhuang",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-16T08:00",
     end: "1948-11-17T20:00",
     unitIcon: "infantryPva",
@@ -990,6 +1037,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-east",
     to: "luliang-line",
     routeKind: "land",
+    positionAnchor: "east-water-ditch-line",
     start: "1948-11-16T20:00",
     end: "1948-11-17T08:00",
     unitIcon: "infantry",
@@ -1008,6 +1056,7 @@ export const frontLines: FrontLine[] = [
     from: "luliang-line",
     to: "nianzhuang-east",
     routeKind: "land",
+    positionAnchor: "east-water-ditch-line",
     start: "1948-11-17T08:00",
     end: "1948-11-19T09:30",
     unitIcon: "infantryPva",
@@ -1026,6 +1075,7 @@ export const frontLines: FrontLine[] = [
     from: "zhoujiazhai",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-15T02:00",
     end: "1948-11-19T09:30",
     unitIcon: "infantryPva",
@@ -1044,6 +1094,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-north",
     to: "inner-north-line",
     routeKind: "land",
+    positionAnchor: "north-approach-sap",
     start: "1948-11-15T02:00",
     end: "1948-11-19T09:30",
     unitIcon: "infantryPva",
@@ -1061,6 +1112,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-south",
     to: "inner-south-line",
     routeKind: "land",
+    positionAnchor: "south-approach-sap",
     start: "1948-11-15T02:00",
     end: "1948-11-19T09:30",
     unitIcon: "infantryPva",
@@ -1078,6 +1130,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-east",
     to: "inner-east-line",
     routeKind: "land",
+    positionAnchor: "east-water-ditch-line",
     start: "1948-11-15T02:00",
     end: "1948-11-19T09:30",
     unitIcon: "infantryPva",
@@ -1095,6 +1148,7 @@ export const frontLines: FrontLine[] = [
     from: "zhoujiazhai",
     to: "nianzhuang-west",
     routeKind: "land",
+    positionAnchor: "west-trench-line",
     start: "1948-11-18T18:00",
     end: "1948-11-19T12:00",
     unitIcon: "cannon",
@@ -1109,6 +1163,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-west",
     to: "inner-west-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-west-break",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1128,6 +1183,7 @@ export const frontLines: FrontLine[] = [
     from: "songzhuang-large",
     to: "inner-north-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-north-fragment",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1147,6 +1203,7 @@ export const frontLines: FrontLine[] = [
     from: "wulou",
     to: "inner-south-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-south-fragment",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1166,6 +1223,7 @@ export const frontLines: FrontLine[] = [
     from: "youfang",
     to: "inner-east-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-east-fragment",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1185,6 +1243,7 @@ export const frontLines: FrontLine[] = [
     from: "nianzhuang-north",
     to: "inner-northeast-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-north-fragment",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1204,6 +1263,7 @@ export const frontLines: FrontLine[] = [
     from: "xujingwa",
     to: "inner-southeast-line",
     routeKind: "land",
+    positionAnchor: "outer-defense-south-fragment",
     start: "1948-11-19T21:15",
     end: "1948-11-19T22:30",
     unitIcon: "infantryPva",
@@ -1223,6 +1283,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-west-line",
     to: "final-west-core",
     routeKind: "land",
+    positionAnchor: "second-defense",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1243,6 +1304,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-north-line",
     to: "final-north-core",
     routeKind: "land",
+    positionAnchor: "second-defense-north-fragment",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1263,6 +1325,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-south-line",
     to: "final-south-core",
     routeKind: "land",
+    positionAnchor: "second-defense-south-fragment",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1283,6 +1346,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-east-line",
     to: "final-east-core",
     routeKind: "land",
+    positionAnchor: "second-defense-east-breach",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1303,6 +1367,7 @@ export const frontLines: FrontLine[] = [
     from: "final-west-core",
     to: "inner-west-line",
     routeKind: "land",
+    positionAnchor: "second-defense",
     start: "1948-11-19T23:15",
     end: "1948-11-20T00:40",
     unitIcon: "infantry",
@@ -1321,6 +1386,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-west-line",
     to: "final-west-core",
     routeKind: "land",
+    positionAnchor: "second-defense",
     start: "1948-11-20T00:40",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1339,6 +1405,7 @@ export const frontLines: FrontLine[] = [
     from: "final-east-core",
     to: "inner-east-line",
     routeKind: "land",
+    positionAnchor: "second-defense-east-breach",
     start: "1948-11-20T00:20",
     end: "1948-11-20T02:00",
     unitIcon: "infantry",
@@ -1357,6 +1424,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-east-line",
     to: "final-east-core",
     routeKind: "land",
+    positionAnchor: "second-defense-east-breach",
     start: "1948-11-20T02:00",
     end: "1948-11-20T03:30",
     unitIcon: "infantryPva",
@@ -1375,6 +1443,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-west-line",
     to: "final-west-core",
     routeKind: "land",
+    positionAnchor: "second-defense",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantry",
@@ -1393,6 +1462,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-north-line",
     to: "final-north-core",
     routeKind: "land",
+    positionAnchor: "second-defense-north-fragment",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantry",
@@ -1411,6 +1481,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-east-line",
     to: "final-east-core",
     routeKind: "land",
+    positionAnchor: "second-defense-east-breach",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantry",
@@ -1429,6 +1500,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-south-line",
     to: "final-south-core",
     routeKind: "land",
+    positionAnchor: "second-defense-south-fragment",
     start: "1948-11-19T22:30",
     end: "1948-11-20T03:30",
     unitIcon: "infantry",
@@ -1447,6 +1519,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-pocket",
     to: "inner-pocket",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantry",
@@ -1469,6 +1542,7 @@ export const frontLines: FrontLine[] = [
     from: "final-north-core",
     to: "inner-pocket",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantry",
@@ -1489,6 +1563,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-north-line",
     to: "final-east-core",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
@@ -1509,6 +1584,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-south-line",
     to: "final-south-core",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
@@ -1529,6 +1605,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-west-line",
     to: "final-west-core",
     routeKind: "land",
+    positionAnchor: "final-core",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
@@ -1549,6 +1626,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-east-line",
     to: "final-east-core",
     routeKind: "land",
+    positionAnchor: "final-core-east-break",
     start: "1948-11-20T03:30",
     end: "1948-11-20T05:15",
     unitIcon: "infantryPva",
@@ -1569,6 +1647,7 @@ export const frontLines: FrontLine[] = [
     from: "east-remnant-pocket",
     to: "east-remnant-pocket",
     routeKind: "land",
+    positionAnchor: "east-remnant-village-worksites",
     start: "1948-11-20T05:30",
     end: "1948-11-22T16:00",
     unitIcon: "infantry",
@@ -1590,6 +1669,7 @@ export const frontLines: FrontLine[] = [
     from: "inner-pocket",
     to: "east-remnant-pocket",
     routeKind: "land",
+    positionAnchor: "east-remnant-village-worksites",
     start: "1948-11-20T05:30",
     end: "1948-11-21T08:00",
     unitIcon: "infantry",
@@ -1609,6 +1689,7 @@ export const frontLines: FrontLine[] = [
     from: "final-north-core",
     to: "remnant-north-village",
     routeKind: "land",
+    positionAnchor: "north-remnant-worksite",
     start: "1948-11-20T05:30",
     end: "1948-11-21T18:00",
     unitIcon: "infantryPva",
@@ -1627,6 +1708,7 @@ export const frontLines: FrontLine[] = [
     from: "final-east-core",
     to: "east-remnant-pocket",
     routeKind: "land",
+    positionAnchor: "east-remnant-village-worksites",
     start: "1948-11-20T05:30",
     end: "1948-11-22T10:00",
     unitIcon: "infantryPva",
@@ -1646,6 +1728,7 @@ export const frontLines: FrontLine[] = [
     from: "final-south-core",
     to: "remnant-south-village",
     routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
     start: "1948-11-20T05:30",
     end: "1948-11-21T22:00",
     unitIcon: "infantryPva",
@@ -1664,6 +1747,7 @@ export const frontLines: FrontLine[] = [
     from: "final-west-core",
     to: "remnant-southwest-block",
     routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
     start: "1948-11-20T05:30",
     end: "1948-11-22T16:00",
     unitIcon: "infantryPva",
@@ -1684,6 +1768,7 @@ export const frontLines: FrontLine[] = [
     from: "remnant-north-village",
     to: "final-north-core",
     routeKind: "land",
+    positionAnchor: "north-remnant-worksite",
     start: "1948-11-21T08:00",
     end: "1948-11-21T12:00",
     unitIcon: "infantry",
@@ -1702,6 +1787,7 @@ export const frontLines: FrontLine[] = [
     from: "final-north-core",
     to: "remnant-north-village",
     routeKind: "land",
+    positionAnchor: "north-remnant-worksite",
     start: "1948-11-21T12:00",
     end: "1948-11-21T18:00",
     unitIcon: "infantryPva",
@@ -1720,6 +1806,7 @@ export const frontLines: FrontLine[] = [
     from: "remnant-south-village",
     to: "final-south-core",
     routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
     start: "1948-11-21T18:00",
     end: "1948-11-21T22:00",
     unitIcon: "infantry",
@@ -1738,6 +1825,7 @@ export const frontLines: FrontLine[] = [
     from: "final-south-core",
     to: "remnant-south-village",
     routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
     start: "1948-11-21T22:00",
     end: "1948-11-22T10:00",
     unitIcon: "infantryPva",
@@ -1756,6 +1844,7 @@ export const frontLines: FrontLine[] = [
     from: "remnant-north-village",
     to: "remnant-north-village",
     routeKind: "land",
+    positionAnchor: "north-remnant-worksite",
     start: "1948-11-22T16:00",
     end: "1948-11-22T18:00",
     unitIcon: "infantry",
@@ -1774,6 +1863,7 @@ export const frontLines: FrontLine[] = [
     from: "east-remnant-pocket",
     to: "east-remnant-pocket",
     routeKind: "land",
+    positionAnchor: "east-remnant-village-worksites",
     start: "1948-11-22T16:00",
     end: "1948-11-22T18:00",
     unitIcon: "infantry",
@@ -1792,6 +1882,7 @@ export const frontLines: FrontLine[] = [
     from: "remnant-southwest-block",
     to: "remnant-south-village",
     routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
     start: "1948-11-22T16:00",
     end: "1948-11-22T18:00",
     unitIcon: "infantry",
@@ -1810,6 +1901,7 @@ export const frontLines: FrontLine[] = [
     from: "east-remnant-pocket",
     to: "nizhuang",
     routeKind: "land",
+    positionAnchor: "nizhuang-final-corridor",
     start: "1948-11-22T16:00",
     end: "1948-11-22T18:00",
     unitIcon: "infantry",
@@ -1827,6 +1919,7 @@ export const frontLines: FrontLine[] = [
     from: "east-remnant-pocket",
     to: "nizhuang",
     routeKind: "land",
+    positionAnchor: "nizhuang-final-corridor",
     start: "1948-11-22T16:20",
     end: "1948-11-22T18:50",
     unitIcon: "infantryPva",
@@ -1859,7 +1952,7 @@ export const timelineDateAnchors = Array.from(
 export const historicalRegions: HistoricalRegion[] = [
   {
     id: "nianzhuang-pocket",
-    label: "五个军部十个整师防御地域",
+    label: "黄兵团防御地域",
     className: "nianzhuang-pocket-region",
     labelCoordinates: [117.87, 34.355],
     coordinates: [
@@ -1899,10 +1992,12 @@ export const historicalRegions: HistoricalRegion[] = [
   }
 ];
 
-export const fortifiedLines: Array<{ id: string; label: string; points: Array<[number, number]>; revealAt?: string; visibleUntil?: string }> = [
+export const fortifiedLines: GeoLine[] = [
   {
     id: "pla-encirclement",
     label: "华野包围圈",
+    kind: "defense",
+    height: 18,
     revealAt: "1948-11-10T20:00",
     points: [
       [117.675, 34.292],
@@ -1920,6 +2015,8 @@ export const fortifiedLines: Array<{ id: string; label: string; points: Array<[n
   {
     id: "outer-defense",
     label: "第一道村落防线",
+    kind: "fortification",
+    height: 32,
     revealAt: "1948-11-10T20:00",
     visibleUntil: "1948-11-19T22:29",
     points: [
@@ -1937,6 +2034,8 @@ export const fortifiedLines: Array<{ id: string; label: string; points: Array<[n
   {
     id: "second-defense",
     label: "第二道围墙",
+    kind: "fortification",
+    height: 42,
     revealAt: "1948-11-15T02:00",
     visibleUntil: "1948-11-20T03:29",
     points: [
@@ -1953,6 +2052,8 @@ export const fortifiedLines: Array<{ id: string; label: string; points: Array<[n
   {
     id: "final-core",
     label: "内圩最后据点",
+    kind: "fortification",
+    height: 38,
     revealAt: "1948-11-20T03:30",
     visibleUntil: "1948-11-20T05:29",
     points: [
@@ -1964,20 +2065,106 @@ export const fortifiedLines: Array<{ id: string; label: string; points: Array<[n
       [117.846, 34.282],
       [117.852, 34.302]
     ]
+  },
+  {
+    id: "relief-first-line",
+    label: "第一阻援带",
+    kind: "defense",
+    height: 24,
+    revealAt: "1948-11-11T12:00",
+    points: [
+      [117.46, 34.35],
+      [117.51, 34.31],
+      [117.56, 34.27],
+      [117.52, 34.2],
+      [117.45, 34.15]
+    ]
+  },
+  {
+    id: "relief-depth-line",
+    label: "第二阻援带",
+    kind: "defense",
+    height: 30,
+    revealAt: "1948-11-13T06:00",
+    points: [
+      [117.575, 34.35],
+      [117.605, 34.31],
+      [117.59, 34.26],
+      [117.565, 34.18]
+    ]
+  },
+  {
+    id: "relief-forward-sap",
+    label: "东援突击受阻沟",
+    kind: "trench",
+    height: 16,
+    revealAt: "1948-11-13T06:00",
+    points: [
+      [117.515, 34.276],
+      [117.545, 34.282],
+      [117.575, 34.286]
+    ]
+  },
+  {
+    id: "relief-stop-line",
+    label: "东援终止线",
+    kind: "defense",
+    height: 22,
+    revealAt: "1948-11-13T18:00",
+    points: [
+      [117.528, 34.31],
+      [117.54, 34.285],
+      [117.525, 34.245]
+    ]
+  },
+  {
+    id: "north-approach-sap",
+    label: "北侧交通壕",
+    kind: "trench",
+    height: 18,
+    revealAt: "1948-11-15T02:00",
+    visibleUntil: "1948-11-19T22:30",
+    points: [
+      [117.81, 34.348],
+      [117.835, 34.335],
+      [117.848, 34.323],
+      [117.862, 34.315]
+    ]
+  },
+  {
+    id: "south-approach-sap",
+    label: "南侧接近壕",
+    kind: "trench",
+    height: 18,
+    revealAt: "1948-11-15T02:00",
+    visibleUntil: "1948-11-19T22:30",
+    points: [
+      [117.82, 34.236],
+      [117.855, 34.245],
+      [117.858, 34.262],
+      [117.872, 34.268]
+    ]
+  },
+  {
+    id: "nizhuang-final-corridor",
+    label: "倪庄逃散走廊",
+    kind: "trench",
+    height: 16,
+    revealAt: "1948-11-22T16:00",
+    points: [
+      [117.952, 34.302],
+      [117.93, 34.286],
+      [117.905, 34.25]
+    ]
   }
 ];
 
-export const fragmentedLines: Array<{
-  className?: string;
-  id: string;
-  label: string;
-  points: Array<[number, number]>;
-  revealAt?: string;
-  visibleUntil?: string;
-}> = [
+export const fragmentedLines: GeoLine[] = [
   {
     id: "outer-defense-west-break",
     label: "西段破口",
+    kind: "fortification",
+    height: 24,
     revealAt: "1948-11-19T22:30",
     visibleUntil: "1948-11-20T03:29",
     className: "fragmented-line-breach",
@@ -1990,6 +2177,8 @@ export const fragmentedLines: Array<{
   {
     id: "outer-defense-north-fragment",
     label: "北段碎裂",
+    kind: "fortification",
+    height: 24,
     revealAt: "1948-11-19T22:30",
     visibleUntil: "1948-11-20T03:29",
     points: [
@@ -2001,6 +2190,8 @@ export const fragmentedLines: Array<{
   {
     id: "outer-defense-east-fragment",
     label: "东段后撤",
+    kind: "fortification",
+    height: 24,
     revealAt: "1948-11-19T22:30",
     visibleUntil: "1948-11-20T03:29",
     points: [
@@ -2012,6 +2203,8 @@ export const fragmentedLines: Array<{
   {
     id: "outer-defense-south-fragment",
     label: "南段割裂",
+    kind: "fortification",
+    height: 24,
     revealAt: "1948-11-19T22:30",
     visibleUntil: "1948-11-20T03:29",
     points: [
@@ -2023,6 +2216,8 @@ export const fragmentedLines: Array<{
   {
     id: "second-defense-north-fragment",
     label: "二道北段破碎",
+    kind: "fortification",
+    height: 28,
     revealAt: "1948-11-20T03:30",
     visibleUntil: "1948-11-20T05:30",
     points: [
@@ -2034,7 +2229,9 @@ export const fragmentedLines: Array<{
   {
     id: "second-defense-east-breach",
     label: "二道东段失守",
-    revealAt: "1948-11-20T03:30",
+    kind: "fortification",
+    height: 28,
+    revealAt: "1948-11-19T22:30",
     visibleUntil: "1948-11-20T05:30",
     className: "fragmented-line-breach",
     points: [
@@ -2046,6 +2243,8 @@ export const fragmentedLines: Array<{
   {
     id: "second-defense-south-fragment",
     label: "二道南段割裂",
+    kind: "fortification",
+    height: 28,
     revealAt: "1948-11-20T03:30",
     visibleUntil: "1948-11-20T05:30",
     points: [
@@ -2057,6 +2256,8 @@ export const fragmentedLines: Array<{
   {
     id: "final-core-east-break",
     label: "内圩核心失守",
+    kind: "fortification",
+    height: 26,
     revealAt: "1948-11-20T05:30",
     visibleUntil: "1948-11-21T08:00",
     className: "fragmented-line-breach",
@@ -2277,7 +2478,7 @@ export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
     id: "nianzhuang-relief-shelf",
     type: "area",
     kind: "relief",
-    height: 54,
+    height: 82,
     label: "微起伏村台",
     labelCoordinates: [117.84, 34.372],
     points: [
@@ -2295,7 +2496,7 @@ export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
     id: "daxujia-relief-ridge",
     type: "area",
     kind: "relief",
-    height: 46,
+    height: 76,
     label: "阻援高地边缘",
     labelCoordinates: [117.47, 34.39],
     points: [
@@ -2311,7 +2512,7 @@ export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
     id: "waterlogged-lowland",
     type: "area",
     kind: "lowland",
-    height: 28,
+    height: 34,
     label: "低洼水网",
     labelCoordinates: [118.075, 34.24],
     points: [
@@ -2328,7 +2529,8 @@ export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
     id: "outer-village-worksites",
     type: "area",
     kind: "village",
-    height: 38,
+    anchorIds: ["outer-defense", "outer-defense-west-break", "outer-defense-north-fragment", "outer-defense-east-fragment", "outer-defense-south-fragment"],
+    height: 58,
     label: "村落群工事",
     labelCoordinates: [117.79, 34.232],
     points: [
@@ -2417,6 +2619,221 @@ export const tacticalTerrainFeatures: TacticalTerrainFeature[] = [
     revealAt: "1948-11-15T02:00",
     visibleUntil: "1948-11-20T05:30",
     testId: "nianzhuang-east-water-ditch-line"
+  },
+  {
+    id: "inner-fortified-platform",
+    type: "area",
+    kind: "village",
+    anchorIds: ["second-defense", "second-defense-north-fragment", "second-defense-east-breach", "second-defense-south-fragment", "final-core", "final-core-east-break"],
+    height: 64,
+    label: "二道围墙-内圩台地",
+    labelCoordinates: [117.89, 34.322],
+    points: [
+      [117.815, 34.306],
+      [117.858, 34.326],
+      [117.908, 34.314],
+      [117.922, 34.286],
+      [117.89, 34.26],
+      [117.84, 34.264],
+      [117.812, 34.286]
+    ],
+    visibleUntil: "1948-11-21T08:00",
+    testId: "nianzhuang-inner-fortified-platform"
+  },
+  {
+    id: "east-remnant-village-worksites",
+    type: "area",
+    kind: "village",
+    height: 52,
+    label: "东侧残点村落",
+    labelCoordinates: [117.966, 34.318],
+    points: [
+      [117.884, 34.344],
+      [117.952, 34.326],
+      [117.978, 34.304],
+      [117.942, 34.274],
+      [117.892, 34.284]
+    ],
+    revealAt: "1948-11-20T05:30",
+    visibleUntil: "1948-11-22T20:00",
+    testId: "nianzhuang-east-remnant-worksites"
+  },
+  {
+    id: "north-remnant-worksite",
+    type: "area",
+    kind: "village",
+    height: 44,
+    label: "尤家湖残点",
+    labelCoordinates: [117.89, 34.358],
+    points: [
+      [117.872, 34.326],
+      [117.902, 34.334],
+      [117.908, 34.352],
+      [117.886, 34.36],
+      [117.868, 34.346]
+    ],
+    revealAt: "1948-11-21T08:00",
+    visibleUntil: "1948-11-22T20:00",
+    testId: "nianzhuang-north-remnant-worksite"
+  },
+  {
+    id: "south-remnant-worksite",
+    type: "area",
+    kind: "village",
+    height: 44,
+    label: "南侧村落残点",
+    labelCoordinates: [117.924, 34.234],
+    points: [
+      [117.882, 34.268],
+      [117.918, 34.258],
+      [117.936, 34.236],
+      [117.912, 34.222],
+      [117.878, 34.242]
+    ],
+    revealAt: "1948-11-21T18:00",
+    visibleUntil: "1948-11-22T20:00",
+    testId: "nianzhuang-south-remnant-worksite"
+  }
+];
+
+export const tacticalFormations: NianzhuangTacticalFormation[] = [
+  {
+    id: "huang-outer-defense-array",
+    faction: "nationalist",
+    kind: "infantry-block",
+    label: "黄兵团第一线师级据点群",
+    start: "1948-11-11T12:00",
+    end: "1948-11-19T22:30",
+    rows: 4,
+    columns: 8,
+    anchorIds: ["outer-defense", "outer-village-worksites"],
+    labelCoordinates: [117.858, 34.354],
+    coordinates: [
+      [117.77, 34.306],
+      [117.84, 34.356],
+      [117.944, 34.318],
+      [117.918, 34.242],
+      [117.806, 34.238],
+      [117.754, 34.284]
+    ]
+  },
+  {
+    id: "huang-inner-defense-array",
+    faction: "nationalist",
+    kind: "infantry-block",
+    label: "二道围墙内缩阵",
+    start: "1948-11-19T22:30",
+    end: "1948-11-20T05:30",
+    rows: 4,
+    columns: 7,
+    anchorIds: ["second-defense", "inner-fortified-platform"],
+    labelCoordinates: [117.874, 34.318],
+    coordinates: [
+      [117.824, 34.304],
+      [117.862, 34.324],
+      [117.91, 34.302],
+      [117.904, 34.27],
+      [117.842, 34.268],
+      [117.812, 34.286]
+    ]
+  },
+  {
+    id: "huang-remnant-pocket-array",
+    faction: "nationalist",
+    kind: "remnant-pocket",
+    label: "东侧残点内缩群",
+    start: "1948-11-20T05:30",
+    end: "1948-11-22T18:00",
+    rows: 3,
+    columns: 6,
+    anchorIds: ["east-remnant-village-worksites", "north-remnant-worksite", "south-remnant-worksite"],
+    labelCoordinates: [117.94, 34.324],
+    coordinates: [
+      [117.884, 34.336],
+      [117.954, 34.32],
+      [117.976, 34.294],
+      [117.936, 34.238],
+      [117.884, 34.262]
+    ]
+  },
+  {
+    id: "pla-outer-assault-echelons",
+    faction: "communist",
+    kind: "assault-echelon",
+    label: "华野四面突击队形",
+    start: "1948-11-19T10:00",
+    end: "1948-11-20T05:30",
+    rows: 3,
+    columns: 7,
+    anchorIds: ["west-trench-line", "east-water-ditch-line", "north-approach-sap", "south-approach-sap"],
+    labelCoordinates: [117.746, 34.354],
+    coordinates: [
+      [117.738, 34.318],
+      [117.792, 34.37],
+      [117.936, 34.344],
+      [117.968, 34.278],
+      [117.906, 34.22],
+      [117.772, 34.232],
+      [117.738, 34.318]
+    ]
+  },
+  {
+    id: "pla-relief-blocking-depth-array",
+    faction: "communist",
+    kind: "blocking-line",
+    label: "徐东方向两层阻援纵深",
+    start: "1948-11-11T12:00",
+    end: "1948-11-22T20:00",
+    rows: 3,
+    columns: 7,
+    anchorIds: ["relief-first-line", "relief-depth-line", "relief-stop-line"],
+    labelCoordinates: [117.492, 34.39],
+    coordinates: [
+      [117.414, 34.372],
+      [117.528, 34.362],
+      [117.626, 34.322],
+      [117.642, 34.236],
+      [117.512, 34.204],
+      [117.39, 34.238]
+    ]
+  },
+  {
+    id: "pla-remnant-cleanup-net",
+    faction: "communist",
+    kind: "trench-work",
+    label: "残点清剿封控网",
+    start: "1948-11-20T05:30",
+    end: "1948-11-22T20:00",
+    rows: 3,
+    columns: 8,
+    anchorIds: ["east-remnant-village-worksites", "nizhuang-final-corridor"],
+    labelCoordinates: [117.926, 34.214],
+    coordinates: [
+      [117.858, 34.342],
+      [117.972, 34.32],
+      [117.956, 34.236],
+      [117.894, 34.218],
+      [117.846, 34.264],
+      [117.858, 34.342]
+    ]
+  },
+  {
+    id: "huang-command-core",
+    faction: "nationalist",
+    kind: "command-post",
+    label: "兵团部核心",
+    start: "1948-11-11T12:00",
+    end: "1948-11-22T18:00",
+    rows: 2,
+    columns: 3,
+    anchorIds: ["final-core", "inner-fortified-platform"],
+    labelCoordinates: [117.876, 34.29],
+    coordinates: [
+      [117.856, 34.302],
+      [117.894, 34.298],
+      [117.902, 34.274],
+      [117.858, 34.27]
+    ]
   }
 ];
 

@@ -31,9 +31,11 @@ type FocusTransitionState = {
   transitionProgress: number;
 };
 
-type GeoLine = {
+export type GeoLine = {
   className?: string;
+  height?: number;
   id: string;
+  kind?: "defense" | "fieldwork" | "fortification" | "trench";
   label: string;
   points: Array<[number, number]>;
   revealAt?: string;
@@ -50,6 +52,7 @@ export type TacticalMapReference = {
 };
 
 export type TacticalTerrainFeature = {
+  anchorIds?: string[];
   className?: string;
   height?: number;
   id: string;
@@ -406,6 +409,42 @@ function buildTerrainFeaturePath(points: Array<[number, number]>, closePath: boo
 
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(" ");
   return closePath ? `${path} Z` : path;
+}
+
+function buildTerrainSkirtPath(points: Array<[number, number]>, offset: [number, number]) {
+  if (points.length < 2) {
+    return "";
+  }
+
+  const [dx, dy] = offset;
+  const basePoints = points[0][0] === points.at(-1)?.[0] && points[0][1] === points.at(-1)?.[1] ? points.slice(0, -1) : points;
+  return basePoints
+    .map((point, index) => {
+      const nextPoint = basePoints[(index + 1) % basePoints.length];
+      const segment = [
+        point,
+        nextPoint,
+        [nextPoint[0] + dx, nextPoint[1] + dy] as [number, number],
+        [point[0] + dx, point[1] + dy] as [number, number]
+      ];
+      return `${segment.map((segmentPoint, segmentIndex) => `${segmentIndex === 0 ? "M" : "L"} ${segmentPoint[0].toFixed(1)} ${segmentPoint[1].toFixed(1)}`).join(" ")} Z`;
+    })
+    .join(" ");
+}
+
+function offsetPoints(points: Array<[number, number]>, offset: [number, number]) {
+  return points.map(([x, y]) => [x + offset[0], y + offset[1]] as [number, number]);
+}
+
+function lineAnchorIds(line: FrontLine) {
+  return [line.positionAnchor, ...(line.positionAnchors ?? []), line.from, line.to].filter((anchor): anchor is string => Boolean(anchor));
+}
+
+function lineIsVisibleAt(line: FrontLine, progress: number, timeline: ReturnType<typeof createCampaignTimeline>) {
+  const visibleFrom = line.visibleFrom ? timeline.dateToProgress(line.visibleFrom) : timeline.dateToProgress(line.start);
+  const visibleUntil = line.visibleUntil ? timeline.dateToProgress(line.visibleUntil) : Number.POSITIVE_INFINITY;
+  const unitVisibleUntil = line.unitVisibleUntil ? timeline.dateToProgress(line.unitVisibleUntil) : Number.NEGATIVE_INFINITY;
+  return progress >= visibleFrom && progress <= Math.max(visibleUntil, unitVisibleUntil);
 }
 
 function frontStrokeWidth(faction: string) {
@@ -1042,6 +1081,17 @@ export function CampaignMapAnimation({
     () => new Map(mapPoints.map((point) => [point.id, projectPoint(projection, point.coordinates)] as const)),
     [mapPoints, projection]
   );
+  const activeRouteAnchorIds = useMemo(() => {
+    const activeAnchors = new Set<string>();
+    frontLines.forEach((line) => {
+      if (!lineIsVisibleAt(line, progress, timeline)) {
+        return;
+      }
+
+      lineAnchorIds(line).forEach((anchor) => activeAnchors.add(anchor));
+    });
+    return activeAnchors;
+  }, [frontLines, progress, timeline]);
 
   const projectedBattleEvents = useMemo(
     () =>
@@ -1520,21 +1570,32 @@ export function CampaignMapAnimation({
                       : featurePoints[Math.max(0, Math.floor(featurePoints.length / 2))] ?? [0, 0];
                     const featureHeight = feature.height ?? (feature.type === "area" ? 32 : 10);
                     const featurePath = buildTerrainFeaturePath(featurePoints, feature.type === "area");
-                    const shadowOffset = `translate(${(featureHeight * 0.78).toFixed(1)} ${(featureHeight * 1.08).toFixed(1)})`;
-                    const highlightOffset = `translate(${(-featureHeight * 0.18).toFixed(1)} ${(-featureHeight * 0.26).toFixed(1)})`;
+                    const lowerOffset: [number, number] = [featureHeight * 0.7, featureHeight * 1.02];
+                    const middleOffset: [number, number] = [featureHeight * 0.36, featureHeight * 0.54];
+                    const highlightOffset = `translate(${(-featureHeight * 0.16).toFixed(1)} ${(-featureHeight * 0.22).toFixed(1)})`;
+                    const anchorIds = [feature.id, ...(feature.anchorIds ?? [])];
+                    const isRouteAnchor = anchorIds.some((anchor) => activeRouteAnchorIds.has(anchor));
 
                     return (
                       <g
                         key={feature.id}
-                        className={`tactical-terrain-feature tactical-terrain-${feature.kind} ${feature.className ?? ""}`}
+                        className={`tactical-terrain-feature tactical-terrain-${feature.kind} ${isRouteAnchor ? "is-route-anchor" : ""} ${feature.className ?? ""}`}
+                        data-route-anchor={isRouteAnchor ? "true" : "false"}
+                        data-terrain-id={feature.id}
                         data-terrain-height={featureHeight.toFixed(1)}
                         data-terrain-kind={feature.kind}
                         data-scene-transition-phase={featureVisibility.phase}
                         data-testid={feature.testId ?? `tactical-terrain-${feature.id}`}
                         style={opacityStyle(featureVisibility.opacity)}
                       >
-                        <path className="tactical-terrain-shadow" d={featurePath} transform={shadowOffset} />
-                        {feature.type === "area" && <path className="tactical-terrain-wall" d={featurePath} transform={shadowOffset} />}
+                        <path className="tactical-terrain-shadow" d={featurePath} transform={`translate(${lowerOffset[0].toFixed(1)} ${lowerOffset[1].toFixed(1)})`} />
+                        {feature.type === "area" && (
+                          <>
+                            <path className="tactical-terrain-skirt" d={buildTerrainSkirtPath(featurePoints, lowerOffset)} />
+                            <path className="tactical-terrain-wall" d={buildTerrainFeaturePath(offsetPoints(featurePoints, middleOffset), true)} />
+                            <path className="tactical-terrain-contour-step" d={buildTerrainFeaturePath(offsetPoints(featurePoints, [middleOffset[0] * 0.45, middleOffset[1] * 0.45]), true)} />
+                          </>
+                        )}
                         <path className="tactical-terrain-highlight" d={featurePath} transform={highlightOffset} />
                         <path className="tactical-terrain-surface" d={featurePath} />
                         {feature.label && (
@@ -1567,15 +1628,27 @@ export function CampaignMapAnimation({
 
                     const labelPoint = line.points[Math.max(0, Math.floor(line.points.length / 3))] ?? line.points[0];
                     const [x, y] = projectPoint(projection, labelPoint);
+                    const lineHeight = line.height ?? (line.kind === "trench" ? 10 : 24);
+                    const routeAnchored = activeRouteAnchorIds.has(line.id);
+                    const raisedOffset = [lineHeight * 0.48, lineHeight * 0.72] as [number, number];
+                    const points = line.points.map((point) => projectPoint(projection, point));
+                    const raisedPoints = offsetPoints(points, [-lineHeight * 0.16, -lineHeight * 0.28]);
+                    const loweredPoints = offsetPoints(points, raisedOffset);
                     return (
                       <g
                         key={line.id}
-                        className={`fortified-line fortified-line-${line.id} ${line.className ?? ""}`}
+                        className={`fortified-line fortified-line-${line.id} fortified-line-${line.kind ?? "fieldwork"} ${routeAnchored ? "is-route-anchor" : ""} ${line.className ?? ""}`}
+                        data-fortified-id={line.id}
+                        data-route-anchor={routeAnchored ? "true" : "false"}
                         data-scene-transition-phase={lineVisibility.phase}
+                        data-fortified-kind={line.kind ?? "fieldwork"}
+                        data-fortified-height={lineHeight.toFixed(1)}
                         data-testid={line.testId ?? `fortified-line-${line.id}`}
                         style={opacityStyle(lineVisibility.opacity)}
                       >
-                        <polyline points={projectLine(line.points)} />
+                        <polyline className="fortified-line-shadow" points={loweredPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-body" points={points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-crest" points={raisedPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
                         <text x={x} y={y - 10}>
                           {line.label}
                         </text>
@@ -1771,6 +1844,7 @@ export function CampaignMapAnimation({
                     data-route-point-count={projectedRoutePoints.length}
                     data-route-state={routeState}
                     data-route-end={line.end}
+                    data-position-anchor={line.positionAnchor ?? ""}
                     data-route-start={line.start}
                     data-route-to={line.to}
                     data-scene-transition-opacity={routeVisibility.opacity.toFixed(3)}

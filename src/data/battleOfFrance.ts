@@ -32,6 +32,10 @@ export type FrontLine = {
   unitBadgeLabel?: string;
   unitGroupId?: string;
   unitIcon?: UnitIconKind;
+  /** Visible terrain, fieldwork, or position id that the route is tactically using. */
+  positionAnchor?: string;
+  /** Additional visible terrain, fieldwork, or position ids that should light up with the route. */
+  positionAnchors?: string[];
   /** Extra route points before `from`, used only to keep multi-unit formations continuous through route handoffs. */
   formationPrelude?: Array<[number, number]>;
   waypoints?: Array<[number, number]>;
