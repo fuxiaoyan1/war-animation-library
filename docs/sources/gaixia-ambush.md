@@ -14,8 +14,9 @@
 - 美国陆军 terrain-analysis/OCOKA 口径：用于把地形层从“好看背景”提升为军事教学图层，重点标出 observation/fields of fire、cover and concealment、obstacles、key terrain、avenues of approach 对应的高地、河汊障碍、东口通道和杀伤区：<https://www.lineofdeparture.army.mil/Journals/Gray-Space/Archive/Summer-2025/Terrain-Analysis/>。
 - NATO/APP-6、MIL-STD-2525 一类战术图形口径只作为视觉语法参照：用 K/AA/EA/BL 等短标签表达关键地形、接近路、杀伤区、封锁线，不把古代军队硬套现代编制符号，也不宣称采用正式军标全套规范。
 - 地形可视化参考采用 shaded-relief/hillshade 的一般制图原则：高地要有受光面、背光侧壁、投影和等高线共同提示，路线与单位要贴在高程面上，而不是只把图标做成立体。
-- Three.js 官方地形示例 `webgl_geometry_terrain`：用于确认本轮应采用 WebGL 场景、透视相机和地形网格，而不是继续在 SVG 上叠阴影：<https://threejs.org/examples/webgl_geometry_terrain.html>。
-- Three.js 官方文档：用于本轮实现口径，重点参考 `WebGLRenderer`、`PerspectiveCamera`、`PlaneGeometry`、`BufferGeometry`、`MeshStandardMaterial`、`CanvasTexture`、`AmbientLight` 和 `DirectionalLight`：<https://threejs.org/docs/>。
+- MapLibre GL JS 官方 3D terrain 示例：用于本轮真实地形底层，采用 `raster-dem` source、`setTerrain` 和斜视相机，不再手写高度场：<https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/>。
+- AWS Terrain Tiles Terrarium DEM：用于垓下区域真实高程瓦片，测试样例瓦片元数据来自 `srtm/N34E117.tif` 和 `gmted/30N090E_20101117_gmted_mea075.tif`；前端以 `encoding: "terrarium"` 读取，terrain exaggeration 固定为 `1`。本轮为可复现回放缓存了 z10、x844-847、y410-412 到 `public/assets/maps/gaixia-real-terrain/terrarium/10/`：<https://registry.opendata.aws/terrain-tiles/>。
+- Esri World Imagery：用于真实遥感底图，前端使用本地缓存的 z10、x844-847、y410-412 瓦片，目录为 `public/assets/maps/gaixia-real-terrain/imagery/10/`，避免测试/演示依赖在线瓦片；公开发布前需复核署名、服务条款和再分发边界：<https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer>。
 
 ## 建模取舍
 
@@ -33,7 +34,7 @@
 - 2026-05-30 六次三维化修正加入地表材质层：西侧河岸草地、北岸岗坡草地、中央干燥沙地、南侧河汊低湿地、东口追击通道和霸王城踏实营地都作为 `gaixia-ground-material` 多边形投到同一沙盘坐标；河道改为河岸、水体、高光三层。这个层级参考战术教学视频里的“地形底图+兵群点阵”可读性，但仍保留本项目的地形高差和工事/阵型语法。
 - 2026-05-30 七次降噪修正取消大面积半透明块：地表材质改为不透明纹理分区，历史区域只保留线框，地形抬升顶面不再铺半透明色，杀伤区/通道等战术图形只用线与虚线。高差只靠侧壁、边棱、坡面线和投影表达，避免多层透明面叠成脏色。
 - 2026-05-30 八次纠偏放弃硬纸板式等距沙盘：垓下底图切换为 `topographic-relief` 连续地表，取消整张地图倾斜、压缩和台面侧壁；高差只保留几像素的地形浮雕线，避免河道、营寨和兵群被巨大的棕色立面切碎。后续视觉目标以参考视频那种“连续地形底图 + 清楚兵群点阵 + 轻微立体阴影”为准，而不是大块几何沙盘。
-- 2026-05-31 九次三维化纠偏改用真正 WebGL 地形层：新增 `GaixiaTerrain3D`，以 Three.js `WebGLRenderer` 渲染独立 canvas，用 `PerspectiveCamera`、`PlaneGeometry(156x320)`、顶点高度场、`CanvasTexture`、`MeshStandardMaterial`、环境光与方向光生成连续地形。河道、霸王城营垒、土垒、壕沟和营门以 3D mesh 贴在高度场上；原 SVG 地形材质面隐藏为数据/测试参考，只保留等高线、标签、战术图形、阵型、路线和作战单位作为上层军图符号。这个版本明确不再用半透明块、SVG 侧壁或纸板沙盘冒充 3D。
+- 2026-05-31 九次三维化纠偏切换为真实 GIS 地形链路：`GaixiaTerrain3D` 改用 MapLibre GL JS，加载本地缓存的 Esri World Imagery 影像底图和 AWS Terrain Tiles Terrarium DEM，`setTerrain({ source: "gaixia-real-dem", exaggeration: 1 })`，保留真实高程比例。垓下位于淮北平原，真实起伏小，因此本轮不再为了立体感人工拔高高地，也不再用 Three.js 手写高度场、SVG 半透明块、SVG 侧壁或纸板沙盘冒充真实地形。瓦片源固定为 z10 缓存层，MapLibre 可 overzoom 显示，但不得回退到在线瓦片。
 - 早期曾使用 Mapzen/Amazon `elevation-tiles-prod` Terrarium DEM 高程瓦片生成本地 hillshade；2026-05-27 后改为纯矢量地形层，避免底图噪声抢走注意力。淮北平原真实起伏较小，动画中的岗脊、缓坡、洼地和通道用于战术表达，不宣称为精确等高线图。
 - 趋势线做成立体感：每条作战线带下投影、高光线和细虚线，表现伏击线从地形上收束。
 - 作战单位不只图标立体：每条路线和单位会暴露 `data-ground-elevation`，路线阴影向地形背光侧偏移，单位有贴地投影和锚杆，表达“沿地形运动”，不是新场景里重新冒出。

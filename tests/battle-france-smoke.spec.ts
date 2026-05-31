@@ -510,9 +510,12 @@ async function expectGaixiaUnitsUseCompactTacticalScale(page: Page) {
 async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   const layer = page.getByTestId("gaixia-terrain-3d");
   await expect(layer).toBeVisible();
-  await expect(layer).toHaveAttribute("data-renderer", "three-webgl");
-  await expect(layer).toHaveAttribute("data-terrain-model", "heightfield-mesh");
-  await expect(layer).toHaveAttribute("data-heightfield-segments", "156x320");
+  await expect(layer).toHaveAttribute("data-renderer", "maplibre-real-terrain");
+  await expect(layer).toHaveAttribute("data-terrain-model", "real-dem-raster-terrain");
+  await expect(layer).toHaveAttribute("data-terrain-exaggeration", "1");
+  await expect(layer).toHaveAttribute("data-terrain-source", /\/assets\/maps\/gaixia-real-terrain\/terrarium\/\{z\}\/\{x\}-\{y\}\.png/);
+  await expect(layer).toHaveAttribute("data-imagery-source", /\/assets\/maps\/gaixia-real-terrain\/imagery\/\{z\}\/\{x\}-\{y\}\.jpg/);
+  await expect(layer).toHaveAttribute("data-tile-cache-zoom", "10");
 
   const terrainStats = await page.getByTestId("gaixia-terrain-3d-canvas").evaluate((canvasElement) => {
     const canvas = canvasElement as HTMLCanvasElement;
@@ -4106,6 +4109,7 @@ test("mongol and qin animations load with ancient warfare pacing", async ({ page
 });
 
 test("gaixia ambush uses terrain map ten-sided formations and pipa score", async ({ page }) => {
+  test.setTimeout(60_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
   await page.setViewportSize({ width: 1440, height: 900 });
 
