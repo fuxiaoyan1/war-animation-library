@@ -512,10 +512,21 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   await expect(layer).toBeVisible();
   await expect(layer).toHaveAttribute("data-renderer", "maplibre-real-terrain");
   await expect(layer).toHaveAttribute("data-terrain-model", "real-dem-raster-terrain");
+  await expect(layer).toHaveAttribute("data-tactical-renderer", "maplibre-geographic-overlay");
   await expect(layer).toHaveAttribute("data-terrain-exaggeration", "1");
   await expect(layer).toHaveAttribute("data-terrain-source", /\/assets\/maps\/gaixia-real-terrain\/terrarium\/\{z\}\/\{x\}-\{y\}\.png/);
   await expect(layer).toHaveAttribute("data-imagery-source", /\/assets\/maps\/gaixia-real-terrain\/imagery\/\{z\}\/\{x\}-\{y\}\.jpg/);
-  await expect(layer).toHaveAttribute("data-tile-cache-zoom", "10");
+  await expect(layer).toHaveAttribute("data-tile-cache-zoom", "14");
+
+  for (const tilePath of [
+    "/assets/maps/gaixia-real-terrain/imagery/14/13536-6580.jpg",
+    "/assets/maps/gaixia-real-terrain/terrarium/14/13536-6580.png"
+  ]) {
+    const response = await page.request.head(tilePath);
+    expect(response.ok(), `${tilePath} should be available from the high-resolution local map cache`).toBe(true);
+    expect(response.headers()["content-type"]).toContain("image");
+    expect(Number(response.headers()["content-length"])).toBeGreaterThan(5_000);
+  }
 
   const terrainStats = await page.getByTestId("gaixia-terrain-3d-canvas").evaluate((canvasElement) => {
     const canvas = canvasElement as HTMLCanvasElement;
@@ -550,6 +561,16 @@ async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
   expect(centerX).toBeLessThan((mapBox?.x ?? 0) + (mapBox?.width ?? 0) * 0.88);
   expect(centerY).toBeGreaterThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.16);
   expect(centerY).toBeLessThan((mapBox?.y ?? 0) + (mapBox?.height ?? 0) * 0.88);
+}
+
+async function expectGaixiaUsesSingleMapLibreTacticalMap(page: Page) {
+  await expect(page.getByTestId("gaixia-maplibre-tactical-overlay")).toBeVisible();
+  await expect(page.getByTestId("gaixia-maplibre-tactical-overlay")).toHaveAttribute("data-projection", "maplibre-real-terrain");
+  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "maplibre-control-only");
+  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveCount(0);
+  await expect(page.getByTestId("gaixia-svg-terrain-reference")).toHaveCount(0);
+  await expect(page.locator(".gaixia-sandbox-top")).toHaveCount(0);
+  await expect(page.locator(".gaixia-sandbox-grid-line")).toHaveCount(0);
 }
 
 async function expectGaixiaCompletedRoutesRemainColored(page: Page) {
@@ -4127,23 +4148,12 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectScoreUsesMusic(page, "/audio/shi-mian-mai-fu-pipa.mp3");
 
   await expectGaixiaWebglTerrainIsRendered(page);
+  await expectGaixiaUsesSingleMapLibreTacticalMap(page);
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
-  await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
-  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "webgl-reference-grid");
-  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "webgl-perspective-overlay");
-  await expect(page.locator(".gaixia-sandbox-top")).toHaveCount(1);
   await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(0);
-  await expect.poll(async () => page.locator(".gaixia-sandbox-grid-line").count()).toBeGreaterThanOrEqual(18);
-  await expect(page.getByTestId("gaixia-ground-material-layer")).toBeVisible();
-  await expect(page.locator(".gaixia-ground-material")).toHaveCount(6);
-  await expect(page.locator(".gaixia-ground-material-grass")).toHaveCount(2);
-  await expect(page.locator(".gaixia-ground-material-camp")).toHaveCount(1);
-  await expect.poll(async () =>
-    page.locator(".gaixia-ground-material").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).opacity === "0"))
-  ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-terrain-layer")).toBeVisible();
-  await expect(page.getByTestId("gaixia-relief-terrain-layer")).toHaveAttribute("data-render-mode", "line-reference");
+  await expect(page.getByTestId("gaixia-relief-terrain-layer")).toHaveAttribute("data-render-mode", "maplibre-geographic-reference");
   await expect(page.locator(".gaixia-relief-surface")).toHaveCount(7);
   await expect(page.locator(".gaixia-relief-wall")).toHaveCount(0);
   await expect(page.locator(".gaixia-relief-back-wall")).toHaveCount(0);

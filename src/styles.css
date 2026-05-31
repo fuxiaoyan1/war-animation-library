@@ -3309,6 +3309,10 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-map {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: auto;
   background: #c6b887;
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
@@ -3319,6 +3323,9 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-terrain-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -3328,6 +3335,16 @@ body:has(.gaixia-ambush) {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.gaixia-maplibre-tactical-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .gaixia-ambush .map-legend {
