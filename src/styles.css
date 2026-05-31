@@ -3185,10 +3185,6 @@ h1 {
 }
 
 .gaixia-ambush .map-stage {
-  border-color: rgba(92, 83, 58, 0.38);
-  background:
-    linear-gradient(135deg, rgba(232, 213, 162, 0.16), rgba(80, 93, 70, 0.08)),
-    #cfc39f;
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
   border-radius: 18px;
@@ -3226,31 +3222,7 @@ h1 {
 }
 
 .gaixia-ambush {
-  color: #2f2b21;
-  --ink: #2f2b21;
-  --muted: #5d5747;
-  --paper: rgba(255, 250, 232, 0.46);
-  --paper-strong: rgba(255, 250, 232, 0.66);
-  --line: rgba(92, 83, 58, 0.28);
   --shadow: 0 18px 54px rgba(80, 64, 33, 0.18);
-}
-
-body:has(.gaixia-ambush) {
-  background:
-    linear-gradient(135deg, rgba(85, 105, 82, 0.16), transparent 42%),
-    linear-gradient(180deg, #d4c8a2 0%, #b8ad8b 100%);
-}
-
-.gaixia-ambush .control-deck,
-.gaixia-ambush .story-card,
-.gaixia-ambush .timeline-list {
-  border-color: rgba(92, 83, 58, 0.3);
-  background:
-    linear-gradient(135deg, rgba(255, 252, 236, 0.78), rgba(228, 216, 177, 0.52)),
-    rgba(210, 196, 157, 0.7);
-  color: #2f2b21;
-  box-shadow: 0 16px 42px rgba(76, 61, 33, 0.18);
-  backdrop-filter: none;
 }
 
 .gaixia-ambush .map-overlay > div,
@@ -3313,7 +3285,7 @@ body:has(.gaixia-ambush) {
   inset: 0;
   z-index: 4;
   pointer-events: auto;
-  background: #c6b887;
+  background: transparent;
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
 }

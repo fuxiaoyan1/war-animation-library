@@ -577,6 +577,38 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   expect(mapRuntime.canvasHeight).toBeGreaterThanOrEqual(mapRuntime.clientHeight * 1.95);
 }
 
+async function expectGaixiaMapControlsDoNotCoverRealTerrain(page: Page) {
+  const visualState = await page.evaluate(() => {
+    const controlSvg = document.querySelector<SVGSVGElement>(".gaixia-map");
+    const terrain = document.querySelector<HTMLElement>('[data-testid="gaixia-terrain-3d"]');
+    const overlay = document.querySelector<SVGSVGElement>('[data-testid="gaixia-maplibre-tactical-overlay"]');
+    const controlDeck = document.querySelector<HTMLElement>('[data-testid="control-deck"]');
+    const timelineList = document.querySelector<HTMLElement>(".timeline-list");
+    const bodyStyle = getComputedStyle(document.body);
+    const controlStyle = controlSvg ? getComputedStyle(controlSvg) : null;
+    const terrainStyle = terrain ? getComputedStyle(terrain) : null;
+    const overlayStyle = overlay ? getComputedStyle(overlay) : null;
+    const deckStyle = controlDeck ? getComputedStyle(controlDeck) : null;
+    const timelineStyle = timelineList ? getComputedStyle(timelineList) : null;
+    return {
+      bodyBackground: bodyStyle.backgroundImage,
+      controlBackground: controlStyle?.backgroundColor ?? "",
+      controlDeckBackground: deckStyle?.backgroundColor ?? "",
+      controlZIndex: Number(controlStyle?.zIndex ?? 0),
+      overlayZIndex: Number(overlayStyle?.zIndex ?? 0),
+      terrainZIndex: Number(terrainStyle?.zIndex ?? 0),
+      timelineBackground: timelineStyle?.backgroundColor ?? ""
+    };
+  });
+
+  expect(visualState.controlBackground).toBe("rgba(0, 0, 0, 0)");
+  expect(visualState.terrainZIndex).toBeLessThan(visualState.overlayZIndex);
+  expect(visualState.overlayZIndex).toBeLessThan(visualState.controlZIndex);
+  expect(visualState.bodyBackground).toContain("rgb(18, 25, 24)");
+  expect(visualState.controlDeckBackground).toContain("rgba(11, 18, 18, 0.72)");
+  expect(visualState.timelineBackground).toContain("rgba(11, 18, 18, 0.72)");
+}
+
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const pointBox = await page.getByTestId(`gaixia-point-${pointId}`).boundingBox();
@@ -4177,6 +4209,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
 
   await expectGaixiaWebglTerrainIsRendered(page);
   await expectGaixiaUsesSingleMapLibreTacticalMap(page);
+  await expectGaixiaMapControlsDoNotCoverRealTerrain(page);
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(0);
