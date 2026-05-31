@@ -507,6 +507,34 @@ async function expectGaixiaUnitsUseCompactTacticalScale(page: Page) {
   expect(scale).toBeLessThanOrEqual(0.6);
 }
 
+async function expectGaixiaWebglTerrainIsRendered(page: Page) {
+  const layer = page.getByTestId("gaixia-terrain-3d");
+  await expect(layer).toBeVisible();
+  await expect(layer).toHaveAttribute("data-renderer", "three-webgl");
+  await expect(layer).toHaveAttribute("data-terrain-model", "heightfield-mesh");
+  await expect(layer).toHaveAttribute("data-heightfield-segments", "156x320");
+
+  const terrainStats = await page.getByTestId("gaixia-terrain-3d-canvas").evaluate((canvasElement) => {
+    const canvas = canvasElement as HTMLCanvasElement;
+    if (canvas.width === 0 || canvas.height === 0) {
+      return null;
+    }
+
+    return {
+      height: canvas.height,
+      urlPrefix: canvas.toDataURL("image/png").slice(0, 30),
+      width: canvas.width,
+      webglContext: canvas.getContext("webgl2") ? "webgl2" : canvas.getContext("webgl") ? "webgl" : "none"
+    };
+  });
+
+  expect(terrainStats).not.toBeNull();
+  expect(terrainStats?.width).toBeGreaterThan(400);
+  expect(terrainStats?.height).toBeGreaterThan(500);
+  expect(terrainStats?.webglContext).toMatch(/webgl/);
+  expect(terrainStats?.urlPrefix).toBe("data:image/png;base64,iVBORw0K");
+}
+
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
   const mapBox = await page.getByTestId("map-stage").boundingBox();
   const pointBox = await page.getByTestId(`gaixia-point-${pointId}`).boundingBox();
@@ -4094,11 +4122,12 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectMapZoomButtonsWork(page);
   await expectScoreUsesMusic(page, "/audio/shi-mian-mai-fu-pipa.mp3");
 
+  await expectGaixiaWebglTerrainIsRendered(page);
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.getByTestId("gaixia-tactical-ground")).toBeVisible();
-  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "topographic-relief");
-  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "topographic-relief");
+  await expect(page.getByTestId("gaixia-tactical-ground")).toHaveAttribute("data-projection", "webgl-reference-grid");
+  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "webgl-perspective-overlay");
   await expect(page.locator(".gaixia-sandbox-top")).toHaveCount(1);
   await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(0);
   await expect.poll(async () => page.locator(".gaixia-sandbox-grid-line").count()).toBeGreaterThanOrEqual(18);
@@ -4107,22 +4136,20 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.locator(".gaixia-ground-material-grass")).toHaveCount(2);
   await expect(page.locator(".gaixia-ground-material-camp")).toHaveCount(1);
   await expect.poll(async () =>
-    page.locator(".gaixia-ground-material").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).opacity === "1"))
+    page.locator(".gaixia-ground-material").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).opacity === "0"))
   ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-terrain-layer")).toBeVisible();
+  await expect(page.getByTestId("gaixia-relief-terrain-layer")).toHaveAttribute("data-render-mode", "line-reference");
   await expect(page.locator(".gaixia-relief-surface")).toHaveCount(7);
-  await expect(page.locator(".gaixia-relief-wall")).toHaveCount(7);
-  await expect(page.locator(".gaixia-relief-back-wall")).toHaveCount(7);
-  await expect(page.locator(".gaixia-relief-underside")).toHaveCount(7);
-  await expect(page.locator(".gaixia-relief-shade")).toHaveCount(7);
-  await expect(page.locator(".gaixia-relief-shadow")).toHaveCount(7);
-  await expect.poll(async () => page.locator(".gaixia-relief-edge-face").count()).toBeGreaterThanOrEqual(40);
+  await expect(page.locator(".gaixia-relief-wall")).toHaveCount(0);
+  await expect(page.locator(".gaixia-relief-back-wall")).toHaveCount(0);
+  await expect(page.locator(".gaixia-relief-underside")).toHaveCount(0);
+  await expect(page.locator(".gaixia-relief-shade")).toHaveCount(0);
+  await expect(page.locator(".gaixia-relief-shadow")).toHaveCount(0);
+  await expect(page.locator(".gaixia-relief-edge-face")).toHaveCount(0);
   await expect(page.locator(".gaixia-relief-layer")).toHaveCSS("filter", "none");
   await expect.poll(async () =>
     page.locator(".gaixia-relief-top").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
-  ).toBe(true);
-  await expect.poll(async () =>
-    page.locator(".gaixia-relief-edge-face").evaluateAll((nodes) => nodes.every((node) => getComputedStyle(node).fill === "none"))
   ).toBe(true);
   await expect(page.getByTestId("gaixia-relief-gaixia-east-ridge")).toHaveAttribute("data-elevation", "42");
   await expect(page.getByTestId("gaixia-relief-east-breakout-corridor")).toContainText("东口诱隙通道");

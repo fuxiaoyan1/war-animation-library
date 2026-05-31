@@ -3309,9 +3309,25 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-map {
-  background: #d9c99d;
+  background: #c6b887;
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
+}
+
+.gaixia-terrain-3d-foreign-object {
+  pointer-events: none;
+}
+
+.gaixia-terrain-3d {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gaixia-terrain-3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .gaixia-ambush .map-legend {
@@ -3335,7 +3351,7 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-grid {
-  fill: rgba(222, 207, 159, 0.18);
+  fill: rgba(222, 207, 159, 0.03);
   background: transparent;
 }
 
@@ -3344,7 +3360,7 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-sandbox-top {
-  fill: url("#gaixiaSandTexture");
+  fill: none;
   stroke: none;
   stroke-linejoin: round;
   stroke-width: 2.2;
@@ -3372,7 +3388,7 @@ body:has(.gaixia-ambush) {
 
 .gaixia-sandbox-grid-line {
   fill: none;
-  stroke: rgba(125, 105, 68, 0.1);
+  stroke: rgba(91, 74, 45, 0.08);
   stroke-dasharray: 10 12;
   stroke-linecap: round;
   stroke-width: 0.8;
@@ -3392,6 +3408,7 @@ body:has(.gaixia-ambush) {
 }
 
 .gaixia-ground-material {
+  opacity: 0;
   stroke-linejoin: round;
   stroke-width: 0;
   vector-effect: non-scaling-stroke;

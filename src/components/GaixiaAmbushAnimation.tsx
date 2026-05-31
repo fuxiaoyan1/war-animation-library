@@ -32,6 +32,7 @@ import { publicPath } from "../lib/publicPath";
 import { formatChineseDate } from "../lib/timeline";
 import { useMapInteraction, type MapView } from "../lib/useMapInteraction";
 import { WarScore } from "../lib/warScore";
+import { GaixiaTerrain3D } from "./GaixiaTerrain3D";
 
 const mapWidth = 1180;
 const projectionHeight = 1408;
@@ -287,27 +288,6 @@ function routeFacing(points: Array<[number, number]>, progress: number) {
   const previous = interpolateRoute(points, Math.max(0, progress - 0.025));
   const next = interpolateRoute(points, Math.min(1, progress + 0.025));
   return next[0] - previous[0] < -0.01 ? -1 : 1;
-}
-
-function reliefSideWallPath(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
-  const startIndex = Math.max(1, Math.floor(basePoints.length * 0.46));
-  const baseEdge = basePoints.slice(startIndex);
-  const raisedEdge = raisedPoints.slice(startIndex).reverse();
-  return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
-}
-
-function reliefBackWallPath(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
-  const endIndex = Math.max(2, Math.floor(basePoints.length * 0.5));
-  const baseEdge = basePoints.slice(0, endIndex);
-  const raisedEdge = raisedPoints.slice(0, endIndex).reverse();
-  return `${buildPath([...baseEdge, ...raisedEdge])} Z`;
-}
-
-function reliefEdgeWallPaths(basePoints: Array<[number, number]>, raisedPoints: Array<[number, number]>) {
-  return basePoints.map((point, index) => {
-    const nextIndex = (index + 1) % basePoints.length;
-    return `${buildPath([point, basePoints[nextIndex], raisedPoints[nextIndex], raisedPoints[index]])} Z`;
-  });
 }
 
 function reliefElevationAtPoint(point: [number, number]) {
@@ -652,7 +632,7 @@ function SandboxDeck() {
   });
 
   return (
-    <g className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" data-projection="topographic-relief">
+    <g className="gaixia-tactical-ground" data-testid="gaixia-tactical-ground" data-projection="webgl-reference-grid">
       <path className="gaixia-sandbox-top" d={`${buildPath(top)} Z`} />
       <g className="gaixia-sandbox-grid" aria-hidden="true">
         {[...xGridLines, ...yGridLines].map((line, index) => (
@@ -683,9 +663,7 @@ function TerrainMaterialLayer({ projection }: { projection: ReturnType<typeof cr
 }
 
 function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof createCampaignProjection>; surface: GaixiaReliefSurface }) {
-  const basePoints = projectLineAtElevation(projection, surface.points, surface.baseElevation);
   const raisedPoints = projectLineAtElevation(projection, surface.points, surface.elevation);
-  const edgeWallPaths = reliefEdgeWallPaths(basePoints, raisedPoints);
   const labelPoint = projectTacticalPoint(projection, surface.labelCoordinates, surface.elevation + 2);
   const ridgeLines = [0.16, 0.32, 0.5, 0.68, 0.84].map((ratio) =>
     raisedPoints.map(([x, y], index) => {
@@ -700,16 +678,7 @@ function ReliefSurface({ projection, surface }: { projection: ReturnType<typeof 
       data-base-elevation={surface.baseElevation}
       data-testid={`gaixia-relief-${surface.id}`}
     >
-      <path className="gaixia-relief-drop" d={`${buildPath(basePoints)} Z`} />
-      <path className="gaixia-relief-shadow" d={`${buildPath(basePoints)} Z`} />
-      {edgeWallPaths.map((wallPath, index) => (
-        <path key={`${surface.id}-edge-${index}`} className={`gaixia-relief-edge-face gaixia-relief-edge-face-${index % 2 === 0 ? "lit" : "shade"}`} d={wallPath} />
-      ))}
-      <path className="gaixia-relief-back-wall" d={reliefBackWallPath(basePoints, raisedPoints)} />
-      <path className="gaixia-relief-wall" d={reliefSideWallPath(basePoints, raisedPoints)} />
-      <path className="gaixia-relief-underside" d={`${buildPath(basePoints)} Z`} />
       <path className="gaixia-relief-top" d={`${buildPath(raisedPoints)} Z`} />
-      <path className="gaixia-relief-shade" d={`${buildPath(raisedPoints)} Z`} />
       {ridgeLines.map((line, index) => (
         <path key={`${surface.id}-facet-${index}`} className="gaixia-relief-facet" d={buildPath(line)} />
       ))}
@@ -1165,6 +1134,9 @@ export function GaixiaAmbushAnimation() {
             aria-label="韩信十面埋伏垓下之战地形态势图"
             {...mapInteractionProps}
           >
+            <foreignObject className="gaixia-terrain-3d-foreign-object" x="0" y="0" width={mapWidth} height={mapHeight}>
+              <GaixiaTerrain3D width={mapWidth} height={mapHeight} mapTransform={mapTransform} />
+            </foreignObject>
             <defs>
               <pattern id="gaixiaSandTexture" patternUnits="userSpaceOnUse" width="86" height="86">
                 <rect width="86" height="86" fill="#dfc895" />
@@ -1211,11 +1183,13 @@ export function GaixiaAmbushAnimation() {
             </defs>
 
             <rect className="gaixia-grid" width={mapWidth} height={mapHeight} />
-            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" data-projection="topographic-relief" transform={mapTransform}>
-              <SandboxDeck />
+            <g className="camera-layer gaixia-camera-layer" data-testid="camera-layer" data-projection="webgl-perspective-overlay" transform={mapTransform}>
+              <g className="gaixia-svg-terrain-reference" data-testid="gaixia-svg-terrain-reference">
+                <SandboxDeck />
+              </g>
               <g className="gaixia-terrain-base" data-testid="gaixia-terrain-layer">
                 <TerrainMaterialLayer projection={projection} />
-                <g className="gaixia-relief-layer" data-testid="gaixia-relief-terrain-layer">
+                <g className="gaixia-relief-layer" data-testid="gaixia-relief-terrain-layer" data-render-mode="line-reference">
                   {terrainReliefSurfaces.map((surface) => (
                     <ReliefSurface key={surface.id} projection={projection} surface={surface} />
                   ))}
