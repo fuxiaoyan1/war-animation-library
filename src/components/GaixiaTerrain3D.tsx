@@ -21,6 +21,7 @@ import {
   type GaixiaTacticalGraphic,
   type GaixiaUnitKind
 } from "../data/gaixiaAmbush";
+import type { MapView } from "../lib/useMapInteraction";
 import { publicPath } from "../lib/publicPath";
 
 const gaixiaTerrainCanvasTestId = "gaixia-terrain-3d-canvas";
@@ -56,7 +57,8 @@ type GaixiaTerrain3DProps = {
   focusCoordinates: TacticalPoint;
   focusRoutePoints: TacticalPoint[];
   height: number;
-  mapTransform: string;
+  mapBaseView: MapView;
+  mapView: MapView;
   progress: number;
   projectedRoutes: GaixiaTerrainRouteState[];
   width: number;
@@ -100,27 +102,124 @@ const terrainExaggeration = 1;
 const hillshadeExaggeration = 0.08;
 const terrainTileUrl = "/assets/maps/gaixia-real-terrain/terrarium/{z}/{x}-{y}.png";
 const imageryTileUrl = "/assets/maps/gaixia-real-terrain/imagery/{z}/{x}-{y}.jpg";
+const historicalBaseBounds: TacticalPoint[] = [
+  [gaixiaSourceBounds[0], gaixiaSourceBounds[1]],
+  [gaixiaSourceBounds[2], gaixiaSourceBounds[1]],
+  [gaixiaSourceBounds[2], gaixiaSourceBounds[3]],
+  [gaixiaSourceBounds[0], gaixiaSourceBounds[3]],
+  [gaixiaSourceBounds[0], gaixiaSourceBounds[1]]
+];
+const historicalLowlandAreas = terrainReliefSurfaces.filter((surface) => surface.kind === "lowland");
+const historicalCorridorAreas = terrainReliefSurfaces.filter((surface) => surface.kind === "corridor");
+const historicalRidgeAreas = terrainReliefSurfaces.filter((surface) => surface.kind === "ridge" || surface.kind === "slope");
 
-function parseSvgMapTransform(transform: string) {
-  const match = transform.match(/translate\((-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)\) scale\((\d+(?:\.\d+)?)\)/);
-  return {
-    x: match ? Number(match[1]) : 0,
-    y: match ? Number(match[2]) : 0,
-    scale: match ? Number(match[3]) : 1
-  };
+function closedCoordinates(points: TacticalPoint[]) {
+  if (points.length === 0) {
+    return points;
+  }
+  const first = points[0];
+  const last = points[points.length - 1];
+  return first[0] === last[0] && first[1] === last[1] ? points : [...points, first];
 }
 
-function cameraForTransform(transform: string, focusCoordinates: TacticalPoint, options: { usePanOffset?: boolean; useScale?: boolean } = {}) {
-  const { x, y, scale } = parseSvgMapTransform(transform);
-  const usePanOffset = options.usePanOffset ?? true;
-  const cameraScale = options.useScale ?? true ? scale : 0.94;
-  const lng = focusCoordinates[0] - (usePanOffset ? x : 0) / 10500 / Math.max(cameraScale, 0.1);
-  const lat = focusCoordinates[1] + (usePanOffset ? y : 0) / 14500 / Math.max(cameraScale, 0.1);
+function featureCollection(features: GeoJSON.Feature<GeoJSON.Geometry>[]) {
+  return {
+    type: "FeatureCollection",
+    features
+  } satisfies GeoJSON.FeatureCollection;
+}
+
+function polygonFeature(id: string, points: TacticalPoint[], properties: Record<string, string | number> = {}) {
+  return {
+    type: "Feature",
+    id,
+    properties: { id, ...properties },
+    geometry: {
+      type: "Polygon",
+      coordinates: [closedCoordinates(points)]
+    }
+  } satisfies GeoJSON.Feature<GeoJSON.Polygon>;
+}
+
+function lineFeature(id: string, points: TacticalPoint[], properties: Record<string, string | number> = {}) {
+  return {
+    type: "Feature",
+    id,
+    properties: { id, ...properties },
+    geometry: {
+      type: "LineString",
+      coordinates: points
+    }
+  } satisfies GeoJSON.Feature<GeoJSON.LineString>;
+}
+
+const historicalTerrainBaseData = featureCollection([
+  polygonFeature("historical-gaixia-base", historicalBaseBounds, { kind: "base" }),
+  ...historicalRidgeAreas.map((surface) => polygonFeature(surface.id, surface.points, { kind: surface.kind, role: surface.tacticalRole })),
+  ...historicalLowlandAreas.map((surface) => polygonFeature(surface.id, surface.points, { kind: surface.kind, role: surface.tacticalRole })),
+  ...historicalCorridorAreas.map((surface) => polygonFeature(surface.id, surface.points, { kind: surface.kind, role: surface.tacticalRole })),
+  ...historicalRegions.map((region) => polygonFeature(`region-${region.id}`, region.coordinates, { kind: region.kind }))
+]);
+const historicalWaterData = featureCollection(rivers.map((river) => lineFeature(river.id, river.points)));
+const historicalContourData = featureCollection(terrainContours.map((contour) => lineFeature(contour.id, contour.points, { elevation: contour.elevation, kind: contour.kind })));
+
+function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinates: TacticalPoint, focusRoutePoints: TacticalPoint[], map?: maplibregl.Map | null) {
+  const hasRouteContext = focusRoutePoints.length > 1;
+  const longitudes = focusRoutePoints.map((point) => point[0]);
+  const latitudes = focusRoutePoints.map((point) => point[1]);
+  const envelopeCenter = hasRouteContext
+    ? ([
+        (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
+        (Math.min(...latitudes) + Math.max(...latitudes)) / 2
+      ] as TacticalPoint)
+    : focusCoordinates;
+  const fittedZoom =
+    hasRouteContext && map
+      ? (() => {
+          const rawWest = Math.min(...longitudes);
+          const rawEast = Math.max(...longitudes);
+          const rawSouth = Math.min(...latitudes);
+          const rawNorth = Math.max(...latitudes);
+          const west = Math.max(gaixiaBounds[0][0], rawWest - 0.085);
+          const east = Math.min(gaixiaBounds[1][0], rawEast + 0.15);
+          const south = Math.max(gaixiaBounds[0][1], rawSouth - 0.085);
+          const north = Math.min(gaixiaBounds[1][1], rawNorth + 0.085);
+          return map.cameraForBounds(
+            [
+              [west, south],
+              [east, north]
+            ],
+            {
+              bearing: -23,
+              padding: { bottom: 158, left: 210, right: 300, top: 168 },
+              pitch: 60
+            }
+          )?.zoom;
+        })()
+      : undefined;
+  const fittedCenter = blendCameraCenter(focusCoordinates, envelopeCenter, focusRoutePoints);
+  const userPanX = mapView.x - mapBaseView.x;
+  const userPanY = mapView.y - mapBaseView.y;
+  const userZoomDelta = mapView.scale - mapBaseView.scale;
+  const center: TacticalPoint = [
+    fittedCenter[0] - userPanX / 10000 / Math.max(mapView.scale, 0.1),
+    fittedCenter[1] + userPanY / 13800 / Math.max(mapView.scale, 0.1)
+  ];
+  const baseZoom = hasRouteContext ? highResolutionZoomForRouteSpan(focusRoutePoints) : 13;
+
   return {
     bearing: -23,
-    center: [Math.max(117.12, Math.min(117.8, lng)), Math.max(33.02, Math.min(33.56, lat))] as [number, number],
+    center: [Math.max(117.12, Math.min(117.8, center[0])), Math.max(33.02, Math.min(33.56, center[1]))] as [number, number],
     pitch: 60,
-    zoom: Math.max(12.7, Math.min(15.65, 13 + (cameraScale - 0.82) * 4.7))
+    zoom: Math.max(
+      10.15,
+      Math.min(
+        15.25,
+        Math.max(minimumZoomForRouteSpan(focusRoutePoints), Math.min(baseZoom, fittedZoom ?? baseZoom) + detailZoomBoostForRouteSpan(focusRoutePoints)) +
+          (mapBaseView.scale - 0.94) * 0.55 +
+          userZoomDelta * 1.65
+      )
+    )
   };
 }
 
@@ -130,7 +229,7 @@ function markMapCanvas(container: HTMLDivElement, map?: maplibregl.Map | null) {
     return false;
   }
   canvas.dataset.testid = gaixiaTerrainCanvasTestId;
-  canvas.setAttribute("aria-label", "垓下真实DEM三维地形与同图战术标绘");
+  canvas.setAttribute("aria-label", "垓下真实DEM三维地形与历史战术底图标绘");
   return true;
 }
 
@@ -206,7 +305,7 @@ function detailZoomBoostForRouteSpan(points: TacticalPoint[]) {
 
 function blendCameraCenter(eventCenter: TacticalPoint, fittedCenter: TacticalPoint, points: TacticalPoint[]) {
   const span = routeSpan(points);
-  const fittedWeight = span <= 0.22 ? 0.08 : span <= 0.3 ? 0.12 : span <= 0.4 ? 0.42 : 0.78;
+  const fittedWeight = span <= 0.22 ? 0.12 : span <= 0.3 ? 0.22 : span <= 0.4 ? 0.54 : 0.82;
   return [
     eventCenter[0] * (1 - fittedWeight) + fittedCenter[0] * fittedWeight,
     eventCenter[1] * (1 - fittedWeight) + fittedCenter[1] * fittedWeight
@@ -216,23 +315,17 @@ function blendCameraCenter(eventCenter: TacticalPoint, fittedCenter: TacticalPoi
 const gaixiaTerrainStyle: StyleSpecification = {
   version: 8,
   sources: {
-    "gaixia-world-imagery": {
-      type: "raster",
-      tiles: [imageryTileUrl],
-      bounds: gaixiaSourceBounds,
-      minzoom: minCachedTileZoom,
-      maxzoom: cachedBaseImageryTileZoom,
-      tileSize: 256,
-      attribution: "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+    "gaixia-historical-terrain": {
+      type: "geojson",
+      data: historicalTerrainBaseData
     },
-    "gaixia-world-imagery-detail": {
-      type: "raster",
-      tiles: [imageryTileUrl],
-      bounds: highResolutionImageryBounds,
-      minzoom: minCachedTileZoom,
-      maxzoom: cachedDetailImageryTileZoom,
-      tileSize: 256,
-      attribution: "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+    "gaixia-historical-water": {
+      type: "geojson",
+      data: historicalWaterData
+    },
+    "gaixia-historical-contours": {
+      type: "geojson",
+      data: historicalContourData
     },
     "gaixia-real-dem": {
       type: "raster-dem",
@@ -247,31 +340,121 @@ const gaixiaTerrainStyle: StyleSpecification = {
   },
   layers: [
     {
-      id: "gaixia-world-imagery",
-      type: "raster",
-      source: "gaixia-world-imagery",
+      id: "gaixia-historical-paper",
+      type: "background",
       paint: {
-        "raster-brightness-min": 0,
-        "raster-brightness-max": 1,
-        "raster-contrast": 0.22,
-        "raster-fade-duration": 0,
-        "raster-resampling": "linear",
-        "raster-saturation": 0.02
+        "background-color": "#d5c693"
       }
     },
     {
-      id: "gaixia-world-imagery-detail",
-      type: "raster",
-      source: "gaixia-world-imagery-detail",
-      minzoom: 12.8,
+      id: "gaixia-historical-ground",
+      type: "fill",
+      source: "gaixia-historical-terrain",
+      filter: ["==", ["get", "kind"], "base"],
       paint: {
-        "raster-brightness-min": 0,
-        "raster-brightness-max": 1,
-        "raster-contrast": 0.26,
-        "raster-fade-duration": 0,
-        "raster-opacity": 0.94,
-        "raster-resampling": "linear",
-        "raster-saturation": 0.04
+        "fill-color": "#d2c189",
+        "fill-opacity": 1
+      }
+    },
+    {
+      id: "gaixia-historical-commandery",
+      type: "fill",
+      source: "gaixia-historical-terrain",
+      filter: ["==", ["get", "kind"], "commandery"],
+      paint: {
+        "fill-color": "#c8b67f",
+        "fill-opacity": 0.22
+      }
+    },
+    {
+      id: "gaixia-historical-ridges",
+      type: "fill",
+      source: "gaixia-historical-terrain",
+      filter: ["in", ["get", "kind"], ["literal", ["ridge", "slope"]]],
+      paint: {
+        "fill-color": ["match", ["get", "kind"], "slope", "#c7ab70", "#b9995c"],
+        "fill-opacity": 0.62
+      }
+    },
+    {
+      id: "gaixia-historical-lowlands",
+      type: "fill",
+      source: "gaixia-historical-terrain",
+      filter: ["==", ["get", "kind"], "lowland"],
+      paint: {
+        "fill-color": "#94b99f",
+        "fill-opacity": 0.58
+      }
+    },
+    {
+      id: "gaixia-historical-corridors",
+      type: "fill",
+      source: "gaixia-historical-terrain",
+      filter: ["==", ["get", "kind"], "corridor"],
+      paint: {
+        "fill-color": "#c9bf75",
+        "fill-opacity": 0.42
+      }
+    },
+    {
+      id: "gaixia-historical-region-lines",
+      type: "line",
+      source: "gaixia-historical-terrain",
+      filter: ["in", ["get", "kind"], ["literal", ["han-ring", "chu-pocket", "terrain", "commandery"]]],
+      paint: {
+        "line-color": [
+          "match",
+          ["get", "kind"],
+          "han-ring",
+          "#2d7798",
+          "chu-pocket",
+          "#9a473b",
+          "terrain",
+          "#7e6b41",
+          "#6f6143"
+        ],
+        "line-dasharray": [4, 3],
+        "line-opacity": 0.58,
+        "line-width": 2
+      }
+    },
+    {
+      id: "gaixia-historical-contours",
+      type: "line",
+      source: "gaixia-historical-contours",
+      paint: {
+        "line-color": [
+          "match",
+          ["get", "kind"],
+          "lowland",
+          "#4d8993",
+          "corridor",
+          "#6a965c",
+          "#755d35"
+        ],
+        "line-dasharray": [2, 2],
+        "line-opacity": 0.5,
+        "line-width": 1.2
+      }
+    },
+    {
+      id: "gaixia-historical-water-bank",
+      type: "line",
+      source: "gaixia-historical-water",
+      paint: {
+        "line-color": "#6a9e91",
+        "line-opacity": 0.48,
+        "line-width": 12
+      }
+    },
+    {
+      id: "gaixia-historical-water",
+      type: "line",
+      source: "gaixia-historical-water",
+      paint: {
+        "line-color": "#2c9fb7",
+        "line-opacity": 0.82,
+        "line-width": 5
       }
     },
     {
@@ -1075,10 +1258,11 @@ function GaixiaTacticalOverlay({
   );
 }
 
-export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRouteIds, focusCoordinates, focusRoutePoints, mapTransform, progress, projectedRoutes }: GaixiaTerrain3DProps) {
+export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRouteIds, focusCoordinates, focusRoutePoints, mapBaseView, mapView, progress, projectedRoutes }: GaixiaTerrain3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const lastCameraEventIdRef = useRef(activeEvent.id);
   const [geometry, setGeometry] = useState<OverlayGeometry | null>(null);
   const latestStateRef = useRef({ activeEffectPlacement, activeEvent, progress, projectedRoutes });
 
@@ -1110,7 +1294,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       return;
     }
 
-    const initialCamera = cameraForTransform(mapTransform, focusCoordinates);
+    const initialCamera = cameraForMapView(mapView, mapBaseView, focusCoordinates, focusRoutePoints);
     const map = new maplibregl.Map({
       attributionControl: false,
       bearing: initialCamera.bearing,
@@ -1146,6 +1330,11 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       const canvas = map.getCanvas();
       container.dataset.terrainLoaded = map.loaded() ? "true" : "false";
       const center = map.getCenter();
+      container.dataset.mapRasterLayerIds = map
+        .getStyle()
+        .layers.filter((layer) => layer.type === "raster")
+        .map((layer) => layer.id)
+        .join(",");
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
       container.dataset.mapZoom = map.getZoom().toFixed(2);
       container.dataset.mapMaxZoom = map.getMaxZoom().toFixed(2);
@@ -1182,47 +1371,20 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
     if (!map) {
       return;
     }
-    const camera = cameraForTransform(mapTransform, focusCoordinates, {
-      usePanOffset: focusRoutePoints.length <= 1,
-      useScale: focusRoutePoints.length <= 1
-    });
-    if (focusRoutePoints.length > 1) {
-      const longitudes = focusRoutePoints.map((point) => point[0]);
-      const latitudes = focusRoutePoints.map((point) => point[1]);
-      const rawWest = Math.min(...longitudes);
-      const rawEast = Math.max(...longitudes);
-      const rawSouth = Math.min(...latitudes);
-      const rawNorth = Math.max(...latitudes);
-      const west = Math.max(gaixiaBounds[0][0], rawWest - 0.085);
-      const east = Math.min(gaixiaBounds[1][0], rawEast + 0.15);
-      const south = Math.max(gaixiaBounds[0][1], rawSouth - 0.085);
-      const north = Math.min(gaixiaBounds[1][1], rawNorth + 0.085);
-      const boundsCamera = map.cameraForBounds(
-        [
-          [west, south],
-          [east, north]
-        ],
-        {
-          bearing: camera.bearing,
-          padding: { bottom: 158, left: 210, right: 300, top: 168 },
-          pitch: camera.pitch
-        }
-      );
-      const fittedCenter = [Math.max(117.12, Math.min(117.8, (rawWest + rawEast) / 2)), Math.max(33.02, Math.min(33.56, (rawSouth + rawNorth) / 2))] as TacticalPoint;
-      map.jumpTo({
-        bearing: camera.bearing,
-        center: blendCameraCenter(focusCoordinates, fittedCenter, focusRoutePoints),
-        pitch: camera.pitch,
-        zoom: Math.max(
-          minimumZoomForRouteSpan(focusRoutePoints),
-          Math.min(highResolutionZoomForRouteSpan(focusRoutePoints), (boundsCamera?.zoom ?? camera.zoom) + detailZoomBoostForRouteSpan(focusRoutePoints))
-        )
+    const camera = cameraForMapView(mapView, mapBaseView, focusCoordinates, focusRoutePoints, map);
+    const activeEventChanged = lastCameraEventIdRef.current !== activeEvent.id;
+    lastCameraEventIdRef.current = activeEvent.id;
+    if (activeEventChanged) {
+      map.easeTo({
+        ...camera,
+        duration: 420,
+        easing: (time) => 1 - (1 - time) ** 3
       });
     } else {
       map.jumpTo(camera);
     }
     syncOverlayGeometry();
-  }, [activeEvent.id, focusCoordinates, focusRoutePoints, mapTransform, syncOverlayGeometry]);
+  }, [activeEvent.id, focusCoordinates, focusRoutePoints, mapBaseView, mapView, syncOverlayGeometry]);
 
   useEffect(() => {
     syncOverlayGeometry();
@@ -1236,14 +1398,15 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       data-renderer="maplibre-real-terrain"
       data-tactical-renderer="maplibre-geographic-overlay"
       data-terrain-model="real-dem-raster-terrain"
+      data-visible-basemap="drawn-historical-tactical-terrain"
+      data-modern-imagery-visible="false"
       data-terrain-exaggeration={`${terrainExaggeration}`}
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-terrain-source={terrainTileUrl}
-      data-imagery-source={imageryTileUrl}
-      data-imagery-tile-cache-zoom={`${cachedDetailImageryTileZoom}`}
-      data-imagery-base-tile-cache-zoom={`${cachedBaseImageryTileZoom}`}
-      data-imagery-detail-tile-cache-zoom={`${cachedDetailImageryTileZoom}`}
-      data-imagery-detail-bounds={highResolutionImageryBounds.join(",")}
+      data-reference-imagery-source={imageryTileUrl}
+      data-reference-imagery-cache-zoom={`${cachedDetailImageryTileZoom}`}
+      data-reference-imagery-base-cache-zoom={`${cachedBaseImageryTileZoom}`}
+      data-reference-imagery-detail-bounds={highResolutionImageryBounds.join(",")}
       data-terrain-tile-cache-zoom={`${cachedTerrainTileZoom}`}
       data-projection="webgl-gis-terrain"
     >

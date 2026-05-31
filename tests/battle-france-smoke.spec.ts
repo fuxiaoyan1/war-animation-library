@@ -417,30 +417,41 @@ async function expectTickerDoesNotBlockMapWheel(page: Page) {
 }
 
 async function expectGaixiaRouteStaysInMapStage(page: Page, routeId: string) {
-  const visibleRatio = await page.evaluate((targetRouteId) => {
-    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
-    const route = document.querySelector(`[data-testid="gaixia-route-${targetRouteId}"]`)?.getBoundingClientRect();
-    if (!stage || !route || route.width <= 0 || route.height <= 0) {
-      return null;
-    }
+  const getVisibleRatio = () =>
+    page.evaluate((targetRouteId) => {
+      const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+      const route = document.querySelector(`[data-testid="gaixia-route-${targetRouteId}"]`)?.getBoundingClientRect();
+      if (!stage || !route || route.width <= 0 || route.height <= 0) {
+        return null;
+      }
 
-    const left = Math.max(stage.left, route.left);
-    const right = Math.min(stage.right, route.right);
-    const top = Math.max(stage.top, route.top);
-    const bottom = Math.min(stage.bottom, route.bottom);
-    const visibleWidth = Math.max(0, right - left);
-    const visibleHeight = Math.max(0, bottom - top);
-    return {
-      areaRatio: (visibleWidth * visibleHeight) / Math.max(1, route.width * route.height),
-      height: visibleHeight,
-      width: visibleWidth
-    };
-  }, routeId);
+      const left = Math.max(stage.left, route.left);
+      const right = Math.min(stage.right, route.right);
+      const top = Math.max(stage.top, route.top);
+      const bottom = Math.min(stage.bottom, route.bottom);
+      const visibleWidth = Math.max(0, right - left);
+      const visibleHeight = Math.max(0, bottom - top);
+      return {
+        areaRatio: (visibleWidth * visibleHeight) / Math.max(1, route.width * route.height),
+        height: visibleHeight,
+        width: visibleWidth
+      };
+    }, routeId);
+
+  await expect
+    .poll(async () => (await getVisibleRatio())?.areaRatio ?? 0, {
+      message: `route ${routeId} should intersect the tactical viewport after camera settles`
+    })
+    .toBeGreaterThan(0.08);
+  const visibleRatio = await getVisibleRatio();
 
   expect(visibleRatio, `route ${routeId} should intersect the tactical viewport`).not.toBeNull();
-  expect(visibleRatio?.areaRatio, `route ${routeId} should have a readable visible segment`).toBeGreaterThan(0.08);
-  expect(visibleRatio?.width).toBeGreaterThan(10);
-  expect(visibleRatio?.height).toBeGreaterThan(6);
+  if (!visibleRatio) {
+    throw new Error(`route ${routeId} should intersect the tactical viewport`);
+  }
+  expect(visibleRatio.areaRatio, `route ${routeId} should have a readable visible segment`).toBeGreaterThan(0.08);
+  expect(visibleRatio.width).toBeGreaterThan(10);
+  expect(visibleRatio.height).toBeGreaterThan(6);
 }
 
 async function expectGaixiaVisibleRouteCount(page: Page, minimumCount: number) {
@@ -517,20 +528,19 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   await expect(layer).toHaveAttribute("data-renderer", "maplibre-real-terrain");
   await expect(layer).toHaveAttribute("data-terrain-model", "real-dem-raster-terrain");
   await expect(layer).toHaveAttribute("data-tactical-renderer", "maplibre-geographic-overlay");
+  await expect(layer).toHaveAttribute("data-visible-basemap", "drawn-historical-tactical-terrain");
+  await expect(layer).toHaveAttribute("data-modern-imagery-visible", "false");
   await expect(layer).toHaveAttribute("data-terrain-exaggeration", "1");
   await expect(layer).toHaveAttribute("data-hillshade-exaggeration", "0.08");
   await expect(layer).toHaveAttribute("data-terrain-source", /\/assets\/maps\/gaixia-real-terrain\/terrarium\/\{z\}\/\{x\}-\{y\}\.png/);
-  await expect(layer).toHaveAttribute("data-imagery-source", /\/assets\/maps\/gaixia-real-terrain\/imagery\/\{z\}\/\{x\}-\{y\}\.jpg/);
-  await expect(layer).toHaveAttribute("data-imagery-tile-cache-zoom", "16");
-  await expect(layer).toHaveAttribute("data-imagery-base-tile-cache-zoom", "15");
-  await expect(layer).toHaveAttribute("data-imagery-detail-tile-cache-zoom", "16");
-  await expect(layer).toHaveAttribute("data-imagery-detail-bounds", "117.14,33.02,117.82,33.58");
+  await expect(layer).toHaveAttribute("data-reference-imagery-source", /\/assets\/maps\/gaixia-real-terrain\/imagery\/\{z\}\/\{x\}-\{y\}\.jpg/);
+  await expect(layer).toHaveAttribute("data-reference-imagery-cache-zoom", "16");
+  await expect(layer).toHaveAttribute("data-reference-imagery-base-cache-zoom", "15");
+  await expect(layer).toHaveAttribute("data-reference-imagery-detail-bounds", "117.14,33.02,117.82,33.58");
   await expect(layer).toHaveAttribute("data-terrain-tile-cache-zoom", "14");
+  await expect.poll(async () => await layer.getAttribute("data-map-raster-layer-ids")).toBe("");
 
-  for (const tilePath of [
-    "/assets/maps/gaixia-real-terrain/imagery/16/54144-26332.jpg",
-    "/assets/maps/gaixia-real-terrain/terrarium/14/13536-6580.png"
-  ]) {
+  for (const tilePath of ["/assets/maps/gaixia-real-terrain/terrarium/14/13536-6580.png"]) {
     const response = await page.request.head(tilePath);
     expect(response.ok(), `${tilePath} should be available from the high-resolution local map cache`).toBe(true);
     expect(response.headers()["content-type"]).toContain("image");
@@ -607,6 +617,29 @@ async function expectGaixiaMapControlsDoNotCoverRealTerrain(page: Page) {
   expect(visualState.bodyBackground).toContain("rgb(18, 25, 24)");
   expect(visualState.controlDeckBackground).toContain("rgba(11, 18, 18, 0.72)");
   expect(visualState.timelineBackground).toContain("rgba(11, 18, 18, 0.72)");
+}
+
+async function expectGaixiaMapViewDrivesTerrainCamera(page: Page) {
+  const stageBox = await page.getByTestId("map-stage").boundingBox();
+  const terrain = page.getByTestId("gaixia-terrain-3d");
+  expect(stageBox).not.toBeNull();
+
+  const center = visibleMapPoint(page, stageBox!, 0.5, 0.5);
+  await page.mouse.dblclick(center.x, center.y);
+  await expectMapResetSettles(page);
+  const before = await terrain.getAttribute("data-map-center");
+  expect(before).not.toBeNull();
+
+  const dragStart = visibleMapPoint(page, stageBox!, 0.62, 0.5);
+  const dragEnd = visibleMapPoint(page, stageBox!, 0.38, 0.42);
+  await page.mouse.move(dragStart.x, dragStart.y);
+  await page.mouse.down();
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 8 });
+  await page.mouse.up();
+
+  await expect.poll(async () => await terrain.getAttribute("data-map-center")).not.toBe(before);
+  await page.mouse.dblclick(center.x, center.y);
+  await expectMapResetSettles(page);
 }
 
 async function expectGaixiaPointInsideMapStage(page: Page, pointId: string) {
@@ -4210,6 +4243,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expectGaixiaWebglTerrainIsRendered(page);
   await expectGaixiaUsesSingleMapLibreTacticalMap(page);
   await expectGaixiaMapControlsDoNotCoverRealTerrain(page);
+  await expectGaixiaMapViewDrivesTerrainCamera(page);
   await expect(page.getByTestId("gaixia-terrain-layer")).toBeVisible();
   await expect(page.locator('.gaixia-ground[href="/assets/maps/gaixia-terrain-dem.webp"]')).toHaveCount(0);
   await expect(page.locator(".gaixia-sandbox-side-wall")).toHaveCount(0);

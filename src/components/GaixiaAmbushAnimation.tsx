@@ -381,6 +381,7 @@ export function GaixiaAmbushAnimation() {
     isMapDragging,
     mapInteractionProps,
     mapTransform,
+    mapView,
     resetMapView,
     stageRef,
     svgRef,
@@ -558,7 +559,8 @@ export function GaixiaAmbushAnimation() {
             focusRoutePoints={activeGeographicFocusRoutePoints}
             width={mapWidth}
             height={mapHeight}
-            mapTransform={mapTransform}
+            mapBaseView={activeMapView}
+            mapView={mapView}
             progress={progress}
             projectedRoutes={geographicRoutes}
           />

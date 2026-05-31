@@ -201,6 +201,7 @@ export function useMapInteraction(
     canZoomIn: mapView.scale < maxScale - 0.01,
     canZoomOut: mapView.scale > minScale + 0.01,
     isMapDragging,
+    mapView,
     mapInteractionProps: {
       onDoubleClick: resetMapView,
       onPointerCancel: endDrag,
