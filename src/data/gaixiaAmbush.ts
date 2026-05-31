@@ -1272,9 +1272,9 @@ export const routes: GaixiaRoute[] = [
   },
   {
     id: "chu-night-breakout-check",
-    label: "楚军夜间冲围受阻",
+    label: "楚骑夜间冲围受阻",
     faction: "chu",
-    unitKind: "chu-infantry",
+    unitKind: "chu-cavalry",
     routeKind: "breakout",
     start: "BCE-0202-12-02T00:40",
     end: "BCE-0202-12-02T02:10",
@@ -1287,10 +1287,9 @@ export const routes: GaixiaRoute[] = [
     ],
     points: [
       [117.46, 33.34],
-      [117.52, 33.32],
-      [117.56, 33.28],
-      [117.51, 33.3],
-      [117.46, 33.33]
+      [117.49, 33.333],
+      [117.515, 33.325],
+      [117.532, 33.326]
     ]
   },
   {

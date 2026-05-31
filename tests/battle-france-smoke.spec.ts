@@ -3015,6 +3015,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRoutePositionAnchor("han-south-locking-line", "old-channel-ditch");
   expectGaixiaRoutePositionAnchor("han-tighten-east", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-night-east-gap-block", "east-gap-gate");
+  expectGaixiaRoutePositionAnchor("chu-night-breakout-check", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-dawn-cavalry-cutoff", "han-southeast-cavalry-ambush");
   const chuInnerRampart = gaixiaData.fieldworks.find((fieldwork) => fieldwork.id === "chu-inner-rampart")!.coordinates;
   for (const routeId of [
@@ -3047,6 +3048,13 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expect(routeCoordinate("han-south-locking-line", -1)[1], "south blockade should hold the south mouth rather than enter the camp center").toBeLessThanOrEqual(33.28);
   expect(routeCoordinate("han-tighten-east", -1)[0], "east compression should hold the east gate edge before dawn").toBeGreaterThanOrEqual(117.52);
   expect(routeCoordinate("han-night-east-gap-block", -1)[0], "night cavalry block should remain on the east gate line").toBeGreaterThanOrEqual(117.545);
+  const chuNightBreakout = gaixiaData.routes.find((route) => route.id === "chu-night-breakout-check")!;
+  expect(chuNightBreakout.unitKind, "night breakout should show Chu cavalry probing the east gate").toBe("chu-cavalry");
+  for (let index = 1; index < chuNightBreakout.points.length; index += 1) {
+    expect(chuNightBreakout.points[index][0], "Chu night breakout should not reverse after crossing the gate contact line").toBeGreaterThanOrEqual(chuNightBreakout.points[index - 1][0]);
+  }
+  expect(routeCoordinate("chu-night-breakout-check", -1)[0], "Chu night breakout should be checked before it clears the east gate").toBeLessThanOrEqual(117.535);
+  expect(routeCoordinate("chu-night-breakout-check", -1)[1], "Chu night breakout should stay near the east gate contact line").toBeGreaterThanOrEqual(33.315);
   expectGaixiaRouteWindow("han-dawn-assault-north", { start: "BCE-0202-12-02T03:05", end: "BCE-0202-12-02T04:50" });
   expectGaixiaRouteWindow("han-dawn-assault-south", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:00" });
   expectGaixiaRouteWindow("han-dawn-assault-west", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:05" });
@@ -4592,6 +4600,8 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("active-event-card")).toContainText("四面楚歌瓦解军心");
   await expect(page.getByTestId("active-event-card")).toContainText("营阵开始动摇");
   await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-night-breakout-check-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-night-breakout-check-0").locator('[data-testid="gaixia-unit-chu-cavalry"]')).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-south-locking-line")).toBeVisible();
@@ -4599,6 +4609,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-han-night-east-gap-block-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toHaveAttribute("data-position-anchor", "east-gap-gate");
   await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toHaveAttribute("data-position-anchor", "east-gap-gate");
+  await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toHaveAttribute("data-position-anchor", "east-gap-gate");
   await expect(page.getByTestId("gaixia-fieldwork-east-gap-gate")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
