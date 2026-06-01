@@ -61,6 +61,8 @@
 本轮重制把碾庄从二维 SVG 底图迁到 MapLibre + 本地 Terrarium DEM 地形层，但可见底图仍是绘制型历史战术图。现代卫星图、现代道路图只允许作为绘制参考信息，不能直接作为战争动画可见底图。
 
 - 地形数据缓存到 `public/assets/maps/nianzhuang-real-terrain/terrarium/`，用于 `raster-dem` 和 `setTerrain`。组件暴露 `data-modern-imagery-visible="false"`、`data-visible-basemap="drawn-historical-tactical-terrain"`，避免后续误把现代影像贴回画面。
+- 2026-06-01 追击幕修正：DEM 缓存和 3D 相机边界东扩到新安镇、东线/北线追击入场区，追击幕相机中心改由黄兵团西撤纵队与华野三路追击当前兵牌位置实时计算；运河桥渡、碾庄方向只作为上下文点保留。不能再让早期作战单位先在地形边界外运动，等镜头进入碾庄才突然出现。
+- 2026-06-01 镜头/黑块修正：碾庄 MapLibre 相机改为固定阶段战术总览 zoom，实测关键节点约 10.31-10.71，避免再次贴脸；大面积地形 feature 的 overlay 阴影取消深色填充和 blur，只保留浅描边/轻墙面，防止全局视角下形成大黑块。回归测试必须同时检查 zoom 上限、相邻跳变和大尺寸深色 overlay。
 - 战术图层、河渠、历史区域、地形区、工事、阵型、路线、事件点和被歼地标注全部在同一 MapLibre 投影下绘制。不得再出现“底层地图一套、战术图一套”的错层。
 - 透明 SVG 只用于拖拽、缩放、测试读取相机状态；可见地图与战术内容由 3D 地形容器和 MapLibre 投影 overlay 承担。测试中 `.battle-map` 应保持透明，避免遮住地形。
 - 带固定 `coordinates` 的作战单位必须按地图坐标投影后落位，不能挂在路线当前 marker 上。徐东阻援这类阵位单位尤其要贴着邱李兵团前锋，形成正面接触。

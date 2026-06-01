@@ -36,8 +36,8 @@ const nianzhuangMinMapScale = 0.86;
 const nianzhuangViewportCenterX = mapWidth / 2;
 const nianzhuangViewportCenterY = mapHeight / 2;
 const nianzhuangInteractionBounds = {
-  east: 118.08,
-  north: 34.42,
+  east: 118.42,
+  north: 34.452,
   south: 34.07,
   west: 117.16
 };
@@ -68,12 +68,12 @@ type NianzhuangFocusState = {
 
 const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraStage> = {
   nianzhuangPursuit: {
-    center: [117.98, 34.32],
+    center: [118.12, 34.32],
     focusRoutePoints: [
-      [117.66, 34.16],
-      [118.08, 34.18],
-      [118.04, 34.42],
-      [117.7, 34.38]
+      [117.8, 34.17],
+      [118.4, 34.18],
+      [118.4, 34.452],
+      [117.82, 34.405]
     ],
     scale: 0.9
   },
@@ -159,6 +159,13 @@ const semanticFrontLines = withUnitBadgeLabels(frontLines, {
   communist: "华",
   nationalist: "國"
 });
+
+const pursuitFollowRouteIds = new Set([
+  "huang-xinan-west-withdrawal",
+  "pla-east-pursuit-main",
+  "pla-north-pursuit",
+  "pla-south-pursuit"
+]);
 
 const pointById = new Map(mapPoints.map((point) => [point.id, point]));
 
@@ -276,6 +283,13 @@ function routePointAtCurrentTime(routeId: string, progress: number) {
   return linePointsUntil(routePoints, routeProgress).at(-1);
 }
 
+function averageFocusPoint(points: Array<[number, number]>) {
+  return [
+    points.reduce((sum, point) => sum + point[0], 0) / points.length,
+    points.reduce((sum, point) => sum + point[1], 0) / points.length
+  ] as [number, number];
+}
+
 function visibleBattleEffects(progress: number): NianzhuangEffectState[] {
   return battleEffects
     .map((effect) => {
@@ -336,6 +350,32 @@ export function NianzhuangBattleAnimation() {
       ),
     [progress]
   );
+  const activeGeographicFocusRoutePoints = useMemo(() => {
+    const stagePoints = [activeStage.center, ...activeStage.focusRoutePoints];
+    if (currentFocus !== "nianzhuangPursuit") {
+      return stagePoints;
+    }
+
+    const movingPursuitPoints = routeStates
+      .filter((state) => pursuitFollowRouteIds.has(state.line.id) && state.isVisible && state.showUnits)
+      .map((state) => state.markerPoint);
+
+    if (movingPursuitPoints.length === 0) {
+      return stagePoints;
+    }
+
+    const movingCenter = averageFocusPoint(movingPursuitPoints);
+    const pursuitStart = timeline.dateToProgress("1948-11-06T18:00");
+    const pursuitEnd = timeline.dateToProgress("1948-11-10T20:00");
+    const pursuitRatio = Math.min(1, Math.max(0, (progress - pursuitStart) / Math.max(0.001, pursuitEnd - pursuitStart)));
+    const nianzhuangWeight = smoothStep((pursuitRatio - 0.58) / 0.42) * 0.28;
+    const focusPoint: [number, number] = [
+      movingCenter[0] * (1 - nianzhuangWeight) + 117.9 * nianzhuangWeight,
+      movingCenter[1] * (1 - nianzhuangWeight) + 34.3 * nianzhuangWeight
+    ];
+
+    return [focusPoint];
+  }, [activeStage.center, activeStage.focusRoutePoints, currentFocus, progress, routeStates]);
   const effectStates = useMemo(() => visibleBattleEffects(progress), [progress]);
   const activeNarrationCue = narrationCues.find((cue, index) => {
     const start = timeline.dateToProgress(cue.start);
@@ -530,7 +570,7 @@ export function NianzhuangBattleAnimation() {
             currentDateProgress={timeline.dateToProgress}
             currentFocus={currentFocus}
             dateToProgress={timeline.dateToProgress}
-            focusRoutePoints={[activeStage.center, ...activeStage.focusRoutePoints]}
+            focusRoutePoints={activeGeographicFocusRoutePoints}
             mapBaseView={activeMapView}
             mapView={mapView}
             progress={progress}

@@ -2466,15 +2466,50 @@ async function expectNianzhuangReadableMapText(page: Page) {
   const selectors: Array<{
     maxFontSize: number;
     minFontSize: number;
+    maxHeightRatio?: number;
+    maxWidthRatio?: number;
+    requireLabels?: boolean;
     selector: string;
   }> = [
-    { selector: ".nianzhuang-battle .map-point text", minFontSize: 46, maxFontSize: 62 },
-    { selector: ".nianzhuang-battle .terrain-label", minFontSize: 44, maxFontSize: 60 },
-    { selector: ".nianzhuang-battle .historical-region-name", minFontSize: 58, maxFontSize: 86 },
-    { selector: ".nianzhuang-battle .wind-overlay.rail-overlay text", minFontSize: 42, maxFontSize: 58 }
+    {
+      selector: ".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .map-point text",
+      minFontSize: 13,
+      maxFontSize: 20,
+      maxHeightRatio: 0.055,
+      maxWidthRatio: 0.22
+    },
+    {
+      selector: ".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .terrain-label",
+      minFontSize: 12,
+      maxFontSize: 18,
+      maxHeightRatio: 0.045,
+      maxWidthRatio: 0.24
+    },
+    {
+      selector: ".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .historical-region-name",
+      minFontSize: 20,
+      maxFontSize: 28,
+      maxHeightRatio: 0.075,
+      maxWidthRatio: 0.34
+    },
+    {
+      selector: ".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .wind-overlay.rail-overlay text",
+      minFontSize: 12,
+      maxFontSize: 18,
+      maxHeightRatio: 0.05,
+      maxWidthRatio: 0.26
+    },
+    {
+      selector: ".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .fortified-line text",
+      minFontSize: 12,
+      maxFontSize: 18,
+      maxHeightRatio: 0.05,
+      maxWidthRatio: 0.24,
+      requireLabels: false
+    }
   ];
 
-  for (const { maxFontSize, minFontSize, selector } of selectors) {
+  for (const { maxFontSize, maxHeightRatio = 0.16, maxWidthRatio = 0.52, minFontSize, requireLabels = true, selector } of selectors) {
     const labels = await page.locator(selector).evaluateAll((nodes) =>
       nodes.map((node) => {
         const box = node.getBoundingClientRect();
@@ -2492,18 +2527,230 @@ async function expectNianzhuangReadableMapText(page: Page) {
       })
     );
 
-    expect(labels.length, `${selector} should render readable tactical labels`).toBeGreaterThan(0);
+    if (requireLabels) {
+      expect(labels.length, `${selector} should render readable tactical labels`).toBeGreaterThan(0);
+    }
     for (const label of labels) {
       expect(label.fontSize, `${selector} ${label.text} label font size`).toBeGreaterThanOrEqual(minFontSize);
       expect(label.fontSize, `${selector} ${label.text} label font size`).toBeLessThanOrEqual(maxFontSize);
       expect(label.height, `${selector} ${label.text} label height`).toBeGreaterThan(6);
-      expect(label.height, `${selector} ${label.text} label height`).toBeLessThan((stage?.height ?? 1) * 0.16);
+      expect(label.height, `${selector} ${label.text} label height`).toBeLessThan((stage?.height ?? 1) * maxHeightRatio);
       expect(label.width, `${selector} ${label.text} label width`).toBeGreaterThan(8);
-      expect(label.width, `${selector} ${label.text} label width`).toBeLessThan((stage?.width ?? 1) * 0.52);
+      expect(label.width, `${selector} ${label.text} label width`).toBeLessThan((stage?.width ?? 1) * maxWidthRatio);
       if (selector.includes("historical-region-name")) {
         expect(label.fillAlpha * label.opacity, `${selector} ${label.text} should stay in the background`).toBeLessThanOrEqual(0.52);
       }
     }
+  }
+}
+
+async function collectNianzhuangCameraSamples(page: Page) {
+  const terrain = page.getByTestId("nianzhuang-terrain-3d");
+  const originalTimelineValue = await page.getByTestId("timeline").inputValue();
+  const samples: Array<{ center: string; date: string; zoom: number }> = [];
+  const sampleDates = [
+    "1948-11-07T06:00",
+    "1948-11-09T12:00",
+    "1948-11-10T18:00",
+    "1948-11-11T12:30",
+    "1948-11-13T18:00",
+    "1948-11-19T10:00",
+    "1948-11-19T23:30",
+    "1948-11-20T18:00",
+    "1948-11-22T17:00"
+  ];
+
+  await expect(terrain).toHaveAttribute("data-camera-zoom-policy", "stage-fixed-tactical-overview");
+  try {
+    for (const date of sampleDates) {
+      await jumpNianzhuangTimelineTo(page, date);
+      await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+      await page.waitForTimeout(750);
+      samples.push({
+        center: (await terrain.getAttribute("data-map-center")) ?? "",
+        date,
+        zoom: Number(await terrain.getAttribute("data-map-zoom"))
+      });
+    }
+  } finally {
+    await page.getByTestId("timeline").fill(originalTimelineValue);
+    await page.waitForTimeout(750);
+  }
+
+  return samples;
+}
+
+function parseCameraCenter(center: string) {
+  const [lng, lat] = center.split(",").map((value) => Number(value));
+  return { lat, lng };
+}
+
+async function expectNianzhuangCameraStaysTactical(page: Page) {
+  const samples = await collectNianzhuangCameraSamples(page);
+  const zooms = samples.map((sample) => sample.zoom);
+  const adjacentDelta = samples.slice(1).map((sample, index) => Math.abs(sample.zoom - samples[index].zoom));
+  const pursuitSamples = samples.filter((sample) => sample.date <= "1948-11-10T18:00").map((sample) => ({ ...sample, ...parseCameraCenter(sample.center) }));
+
+  expect(Math.max(...zooms), `Nianzhuang camera should keep a tactical overview instead of zooming into a local close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(10.95);
+  expect(Math.min(...zooms), `Nianzhuang camera should keep enough terrain detail: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(10.15);
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.65);
+  expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.35);
+  expect(pursuitSamples[0].lng - pursuitSamples.at(-1)!.lng, `Pursuit camera should follow the westward moving armies: ${JSON.stringify(pursuitSamples)}`).toBeGreaterThan(0.08);
+  expect(pursuitSamples.every((sample) => sample.lng >= 117.86 && sample.lng <= 118.22), `Pursuit camera should stay between the mobile column and Nianzhuang context: ${JSON.stringify(pursuitSamples)}`).toBe(true);
+}
+
+async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
+  const sampleDates = ["1948-11-07T06:00", "1948-11-13T18:00", "1948-11-20T18:00", "1948-11-22T17:00"];
+  const samples: Array<{
+    areaRatio: number;
+    date: string;
+    effectiveFillAlpha: number;
+    fill: string;
+    filter: string;
+    heightRatio: number;
+    selector: string;
+    stroke: string;
+    widthRatio: number;
+  }> = [];
+
+  for (const date of sampleDates) {
+    await jumpNianzhuangTimelineTo(page, date);
+    await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+    await page.waitForTimeout(750);
+    samples.push(
+      ...(await page.evaluate((currentDate) => {
+        const parseAlpha = (color: string) => {
+          if (color === "none" || color === "transparent") {
+            return 0;
+          }
+          const rgba = color.match(/rgba?\(([^)]+)\)/);
+          if (!rgba) {
+            return 1;
+          }
+          const parts = rgba[1].split(",").map((part) => Number(part.trim()));
+          return parts.length >= 4 ? parts[3] : 1;
+        };
+        const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+        if (!stage) {
+          return [];
+        }
+        const selectors = [
+          ".nianzhuang-battle .tactical-terrain-shadow",
+          ".nianzhuang-battle .tactical-terrain-skirt",
+          ".nianzhuang-battle .tactical-terrain-wall"
+        ];
+
+        return selectors.flatMap((selector) =>
+          [...document.querySelectorAll(selector)]
+            .map((node) => {
+              const box = node.getBoundingClientRect();
+              const style = window.getComputedStyle(node);
+              return {
+                areaRatio: (box.width * box.height) / Math.max(1, stage.width * stage.height),
+                date: currentDate,
+                effectiveFillAlpha: parseAlpha(style.fill) * Number(style.opacity || 1),
+                fill: style.fill,
+                filter: style.filter,
+                heightRatio: box.height / stage.height,
+                selector,
+                stroke: style.stroke,
+                widthRatio: box.width / stage.width
+              };
+            })
+            .filter((sample) => sample.areaRatio > 0.1 || sample.widthRatio > 0.5 || sample.heightRatio > 0.5)
+        );
+      }, date))
+    );
+  }
+
+  for (const sample of samples) {
+    expect(sample.effectiveFillAlpha, `Large Nianzhuang overlay terrain element should not read as a dark block: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.08);
+    expect(sample.filter, `Large Nianzhuang overlay terrain element should not use blurred block shadows: ${JSON.stringify(sample)}`).toBe("none");
+  }
+}
+
+async function expectNianzhuangPursuitUnitsStayInCameraCore(page: Page) {
+  const routeIds = ["huang-xinan-west-withdrawal", "pla-east-pursuit-main", "pla-north-pursuit", "pla-south-pursuit"];
+  const sampleDates = ["1948-11-07T06:00", "1948-11-09T12:00", "1948-11-10T18:00"];
+  const samples: Array<{ date: string; maxX: number; minX: number; routes: number }> = [];
+
+  for (const date of sampleDates) {
+    await jumpNianzhuangTimelineTo(page, date);
+    await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+    await page.waitForTimeout(750);
+    samples.push(
+      await page.evaluate((wantedRouteIds) => {
+        const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+        const boxes = wantedRouteIds.flatMap((routeId) =>
+          [...document.querySelectorAll(`.nianzhuang-battle .front-line[data-route-id="${routeId}"][data-unit-visible="true"] .formation-unit`)]
+            .map((unit) => unit.getBoundingClientRect())
+            .filter((box) => box.width > 0 && box.height > 0)
+        );
+        const centers = boxes.map((box) => ({
+          x: stage ? ((box.left + box.right) / 2 - stage.left) / stage.width : Number.NaN,
+          y: stage ? ((box.top + box.bottom) / 2 - stage.top) / stage.height : Number.NaN
+        }));
+        const xValues = centers.map((center) => center.x);
+
+        return {
+          maxX: xValues.length > 0 ? Math.max(...xValues) : Number.NaN,
+          minX: xValues.length > 0 ? Math.min(...xValues) : Number.NaN,
+          routes: boxes.length
+        };
+      }, routeIds).then((sample) => ({ ...sample, date }))
+    );
+  }
+
+  for (const sample of samples) {
+    expect(sample.routes, `${sample.date} should render pursuit unit markers`).toBeGreaterThan(0);
+    expect(sample.minX, `${sample.date} pursuit units should not be left offscreen: ${JSON.stringify(samples)}`).toBeGreaterThan(0.08);
+    expect(sample.maxX, `${sample.date} pursuit units should not lag beyond the right edge: ${JSON.stringify(samples)}`).toBeLessThan(1.03);
+  }
+}
+
+async function expectNianzhuangPursuitUnitsAttachToRouteHeads(page: Page) {
+  const routeIds = ["huang-xinan-west-withdrawal", "pla-east-pursuit-main", "pla-north-pursuit", "pla-south-pursuit"];
+  const sampleDates = ["1948-11-07T06:00", "1948-11-09T12:00"];
+  const samples: Array<{ date: string; maxDistance: number; routeId: string; unitCount: number }> = [];
+
+  for (const date of sampleDates) {
+    await jumpNianzhuangTimelineTo(page, date);
+    await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+    await page.waitForTimeout(750);
+
+    for (const routeId of routeIds) {
+      const sample = await page.evaluate((id) => {
+        const route = document.querySelector(`.nianzhuang-battle .front-line[data-route-id="${id}"][data-unit-visible="true"]`);
+        const routeHead = route?.querySelector("circle");
+        const headBox = routeHead?.getBoundingClientRect();
+        const units = [...(route?.querySelectorAll(".formation-unit") ?? [])].map((unit) => unit.getBoundingClientRect()).filter((box) => box.width > 0 && box.height > 0);
+        const head = headBox
+          ? {
+              x: (headBox.left + headBox.right) / 2,
+              y: (headBox.top + headBox.bottom) / 2
+            }
+          : null;
+        const distances = head
+          ? units.map((box) =>
+              Math.hypot((box.left + box.right) / 2 - head.x, (box.top + box.bottom) / 2 - head.y)
+            )
+          : [];
+        return {
+          maxDistance: distances.length > 0 ? Math.max(...distances) : Number.NaN,
+          routeId: id,
+          unitCount: units.length
+        };
+      }, routeId);
+
+      if (sample.unitCount > 0) {
+        samples.push({ ...sample, date });
+      }
+    }
+  }
+
+  expect(samples.length).toBeGreaterThan(0);
+  for (const sample of samples) {
+    expect(sample.maxDistance, `${sample.date} ${sample.routeId} units should stay attached to the current route head: ${JSON.stringify(samples)}`).toBeLessThan(190);
   }
 }
 
@@ -2728,23 +2975,35 @@ async function expectNianzhuangStageInView(page: Page) {
   expect(placement.height, "Nianzhuang tactical map should keep a large working area").toBeGreaterThan(placement.viewportHeight * 0.72);
 }
 
-async function expectNianzhuangLocalBattlefieldSpread(page: Page, routeIds: string[], minimumWidthRatio: number, minimumHeightRatio: number) {
+async function expectNianzhuangLocalBattlefieldSpread(
+  page: Page,
+  routeIds: string[],
+  minimumWidthRatio: number,
+  minimumHeightRatio: number,
+  maximumWidthRatio = 0.82,
+  maximumHeightRatio = 0.72
+) {
   const spread = await page.evaluate((routes) => {
     const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
     const routeBoxes = routes
-      .map((routeId) => {
-        const box = document
-          .querySelector(`.nianzhuang-battle .front-line[data-route-id="${routeId}"] .front-route`)
-          ?.getBoundingClientRect();
-        return box && box.width > 0 && box.height > 0
-          ? {
-              bottom: box.bottom,
-              left: box.left,
-              right: box.right,
-              top: box.top
-            }
-          : null;
-      })
+      .flatMap((routeId) =>
+        [
+          ...document.querySelectorAll(
+            `.nianzhuang-battle .front-line[data-route-id="${routeId}"] .front-route, ` +
+              `.nianzhuang-battle .front-line[data-route-id="${routeId}"] .formation-unit`
+          )
+        ].map((node) => {
+          const box = node.getBoundingClientRect();
+          return box && box.width > 0 && box.height > 0
+            ? {
+                bottom: box.bottom,
+                left: box.left,
+                right: box.right,
+                top: box.top
+              }
+            : null;
+        })
+      )
       .filter((box): box is { bottom: number; left: number; right: number; top: number } => box !== null);
 
     if (!stage || routeBoxes.length === 0) {
@@ -2775,6 +3034,8 @@ async function expectNianzhuangLocalBattlefieldSpread(page: Page, routeIds: stri
   expect(spread).not.toBeNull();
   expect(spread?.widthRatio).toBeGreaterThan(minimumWidthRatio);
   expect(spread?.heightRatio).toBeGreaterThan(minimumHeightRatio);
+  expect(spread?.widthRatio, `${routeIds.join(", ")} should not force a close-up camera`).toBeLessThan(maximumWidthRatio);
+  expect(spread?.heightRatio, `${routeIds.join(", ")} should not force a close-up camera`).toBeLessThan(maximumHeightRatio);
 }
 
 async function jumpToEventByName(page: Page, name: RegExp) {
@@ -5394,6 +5655,7 @@ test("korean war animation uses era matched carrier aircraft infantry and tank m
 });
 
 test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit", async ({ page }) => {
+  test.setTimeout(70_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await openCampaignFromHome(page, "nianzhuang");
@@ -5426,6 +5688,10 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectNianzhuangTacticalTerrainAndForceBlocks(page);
   await expectNianzhuangReadableIcons(page);
   await expectNianzhuangReadableMapText(page);
+  await expectNianzhuangCameraStaysTactical(page);
+  await expectNianzhuangNoLargeDarkOverlayBlocks(page);
+  await expectNianzhuangPursuitUnitsStayInCameraCore(page);
+  await expectNianzhuangPursuitUnitsAttachToRouteHeads(page);
   await expectNianzhuangNoResultSpoilers(page);
   await expectNianzhuangCompletedLabelsHidden(page);
   await expectNianzhuangMapFocus(page, "nianzhuangPursuit");
@@ -5635,7 +5901,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     page,
     ["huang-nianzhuang-defense-ring", "pla-west-trench-approach", "pla-north-trench-approach", "pla-east-trench-approach"],
     0.34,
-    0.46
+    0.36
   );
   await expectRouteVisibleWithUnit(page, "pla-artillery-zhoujiazhai");
   for (const routeId of ["pla-west-trench-approach", "pla-north-trench-approach", "pla-south-trench-approach", "pla-east-trench-approach"]) {
@@ -5703,7 +5969,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     page,
     ".nianzhuang-battle",
     ["huang-inner-recoil", "huang-north-fragment-recoil", "huang-east-fragment-recoil", "huang-south-fragment-recoil"],
-    0.2,
+    0.18,
     0.32
   );
   await jumpNianzhuangTimelineTo(page, "1948-11-19T23:30");
@@ -5742,7 +6008,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     page,
     ["pla-second-wall-west", "pla-second-wall-north", "pla-second-wall-south", "pla-second-wall-east", "huang-final-core-defense"],
     0.18,
-    0.28
+    0.22
   );
   await expectNianzhuangFinalCoreDefense(page);
   await expectNianzhuangFragmentedSecondDefense(page);
@@ -5833,7 +6099,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
       "pla-remnant-mop-up-south",
       "pla-remnant-mop-up-west"
     ],
-    0.18,
+    0.16,
     0.24
   );
 

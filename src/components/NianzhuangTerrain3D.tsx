@@ -96,10 +96,10 @@ type OverlayGeometry = {
 };
 
 const nianzhuangTerrainCanvasTestId = "nianzhuang-terrain-3d-canvas";
-const nianzhuangSourceBounds: [number, number, number, number] = [117.16, 34.07, 118.08, 34.42];
+const nianzhuangSourceBounds: [number, number, number, number] = [117.16, 34.07, 118.42, 34.452];
 const nianzhuangBounds: [[number, number], [number, number]] = [
   [117.16, 34.07],
-  [118.08, 34.42]
+  [118.42, 34.452]
 ];
 const terrainTileUrl = "/assets/maps/nianzhuang-real-terrain/terrarium/{z}/{x}-{y}.png";
 const cachedTerrainTileZoom = 13;
@@ -109,9 +109,18 @@ const hillshadeExaggeration = 0.1;
 const tacticalCameraBearing = -18;
 const tacticalCameraPitch = 48;
 const cameraTransitionDurationMs = 1050;
+const nianzhuangBaseMapScale = 0.86;
 const sceneTransitionMinimumOpacity = 0.08;
 const sceneTransitionExitingOpacity = 0.84;
 const sceneTransitionProgress = 0.006;
+const stageCameraZooms: Record<string, number> = {
+  nianzhuangBreakthrough: 10.62,
+  nianzhuangCompression: 10.68,
+  nianzhuangFinal: 10.6,
+  nianzhuangPocket: 10.48,
+  nianzhuangPursuit: 10.3,
+  nianzhuangRelief: 10.36
+};
 
 const historicalBaseBounds: TacticalPoint[] = [
   [nianzhuangSourceBounds[0], nianzhuangSourceBounds[1]],
@@ -506,24 +515,47 @@ function routeSpan(points: TacticalPoint[]) {
 function stableZoomForRouteSpan(points: TacticalPoint[]) {
   const span = routeSpan(points);
   if (span <= 0.1) {
-    return 13.05;
+    return 11.65;
   }
   if (span <= 0.16) {
-    return 12.75;
+    return 11.55;
   }
   if (span <= 0.24) {
-    return 12.35;
+    return 11.4;
   }
   if (span <= 0.42) {
-    return 11.95;
+    return 11.2;
   }
-  return 11.35;
+  return 10.95;
+}
+
+function stableZoomForFocus(currentFocus: string, focusRoutePoints: TacticalPoint[]) {
+  return stageCameraZooms[currentFocus] ?? stableZoomForRouteSpan(focusRoutePoints);
+}
+
+function cameraCenterBoundsForFocus(currentFocus: string) {
+  if (currentFocus === "nianzhuangPursuit") {
+    return {
+      east: 118.34,
+      north: 34.43,
+      south: 34.16,
+      west: 117.84
+    };
+  }
+
+  return {
+    east: 118.03,
+    north: 34.4,
+    south: 34.09,
+    west: 117.22
+  };
 }
 
 function cameraForMapView(
   mapView: { scale: number; x: number; y: number },
   mapBaseView: { scale: number; x: number; y: number },
-  focusRoutePoints: TacticalPoint[]
+  focusRoutePoints: TacticalPoint[],
+  currentFocus: string
 ) {
   const longitudes = focusRoutePoints.map((point) => point[0]);
   const latitudes = focusRoutePoints.map((point) => point[1]);
@@ -534,15 +566,17 @@ function cameraForMapView(
   const userPanX = mapView.x - mapBaseView.x;
   const userPanY = mapView.y - mapBaseView.y;
   const userZoomDelta = mapView.scale - mapBaseView.scale;
+  const stageZoom = stableZoomForFocus(currentFocus, focusRoutePoints);
+  const cameraCenterBounds = cameraCenterBoundsForFocus(currentFocus);
 
   return {
     bearing: tacticalCameraBearing,
     center: [
-      Math.max(117.22, Math.min(118.03, fittedCenter[0] - userPanX / 11000 / Math.max(mapView.scale, 0.1))),
-      Math.max(34.09, Math.min(34.4, fittedCenter[1] + userPanY / 14500 / Math.max(mapView.scale, 0.1)))
+      Math.max(cameraCenterBounds.west, Math.min(cameraCenterBounds.east, fittedCenter[0] - userPanX / 11000 / Math.max(mapView.scale, 0.1))),
+      Math.max(cameraCenterBounds.south, Math.min(cameraCenterBounds.north, fittedCenter[1] + userPanY / 14500 / Math.max(mapView.scale, 0.1)))
     ] as TacticalPoint,
     pitch: tacticalCameraPitch,
-    zoom: Math.max(10.9, Math.min(13.45, stableZoomForRouteSpan(focusRoutePoints) + (mapBaseView.scale - 0.86) * 0.42 + userZoomDelta * 1.38))
+    zoom: Math.max(9.95, Math.min(11.05, stageZoom + (mapBaseView.scale - nianzhuangBaseMapScale) * 0.16 + userZoomDelta * 0.66))
   };
 }
 
@@ -866,14 +900,12 @@ function OverlayFormation({ activeAnchors, formation }: { activeAnchors: Set<str
 function OverlayRouteUnit({
   formationUnit,
   line,
-  markerPoint,
   routeDirection,
   routePoints,
   routeProgress
 }: {
   formationUnit: FormationUnit;
   line: FrontLine;
-  markerPoint: TacticalPoint;
   routeDirection: { x: number; y: number };
   routePoints: TacticalPoint[];
   routeProgress: number;
@@ -886,13 +918,14 @@ function OverlayRouteUnit({
         point: routeLocalOffset(formationUnit.coordinates, routeDirection, formationUnit.offset ?? [0, 0]),
         routeProgress
       }
-    : formationUnitPlacement(routePoints, routeProgress, formationUnit.offset ?? [0, 0], 0.7);
+    : formationUnitPlacement(routePoints, 1, formationUnit.offset ?? [0, 0], 0.7);
 
   return (
     <g
       className={`unit-icon-orientation formation-unit has-force-echelon ${formationUnit.className ?? ""}`}
       data-facing-x={placement.facingX}
       data-route-progress={routeProgress.toFixed(4)}
+      data-unit-route-progress={placement.routeProgress.toFixed(4)}
       data-ship-label={formationUnit.label}
       data-testid={`formation-unit-${line.id}-${formationUnit.id}`}
       transform={`translate(${placement.point[0]} ${placement.point[1]})`}
@@ -915,7 +948,8 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
   }
   const routePath = buildPath(visiblePoints);
   const routeStateClass = active ? "is-active" : isComplete ? "is-complete" : "is-forming";
-  const routeDirection = routeDirectionVector(visiblePoints, routeProgress);
+  const visibleRouteProgress = active ? 1 : routeProgress;
+  const routeDirection = routeDirectionVector(visiblePoints, visibleRouteProgress);
   const formationRoutePoints = routeState.line.formationPrelude ? [...routeState.line.formationPrelude, ...visiblePoints] : visiblePoints;
   const formationUnits =
     line.formationUnits && line.formationUnits.length > 0
@@ -963,7 +997,6 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
               key={formationUnit.id}
               formationUnit={formationUnit}
               line={line}
-              markerPoint={markerPoint}
               routeDirection={routeDirection}
               routePoints={formationRoutePoints}
               routeProgress={routeProgress}
@@ -1300,7 +1333,7 @@ export function NianzhuangTerrain3D({
     if (!container) {
       return;
     }
-    const initialCamera = cameraForMapView(mapView, mapBaseView, focusRoutePoints);
+    const initialCamera = cameraForMapView(mapView, mapBaseView, focusRoutePoints, currentFocus);
     const map = new maplibregl.Map({
       attributionControl: false,
       bearing: initialCamera.bearing,
@@ -1319,7 +1352,7 @@ export function NianzhuangTerrain3D({
       maxBounds: nianzhuangBounds,
       maxPitch: 62,
       maxZoom: 13.5,
-      minZoom: 10.4,
+      minZoom: 9.85,
       pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
       pitch: initialCamera.pitch,
       refreshExpiredTiles: false,
@@ -1375,7 +1408,7 @@ export function NianzhuangTerrain3D({
     }
     const focusChanged = lastFocusRef.current !== currentFocus;
     lastFocusRef.current = currentFocus;
-    const camera = cameraForMapView(focusChanged ? mapBaseView : mapView, mapBaseView, focusRoutePoints);
+    const camera = cameraForMapView(focusChanged ? mapBaseView : mapView, mapBaseView, focusRoutePoints, currentFocus);
     if (focusChanged) {
       map.easeTo({
         ...camera,
@@ -1403,6 +1436,7 @@ export function NianzhuangTerrain3D({
       data-camera-mode="stable-tactical-stages"
       data-camera-pitch={`${tacticalCameraPitch}`}
       data-camera-transition-ms={`${cameraTransitionDurationMs}`}
+      data-camera-zoom-policy="stage-fixed-tactical-overview"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-modern-imagery-visible="false"
       data-projection="webgl-gis-terrain"
