@@ -47,6 +47,8 @@
 - 原私有工作区曾用 macOS LaunchAgent 常驻运行生产预览。
 - 开源仓库默认不附带本机服务文件；如需常驻运行，可按 `animation-assistant` skill 的通用运行章节自行创建。
 - 推荐使用 `npm run preview` 服务生产构建产物，并用 `lsof`、`curl -I` 或浏览器 smoke 验证。
+- macOS LaunchAgent 不要直接从 `Desktop`、`Downloads` 等受 TCC 保护目录设置 `WorkingDirectory` 或读取构建产物；先把 `dist` 发布到 `~/Library/Application Support/<app>`，日志写到 `~/Library/Logs/<app>`，再让 LaunchAgent 服务发布目录。
+- 自建静态服务要覆盖音频 MIME：`.mp3` 返回 `audio/mpeg`，`.ogg` 和 `.oga` 返回 `audio/ogg`。常驻服务验证要包含代表性音乐/SFX 的 `HEAD`，不能只测首页 HTML。
 
 ## 稳定工作法
 

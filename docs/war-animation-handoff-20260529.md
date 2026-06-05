@@ -300,6 +300,8 @@ git diff --check
 - `huang-nianzhuang-defense-ring` 的 `visibleUntil` 是 `22:29`，但 `unitVisibleUntil` 是 `22:30`，这是为了数据交接不断，同时不让完整大圈在 22:30 覆盖碎裂画面。
 - `pla-remnant-mop-up-*` 的单位窗口到 `1948-11-22T16:20`，接 `pla-nizhuang-pursuit`。不要把它们提前关掉。
 - `logs/` 是未跟踪运行产物，默认不要提交。
+- macOS LaunchAgent 不要直接把 `WorkingDirectory` 指到 `/Users/asukarei/Desktop/war-animation-lab-oss`，后台进程会因桌面目录权限报 `Operation not permitted`，表现为 5177 间歇性断线或 `EX_CONFIG`。常驻预览必须先发布到 `~/Library/Application Support/war-animation-lab-oss`，日志写到 `~/Library/Logs/war-animation-lab`。
+- 常驻静态服务不能只验证首页 `200 OK`。音乐和音效资源也要用 HEAD 检查 `content-type` 与 `content-length`；例如 `.oga` 必须返回 `audio/ogg`，否则瓜岛等音频门禁会失败。
 
 ## 8. 2026-06-05 视觉门禁补充
 
@@ -366,6 +368,14 @@ FRONTEND_URL=http://127.0.0.1:5177 npm run test:smoke
 
 ```bash
 lsof -iTCP:5177 -sTCP:LISTEN || true
+```
+
+稳定常驻预览：
+
+```bash
+npm run preview:local
+launchctl print gui/$(id -u)/com.asukarei.war-animation-lab-5177
+curl -I http://127.0.0.1:5177/
 ```
 
 提交前：

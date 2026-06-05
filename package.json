@@ -8,6 +8,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "serve:dist": "node scripts/serve-dist.mjs",
+    "preview:local": "node scripts/deploy-local-preview.mjs",
     "test:smoke": "playwright test"
   },
   "dependencies": {
