@@ -1734,8 +1734,8 @@ h1 {
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .map-point text,
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .active-event-label {
-  font-size: 17px;
-  stroke-width: 3.5px;
+  font-size: 14px;
+  stroke-width: 3px;
 }
 
 .nianzhuang-battle.cinematic-mode .map-stage {
@@ -1977,8 +1977,9 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .tactical-terrain-label {
-  font-size: 14px;
-  stroke-width: 3px;
+  font-size: 12px;
+  opacity: 0.72;
+  stroke-width: 2.5px;
 }
 
 .nianzhuang-battle .fortified-line-layer {
@@ -2069,8 +2070,8 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .fortified-line text {
-  font-size: 15px;
-  stroke-width: 3px;
+  font-size: 13px;
+  stroke-width: 2.7px;
 }
 
 .nianzhuang-battle .nianzhuang-formation-layer {
@@ -2231,7 +2232,7 @@ h1 {
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .river text {
   fill: rgba(38, 82, 98, 0.62);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0;
   paint-order: stroke;
@@ -2290,9 +2291,9 @@ h1 {
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .terrain-label,
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .region-labels text {
   fill: rgba(64, 47, 24, 0.5);
-  font-size: 16px;
+  font-size: 12px;
   stroke: rgba(235, 220, 178, 0.62);
-  stroke-width: 3.5px;
+  stroke-width: 2.5px;
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .region-labels text {
@@ -2301,7 +2302,7 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .region-labels text.terrain-label {
-  font-size: 16px;
+  font-size: 12px;
 }
 
 .nianzhuang-battle .wind-overlay.rail-overlay path {
@@ -2324,8 +2325,8 @@ h1 {
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .wind-overlay.rail-overlay text,
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .annotation-marker text {
-  font-size: 15px;
-  stroke-width: 3px;
+  font-size: 12px;
+  stroke-width: 2.6px;
 }
 
 .nianzhuang-battle .annotation-marker circle {
@@ -2343,7 +2344,7 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .annotation-subtitle {
-  font-size: 11px;
+  font-size: 9.5px;
   stroke-width: 2px;
 }
 
@@ -2396,7 +2397,7 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .destruction-site-marker .annotation-subtitle {
-  font-size: 12px;
+  font-size: 10px;
   stroke-width: 2px;
 }
 
@@ -2435,8 +2436,8 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .line-label {
-  font-size: 13px;
-  stroke-width: 3px;
+  font-size: 11px;
+  stroke-width: 2.5px;
 }
 
 .nianzhuang-battle .front-line.is-complete .line-label {
@@ -2450,9 +2451,9 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .formation-unit-label {
-  font-size: 16px;
-  stroke-width: 2.5px;
-  transform: translateY(-24px);
+  font-size: 11px;
+  stroke-width: 2px;
+  transform: translateY(-20px);
 }
 
 .nianzhuang-battle .battle-salvo-effect.nianzhuang-fragment-impact .salvo-label,
@@ -2469,8 +2470,8 @@ h1 {
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .battle-salvo-effect[data-testid="nianzhuang-effect-first-line"] .salvo-label,
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .battle-salvo-effect[data-testid="nianzhuang-effect-final-pocket"] .salvo-label,
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .battle-salvo-effect[data-testid="nianzhuang-effect-remnant-village"] .salvo-label {
-  font-size: 14px;
-  stroke-width: 3px;
+  font-size: 11px;
+  stroke-width: 2.5px;
 }
 
 .nianzhuang-battle .unit-marker-communist {
@@ -2610,7 +2611,8 @@ h1 {
 .nianzhuang-battle .map-legend {
   top: 56px;
   right: 16px;
-  max-width: min(460px, calc(100% - 360px));
+  justify-content: flex-end;
+  max-width: min(420px, calc(100% - 420px));
   min-height: 0;
   padding: 6px 10px;
   border-color: rgba(86, 63, 32, 0.22);
@@ -2621,7 +2623,7 @@ h1 {
 
 .nianzhuang-battle .map-legend span {
   color: #3a2717;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   line-height: 1.1;
 }
 

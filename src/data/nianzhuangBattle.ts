@@ -2315,6 +2315,7 @@ export const mapOverlays: MapOverlayElement[] = [
     from: [117.18, 34.262],
     to: [118.36, 34.36],
     className: "rail-overlay",
+    visibleUntil: "1948-11-19T10:00",
     testId: "nianzhuang-longhai-rail"
   },
   {
@@ -2324,6 +2325,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "先头试突后被反压回大许家外缘",
     coordinates: [117.555, 34.315],
     revealAt: "1948-11-13T18:00",
+    visibleUntil: "1948-11-15T02:00",
     className: "tactical-callout-marker relief-depth-callout",
     testId: "nianzhuang-relief-block-note"
   },
@@ -2333,6 +2335,7 @@ export const mapOverlays: MapOverlayElement[] = [
     label: "纵横壕沟近迫",
     coordinates: [117.82, 34.255],
     revealAt: "1948-11-15T02:00",
+    visibleUntil: "1948-11-15T20:00",
     testId: "nianzhuang-trench-note"
   },
   {
@@ -2342,6 +2345,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "一线村落、二道围墙、内圩核心",
     coordinates: [117.875, 34.365],
     revealAt: "1948-11-10T20:00",
+    visibleUntil: "1948-11-13T06:00",
     className: "tactical-callout-marker echelon-callout",
     testId: "nianzhuang-force-scale-note"
   },
@@ -2352,6 +2356,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "100军与13纵围绕彭庄壕线反复争夺",
     coordinates: [117.792, 34.316],
     revealAt: "1948-11-15T18:00",
+    visibleUntil: "1948-11-17T08:00",
     className: "tactical-callout-marker tug-of-war-callout",
     testId: "nianzhuang-west-tug-note"
   },
@@ -2362,6 +2367,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "64军短促外突，8纵沿水沟再压回",
     coordinates: [117.938, 34.318],
     revealAt: "1948-11-17T08:00",
+    visibleUntil: "1948-11-18T12:00",
     className: "tactical-callout-marker tug-of-war-callout",
     testId: "nianzhuang-east-tug-note"
   },
@@ -2371,6 +2377,7 @@ export const mapOverlays: MapOverlayElement[] = [
     label: "华野5个纵队四面向心突击",
     coordinates: [117.69, 34.37],
     revealAt: "1948-11-19T10:00",
+    visibleUntil: "1948-11-19T21:15",
     className: "tactical-callout-marker assault-callout",
     testId: "nianzhuang-assault-axis-note"
   },
@@ -2381,6 +2388,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "突破线、二道线和守军回缩线同步显示",
     coordinates: [117.872, 34.322],
     revealAt: "1948-11-19T22:30",
+    visibleUntil: "1948-11-20T00:30",
     className: "tactical-callout-marker tug-of-war-callout",
     testId: "nianzhuang-night-breakthrough-note"
   },
@@ -2391,6 +2399,7 @@ export const mapOverlays: MapOverlayElement[] = [
     subtitle: "北侧、南侧残部外突后被反压回据点",
     coordinates: [117.93, 34.264],
     revealAt: "1948-11-21T12:00",
+    visibleUntil: "1948-11-21T22:00",
     className: "tactical-callout-marker tug-of-war-callout",
     testId: "nianzhuang-remnant-tug-note"
   },

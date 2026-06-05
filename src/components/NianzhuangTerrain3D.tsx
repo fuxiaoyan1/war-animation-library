@@ -114,13 +114,18 @@ const sceneTransitionMinimumOpacity = 0.08;
 const sceneTransitionExitingOpacity = 0.84;
 const sceneTransitionProgress = 0.006;
 const stageCameraZooms: Record<string, number> = {
-  nianzhuangBreakthrough: 10.44,
-  nianzhuangCompression: 10.48,
-  nianzhuangFinal: 10.44,
-  nianzhuangPocket: 10.38,
+  nianzhuangBreakthrough: 10.36,
+  nianzhuangCompression: 10.38,
+  nianzhuangFinal: 10.34,
+  nianzhuangPocket: 10.32,
   nianzhuangPursuit: 10.28,
   nianzhuangRelief: 10.22
 };
+
+const alwaysLabeledPointIds = new Set(["xuzhou", "daxujia", "nianzhuang", "xinanzhen", "yunhe", "zhoujiazhai", "nizhuang", "inner-pocket"]);
+const denseAssaultStart = "1948-11-19T10:00";
+const majorFieldworkLabelIds = new Set(["pla-encirclement", "outer-defense", "second-defense", "final-core"]);
+const quietPointKinds = new Set(["front"]);
 
 const historicalBaseBounds: TacticalPoint[] = [
   [nianzhuangSourceBounds[0], nianzhuangSourceBounds[1]],
@@ -507,6 +512,30 @@ function activeAnchorIds(routeStates: NianzhuangRouteState[]) {
   );
 }
 
+function shouldShowMapPointLabel(point: OverlayGeometry["mapPoints"][number], activeAnchors: Set<string>, progress: number, dateToProgress: (date: string) => number) {
+  if (alwaysLabeledPointIds.has(point.id)) {
+    return true;
+  }
+  if (progress >= dateToProgress(denseAssaultStart) && quietPointKinds.has(point.kind)) {
+    return false;
+  }
+  if (activeAnchors.has(point.id)) {
+    return true;
+  }
+  return !quietPointKinds.has(point.kind);
+}
+
+function shouldShowFormationLabel(formation: OverlayGeometry["formations"][number], activeAnchors: Set<string>) {
+  if (formation.kind === "command-post") {
+    return true;
+  }
+  return [formation.id, ...(formation.anchorIds ?? [])].some((anchor) => activeAnchors.has(anchor));
+}
+
+function shouldShowRouteLabel(routeState: ProjectedRouteState) {
+  return routeState.active && routeState.line.id.startsWith("xuzhou-relief");
+}
+
 function isFormationVisible(formation: NianzhuangTacticalFormation, progress: number, dateToProgress: (date: string) => number) {
   const start = dateToProgress(formation.start);
   const end = formation.end ? dateToProgress(formation.end) : 1;
@@ -739,7 +768,7 @@ function computeOverlayGeometry({
     })),
     mapOverlays: mapOverlays
       .filter((overlay) => {
-        const visibility = sceneElementVisibility(progress, overlay.revealAt ? dateToProgress(overlay.revealAt) : 0, Number.POSITIVE_INFINITY);
+        const visibility = sceneElementVisibility(progress, overlay.revealAt ? dateToProgress(overlay.revealAt) : 0, overlay.visibleUntil ? dateToProgress(overlay.visibleUntil) : Number.POSITIVE_INFINITY);
         return visibility.isDrawn;
       })
       .map((overlay) =>
@@ -810,6 +839,8 @@ function computeOverlayGeometry({
 function OverlayFieldwork({ activeAnchors, dateToProgress, fieldwork, progress }: { activeAnchors: Set<string>; dateToProgress: (date: string) => number; fieldwork: OverlayGeometry["fieldworks"][number]; progress: number }) {
   const visibility = sceneElementVisibility(progress, fieldwork.revealAt ? dateToProgress(fieldwork.revealAt) : 0, fieldwork.visibleUntil ? dateToProgress(fieldwork.visibleUntil) : Number.POSITIVE_INFINITY);
   const isActiveAnchor = activeAnchors.has(fieldwork.id);
+  const isDenseAssaultStage = progress >= dateToProgress(denseAssaultStart);
+  const shouldShowLabel = Boolean(fieldwork.labelPoint) && (majorFieldworkLabelIds.has(fieldwork.id) || (isActiveAnchor && !isDenseAssaultStage));
   const points = fieldwork.points;
   const midpoints = points.slice(0, -1).map((point, index) => midpoint(point, points[index + 1]));
   const isBroken = fieldwork.className?.includes("breach") || fieldwork.id.includes("fragment") || fieldwork.id.includes("break");
@@ -845,7 +876,7 @@ function OverlayFieldwork({ activeAnchors, dateToProgress, fieldwork, progress }
             <path d="M -9 -8 L 0 0 L -7 8 M 5 -9 L -1 0 L 8 8" />
           </g>
         ))}
-      {fieldwork.labelPoint && (
+      {shouldShowLabel && fieldwork.labelPoint && (
         <text x={fieldwork.labelPoint[0]} y={fieldwork.labelPoint[1] - 10}>
           {fieldwork.label}
         </text>
@@ -898,7 +929,7 @@ function OverlayFormation({ activeAnchors, formation }: { activeAnchors: Set<str
             </g>
           );
         })}
-      {formation.labelPoint && (
+      {formation.labelPoint && shouldShowFormationLabel(formation, activeAnchors) && (
         <text x={formation.labelPoint[0]} y={formation.labelPoint[1] - 12}>
           {formation.label}
         </text>
@@ -1014,7 +1045,7 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
           ))}
         </g>
       )}
-      {labelPoint && active && (
+      {labelPoint && shouldShowRouteLabel(routeState) && (
         <text className="line-label" x={labelPoint[0] + 14} y={labelPoint[1] - 14}>
           {line.label}
         </text>
@@ -1027,6 +1058,7 @@ function OverlayTerrainFeature({ activeAnchors, dateToProgress, feature, progres
   const visibility = sceneElementVisibility(progress, feature.revealAt ? dateToProgress(feature.revealAt) : 0, feature.visibleUntil ? dateToProgress(feature.visibleUntil) : Number.POSITIVE_INFINITY);
   const anchorIds = [feature.id, ...(feature.anchorIds ?? [])];
   const isActiveAnchor = anchorIds.some((anchor) => activeAnchors.has(anchor));
+  const shouldShowLabel = Boolean(feature.label && feature.labelPoint) && (isActiveAnchor || progress < dateToProgress(denseAssaultStart));
   const path = `${buildPath(feature.points)}${feature.type === "area" ? " Z" : ""}`;
   const isRaisedArea = feature.type === "area" && (feature.kind === "relief" || feature.kind === "village");
   return (
@@ -1045,7 +1077,7 @@ function OverlayTerrainFeature({ activeAnchors, dateToProgress, feature, progres
       {feature.type === "line" && <path className="tactical-terrain-contour-step" d={path} />}
       <path className="tactical-terrain-surface" d={path} />
       <path className="tactical-terrain-highlight" d={path} />
-      {feature.label && feature.labelPoint && (
+      {shouldShowLabel && feature.labelPoint && (
         <text className="tactical-terrain-label" x={feature.labelPoint[0]} y={feature.labelPoint[1]}>
           {feature.label}
         </text>
@@ -1085,6 +1117,7 @@ function NianzhuangTacticalOverlay({
   geometry: OverlayGeometry;
   progress: number;
 }) {
+  const isDenseAssaultStage = progress >= dateToProgress(denseAssaultStart);
   return (
     <svg className="nianzhuang-maplibre-tactical-overlay" data-testid="nianzhuang-maplibre-tactical-overlay" data-projection="maplibre-real-terrain" aria-hidden="true">
       <g className="tactical-grid-layer" data-testid="tactical-grid-layer">
@@ -1105,7 +1138,7 @@ function NianzhuangTacticalOverlay({
           <g key={river.id} className={`river river-${river.id}`}>
             <path className="nianzhuang-river-bank" d={buildPath(river.points)} />
             <path className="nianzhuang-river-water" d={buildPath(river.points)} />
-            {river.labelPoint && (
+            {river.labelPoint && !isDenseAssaultStage && (
               <text x={river.labelPoint[0] + 10} y={river.labelPoint[1] - 8}>
                 {river.label}
               </text>
@@ -1117,11 +1150,6 @@ function NianzhuangTacticalOverlay({
         {geometry.historicalRegions.map((region) => (
           <g key={region.id} className="historical-region-group">
             <path className={`historical-region historical-region-${region.id} ${region.className ?? ""}`} data-testid={`historical-region-${region.id}`} d={`${buildPath(region.points)} Z`} />
-            {region.labelPoint && (
-              <text className={`historical-region-name historical-region-name-${region.id}`} data-testid={`historical-region-label-${region.id}`} x={region.labelPoint[0]} y={region.labelPoint[1]}>
-                {region.label}
-              </text>
-            )}
           </g>
         ))}
       </g>
@@ -1132,9 +1160,11 @@ function NianzhuangTacticalOverlay({
             zone.labelPoint && (
               <g key={zone.label} className={zone.className}>
                 <ellipse cx={zone.point[0]} cy={zone.point[1]} rx={zone.rx} ry={zone.ry} />
-                <text className="terrain-label" x={zone.labelPoint[0]} y={zone.labelPoint[1]}>
-                  {zone.label}
-                </text>
+                {!isDenseAssaultStage && (
+                  <text className="terrain-label" x={zone.labelPoint[0]} y={zone.labelPoint[1]}>
+                    {zone.label}
+                  </text>
+                )}
               </g>
             )
         )}
@@ -1192,15 +1222,19 @@ function NianzhuangTacticalOverlay({
       </g>
       <g className="nianzhuang-points">
         {geometry.mapPoints.map(
-          (point) =>
-            point.point && (
-              <g key={point.id} className={`map-point point-${point.kind}`} data-testid={`map-point-${point.id}`}>
+          (point) => {
+            const showLabel = shouldShowMapPointLabel(point, activeAnchors, progress, dateToProgress);
+            return point.point && (
+              <g key={point.id} className={`map-point point-${point.kind}`} data-label-visible={showLabel ? "true" : "false"} data-route-anchor={activeAnchors.has(point.id) ? "true" : "false"} data-testid={`map-point-${point.id}`}>
                 <circle cx={point.point[0]} cy={point.point[1]} r={point.kind === "objective" ? 5.2 : 3.4} />
-                <text x={point.point[0] + 8} y={point.point[1] + 4}>
-                  {point.label}
-                </text>
+                {showLabel && (
+                  <text x={point.point[0] + 8} y={point.point[1] + 4}>
+                    {point.label}
+                  </text>
+                )}
               </g>
-            )
+            );
+          }
         )}
       </g>
       <g className="event-pin-layer">

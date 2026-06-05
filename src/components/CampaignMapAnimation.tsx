@@ -74,6 +74,7 @@ export type MapOverlayElement =
       revealAt?: string;
       testId?: string;
       type: "wind";
+      visibleUntil?: string;
       from: [number, number];
       to: [number, number];
     }
@@ -85,6 +86,7 @@ export type MapOverlayElement =
       subtitle?: string;
       testId?: string;
       type: "marker";
+      visibleUntil?: string;
       coordinates: [number, number];
     };
 

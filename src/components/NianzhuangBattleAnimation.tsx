@@ -625,10 +625,10 @@ export function NianzhuangBattleAnimation() {
           )}
 
           <div className="map-legend" aria-label="图例">
-            <span className="legend-germany">华东野战军</span>
-            <span className="legend-allies">国民党军</span>
-            <span className="legend-evacuation">追击 / 围歼 / 阻援 / 对壕攻坚</span>
-            <span className="legend-event">关键事件</span>
+            <span className="legend-germany">华野</span>
+            <span className="legend-allies">国军</span>
+            <span className="legend-evacuation">行动线</span>
+            <span className="legend-event">事件</span>
           </div>
 
           <div className="outcome-panel" data-testid="outcome-panel">
