@@ -55,6 +55,7 @@ type NianzhuangCameraStage = {
   center: [number, number];
   focusRoutePoints: Array<[number, number]>;
   scale: number;
+  terrainZoom: number;
 };
 
 type NianzhuangFocusState = {
@@ -75,7 +76,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [118.4, 34.452],
       [117.82, 34.405]
     ],
-    scale: 0.9
+    scale: 0.86,
+    terrainZoom: 10.28
   },
   nianzhuangPocket: {
     center: [117.84, 34.292],
@@ -85,7 +87,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [118.02, 34.405],
       [117.68, 34.405]
     ],
-    scale: 0.92
+    scale: 0.98,
+    terrainZoom: 10.6
   },
   nianzhuangRelief: {
     center: [117.55, 34.275],
@@ -95,7 +98,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [117.8, 34.42],
       [117.16, 34.42]
     ],
-    scale: 0.9
+    scale: 0.86,
+    terrainZoom: 10.24
   },
   nianzhuangBreakthrough: {
     center: [117.86, 34.286],
@@ -105,7 +109,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [117.975, 34.365],
       [117.73, 34.365]
     ],
-    scale: 0.98
+    scale: 0.98,
+    terrainZoom: 10.62
   },
   nianzhuangCompression: {
     center: [117.875, 34.292],
@@ -115,7 +120,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [117.95, 34.345],
       [117.79, 34.345]
     ],
-    scale: 1.04
+    scale: 1.0,
+    terrainZoom: 10.64
   },
   nianzhuangFinal: {
     center: [117.91, 34.286],
@@ -125,7 +131,8 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [118.0, 34.36],
       [117.82, 34.36]
     ],
-    scale: 1.0
+    scale: 0.98,
+    terrainZoom: 10.58
   }
 };
 
@@ -227,6 +234,24 @@ function mapViewForStage(stage: NianzhuangCameraStage): MapView {
     scale,
     x: nianzhuangViewportCenterX - focusX * scale,
     y: nianzhuangViewportCenterY - focusY * scale
+  };
+}
+
+function interpolatePoint(from: [number, number], to: [number, number], ratio: number) {
+  return [from[0] + (to[0] - from[0]) * ratio, from[1] + (to[1] - from[1]) * ratio] as [number, number];
+}
+
+function interpolateCameraStage(fromStage: NianzhuangCameraStage, toStage: NianzhuangCameraStage, ratio: number): NianzhuangCameraStage {
+  const maxFocusPointCount = Math.max(fromStage.focusRoutePoints.length, toStage.focusRoutePoints.length);
+  return {
+    center: interpolatePoint(fromStage.center, toStage.center, ratio),
+    focusRoutePoints: Array.from({ length: maxFocusPointCount }, (_, index) => {
+      const fromPoint = fromStage.focusRoutePoints[index] ?? fromStage.focusRoutePoints.at(-1) ?? fromStage.center;
+      const toPoint = toStage.focusRoutePoints[index] ?? toStage.focusRoutePoints.at(-1) ?? toStage.center;
+      return interpolatePoint(fromPoint, toPoint, ratio);
+    }),
+    scale: fromStage.scale + (toStage.scale - fromStage.scale) * ratio,
+    terrainZoom: fromStage.terrainZoom + (toStage.terrainZoom - fromStage.terrainZoom) * ratio
   };
 }
 
@@ -335,8 +360,14 @@ export function NianzhuangBattleAnimation() {
   const currentTimeCounter = Math.max(1, Math.round(timeline.displayDaysAtProgress(progress)) + 1);
   const focusState = useMemo(() => focusTransitionState(progress), [progress]);
   const currentFocus = focusState.focus;
-  const activeStage = nianzhuangCameraStages[currentFocus];
-  const activeMapView = useMemo(() => mapViewForStage(activeStage), [currentFocus]);
+  const activeStage = useMemo(() => {
+    const targetStage = nianzhuangCameraStages[currentFocus];
+    if (!focusState.isTransitioning) {
+      return targetStage;
+    }
+    return interpolateCameraStage(nianzhuangCameraStages[focusState.fromFocus], targetStage, focusState.ratio);
+  }, [currentFocus, focusState.fromFocus, focusState.isTransitioning, focusState.ratio]);
+  const activeMapView = useMemo(() => mapViewForStage(activeStage), [activeStage]);
   const activeRouteIds = useMemo(() => new Set(activeEvent.mapFocus), [activeEvent.mapFocus]);
   const routeStates = useMemo<NianzhuangRouteState[]>(
     () =>
@@ -357,7 +388,7 @@ export function NianzhuangBattleAnimation() {
     }
 
     const movingPursuitPoints = routeStates
-      .filter((state) => pursuitFollowRouteIds.has(state.line.id) && state.isVisible && state.showUnits)
+      .filter((state) => pursuitFollowRouteIds.has(state.line.id) && state.isRouteVisible && state.isUnitVisible)
       .map((state) => state.markerPoint);
 
     if (movingPursuitPoints.length === 0) {
@@ -376,6 +407,15 @@ export function NianzhuangBattleAnimation() {
 
     return [focusPoint];
   }, [activeStage.center, activeStage.focusRoutePoints, currentFocus, progress, routeStates]);
+  const activeTerrainZoom = useMemo(() => {
+    if (currentFocus !== "nianzhuangPursuit") {
+      return activeStage.terrainZoom;
+    }
+    const pursuitStart = timeline.dateToProgress("1948-11-06T18:00");
+    const pursuitEnd = timeline.dateToProgress("1948-11-10T20:00");
+    const pursuitRatio = Math.min(1, Math.max(0, (progress - pursuitStart) / Math.max(0.001, pursuitEnd - pursuitStart)));
+    return activeStage.terrainZoom + smoothStep((pursuitRatio - 0.38) / 0.62) * 0.22;
+  }, [activeStage.terrainZoom, currentFocus, progress]);
   const effectStates = useMemo(() => visibleBattleEffects(progress), [progress]);
   const activeNarrationCue = narrationCues.find((cue, index) => {
     const start = timeline.dateToProgress(cue.start);
@@ -575,6 +615,7 @@ export function NianzhuangBattleAnimation() {
             mapView={mapView}
             progress={progress}
             routeStates={routeStates}
+            terrainZoom={activeTerrainZoom}
             visibleEffects={effectStates}
           />
 
@@ -596,7 +637,7 @@ export function NianzhuangBattleAnimation() {
               data-focus-transition-ratio={focusState.ratio.toFixed(3)}
               data-map-focus={currentFocus}
               data-projection="maplibre-control-only"
-              data-scene-content-transition-progress="0.006"
+              data-scene-content-transition-progress="0.012"
               data-testid="camera-layer"
               transform={mapTransform}
             />

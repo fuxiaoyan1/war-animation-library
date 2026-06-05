@@ -26,6 +26,9 @@ export type NianzhuangRouteState = {
   active: boolean;
   facingX: HorizontalFacing;
   isComplete: boolean;
+  isRouteRendered: boolean;
+  isRouteVisible: boolean;
+  isUnitVisible: boolean;
   isVisible: boolean;
   labelPoint: TacticalPoint;
   line: FrontLine;
@@ -53,6 +56,7 @@ type NianzhuangTerrain3DProps = {
   mapView: { scale: number; x: number; y: number };
   progress: number;
   routeStates: NianzhuangRouteState[];
+  terrainZoom: number;
   visibleEffects: NianzhuangEffectState[];
 };
 
@@ -112,14 +116,14 @@ const cameraTransitionDurationMs = 1050;
 const nianzhuangBaseMapScale = 0.86;
 const sceneTransitionMinimumOpacity = 0.08;
 const sceneTransitionExitingOpacity = 0.84;
-const sceneTransitionProgress = 0.006;
+const sceneTransitionProgress = 0.012;
 const stageCameraZooms: Record<string, number> = {
-  nianzhuangBreakthrough: 10.36,
-  nianzhuangCompression: 10.38,
-  nianzhuangFinal: 10.34,
-  nianzhuangPocket: 10.32,
-  nianzhuangPursuit: 10.28,
-  nianzhuangRelief: 10.22
+  nianzhuangBreakthrough: 10.44,
+  nianzhuangCompression: 10.5,
+  nianzhuangFinal: 10.42,
+  nianzhuangPocket: 10.31,
+  nianzhuangPursuit: 10.15,
+  nianzhuangRelief: 10.21
 };
 
 const alwaysLabeledPointIds = new Set(["xuzhou", "daxujia", "nianzhuang", "xinanzhen", "yunhe", "zhoujiazhai", "nizhuang", "inner-pocket"]);
@@ -506,7 +510,7 @@ function projectLine(map: maplibregl.Map, points: TacticalPoint[]) {
 function activeAnchorIds(routeStates: NianzhuangRouteState[]) {
   return new Set(
     routeStates
-      .filter((state) => state.isVisible && state.showUnits)
+      .filter((state) => state.isRouteVisible && state.isUnitVisible)
       .flatMap((state) => [state.line.positionAnchor, ...(state.line.positionAnchors ?? []), state.line.from, state.line.to])
       .filter((anchor): anchor is string => Boolean(anchor))
   );
@@ -594,7 +598,8 @@ function cameraForMapView(
   mapView: { scale: number; x: number; y: number },
   mapBaseView: { scale: number; x: number; y: number },
   focusRoutePoints: TacticalPoint[],
-  currentFocus: string
+  currentFocus: string,
+  terrainZoom?: number
 ) {
   const longitudes = focusRoutePoints.map((point) => point[0]);
   const latitudes = focusRoutePoints.map((point) => point[1]);
@@ -605,7 +610,7 @@ function cameraForMapView(
   const userPanX = mapView.x - mapBaseView.x;
   const userPanY = mapView.y - mapBaseView.y;
   const userZoomDelta = mapView.scale - mapBaseView.scale;
-  const stageZoom = stableZoomForFocus(currentFocus, focusRoutePoints);
+  const stageZoom = terrainZoom ?? stableZoomForFocus(currentFocus, focusRoutePoints);
   const cameraCenterBounds = cameraCenterBoundsForFocus(currentFocus);
 
   return {
@@ -983,7 +988,7 @@ function OverlayRouteUnit({
 }
 
 function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
-  const { active, isComplete, isVisible, labelPoint, line, markerPoint, routeProgress, sceneOpacity, scenePhase, showUnits, unitOpacity, visiblePoints } = routeState;
+  const { active, isComplete, isRouteRendered, isRouteVisible, isUnitVisible, isVisible, labelPoint, line, markerPoint, routeProgress, sceneOpacity, scenePhase, showUnits, unitOpacity, visiblePoints } = routeState;
   if (!isVisible || visiblePoints.length < 2 || !markerPoint) {
     return null;
   }
@@ -1018,19 +1023,25 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
       data-route-start={line.start}
       data-route-state={routeStateClass}
       data-route-to={line.to}
+      data-route-rendered={isRouteRendered ? "true" : "false"}
+      data-route-visible={isRouteVisible ? "true" : "false"}
       data-route-visible-from={line.visibleFrom ?? ""}
       data-route-visible-until={line.visibleUntil ?? ""}
       data-scene-transition-opacity={sceneOpacity.toFixed(3)}
       data-scene-transition-phase={scenePhase}
       data-unit-transition-opacity={unitOpacity.toFixed(3)}
-      data-unit-visible={showUnits ? "true" : "false"}
+      data-unit-rendered={showUnits ? "true" : "false"}
+      data-unit-visible={isUnitVisible ? "true" : "false"}
       data-unit-visible-until={line.unitVisibleUntil ?? ""}
-      style={{ opacity: sceneOpacity }}
     >
-      <path className="front-halo nianzhuang-route-shadow" d={routePath} />
-      <path className="front-route nianzhuang-route-line" d={routePath} />
-      <path className="front-direction nianzhuang-route-highlight" d={routePath} />
-      <circle cx={markerPoint[0]} cy={markerPoint[1]} r={active ? 4.6 : 3.2} />
+      {isRouteRendered && (
+        <g className="route-stroke-shell" style={{ opacity: sceneOpacity }}>
+          <path className="front-halo nianzhuang-route-shadow" d={routePath} />
+          <path className="front-route nianzhuang-route-line" d={routePath} />
+          <path className="front-direction nianzhuang-route-highlight" d={routePath} />
+          <circle cx={markerPoint[0]} cy={markerPoint[1]} r={active ? 4.6 : 3.2} />
+        </g>
+      )}
       {showUnits && (
         <g className="formation-units" style={{ opacity: unitOpacity }}>
           {formationUnits.map((formationUnit) => (
@@ -1045,7 +1056,7 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
           ))}
         </g>
       )}
-      {labelPoint && shouldShowRouteLabel(routeState) && (
+      {isRouteVisible && labelPoint && shouldShowRouteLabel(routeState) && (
         <text className="line-label" x={labelPoint[0] + 14} y={labelPoint[1] - 14}>
           {line.label}
         </text>
@@ -1313,12 +1324,19 @@ export function buildNianzhuangRouteState({
   const drawnProgress = isComplete ? 1 : routeProgress;
   const visiblePoints = linePointsUntil(routePoints, drawnProgress);
   const markerPoint = pointAtRatio(routePoints, routeProgress);
-  const showUnits = !line.hideUnit && progress >= unitVisibleFrom && progress <= unitVisibleUntil && unitVisibility.isDrawn;
+  const showUnits = !line.hideUnit && unitVisibility.isDrawn;
+  const isUnitVisible = !line.hideUnit && unitVisibility.isNominalVisible;
+  const isRouteRendered = routeVisibility.isDrawn;
+  const isRouteVisible = routeVisibility.isNominalVisible;
+  const isVisible = isRouteRendered || showUnits;
   return {
     active: routeProgress > 0 && routeProgress < 1,
     facingX: routeFacingX(routePoints, routeProgress),
     isComplete,
-    isVisible: routeVisibility.isDrawn,
+    isRouteRendered,
+    isRouteVisible,
+    isUnitVisible,
+    isVisible,
     labelPoint: visiblePoints.at(-1) ?? markerPoint,
     line,
     markerPoint,
@@ -1340,6 +1358,7 @@ export function NianzhuangTerrain3D({
   mapView,
   progress,
   routeStates,
+  terrainZoom,
   visibleEffects
 }: NianzhuangTerrain3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -1379,7 +1398,7 @@ export function NianzhuangTerrain3D({
     if (!container) {
       return;
     }
-    const initialCamera = cameraForMapView(mapView, mapBaseView, focusRoutePoints, currentFocus);
+    const initialCamera = cameraForMapView(mapView, mapBaseView, focusRoutePoints, currentFocus, terrainZoom);
     const map = new maplibregl.Map({
       attributionControl: false,
       bearing: initialCamera.bearing,
@@ -1454,7 +1473,7 @@ export function NianzhuangTerrain3D({
     }
     const focusChanged = lastFocusRef.current !== currentFocus;
     lastFocusRef.current = currentFocus;
-    const camera = cameraForMapView(focusChanged ? mapBaseView : mapView, mapBaseView, focusRoutePoints, currentFocus);
+    const camera = cameraForMapView(focusChanged ? mapBaseView : mapView, mapBaseView, focusRoutePoints, currentFocus, terrainZoom);
     if (focusChanged) {
       map.easeTo({
         ...camera,
@@ -1469,7 +1488,7 @@ export function NianzhuangTerrain3D({
       container.dataset.mapFocus = currentFocus;
     }
     syncOverlayGeometry();
-  }, [currentFocus, focusRoutePoints, mapBaseView, mapView, syncOverlayGeometry]);
+  }, [currentFocus, focusRoutePoints, mapBaseView, mapView, syncOverlayGeometry, terrainZoom]);
 
   useEffect(() => {
     syncOverlayGeometry();

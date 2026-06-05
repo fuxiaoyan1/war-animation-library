@@ -1844,6 +1844,7 @@ export function CampaignMapAnimation({
                     data-route-id={line.id}
                     data-route-label={line.label}
                     data-route-point-count={projectedRoutePoints.length}
+                    data-route-visible="true"
                     data-route-state={routeState}
                     data-route-end={line.end}
                     data-position-anchor={line.positionAnchor ?? ""}

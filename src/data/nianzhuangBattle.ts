@@ -158,15 +158,23 @@ const huangOuterDestroyedUnits: FormationUnit[] = [
   { id: "rear-column", label: "后卫纵队被截", badgeLabel: "后", icon: "infantry", coordinates: [117.995, 34.245], facingX: -1, offset: [0, 0] }
 ];
 
-const plaPursuitUnits: FormationUnit[] = [
-  { id: "v1", label: "", icon: "infantryPva", offset: [0, -34] },
-  { id: "v2", label: "", icon: "infantryPva", offset: [-96, 32] },
-  { id: "v3", label: "", icon: "infantryPva", offset: [-190, -4] }
-];
+function plaPursuitUnits(leadLabel: string, echelonLabel: string, scoutLabel: string): FormationUnit[] {
+  return [
+    { id: "lead", label: leadLabel, badgeLabel: leadLabel.slice(0, 1), icon: "infantryPva", offset: [0, -34] },
+    { id: "echelon", label: echelonLabel, badgeLabel: "追", icon: "infantryPva", offset: [-96, 32] },
+    { id: "scout", label: scoutLabel, badgeLabel: "侦", icon: "infantryPva", offset: [-190, -4] }
+  ];
+}
+
+const plaEastPursuitUnits = plaPursuitUnits("8纵前卫", "8纵追击梯队", "东线侦察");
+const plaNorthPursuitUnits = plaPursuitUnits("9纵北追", "9纵追击梯队", "北线侦察");
+const plaSouthPursuitUnits = plaPursuitUnits("4纵南截", "4纵截击梯队", "水网尖兵");
+const plaSouthwestPursuitUnits = plaPursuitUnits("7纵封口", "7纵截击梯队", "西南封控");
+const plaEastFixUnits = plaPursuitUnits("8纵东线", "东线压制梯队", "水沟尖兵");
 
 const plaClosingUnits: FormationUnit[] = [
-  { id: "closing-lead", label: "", icon: "infantryPva", offset: [0, -28] },
-  { id: "closing-support", label: "", icon: "infantryPva", offset: [-74, 28] }
+  { id: "closing-lead", label: "封口前卫", badgeLabel: "封", icon: "infantryPva", offset: [0, -28] },
+  { id: "closing-support", label: "合围梯队", badgeLabel: "围", icon: "infantryPva", offset: [-74, 28] }
 ];
 
 const plaAssaultUnits: FormationUnit[] = [
@@ -199,13 +207,13 @@ const plaMopUpWestUnits: FormationUnit[] = [
 ];
 
 const plaAssaultNorthUnits: FormationUnit[] = [
-  { id: "assault-west-13", label: "", badgeLabel: "13", icon: "infantryPva", offset: [0, -56] },
+  { id: "assault-west-13", label: "13纵突击", badgeLabel: "13", icon: "infantryPva", offset: [0, -56] },
   { id: "assault-west-lead", label: "", badgeLabel: "突", icon: "infantryPva", offset: [-78, 24] },
   { id: "assault-west-gun", label: "", badgeLabel: "炮", icon: "cannon", offset: [-146, -10] }
 ];
 
 const plaAssaultSouthUnits: FormationUnit[] = [
-  { id: "assault-north-6", label: "", badgeLabel: "6", icon: "infantryPva", offset: [0, 56] },
+  { id: "assault-north-6", label: "6纵突击", badgeLabel: "6", icon: "infantryPva", offset: [0, 56] },
   { id: "assault-north-lead", label: "", badgeLabel: "突", icon: "infantryPva", offset: [-78, -24] },
   { id: "assault-north-gun", label: "", badgeLabel: "炮", icon: "cannon", offset: [-146, 10] }
 ];
@@ -237,27 +245,27 @@ const reliefForwardUnits: FormationUnit[] = [
 ];
 
 const blockingUnits: FormationUnit[] = [
-  { id: "block-side-north", label: "", badgeLabel: "侧", icon: "infantryPva", coordinates: [117.592, 34.315], facingX: -1, offset: [0, -8] },
-  { id: "block-side-center", label: "", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.565, 34.292], facingX: -1, offset: [0, 8] },
-  { id: "block-side-gun", label: "", badgeLabel: "炮", icon: "cannon", coordinates: [117.548, 34.272], facingX: -1, offset: [0, 0] }
+  { id: "block-side-north", label: "阻援侧击", badgeLabel: "侧", icon: "infantryPva", coordinates: [117.592, 34.315], facingX: -1, offset: [0, -8] },
+  { id: "block-side-center", label: "阻援主阵", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.565, 34.292], facingX: -1, offset: [0, 8] },
+  { id: "block-side-gun", label: "阻援炮兵", badgeLabel: "炮", icon: "cannon", coordinates: [117.548, 34.272], facingX: -1, offset: [0, 0] }
 ];
 
 const blockingForwardUnits: FormationUnit[] = [
-  { id: "block-forward-contact", label: "", badgeLabel: "一", icon: "infantryPva", coordinates: [117.486, 34.286], facingX: -1, offset: [0, -8] },
-  { id: "block-forward-south", label: "", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.506, 34.255], facingX: -1, offset: [0, 8] },
-  { id: "block-forward-gun", label: "", badgeLabel: "炮", icon: "cannon", coordinates: [117.535, 34.305], facingX: -1, offset: [0, 0] }
+  { id: "block-forward-contact", label: "前沿阻击", badgeLabel: "一", icon: "infantryPva", coordinates: [117.486, 34.286], facingX: -1, offset: [0, -8] },
+  { id: "block-forward-south", label: "前沿侧防", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.506, 34.255], facingX: -1, offset: [0, 8] },
+  { id: "block-forward-gun", label: "前沿炮兵", badgeLabel: "炮", icon: "cannon", coordinates: [117.535, 34.305], facingX: -1, offset: [0, 0] }
 ];
 
 const blockingDepthUnits: FormationUnit[] = [
-  { id: "block-depth-contact", label: "", badgeLabel: "二", icon: "infantryPva", coordinates: [117.575, 34.305], facingX: -1, offset: [0, -8] },
-  { id: "block-depth-column", label: "", badgeLabel: "纵", icon: "infantryPva", coordinates: [117.592, 34.278], facingX: -1, offset: [0, 8] },
-  { id: "block-depth-gun", label: "", badgeLabel: "炮", icon: "cannon", coordinates: [117.57, 34.238], facingX: -1, offset: [0, 0] }
+  { id: "block-depth-contact", label: "二线阻击", badgeLabel: "二", icon: "infantryPva", coordinates: [117.575, 34.305], facingX: -1, offset: [0, -8] },
+  { id: "block-depth-column", label: "纵深机动", badgeLabel: "纵", icon: "infantryPva", coordinates: [117.592, 34.278], facingX: -1, offset: [0, 8] },
+  { id: "block-depth-gun", label: "纵深炮兵", badgeLabel: "炮", icon: "cannon", coordinates: [117.57, 34.238], facingX: -1, offset: [0, 0] }
 ];
 
 const reliefCounterpushUnits: FormationUnit[] = [
-  { id: "counterpush-block", label: "", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.582, 34.292], facingX: -1, offset: [0, -8] },
-  { id: "counterpush-assault", label: "", badgeLabel: "反", icon: "infantryPva", coordinates: [117.566, 34.286], facingX: -1, offset: [0, 8] },
-  { id: "counterpush-gun", label: "", badgeLabel: "炮", icon: "cannon", coordinates: [117.552, 34.282], facingX: -1, offset: [0, 0] }
+  { id: "counterpush-block", label: "阻援固守", badgeLabel: "阻", icon: "infantryPva", coordinates: [117.582, 34.292], facingX: -1, offset: [0, -8] },
+  { id: "counterpush-assault", label: "反压分队", badgeLabel: "反", icon: "infantryPva", coordinates: [117.566, 34.286], facingX: -1, offset: [0, 8] },
+  { id: "counterpush-gun", label: "阻援炮兵", badgeLabel: "炮", icon: "cannon", coordinates: [117.552, 34.282], facingX: -1, offset: [0, 0] }
 ];
 
 const trenchWorkerUnits: FormationUnit[] = [
@@ -554,7 +562,7 @@ export const frontLines: FrontLine[] = [
     start: "1948-11-06T18:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
-    formationUnits: plaPursuitUnits,
+    formationUnits: plaEastPursuitUnits,
     waypoints: [
       [118.29, 34.33],
       [118.16, 34.315],
@@ -562,7 +570,7 @@ export const frontLines: FrontLine[] = [
       [117.95, 34.292]
     ],
     visibleUntil: "1948-11-10T20:30",
-    unitVisibleUntil: "1948-11-10T20:30"
+    unitVisibleUntil: "1948-11-11T06:00"
   },
   {
     id: "pla-north-pursuit",
@@ -575,14 +583,14 @@ export const frontLines: FrontLine[] = [
     start: "1948-11-07T06:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
-    formationUnits: plaPursuitUnits,
+    formationUnits: plaNorthPursuitUnits,
     waypoints: [
       [118.14, 34.42],
       [118.0, 34.39],
       [117.9, 34.36]
     ],
     visibleUntil: "1948-11-10T20:30",
-    unitVisibleUntil: "1948-11-10T20:30"
+    unitVisibleUntil: "1948-11-11T06:00"
   },
   {
     id: "pla-south-pursuit",
@@ -595,14 +603,14 @@ export const frontLines: FrontLine[] = [
     start: "1948-11-07T12:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
-    formationUnits: plaPursuitUnits,
+    formationUnits: plaSouthPursuitUnits,
     waypoints: [
       [118.05, 34.185],
       [117.94, 34.215],
       [117.87, 34.238]
     ],
     visibleUntil: "1948-11-10T20:30",
-    unitVisibleUntil: "1948-11-10T20:30"
+    unitVisibleUntil: "1948-11-11T06:00"
   },
   {
     id: "pla-southwest-closing-line",
@@ -615,14 +623,14 @@ export const frontLines: FrontLine[] = [
     start: "1948-11-09T18:00",
     end: "1948-11-10T20:00",
     unitIcon: "infantryPva",
-    formationUnits: plaPursuitUnits,
+    formationUnits: plaSouthwestPursuitUnits,
     waypoints: [
       [117.64, 34.18],
       [117.7, 34.235],
       [117.76, 34.282]
     ],
     visibleUntil: "1948-11-10T20:30",
-    unitVisibleUntil: "1948-11-10T20:30"
+    unitVisibleUntil: "1948-11-11T06:00"
   },
   {
     id: "pla-east-closing-position",
@@ -645,7 +653,7 @@ export const frontLines: FrontLine[] = [
     ],
     retainRouteTailRatio: 0.32,
     visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-11T11:59"
+    unitVisibleUntil: "1948-11-11T12:10"
   },
   {
     id: "pla-north-closing-position",
@@ -667,7 +675,7 @@ export const frontLines: FrontLine[] = [
     ],
     retainRouteTailRatio: 0.34,
     visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-11T11:59"
+    unitVisibleUntil: "1948-11-11T12:10"
   },
   {
     id: "pla-south-closing-position",
@@ -689,7 +697,7 @@ export const frontLines: FrontLine[] = [
     ],
     retainRouteTailRatio: 0.22,
     visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-11T11:59"
+    unitVisibleUntil: "1948-11-11T12:10"
   },
   {
     id: "pla-southwest-closing-position",
@@ -711,7 +719,7 @@ export const frontLines: FrontLine[] = [
     ],
     retainRouteTailRatio: 0.38,
     visibleUntil: "1948-11-11T11:59",
-    unitVisibleUntil: "1948-11-11T11:59"
+    unitVisibleUntil: "1948-11-11T12:10"
   },
   {
     id: "xuzhou-relief-east",
@@ -921,7 +929,7 @@ export const frontLines: FrontLine[] = [
     start: "1948-11-12T12:00",
     end: "1948-11-14T20:00",
     unitIcon: "infantryPva",
-    formationUnits: plaPursuitUnits,
+    formationUnits: plaEastFixUnits,
     waypoints: [
       [118.1, 34.325],
       [117.98, 34.315],

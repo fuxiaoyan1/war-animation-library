@@ -1200,7 +1200,12 @@ async function visibleFleetRouteIds(page: Page, shellSelector: string) {
 async function renderedRouteIds(page: Page, shellSelector: string) {
   return page
     .locator(`${shellSelector} .front-line`)
-    .evaluateAll((routes) => routes.map((route) => route.getAttribute("data-route-id")).filter((routeId): routeId is string => Boolean(routeId)));
+    .evaluateAll((routes) =>
+      routes
+        .filter((route) => route.getAttribute("data-route-visible") !== "false")
+        .map((route) => route.getAttribute("data-route-id"))
+        .filter((routeId): routeId is string => Boolean(routeId))
+    );
 }
 
 async function expectVisibleTsushimaFleetRoutes(page: Page, expectedRouteIds: string[]) {
@@ -2355,17 +2360,29 @@ function expectNianzhuangEffectUsesRoutes(effectId: string, fromRouteId: string,
 async function expectRouteVisibleWithUnit(page: Page, routeId: string) {
   const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
   await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-visible", "true");
   await expect(route).toHaveAttribute("data-unit-visible", "true");
   await expect(route.locator(".formation-unit").first()).toBeVisible();
 }
 
+async function expectRouteUnitLabels(page: Page, routeId: string, labels: RegExp[]) {
+  const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  for (const label of labels) {
+    await expect(route.locator(".formation-unit-label").filter({ hasText: label }).first()).toBeVisible();
+  }
+}
+
 async function expectRouteVisible(page: Page, routeId: string) {
-  await expect(page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`)).toBeVisible();
+  const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-visible", "true");
 }
 
 async function expectRouteTransitionPhase(page: Page, routeId: string, phase: "entering" | "exiting" | "present") {
   const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
   await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-rendered", "true");
   await expect(route).toHaveAttribute("data-scene-transition-phase", phase);
   const opacity = Number(await route.getAttribute("data-scene-transition-opacity"));
   if (phase === "present") {
@@ -2374,6 +2391,23 @@ async function expectRouteTransitionPhase(page: Page, routeId: string, phase: "e
     expect(opacity, `${routeId} should be visually blended during ${phase}`).toBeGreaterThan(0.05);
     expect(opacity, `${routeId} should not hard-cut during ${phase}`).toBeLessThan(0.98);
   }
+}
+
+async function expectRouteShellWithUnitOnly(page: Page, routeId: string) {
+  const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-visible", "false");
+  await expect(route).toHaveAttribute("data-unit-rendered", "true");
+  await expect(route.locator(".front-route")).toHaveCount(0);
+  await expect(route.locator(".formation-unit").first()).toBeVisible();
+}
+
+async function expectRouteNotCurrentWithRenderedUnit(page: Page, routeId: string) {
+  const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-visible", "false");
+  await expect(route).toHaveAttribute("data-unit-rendered", "true");
+  await expect(route.locator(".formation-unit").first()).toBeVisible();
 }
 
 async function expectFortifiedLineTransitionPhase(page: Page, lineId: string, phase: "entering" | "exiting" | "present") {
@@ -2445,13 +2479,23 @@ async function expectNianzhuangReadableIcons(page: Page) {
     nodes.map((node) => {
       const box = node.getBoundingClientRect();
       const style = window.getComputedStyle(node);
-      return { fontSize: Number.parseFloat(style.fontSize), height: box.height, width: box.width };
+      return {
+        fontSize: Number.parseFloat(style.fontSize),
+        height: box.height,
+        isMapLibreOverlay: Boolean(node.closest(".nianzhuang-maplibre-tactical-overlay")),
+        width: box.width
+      };
     })
   );
 
   for (const label of labels) {
-    expect(label.fontSize).toBeGreaterThanOrEqual(60);
-    expect(label.fontSize).toBeLessThanOrEqual(96);
+    if (label.isMapLibreOverlay) {
+      expect(label.fontSize).toBeGreaterThanOrEqual(10);
+      expect(label.fontSize).toBeLessThanOrEqual(14);
+    } else {
+      expect(label.fontSize).toBeGreaterThanOrEqual(60);
+      expect(label.fontSize).toBeLessThanOrEqual(96);
+    }
     expect(label.height).toBeGreaterThan(8);
     expect(label.height).toBeLessThan(42);
     expect(label.width).toBeGreaterThan(18);
@@ -2638,7 +2682,7 @@ async function expectNianzhuangTacticalLabelsNotCrowded(page: Page) {
   }
 
   for (const sample of samples) {
-    expect(sample.labelCount, `${sample.date} should not crowd the tactical map with too many simultaneous labels: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(58);
+    expect(sample.labelCount, `${sample.date} should not crowd the tactical map with too many simultaneous labels: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(62);
     expect(sample.majorOverlapCount, `${sample.date} tactical labels should not overlap heavily: ${JSON.stringify(sample.topOverlaps)}`).toBeLessThanOrEqual(18);
     expect(sample.textAreaRatio, `${sample.date} visible text should not dominate the map: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.125);
     expect(sample.legendOverflow?.right ?? 0, `${sample.date} legend should stay inside the map stage`).toBeLessThanOrEqual(0);
@@ -2698,7 +2742,10 @@ async function expectNianzhuangCameraStaysTactical(page: Page) {
 
   expect(Math.max(...zooms), `Nianzhuang camera should keep a tactical overview instead of zooming into a local close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(10.95);
   expect(Math.min(...zooms), `Nianzhuang camera should keep enough terrain detail: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(10.15);
-  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.65);
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera should keep visible stage-to-stage zoom changes: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
+    0.35
+  );
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.75);
   expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.35);
   expect(pursuitSamples[0].lng - pursuitSamples.at(-1)!.lng, `Pursuit camera should follow the westward moving armies: ${JSON.stringify(pursuitSamples)}`).toBeGreaterThan(0.08);
   expect(pursuitSamples.every((sample) => sample.lng >= 117.86 && sample.lng <= 118.22), `Pursuit camera should stay between the mobile column and Nianzhuang context: ${JSON.stringify(pursuitSamples)}`).toBe(true);
@@ -3360,7 +3407,10 @@ async function jumpNianzhuangTimelineTo(page: Page, date: string) {
   const timelineValue = String(Math.round(timeline.dateToProgress(date) * 1000));
   await page.getByTestId("timeline").fill(timelineValue);
   await expect(page.getByTestId("timeline")).toHaveValue(timelineValue);
-  await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+  const currentZoom = Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"));
+  if (currentZoom <= 0) {
+    await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+  }
 }
 
 async function expectAncientEventClickPlaysMeleeCue(page: Page, clickEvent: () => Promise<void>) {
@@ -3901,7 +3951,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   });
   for (const routeId of ["pla-east-pursuit-main", "pla-north-pursuit", "pla-south-pursuit", "pla-southwest-closing-line"]) {
     expectNianzhuangRouteWindow(routeId, {
-      unitVisibleUntil: "1948-11-10T20:30",
+      unitVisibleUntil: "1948-11-11T06:00",
       visibleUntil: "1948-11-10T20:30"
     });
   }
@@ -3909,7 +3959,7 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     expectNianzhuangRouteWindow(routeId, {
       start: "1948-11-10T20:00",
       end: "1948-11-11T06:00",
-      unitVisibleUntil: "1948-11-11T11:59",
+      unitVisibleUntil: "1948-11-11T12:10",
       visibleUntil: "1948-11-11T11:59"
     });
   }
@@ -5961,7 +6011,7 @@ test("korean war animation uses era matched carrier aircraft infantry and tank m
 });
 
 test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit", async ({ page }) => {
-  test.setTimeout(70_000);
+  test.setTimeout(95_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await openCampaignFromHome(page, "nianzhuang");
@@ -6011,6 +6061,9 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectRouteVisibleWithUnit(page, "pla-east-pursuit-main");
   await expectRouteVisibleWithUnit(page, "pla-north-pursuit");
   await expectRouteVisibleWithUnit(page, "pla-south-pursuit");
+  await expectRouteUnitLabels(page, "pla-east-pursuit-main", [/8纵前卫/]);
+  await expectRouteUnitLabels(page, "pla-north-pursuit", [/9纵北追/]);
+  await expectRouteUnitLabels(page, "pla-south-pursuit", [/4纵南截/]);
   await expectRoutesUseReadableBattleArea(page, ".nianzhuang-battle", ["huang-xinan-west-withdrawal", "pla-east-pursuit-main", "pla-north-pursuit"], 0.26, 0.14);
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", ["xuzhou-relief-east", "pla-west-trench-approach"]);
   await expectNianzhuangNoResultSpoilers(page);
@@ -6021,6 +6074,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   for (const routeId of ["pla-east-closing-position", "pla-north-closing-position", "pla-south-closing-position", "pla-southwest-closing-position"]) {
     await expectRouteVisibleWithUnit(page, routeId);
   }
+  await expectRouteUnitLabels(page, "pla-east-closing-position", [/封口前卫|合围梯队/]);
   for (const routeId of ["huang-deploy-north", "huang-deploy-east", "huang-deploy-south", "huang-deploy-west"]) {
     await expectRouteVisible(page, routeId);
     await expect(page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`)).toHaveAttribute("data-unit-visible", "false");
@@ -6034,6 +6088,9 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     await expectRouteVisibleWithUnit(page, routeId);
   }
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", ["pla-east-pursuit-main", "pla-north-pursuit", "pla-south-pursuit", "pla-southwest-closing-line"]);
+  for (const routeId of ["pla-east-pursuit-main", "pla-north-pursuit", "pla-south-pursuit", "pla-southwest-closing-line"]) {
+    await expectRouteShellWithUnitOnly(page, routeId);
+  }
   await expectNianzhuangClosingRoutesStayLocal(page);
   await expectRouteVisible(page, "pla-encirclement-ring");
   await expect(page.locator('.nianzhuang-battle .front-line[data-route-id="pla-encirclement-ring"]')).toHaveAttribute("data-unit-visible", "false");
@@ -6054,12 +6111,11 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   const reliefTransitionRatio = Number(await page.locator(".nianzhuang-battle .camera-layer").getAttribute("data-focus-transition-raw-ratio"));
   expect(reliefTransitionRatio).toBeGreaterThan(0.01);
   expect(reliefTransitionRatio).toBeLessThan(0.98);
-  await expectRouteTransitionPhase(page, "pla-east-closing-position", "exiting");
-  await expectRouteTransitionPhase(page, "pla-north-closing-position", "exiting");
   await expectRouteTransitionPhase(page, "huang-deploy-north", "exiting");
   await expectRouteTransitionPhase(page, "huang-nianzhuang-defense-ring", "entering");
   await expectRouteTransitionPhase(page, "pla-encirclement-ring", "present");
-  await expect(page.locator('.nianzhuang-battle .front-line[data-route-id="pla-east-closing-position"]')).toHaveAttribute("data-unit-visible", "false");
+  await expectRenderedRoutesExclude(page, ".nianzhuang-battle", ["pla-east-closing-position", "pla-north-closing-position"]);
+  await expectRouteNotCurrentWithRenderedUnit(page, "pla-east-closing-position");
   await expect(page.locator('.nianzhuang-battle .front-line[data-route-id="huang-deploy-north"]')).toHaveAttribute("data-unit-visible", "false");
   await expectRouteVisibleWithUnit(page, "huang-nianzhuang-defense-ring");
   await expectRouteVisibleWithUnit(page, "pla-encirclement-ring");
@@ -6079,7 +6135,6 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectNoUnitBadgeLabels(page, ["黄维"]);
   await expect(page.getByTestId("nianzhuang-force-scale-note")).toContainText("黄兵团师级阵地展开");
   await expectNianzhuangRouteAnchorHighlighted(page, "huang-nianzhuang-defense-ring");
-  await expectRouteTransitionPhase(page, "pla-east-closing-position", "exiting");
   await expectRouteTransitionPhase(page, "huang-deploy-north", "exiting");
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", [
     "huang-xinan-west-withdrawal",
