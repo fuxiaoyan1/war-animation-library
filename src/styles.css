@@ -1994,9 +1994,9 @@ h1 {
 }
 
 .nianzhuang-battle .fortified-line-shadow {
-  stroke: rgba(50, 34, 18, 0.24);
+  stroke: rgba(75, 58, 35, 0.13);
   stroke-width: 9;
-  filter: blur(3px);
+  filter: none;
 }
 
 .nianzhuang-battle .fortified-line-body {
@@ -2013,26 +2013,51 @@ h1 {
 
 .nianzhuang-battle .fortified-line.is-route-anchor .fortified-line-body,
 .nianzhuang-battle .fortified-line.is-route-anchor .fortified-line-crest {
-  stroke: rgba(255, 213, 92, 0.98);
   stroke-width: 5.6;
 }
 
 .nianzhuang-battle .fortified-line-pla-encirclement .fortified-line-body {
-  stroke: rgba(170, 49, 34, 0.74);
+  stroke: rgba(190, 53, 38, 0.82);
   stroke-dasharray: 18 8;
   stroke-width: 3.4;
 }
 
+.nianzhuang-battle .fortified-line-pla-encirclement .fortified-line-crest,
+.nianzhuang-battle .fortified-line-pla-encirclement.is-route-anchor .fortified-line-crest {
+  stroke: rgba(255, 174, 116, 0.88);
+}
+
+.nianzhuang-battle .fortified-line-outer-defense .fortified-line-body {
+  stroke: rgba(42, 96, 147, 0.78);
+  stroke-dasharray: 12 7;
+  stroke-width: 4.8;
+}
+
+.nianzhuang-battle .fortified-line-outer-defense .fortified-line-crest,
+.nianzhuang-battle .fortified-line-outer-defense.is-route-anchor .fortified-line-crest {
+  stroke: rgba(168, 215, 235, 0.82);
+}
+
 .nianzhuang-battle .fortified-line-second-defense .fortified-line-body {
-  stroke: rgba(96, 67, 39, 0.64);
+  stroke: rgba(36, 76, 129, 0.78);
   stroke-dasharray: 7 6;
   stroke-width: 5.2;
 }
 
+.nianzhuang-battle .fortified-line-second-defense .fortified-line-crest,
+.nianzhuang-battle .fortified-line-second-defense.is-route-anchor .fortified-line-crest {
+  stroke: rgba(152, 203, 229, 0.84);
+}
+
 .nianzhuang-battle .fortified-line-final-core .fortified-line-body {
-  stroke: rgba(141, 62, 46, 0.72);
+  stroke: rgba(26, 66, 118, 0.84);
   stroke-dasharray: 5 5;
   stroke-width: 5.4;
+}
+
+.nianzhuang-battle .fortified-line-final-core .fortified-line-crest,
+.nianzhuang-battle .fortified-line-final-core.is-route-anchor .fortified-line-crest {
+  stroke: rgba(139, 193, 226, 0.88);
 }
 
 .nianzhuang-battle .fragmented-line-breach .fortified-line-body,
@@ -2043,7 +2068,7 @@ h1 {
 .nianzhuang-battle .fortified-line-second-defense-east-breach .fortified-line-body,
 .nianzhuang-battle .fortified-line-second-defense-south-fragment .fortified-line-body,
 .nianzhuang-battle .fortified-line-final-core-east-break .fortified-line-body {
-  stroke: rgba(119, 52, 42, 0.86);
+  stroke: rgba(60, 98, 146, 0.88);
   stroke-dasharray: 4 14;
   stroke-width: 4.2;
 }
@@ -2135,8 +2160,15 @@ h1 {
 }
 
 .nianzhuang-battle .nianzhuang-formation-front-line {
-  stroke: rgba(255, 232, 142, 0.78);
   stroke-width: 3.6;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-front-line {
+  stroke: rgba(216, 84, 55, 0.82);
+}
+
+.nianzhuang-battle .nianzhuang-formation-nationalist .nianzhuang-formation-front-line {
+  stroke: rgba(65, 137, 196, 0.82);
 }
 
 .nianzhuang-battle .nianzhuang-formation-rank-guide {
@@ -2151,8 +2183,17 @@ h1 {
 
 .nianzhuang-battle .nianzhuang-formation.is-route-anchor .nianzhuang-formation-body,
 .nianzhuang-battle .nianzhuang-formation.is-route-anchor .nianzhuang-formation-front-line {
-  stroke: rgba(255, 213, 92, 0.98);
   stroke-width: 4.2;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist.is-route-anchor .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-communist.is-route-anchor .nianzhuang-formation-front-line {
+  stroke: rgba(218, 61, 42, 0.94);
+}
+
+.nianzhuang-battle .nianzhuang-formation-nationalist.is-route-anchor .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-nationalist.is-route-anchor .nianzhuang-formation-front-line {
+  stroke: rgba(50, 124, 194, 0.94);
 }
 
 .nianzhuang-battle .nianzhuang-formation-ranks {
@@ -2349,9 +2390,9 @@ h1 {
 }
 
 .nianzhuang-battle .tactical-callout-marker circle {
-  fill: rgba(52, 42, 28, 0.9);
-  stroke: rgba(255, 239, 194, 0.95);
-  stroke-width: 2.6;
+  fill: rgba(246, 231, 184, 0.72);
+  stroke: rgba(88, 55, 31, 0.8);
+  stroke-width: 2.2;
 }
 
 .nianzhuang-battle .tactical-callout-marker path {
@@ -2359,15 +2400,18 @@ h1 {
 }
 
 .nianzhuang-battle .tug-of-war-callout circle {
-  fill: rgba(96, 54, 45, 0.9);
+  fill: rgba(238, 205, 155, 0.72);
+  stroke: rgba(121, 55, 42, 0.84);
 }
 
 .nianzhuang-battle .assault-callout circle {
-  fill: rgba(146, 42, 30, 0.92);
+  fill: rgba(246, 194, 154, 0.72);
+  stroke: rgba(164, 48, 36, 0.9);
 }
 
 .nianzhuang-battle .echelon-callout circle {
-  fill: rgba(56, 68, 49, 0.92);
+  fill: rgba(206, 220, 171, 0.72);
+  stroke: rgba(75, 91, 52, 0.86);
 }
 
 .nianzhuang-battle .destruction-site-marker circle {
@@ -2472,6 +2516,20 @@ h1 {
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .battle-salvo-effect[data-testid="nianzhuang-effect-remnant-village"] .salvo-label {
   font-size: 11px;
   stroke-width: 2.5px;
+}
+
+.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .salvo-blast {
+  fill: rgba(210, 74, 48, 0.06);
+  stroke: rgba(202, 62, 42, 0.72);
+  stroke-width: 2.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .salvo-core {
+  fill: rgba(255, 199, 94, 0.46);
+  stroke: rgba(174, 55, 38, 0.78);
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
 }
 
 .nianzhuang-battle .unit-marker-communist {

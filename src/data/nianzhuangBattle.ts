@@ -537,6 +537,7 @@ export const frontLines: FrontLine[] = [
     end: "1948-11-11T12:00",
     unitIcon: "infantryPva",
     formationUnits: plaEncirclementUnits,
+    retainRouteTailRatio: 0.82,
     waypoints: [
       [117.70, 34.34],
       [117.795, 34.415],

@@ -2421,18 +2421,40 @@ async function expectNianzhuangLargeBattlefield(page: Page) {
   expect(viewBox).toBe("0 0 4800 2880");
 }
 
+async function expectNianzhuangFortifiedLineColor(page: Page, lineId: string, side: "nationalist" | "pla") {
+  const color = await page.getByTestId(`fortified-line-${lineId}`).locator(".fortified-line-body").evaluate((node) => {
+    const stroke = window.getComputedStyle(node).stroke;
+    const match = stroke.match(/rgba?\(([^)]+)\)/);
+    const parts = match ? match[1].split(",").map((part) => Number.parseFloat(part.trim())) : [0, 0, 0, 1];
+    return { alpha: parts.length >= 4 ? parts[3] : 1, b: parts[2] ?? 0, g: parts[1] ?? 0, r: parts[0] ?? 0, stroke };
+  });
+
+  if (side === "pla") {
+    expect(color.r - color.b, `${lineId} should read as PLA encirclement red, not the same color as defensive rings: ${JSON.stringify(color)}`).toBeGreaterThan(70);
+    expect(color.alpha, `${lineId} should remain visible after color separation`).toBeGreaterThan(0.7);
+    return;
+  }
+
+  expect(color.b - color.r, `${lineId} should read as Nationalist defensive blue/gray, not PLA red/yellow: ${JSON.stringify(color)}`).toBeGreaterThan(25);
+  expect(color.alpha, `${lineId} should remain visible after color separation`).toBeGreaterThan(0.7);
+}
+
 async function expectNianzhuangEncirclementAndOuterDefense(page: Page) {
   await expect(page.getByTestId("fortified-line-layer")).toBeVisible();
   await expect(page.getByTestId("fortified-line-pla-encirclement")).toContainText("华野包围圈");
   await expect(page.getByTestId("fortified-line-outer-defense")).toContainText("第一道村落防线");
+  await expectNianzhuangFortifiedLineColor(page, "pla-encirclement", "pla");
+  await expectNianzhuangFortifiedLineColor(page, "outer-defense", "nationalist");
 }
 
 async function expectNianzhuangInnerDefense(page: Page) {
   await expect(page.getByTestId("fortified-line-second-defense")).toContainText("第二道围墙");
+  await expectNianzhuangFortifiedLineColor(page, "second-defense", "nationalist");
 }
 
 async function expectNianzhuangFinalCoreDefense(page: Page) {
   await expect(page.getByTestId("fortified-line-final-core")).toContainText("内圩最后据点");
+  await expectNianzhuangFortifiedLineColor(page, "final-core", "nationalist");
 }
 
 async function expectNianzhuangFragmentedOuterDefense(page: Page) {
@@ -2603,7 +2625,7 @@ async function expectNianzhuangTacticalLabelsNotCrowded(page: Page) {
   for (const date of sampleDates) {
     await jumpNianzhuangTimelineTo(page, date);
     await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
-    await page.waitForTimeout(1_200);
+    await page.waitForTimeout(1_650);
     samples.push(
       await page.evaluate((currentDate) => {
         const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
@@ -2739,48 +2761,78 @@ async function expectNianzhuangCameraStaysTactical(page: Page) {
   const zooms = samples.map((sample) => sample.zoom);
   const adjacentDelta = samples.slice(1).map((sample, index) => Math.abs(sample.zoom - samples[index].zoom));
   const pursuitSamples = samples.filter((sample) => sample.date <= "1948-11-10T18:00").map((sample) => ({ ...sample, ...parseCameraCenter(sample.center) }));
+  const pocketSample = samples.find((sample) => sample.date === "1948-11-10T18:00");
+  const assaultSamples = samples.filter((sample) => sample.date >= "1948-11-19T10:00");
 
-  expect(Math.max(...zooms), `Nianzhuang camera should keep a tactical overview instead of zooming into a local close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(10.95);
+  expect(Math.max(...zooms), `Nianzhuang camera should keep a tactical overview instead of zooming into a local close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(11.55);
   expect(Math.min(...zooms), `Nianzhuang camera should keep enough terrain detail: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(10.15);
-  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera should keep visible stage-to-stage zoom changes: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
-    0.35
+  expect(Math.min(...assaultSamples.map((sample) => sample.zoom)), `Nianzhuang assault and encirclement stages should zoom in after the pocket battle begins: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
+    11.05
   );
-  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.75);
-  expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.35);
+  expect(pocketSample ? Math.max(...assaultSamples.map((sample) => sample.zoom)) - pocketSample.zoom : 0, `Nianzhuang assault map should be at least about one zoom level tighter than the pre-assault pocket: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(0.95);
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera should keep visible stage-to-stage zoom changes: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
+    0.8
+  );
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(1.45);
+  expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.62);
   expect(pursuitSamples[0].lng - pursuitSamples.at(-1)!.lng, `Pursuit camera should follow the westward moving armies: ${JSON.stringify(pursuitSamples)}`).toBeGreaterThan(0.08);
   expect(pursuitSamples.every((sample) => sample.lng >= 117.86 && sample.lng <= 118.22), `Pursuit camera should stay between the mobile column and Nianzhuang context: ${JSON.stringify(pursuitSamples)}`).toBe(true);
 }
 
 async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
-  const sampleDates = ["1948-11-07T06:00", "1948-11-13T18:00", "1948-11-20T18:00", "1948-11-22T17:00"];
+  const sampleDates = [
+    "1948-11-07T06:00",
+    "1948-11-13T18:00",
+    "1948-11-19T10:00",
+    "1948-11-19T21:15",
+    "1948-11-19T22:30",
+    "1948-11-20T00:30",
+    "1948-11-20T18:00",
+    "1948-11-22T17:00"
+  ];
   const samples: Array<{
     areaRatio: number;
+    className: string;
     date: string;
     effectiveFillAlpha: number;
+    effectiveStrokeAlpha: number;
     fill: string;
     filter: string;
+    hasDarkFill: boolean;
+    hasDarkStroke: boolean;
     heightRatio: number;
+    parentClassName: string;
     selector: string;
     stroke: string;
+    testId: string;
     widthRatio: number;
+  }> = [];
+  const pixelSamples: Array<{
+    areaRatio: number;
+    date: string;
+    heightRatio: number;
+    maxPixels: number;
+    widthRatio: number;
+    xRatio: number;
+    yRatio: number;
   }> = [];
 
   for (const date of sampleDates) {
     await jumpNianzhuangTimelineTo(page, date);
     await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
-    await page.waitForTimeout(750);
+    await page.waitForTimeout(1_050);
     samples.push(
       ...(await page.evaluate((currentDate) => {
-        const parseAlpha = (color: string) => {
+        const parseColor = (color: string) => {
           if (color === "none" || color === "transparent") {
-            return 0;
+            return { alpha: 0, b: 0, g: 0, r: 0 };
           }
           const rgba = color.match(/rgba?\(([^)]+)\)/);
           if (!rgba) {
-            return 1;
+            return { alpha: 1, b: 0, g: 0, r: 0 };
           }
-          const parts = rgba[1].split(",").map((part) => Number(part.trim()));
-          return parts.length >= 4 ? parts[3] : 1;
+          const parts = rgba[1].split(",").map((part) => Number.parseFloat(part.trim()));
+          return { alpha: parts.length >= 4 ? parts[3] : 1, b: parts[2] ?? 0, g: parts[1] ?? 0, r: parts[0] ?? 0 };
         };
         const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
         if (!stage) {
@@ -2790,6 +2842,9 @@ async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
           ".nianzhuang-battle .tactical-terrain-shadow",
           ".nianzhuang-battle .tactical-terrain-skirt",
           ".nianzhuang-battle .tactical-terrain-wall",
+          ".nianzhuang-battle .fortified-line-shadow",
+          ".nianzhuang-battle .annotation-marker circle",
+          ".nianzhuang-battle .battle-salvo-effect circle",
           ".nianzhuang-battle .nianzhuang-formation-shadow",
           ".nianzhuang-battle .nianzhuang-formation-body",
           ".nianzhuang-battle .nianzhuang-formation-front-line",
@@ -2801,55 +2856,175 @@ async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
             .map((node) => {
               const box = node.getBoundingClientRect();
               const style = window.getComputedStyle(node);
+              const fill = parseColor(style.fill);
+              const stroke = parseColor(style.stroke);
+              const opacity = Number.parseFloat(style.opacity || "1");
+              const effectiveFillAlpha = fill.alpha * opacity;
+              const effectiveStrokeAlpha = stroke.alpha * opacity;
+              const hasDarkFill = effectiveFillAlpha > 0.08 && fill.r <= 85 && fill.g <= 75 && fill.b <= 65;
+              const hasDarkStroke = effectiveStrokeAlpha > 0.18 && stroke.r <= 85 && stroke.g <= 75 && stroke.b <= 65;
               return {
                 areaRatio: (box.width * box.height) / Math.max(1, stage.width * stage.height),
+                className: (node as Element).getAttribute("class") ?? "",
                 date: currentDate,
-                effectiveFillAlpha: parseAlpha(style.fill) * Number(style.opacity || 1),
+                effectiveFillAlpha,
+                effectiveStrokeAlpha,
                 fill: style.fill,
                 filter: style.filter,
+                hasDarkFill,
+                hasDarkStroke,
                 heightRatio: box.height / stage.height,
+                parentClassName: (node as Element).parentElement?.getAttribute("class") ?? "",
                 selector,
                 stroke: style.stroke,
+                testId: (node as Element).closest("[data-testid]")?.getAttribute("data-testid") ?? "",
                 widthRatio: box.width / stage.width
               };
             })
-            .filter((sample) => sample.areaRatio > 0.1 || sample.widthRatio > 0.5 || sample.heightRatio > 0.5)
+            .filter((sample) => sample.hasDarkFill || sample.hasDarkStroke)
+            .filter((sample) => sample.areaRatio > 0.02 || sample.widthRatio > 0.14 || sample.heightRatio > 0.14)
         );
       }, date))
     );
+
+    const screenshot = await page.getByTestId("map-stage").screenshot();
+    pixelSamples.push(await largestDarkPixelBlock(page, date, screenshot));
   }
 
   for (const sample of samples) {
     expect(sample.effectiveFillAlpha, `Large Nianzhuang overlay terrain element should not read as a dark block: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.08);
+    expect(sample.effectiveStrokeAlpha, `Large Nianzhuang overlay stroke should not read as a dark block: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.18);
     expect(sample.filter, `Large Nianzhuang overlay terrain element should not use blurred block shadows: ${JSON.stringify(sample)}`).toBe("none");
   }
+
+  for (const sample of pixelSamples) {
+    expect(sample.areaRatio, `Nianzhuang map screenshot should not contain a large contiguous black block: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.006);
+    expect(sample.widthRatio, `Nianzhuang map screenshot should not contain a wide black rectangle: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.12);
+    expect(sample.heightRatio, `Nianzhuang map screenshot should not contain a tall black rectangle: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.12);
+  }
+}
+
+async function largestDarkPixelBlock(page: Page, date: string, screenshot: Buffer) {
+  return await page.evaluate(
+    async ({ currentDate, imageDataUrl }) => {
+      const image = new Image();
+      image.src = imageDataUrl;
+      await image.decode();
+      const sampleScale = 0.28;
+      const width = Math.max(1, Math.floor(image.naturalWidth * sampleScale));
+      const height = Math.max(1, Math.floor(image.naturalHeight * sampleScale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return { areaRatio: 0, date: currentDate, heightRatio: 0, maxPixels: 0, widthRatio: 0, xRatio: 0, yRatio: 0 };
+      }
+      context.drawImage(image, 0, 0, width, height);
+      const pixels = context.getImageData(0, 0, width, height).data;
+      const visited = new Uint8Array(width * height);
+      const queue = new Int32Array(width * height);
+      let largest = { maxPixels: 0, maxX: 0, maxY: 0, minX: 0, minY: 0 };
+      const isDark = (index: number) => {
+        const offset = index * 4;
+        const alpha = pixels[offset + 3] / 255;
+        const r = pixels[offset];
+        const g = pixels[offset + 1];
+        const b = pixels[offset + 2];
+        return alpha > 0.92 && r < 22 && g < 22 && b < 22;
+      };
+
+      for (let index = 0; index < width * height; index += 1) {
+        if (visited[index] || !isDark(index)) {
+          visited[index] = 1;
+          continue;
+        }
+
+        let head = 0;
+        let tail = 0;
+        let count = 0;
+        let minX = width;
+        let minY = height;
+        let maxX = 0;
+        let maxY = 0;
+        queue[tail] = index;
+        tail += 1;
+        visited[index] = 1;
+        while (head < tail) {
+          const current = queue[head];
+          head += 1;
+          count += 1;
+          const x = current % width;
+          const y = Math.floor(current / width);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+          const neighbors = [current - 1, current + 1, current - width, current + width];
+          for (const neighbor of neighbors) {
+            if (neighbor < 0 || neighbor >= width * height || visited[neighbor]) {
+              continue;
+            }
+            const nx = neighbor % width;
+            const ny = Math.floor(neighbor / width);
+            if (Math.abs(nx - x) + Math.abs(ny - y) !== 1) {
+              continue;
+            }
+            visited[neighbor] = 1;
+            if (isDark(neighbor)) {
+              queue[tail] = neighbor;
+              tail += 1;
+            }
+          }
+        }
+
+        if (count > largest.maxPixels) {
+          largest = { maxPixels: count, maxX, maxY, minX, minY };
+        }
+      }
+
+      return {
+        areaRatio: largest.maxPixels / Math.max(1, width * height),
+        date: currentDate,
+        heightRatio: (largest.maxY - largest.minY + 1) / height,
+        maxPixels: largest.maxPixels,
+        widthRatio: (largest.maxX - largest.minX + 1) / width,
+        xRatio: largest.minX / width,
+        yRatio: largest.minY / height
+      };
+    },
+    { currentDate: date, imageDataUrl: `data:image/png;base64,${screenshot.toString("base64")}` }
+  );
 }
 
 async function expectNianzhuangFullVisualIntegrity(page: Page) {
   const samples = [
-    { date: "1948-11-07T08:00", expectedFocus: "nianzhuangPursuit", minimumUnits: 4 },
-    { date: "1948-11-09T12:00", expectedFocus: "nianzhuangPursuit", minimumUnits: 8 },
-    { date: "1948-11-10T22:45", expectedFocus: "nianzhuangPocket", minimumUnits: 8 },
-    { date: "1948-11-11T16:00", expectedFocus: "nianzhuangRelief", minimumUnits: 16 },
-    { date: "1948-11-13T18:00", expectedFocus: "nianzhuangPocket", minimumUnits: 18 },
-    { date: "1948-11-18T01:00", expectedFocus: "nianzhuangPocket", minimumUnits: 24 },
-    { date: "1948-11-19T22:00", expectedFocus: "nianzhuangCompression", minimumUnits: 30 },
-    { date: "1948-11-20T01:45", expectedFocus: "nianzhuangCompression", minimumUnits: 30 },
-    { date: "1948-11-20T06:00", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
-    { date: "1948-11-21T12:00", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
-    { date: "1948-11-22T16:30", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
-    { date: "1948-11-22T20:00", expectedFocus: "nianzhuangFinal", minimumUnits: 14 }
+    { date: "1948-11-07T08:00", expectedFocus: "nianzhuangPursuit", maximumZoom: 10.7, minimumUnits: 4, minimumZoom: 10.1 },
+    { date: "1948-11-09T12:00", expectedFocus: "nianzhuangPursuit", maximumZoom: 10.85, minimumUnits: 8, minimumZoom: 10.1 },
+    { date: "1948-11-10T22:45", expectedFocus: "nianzhuangPocket", maximumZoom: 11.25, minimumUnits: 8, minimumZoom: 10.35 },
+    { date: "1948-11-11T16:00", expectedFocus: "nianzhuangRelief", maximumZoom: 11.15, minimumUnits: 16, minimumZoom: 10.15 },
+    { date: "1948-11-13T18:00", expectedFocus: "nianzhuangPocket", maximumZoom: 11.25, minimumUnits: 18, minimumZoom: 10.9 },
+    { date: "1948-11-18T01:00", expectedFocus: "nianzhuangPocket", maximumZoom: 11.25, minimumUnits: 24, minimumZoom: 10.9 },
+    { date: "1948-11-19T22:00", expectedFocus: "nianzhuangCompression", maximumZoom: 11.55, minimumUnits: 30, minimumZoom: 11.1 },
+    { date: "1948-11-20T01:45", expectedFocus: "nianzhuangCompression", maximumZoom: 11.55, minimumUnits: 30, minimumZoom: 11.1 },
+    { date: "1948-11-20T06:00", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
+    { date: "1948-11-21T12:00", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
+    { date: "1948-11-22T16:30", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
+    { date: "1948-11-22T20:00", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 14, minimumZoom: 11.0 }
   ];
   const visualSamples: Array<{
     brokenImages: Array<{ height: number; href: string; routeId: string; width: number }>;
     date: string;
     focus: string | null;
     formationPathProblems: Array<{ className: string; fill: string; stroke: string; testId: string }>;
+    maxContextRoute: { heightRatio: number; routeId: string; widthRatio: number } | null;
     maxRoute: { heightRatio: number; routeId: string; widthRatio: number } | null;
     maxUnit: { height: number; routeId: string; width: number } | null;
     offscreenUnitRatio: number;
+    primaryUnitCount: number;
     routeCount: number;
     suspiciousDarkFills: Array<{ areaRatio: number; className: string; fill: string; opacity: number; testId: string }>;
+    unstyledSalvoCircles: Array<{ className: string; fill: string; stroke: string; testId: string }>;
     unitCount: number;
     zoom: number;
   }> = [];
@@ -2939,20 +3114,48 @@ async function expectNianzhuangFullVisualIntegrity(page: Page) {
           ];
         });
 
+      const unstyledSalvoCircles = [...document.querySelectorAll(".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .battle-salvo-effect circle")]
+        .flatMap((node) => {
+          const box = node.getBoundingClientRect();
+          if (box.width <= 0 || box.height <= 0) {
+            return [];
+          }
+          const style = window.getComputedStyle(node);
+          const fill = parseColor(style.fill);
+          const stroke = parseColor(style.stroke);
+          const hasDefaultBlackFill = fill.alpha >= 0.18 && fill.r <= 12 && fill.g <= 12 && fill.b <= 12;
+          const hasNoStroke = stroke.alpha === 0 || style.stroke === "none";
+          if (!hasDefaultBlackFill && !hasNoStroke) {
+            return [];
+          }
+          return [
+            {
+              className: (node as Element).getAttribute("class") ?? "",
+              fill: style.fill,
+              stroke: style.stroke,
+              testId: (node as Element).closest("[data-testid]")?.getAttribute("data-testid") ?? ""
+            }
+          ];
+        });
+
       const visibleUnits = [...document.querySelectorAll('.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .front-line[data-unit-visible="true"] .formation-unit')]
         .map((unit) => {
           const box = unit.getBoundingClientRect();
+          const route = unit.closest(".front-line");
+          const isCurrentRoute = route?.getAttribute("data-route-current") === "true";
           const relative = relativeBox(box);
           return {
             ...relative,
             height: box.height,
-            routeId: unit.closest(".front-line")?.getAttribute("data-route-id") ?? "",
+            isCurrentRoute,
+            routeId: route?.getAttribute("data-route-id") ?? "",
             width: box.width
           };
         })
         .filter((unit) => unit.width > 0 && unit.height > 0);
 
-      const offscreenUnits = visibleUnits.filter((unit) => unit.centerX < -0.08 || unit.centerX > 1.08 || unit.centerY < -0.1 || unit.centerY > 1.1);
+      const primaryVisibleUnits = visibleUnits.filter((unit) => unit.isCurrentRoute);
+      const offscreenUnits = primaryVisibleUnits.filter((unit) => unit.centerX < -0.08 || unit.centerX > 1.08 || unit.centerY < -0.1 || unit.centerY > 1.1);
       const maxUnit = visibleUnits.reduce<{ height: number; routeId: string; width: number } | null>(
         (current, unit) => (!current || unit.width * unit.height > current.width * current.height ? { height: unit.height, routeId: unit.routeId, width: unit.width } : current),
         null
@@ -2979,7 +3182,12 @@ async function expectNianzhuangFullVisualIntegrity(page: Page) {
           };
         })
         .filter((route) => route.widthRatio > 0 && route.heightRatio > 0);
-      const maxRoute = routes.reduce<{ heightRatio: number; routeId: string; widthRatio: number } | null>(
+      const contextRingRouteIds = new Set(["pla-encirclement-ring", "huang-nianzhuang-defense-ring"]);
+      const maxRoute = routes.filter((route) => !contextRingRouteIds.has(route.routeId)).reduce<{ heightRatio: number; routeId: string; widthRatio: number } | null>(
+        (current, route) => (!current || route.widthRatio * route.heightRatio > current.widthRatio * current.heightRatio ? route : current),
+        null
+      );
+      const maxContextRoute = routes.filter((route) => contextRingRouteIds.has(route.routeId)).reduce<{ heightRatio: number; routeId: string; widthRatio: number } | null>(
         (current, route) => (!current || route.widthRatio * route.heightRatio > current.widthRatio * current.heightRatio ? route : current),
         null
       );
@@ -2989,11 +3197,14 @@ async function expectNianzhuangFullVisualIntegrity(page: Page) {
         date,
         focus: terrain?.getAttribute("data-map-focus") ?? null,
         formationPathProblems,
+        maxContextRoute,
         maxRoute,
         maxUnit,
-        offscreenUnitRatio: visibleUnits.length > 0 ? offscreenUnits.length / visibleUnits.length : 0,
+        offscreenUnitRatio: primaryVisibleUnits.length > 0 ? offscreenUnits.length / primaryVisibleUnits.length : 1,
+        primaryUnitCount: primaryVisibleUnits.length,
         routeCount: routes.length,
         suspiciousDarkFills,
+        unstyledSalvoCircles,
         unitCount: visibleUnits.length,
         zoom: Number(terrain?.getAttribute("data-map-zoom") ?? 0)
       };
@@ -3001,16 +3212,20 @@ async function expectNianzhuangFullVisualIntegrity(page: Page) {
 
     visualSamples.push(visualState);
     expect(visualState.focus, `${sample.date} should keep the WebGL terrain camera on the expected tactical stage`).toBe(sample.expectedFocus);
-    expect(visualState.zoom, `${sample.date} should keep a readable tactical overview`).toBeGreaterThanOrEqual(10.1);
-    expect(visualState.zoom, `${sample.date} should not zoom into a local close-up`).toBeLessThanOrEqual(10.7);
+    expect(visualState.zoom, `${sample.date} should keep a readable tactical overview`).toBeGreaterThanOrEqual(sample.minimumZoom);
+    expect(visualState.zoom, `${sample.date} should not zoom into a local close-up`).toBeLessThanOrEqual(sample.maximumZoom);
     expect(visualState.unitCount, `${sample.date} should keep enough operational units visible: ${JSON.stringify(visualState)}`).toBeGreaterThanOrEqual(sample.minimumUnits);
+    expect(visualState.primaryUnitCount, `${sample.date} should keep current-event operational units visible instead of only historical traces: ${JSON.stringify(visualState)}`).toBeGreaterThan(0);
     expect(visualState.offscreenUnitRatio, `${sample.date} should not push most units outside the camera: ${JSON.stringify(visualState)}`).toBeLessThanOrEqual(0.32);
     expect(visualState.brokenImages, `${sample.date} should not render broken or zero-size unit images`).toEqual([]);
     expect(visualState.formationPathProblems, `${sample.date} should not contain default black or unstyled formation paths`).toEqual([]);
     expect(visualState.suspiciousDarkFills, `${sample.date} should not contain large dark filled SVG blocks`).toEqual([]);
+    expect(visualState.unstyledSalvoCircles, `${sample.date} should not contain default black or unstyled salvo circles`).toEqual([]);
     expect(visualState.routeCount, `${sample.date} should render tactical routes on the terrain overlay`).toBeGreaterThan(0);
-    expect(visualState.maxRoute?.widthRatio ?? 0, `${sample.date} should not render a runaway route line: ${JSON.stringify(visualState.maxRoute)}`).toBeLessThanOrEqual(1.16);
+    expect(visualState.maxRoute?.widthRatio ?? 0, `${sample.date} should not render a runaway route line: ${JSON.stringify(visualState.maxRoute)}`).toBeLessThanOrEqual(1.3);
     expect(visualState.maxRoute?.heightRatio ?? 0, `${sample.date} should not render a runaway route line: ${JSON.stringify(visualState.maxRoute)}`).toBeLessThanOrEqual(1.05);
+    expect(visualState.maxContextRoute?.widthRatio ?? 0, `${sample.date} context encirclement rings should not take over the full tactical viewport: ${JSON.stringify(visualState.maxContextRoute)}`).toBeLessThanOrEqual(1.18);
+    expect(visualState.maxContextRoute?.heightRatio ?? 0, `${sample.date} context encirclement rings should remain bounded even when kept visible across camera stages: ${JSON.stringify(visualState.maxContextRoute)}`).toBeLessThanOrEqual(1.35);
     expect(visualState.maxUnit?.width ?? 0, `${sample.date} unit markers should stay compact after scaling: ${JSON.stringify(visualState.maxUnit)}`).toBeLessThanOrEqual(105);
     expect(visualState.maxUnit?.height ?? 0, `${sample.date} unit markers should stay compact after scaling: ${JSON.stringify(visualState.maxUnit)}`).toBeLessThanOrEqual(78);
   }
@@ -3169,10 +3384,10 @@ async function expectNianzhuangCoreBattlefieldZoom(page: Page, minimumWidthRatio
   const spread = await page.evaluate(() => {
     const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
     const coreSelectors = [
-      ".nianzhuang-battle .front-line[data-route-id=\"huang-nianzhuang-defense-ring\"] .front-route",
-      ".nianzhuang-battle .front-line[data-route-id=\"pla-encirclement-ring\"] .front-route"
+      ".nianzhuang-battle [data-testid=\"fortified-line-pla-encirclement\"] .fortified-line-body",
+      ".nianzhuang-battle [data-testid=\"fortified-line-outer-defense\"] .fortified-line-body"
     ];
-    const boxes: Array<{ bottom: number; left: number; right: number; top: number }> = [];
+    const boxes: Array<{ bottom: number; left: number; right: number; selector: string; top: number }> = [];
     for (const selector of coreSelectors) {
       const box = document.querySelector(selector)?.getBoundingClientRect();
       if (box && box.width > 0 && box.height > 0) {
@@ -3180,6 +3395,7 @@ async function expectNianzhuangCoreBattlefieldZoom(page: Page, minimumWidthRatio
           bottom: box.bottom,
           left: box.left,
           right: box.right,
+          selector,
           top: box.top
         });
       }
@@ -3206,13 +3422,14 @@ async function expectNianzhuangCoreBattlefieldZoom(page: Page, minimumWidthRatio
 
     return {
       heightRatio: (bounds.bottom - bounds.top) / stage.height,
+      selectors: boxes.map((box) => box.selector),
       widthRatio: (bounds.right - bounds.left) / stage.width
     };
   });
 
   expect(spread).not.toBeNull();
-  expect(spread?.widthRatio).toBeGreaterThan(minimumWidthRatio);
-  expect(spread?.heightRatio).toBeGreaterThan(minimumHeightRatio);
+  expect(spread?.widthRatio, `Nianzhuang full encirclement and defensive rings should occupy the tactical battlefield after zoom-in: ${JSON.stringify(spread)}`).toBeGreaterThan(minimumWidthRatio);
+  expect(spread?.heightRatio, `Nianzhuang full encirclement and defensive rings should occupy the tactical battlefield after zoom-in: ${JSON.stringify(spread)}`).toBeGreaterThan(minimumHeightRatio);
 }
 
 async function expectNianzhuangRouteStopsWestOf(page: Page, routeId: string, boundaryPointId: string) {
@@ -6011,7 +6228,7 @@ test("korean war animation uses era matched carrier aircraft infantry and tank m
 });
 
 test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit", async ({ page }) => {
-  test.setTimeout(95_000);
+  test.setTimeout(220_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await openCampaignFromHome(page, "nianzhuang");

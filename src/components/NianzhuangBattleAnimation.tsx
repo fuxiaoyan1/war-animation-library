@@ -80,15 +80,15 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
     terrainZoom: 10.28
   },
   nianzhuangPocket: {
-    center: [117.84, 34.292],
+    center: [117.858, 34.294],
     focusRoutePoints: [
-      [117.68, 34.18],
-      [118.02, 34.18],
-      [118.02, 34.405],
-      [117.68, 34.405]
+      [117.72, 34.205],
+      [117.995, 34.205],
+      [117.995, 34.385],
+      [117.72, 34.385]
     ],
-    scale: 0.98,
-    terrainZoom: 10.6
+    scale: 1.42,
+    terrainZoom: 11.0
   },
   nianzhuangRelief: {
     center: [117.55, 34.275],
@@ -102,15 +102,15 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
     terrainZoom: 10.24
   },
   nianzhuangBreakthrough: {
-    center: [117.86, 34.286],
+    center: [117.862, 34.292],
     focusRoutePoints: [
       [117.73, 34.22],
       [117.975, 34.22],
       [117.975, 34.365],
       [117.73, 34.365]
     ],
-    scale: 0.98,
-    terrainZoom: 10.62
+    scale: 1.62,
+    terrainZoom: 11.08
   },
   nianzhuangCompression: {
     center: [117.875, 34.292],
@@ -120,19 +120,19 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
       [117.95, 34.345],
       [117.79, 34.345]
     ],
-    scale: 1.0,
-    terrainZoom: 10.64
+    scale: 1.86,
+    terrainZoom: 11.32
   },
   nianzhuangFinal: {
-    center: [117.91, 34.286],
+    center: [117.902, 34.286],
     focusRoutePoints: [
       [117.82, 34.218],
       [118.0, 34.218],
       [118.0, 34.36],
       [117.82, 34.36]
     ],
-    scale: 0.98,
-    terrainZoom: 10.58
+    scale: 1.74,
+    terrainZoom: 11.22
   }
 };
 

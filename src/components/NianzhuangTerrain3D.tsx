@@ -130,6 +130,7 @@ const alwaysLabeledPointIds = new Set(["xuzhou", "daxujia", "nianzhuang", "xinan
 const denseAssaultStart = "1948-11-19T10:00";
 const majorFieldworkLabelIds = new Set(["pla-encirclement", "outer-defense", "second-defense", "final-core"]);
 const quietPointKinds = new Set(["front"]);
+const fullTraceRouteIds = new Set(["huang-nianzhuang-defense-ring", "huang-final-core-defense", "huang-east-remnant-defense"]);
 
 const historicalBaseBounds: TacticalPoint[] = [
   [nianzhuangSourceBounds[0], nianzhuangSourceBounds[1]],
@@ -586,6 +587,24 @@ function cameraCenterBoundsForFocus(currentFocus: string) {
     };
   }
 
+  if (currentFocus === "nianzhuangCompression" || currentFocus === "nianzhuangFinal") {
+    return {
+      east: 117.99,
+      north: 34.38,
+      south: 34.2,
+      west: 117.76
+    };
+  }
+
+  if (currentFocus === "nianzhuangBreakthrough" || currentFocus === "nianzhuangPocket") {
+    return {
+      east: 118.02,
+      north: 34.39,
+      south: 34.17,
+      west: 117.68
+    };
+  }
+
   return {
     east: 118.03,
     north: 34.4,
@@ -620,7 +639,7 @@ function cameraForMapView(
       Math.max(cameraCenterBounds.south, Math.min(cameraCenterBounds.north, fittedCenter[1] + userPanY / 14500 / Math.max(mapView.scale, 0.1)))
     ] as TacticalPoint,
     pitch: tacticalCameraPitch,
-    zoom: Math.max(9.95, Math.min(11.05, stageZoom + (mapBaseView.scale - nianzhuangBaseMapScale) * 0.16 + userZoomDelta * 0.66))
+    zoom: Math.max(9.95, Math.min(11.65, stageZoom + (mapBaseView.scale - nianzhuangBaseMapScale) * 0.16 + userZoomDelta * 0.66))
   };
 }
 
@@ -987,7 +1006,7 @@ function OverlayRouteUnit({
   );
 }
 
-function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
+function OverlayRoute({ isCurrentRoute, routeState }: { isCurrentRoute: boolean; routeState: ProjectedRouteState }) {
   const { active, isComplete, isRouteRendered, isRouteVisible, isUnitVisible, isVisible, labelPoint, line, markerPoint, routeProgress, sceneOpacity, scenePhase, showUnits, unitOpacity, visiblePoints } = routeState;
   if (!isVisible || visiblePoints.length < 2 || !markerPoint) {
     return null;
@@ -1015,6 +1034,7 @@ function OverlayRoute({ routeState }: { routeState: ProjectedRouteState }) {
     <g
       className={`front-line nianzhuang-route route-${line.routeKind ?? "land"} unit-marker-${line.faction} ${routeStateClass}`}
       data-position-anchor={line.positionAnchor ?? ""}
+      data-route-current={isCurrentRoute ? "true" : "false"}
       data-route-end={line.end}
       data-route-from={line.from}
       data-route-id={line.id}
@@ -1119,11 +1139,13 @@ function OverlayEffect({ effect }: { effect: ProjectedEffectState }) {
 
 function NianzhuangTacticalOverlay({
   activeAnchors,
+  activeRouteIds,
   dateToProgress,
   geometry,
   progress
 }: {
   activeAnchors: Set<string>;
+  activeRouteIds: Set<string>;
   dateToProgress: (date: string) => number;
   geometry: OverlayGeometry;
   progress: number;
@@ -1223,7 +1245,7 @@ function NianzhuangTacticalOverlay({
       </g>
       <g className="nianzhuang-routes">
         {geometry.routes.map((route) => (
-          <OverlayRoute key={route.line.id} routeState={route} />
+          <OverlayRoute key={route.line.id} isCurrentRoute={activeRouteIds.has(route.line.id) || (route.active && route.isUnitVisible)} routeState={route} />
         ))}
       </g>
       <g className="battle-effect-layer" data-testid="battle-effect-layer">
@@ -1299,6 +1321,30 @@ export function linePointsUntil(points: TacticalPoint[], progress: number) {
   return visible;
 }
 
+function linePointsFrom(points: TacticalPoint[], progress: number) {
+  if (points.length < 2) {
+    return points;
+  }
+  const current = pointAtRatio(points, progress);
+  const segmentLengths = points.slice(0, -1).map((point, index) => distance(point, points[index + 1]));
+  const totalLength = Math.max(0.001, segmentLengths.reduce((sum, length) => sum + length, 0));
+  let remaining = totalLength * clamp(progress);
+  const visible = [current];
+  for (let index = 0; index < segmentLengths.length; index += 1) {
+    const length = segmentLengths[index];
+    if (remaining >= length) {
+      remaining -= length;
+      continue;
+    }
+    visible.push(points[index + 1]);
+    for (let tailIndex = index + 2; tailIndex < points.length; tailIndex += 1) {
+      visible.push(points[tailIndex]);
+    }
+    break;
+  }
+  return visible;
+}
+
 export function buildNianzhuangRouteState({
   dateToProgress,
   line,
@@ -1329,6 +1375,9 @@ export function buildNianzhuangRouteState({
   const isRouteRendered = routeVisibility.isDrawn;
   const isRouteVisible = routeVisibility.isNominalVisible;
   const isVisible = isRouteRendered || showUnits;
+  const shouldKeepFullTrace = fullTraceRouteIds.has(line.id) || !isComplete;
+  const trailStart = shouldKeepFullTrace ? 0 : line.retainRouteTailRatio ?? 0.58;
+  const renderedPoints = trailStart > 0 ? linePointsFrom(visiblePoints, trailStart) : visiblePoints;
   return {
     active: routeProgress > 0 && routeProgress < 1,
     facingX: routeFacingX(routePoints, routeProgress),
@@ -1345,12 +1394,13 @@ export function buildNianzhuangRouteState({
     scenePhase: routeVisibility.phase,
     showUnits,
     unitOpacity: showUnits ? unitVisibility.opacity : 0,
-    visiblePoints
+    visiblePoints: renderedPoints
   } satisfies NianzhuangRouteState;
 }
 
 export function NianzhuangTerrain3D({
   activeEvent,
+  activeRouteIds,
   currentFocus,
   dateToProgress,
   focusRoutePoints,
@@ -1515,7 +1565,7 @@ export function NianzhuangTerrain3D({
       data-testid="nianzhuang-terrain-3d"
       data-visible-basemap="drawn-historical-tactical-terrain"
     >
-      {geometry && <NianzhuangTacticalOverlay activeAnchors={routeAnchors} dateToProgress={dateToProgress} geometry={geometry} progress={progress} />}
+      {geometry && <NianzhuangTacticalOverlay activeAnchors={routeAnchors} activeRouteIds={activeRouteIds} dateToProgress={dateToProgress} geometry={geometry} progress={progress} />}
     </div>
   );
 }

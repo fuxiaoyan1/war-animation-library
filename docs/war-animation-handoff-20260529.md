@@ -301,7 +301,30 @@ git diff --check
 - `pla-remnant-mop-up-*` 的单位窗口到 `1948-11-22T16:20`，接 `pla-nizhuang-pursuit`。不要把它们提前关掉。
 - `logs/` 是未跟踪运行产物，默认不要提交。
 
-## 8. 快速命令
+## 8. 2026-06-05 视觉门禁补充
+
+本轮继续修碾庄圩 3D 战术图，用户重点反馈黑块、包围/防守圈同色、包围战后地图不够放大、解放军单位随镜头突然消失。新增规则如下：
+
+- SVG 战术叠加层里的大面积 `path`、`ellipse`、`circle` 必须显式设置 `fill`、`stroke` 和透明度。尤其是 `salvo-blast`、`salvo-core`、工事阴影、callout 圆点，不能依赖 SVG 默认黑色填充。
+- 不要用模糊深色阴影制造“立体感”。工事和地形阴影要浅、可读、无 `blur`，否则 MapLibre 地形上会形成用户截图里的黑块。
+- 华野包围圈保持红系，国民党军防守圈保持蓝灰系；`is-route-anchor` 高亮不能统一刷成黄色，否则会破坏军事语义。
+- 包围战后镜头可以放大，但门禁要同时卡住最小放大和最大近景。当前碾庄 3D 阶段约束：总攻后 `data-map-zoom` 不低于 11.05，不高于 11.55，且相邻阶段缩放跳变保持受控。
+- 判断“包围战地图是否放大”时，优先量完整工事层，例如 `fortified-line-pla-encirclement` 和 `fortified-line-outer-defense`；不要量已经裁剪尾迹的路线 `front-route`，否则会把尾迹裁剪误判成战场没放大。
+- 完成路线可以用尾迹裁剪降低拥挤，但当前事件单位必须用 `data-route-current="true"` 标识并检查镜头内比例。测试要确认当前作战单位不离屏，不能只看历史尾迹仍可见。
+- 黑块回归要双层检查：一层查 SVG 叶子节点的暗色大面积填充/描边，一层对 `map-stage` 截图做像素级最大黑色连通块扫描。只做页面冒烟不能发现用户截图里的黑块。
+- 增加严格视觉检查后，碾庄单用例耗时超过普通 smoke，允许该专项测试使用更长 timeout；不要为了省时删除全程视觉采样。
+
+本轮已通过：
+
+```bash
+git diff --check
+/opt/homebrew/Cellar/node/23.11.0/bin/node node_modules/typescript/bin/tsc -b
+/opt/homebrew/Cellar/node/23.11.0/bin/node node_modules/vite/bin/vite.js build
+FRONTEND_URL=http://127.0.0.1:5177 /opt/homebrew/Cellar/node/23.11.0/bin/node node_modules/@playwright/test/cli.js test tests/battle-france-smoke.spec.ts -g "nianzhuang battle shows"
+FRONTEND_URL=http://127.0.0.1:5177 /opt/homebrew/Cellar/node/23.11.0/bin/node node_modules/@playwright/test/cli.js test tests/battle-france-smoke.spec.ts
+```
+
+## 9. 快速命令
 
 开发：
 
@@ -336,13 +359,13 @@ npm run test:smoke
 若已有手动预览服务：
 
 ```bash
-FRONTEND_URL=http://127.0.0.1:4177 npm run test:smoke
+FRONTEND_URL=http://127.0.0.1:5177 npm run test:smoke
 ```
 
 检查残留服务：
 
 ```bash
-lsof -iTCP:4177 -sTCP:LISTEN || true
+lsof -iTCP:5177 -sTCP:LISTEN || true
 ```
 
 提交前：
