@@ -2435,8 +2435,8 @@ async function expectNianzhuangReadableIcons(page: Page) {
 
   expect(sizes.length).toBeGreaterThan(0);
   for (const size of sizes) {
-    expect(size.width).toBeGreaterThan(18);
-    expect(size.height).toBeGreaterThan(22);
+    expect(size.width).toBeGreaterThan(12);
+    expect(size.height).toBeGreaterThan(14);
     expect(size.width).toBeLessThan(70);
     expect(size.height).toBeLessThan(90);
   }
@@ -2637,7 +2637,11 @@ async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
         const selectors = [
           ".nianzhuang-battle .tactical-terrain-shadow",
           ".nianzhuang-battle .tactical-terrain-skirt",
-          ".nianzhuang-battle .tactical-terrain-wall"
+          ".nianzhuang-battle .tactical-terrain-wall",
+          ".nianzhuang-battle .nianzhuang-formation-shadow",
+          ".nianzhuang-battle .nianzhuang-formation-body",
+          ".nianzhuang-battle .nianzhuang-formation-front-line",
+          ".nianzhuang-battle .nianzhuang-formation-rank-guide"
         ];
 
         return selectors.flatMap((selector) =>
@@ -2667,6 +2671,199 @@ async function expectNianzhuangNoLargeDarkOverlayBlocks(page: Page) {
     expect(sample.effectiveFillAlpha, `Large Nianzhuang overlay terrain element should not read as a dark block: ${JSON.stringify(sample)}`).toBeLessThanOrEqual(0.08);
     expect(sample.filter, `Large Nianzhuang overlay terrain element should not use blurred block shadows: ${JSON.stringify(sample)}`).toBe("none");
   }
+}
+
+async function expectNianzhuangFullVisualIntegrity(page: Page) {
+  const samples = [
+    { date: "1948-11-07T08:00", expectedFocus: "nianzhuangPursuit", minimumUnits: 4 },
+    { date: "1948-11-09T12:00", expectedFocus: "nianzhuangPursuit", minimumUnits: 8 },
+    { date: "1948-11-10T22:45", expectedFocus: "nianzhuangPocket", minimumUnits: 8 },
+    { date: "1948-11-11T16:00", expectedFocus: "nianzhuangRelief", minimumUnits: 16 },
+    { date: "1948-11-13T18:00", expectedFocus: "nianzhuangPocket", minimumUnits: 18 },
+    { date: "1948-11-18T01:00", expectedFocus: "nianzhuangPocket", minimumUnits: 24 },
+    { date: "1948-11-19T22:00", expectedFocus: "nianzhuangCompression", minimumUnits: 30 },
+    { date: "1948-11-20T01:45", expectedFocus: "nianzhuangCompression", minimumUnits: 30 },
+    { date: "1948-11-20T06:00", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
+    { date: "1948-11-21T12:00", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
+    { date: "1948-11-22T16:30", expectedFocus: "nianzhuangFinal", minimumUnits: 24 },
+    { date: "1948-11-22T20:00", expectedFocus: "nianzhuangFinal", minimumUnits: 14 }
+  ];
+  const visualSamples: Array<{
+    brokenImages: Array<{ height: number; href: string; routeId: string; width: number }>;
+    date: string;
+    focus: string | null;
+    formationPathProblems: Array<{ className: string; fill: string; stroke: string; testId: string }>;
+    maxRoute: { heightRatio: number; routeId: string; widthRatio: number } | null;
+    maxUnit: { height: number; routeId: string; width: number } | null;
+    offscreenUnitRatio: number;
+    routeCount: number;
+    suspiciousDarkFills: Array<{ areaRatio: number; className: string; fill: string; opacity: number; testId: string }>;
+    unitCount: number;
+    zoom: number;
+  }> = [];
+
+  for (const sample of samples) {
+    await jumpNianzhuangTimelineTo(page, sample.date);
+    await expect(page.locator(".nianzhuang-battle .camera-layer")).toHaveAttribute("data-map-focus", sample.expectedFocus);
+    await expect(page.getByTestId("nianzhuang-terrain-3d")).toHaveAttribute("data-map-focus", sample.expectedFocus);
+    await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+    await page.waitForTimeout(1_200);
+
+    const visualState = await page.evaluate((date) => {
+      const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+      const terrain = document.querySelector('[data-testid="nianzhuang-terrain-3d"]');
+      const parseColor = (color: string) => {
+        if (color === "none" || color === "transparent") {
+          return { alpha: 0, b: 0, g: 0, r: 0 };
+        }
+        const rgba = color.match(/rgba?\(([^)]+)\)/);
+        if (!rgba) {
+          return { alpha: 1, b: 0, g: 0, r: 0 };
+        }
+        const parts = rgba[1].split(",").map((part) => Number.parseFloat(part.trim()));
+        return { alpha: parts.length >= 4 ? parts[3] : 1, b: parts[2] ?? 0, g: parts[1] ?? 0, r: parts[0] ?? 0 };
+      };
+      const stageArea = Math.max(1, (stage?.width ?? 1) * (stage?.height ?? 1));
+      const relativeBox = (box: DOMRect) => ({
+        centerX: stage ? ((box.left + box.right) / 2 - stage.left) / stage.width : Number.NaN,
+        centerY: stage ? ((box.top + box.bottom) / 2 - stage.top) / stage.height : Number.NaN,
+        heightRatio: stage ? box.height / stage.height : Number.NaN,
+        widthRatio: stage ? box.width / stage.width : Number.NaN
+      });
+
+      const suspiciousDarkFills = [...document.querySelectorAll(".nianzhuang-battle .nianzhuang-maplibre-tactical-overlay path, .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay polygon, .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay rect, .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay ellipse")]
+        .flatMap((node) => {
+          const box = node.getBoundingClientRect();
+          if (!stage || box.width <= 0 || box.height <= 0) {
+            return [];
+          }
+          const style = window.getComputedStyle(node);
+          const fill = parseColor(style.fill);
+          const opacity = Number.parseFloat(style.opacity || "1");
+          const effectiveAlpha = fill.alpha * opacity;
+          const areaRatio = (box.width * box.height) / stageArea;
+          const relative = relativeBox(box);
+          const isLargeShape = areaRatio > 0.02 || relative.widthRatio > 0.18 || relative.heightRatio > 0.18;
+          const isDarkFill = isLargeShape && fill.r <= 45 && fill.g <= 45 && fill.b <= 45 && effectiveAlpha >= 0.18;
+          const isLargeMutedFill = fill.r <= 85 && fill.g <= 75 && fill.b <= 65 && effectiveAlpha >= 0.2 && areaRatio > 0.08;
+          if (!isDarkFill && !isLargeMutedFill) {
+            return [];
+          }
+          return [
+            {
+              areaRatio,
+              className: (node as Element).getAttribute("class") ?? "",
+              fill: style.fill,
+              opacity,
+              testId: (node as Element).closest("[data-testid]")?.getAttribute("data-testid") ?? ""
+            }
+          ];
+        });
+
+      const formationPathProblems = [...document.querySelectorAll(".nianzhuang-battle .nianzhuang-formation-shadow, .nianzhuang-battle .nianzhuang-formation-body, .nianzhuang-battle .nianzhuang-formation-front-line, .nianzhuang-battle .nianzhuang-formation-rank-guide")]
+        .flatMap((node) => {
+          const box = node.getBoundingClientRect();
+          if (box.width <= 0 || box.height <= 0) {
+            return [];
+          }
+          const style = window.getComputedStyle(node);
+          const fill = parseColor(style.fill);
+          const stroke = parseColor(style.stroke);
+          const hasDefaultBlackFill = fill.alpha >= 0.18 && fill.r <= 12 && fill.g <= 12 && fill.b <= 12;
+          const hasNoStroke = stroke.alpha === 0 || style.stroke === "none";
+          const needsStroke = (node as Element).classList.contains("nianzhuang-formation-body") ||
+            (node as Element).classList.contains("nianzhuang-formation-front-line") ||
+            (node as Element).classList.contains("nianzhuang-formation-rank-guide");
+          if (!hasDefaultBlackFill && (!needsStroke || !hasNoStroke)) {
+            return [];
+          }
+          return [
+            {
+              className: (node as Element).getAttribute("class") ?? "",
+              fill: style.fill,
+              stroke: style.stroke,
+              testId: (node as Element).closest("[data-testid]")?.getAttribute("data-testid") ?? ""
+            }
+          ];
+        });
+
+      const visibleUnits = [...document.querySelectorAll('.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .front-line[data-unit-visible="true"] .formation-unit')]
+        .map((unit) => {
+          const box = unit.getBoundingClientRect();
+          const relative = relativeBox(box);
+          return {
+            ...relative,
+            height: box.height,
+            routeId: unit.closest(".front-line")?.getAttribute("data-route-id") ?? "",
+            width: box.width
+          };
+        })
+        .filter((unit) => unit.width > 0 && unit.height > 0);
+
+      const offscreenUnits = visibleUnits.filter((unit) => unit.centerX < -0.08 || unit.centerX > 1.08 || unit.centerY < -0.1 || unit.centerY > 1.1);
+      const maxUnit = visibleUnits.reduce<{ height: number; routeId: string; width: number } | null>(
+        (current, unit) => (!current || unit.width * unit.height > current.width * current.height ? { height: unit.height, routeId: unit.routeId, width: unit.width } : current),
+        null
+      );
+
+      const brokenImages = [...document.querySelectorAll<SVGImageElement>('.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .front-line[data-unit-visible="true"] image.unit-icon-image')]
+        .flatMap((image) => {
+          const box = image.getBoundingClientRect();
+          const href = image.getAttribute("href") ?? "";
+          if (href && box.width >= 8 && box.height >= 12) {
+            return [];
+          }
+          return [{ height: box.height, href, routeId: image.closest(".front-line")?.getAttribute("data-route-id") ?? "", width: box.width }];
+        });
+
+      const routes = [...document.querySelectorAll('.nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .front-line .front-route')]
+        .map((route) => {
+          const box = route.getBoundingClientRect();
+          const relative = relativeBox(box);
+          return {
+            heightRatio: relative.heightRatio,
+            routeId: route.closest(".front-line")?.getAttribute("data-route-id") ?? "",
+            widthRatio: relative.widthRatio
+          };
+        })
+        .filter((route) => route.widthRatio > 0 && route.heightRatio > 0);
+      const maxRoute = routes.reduce<{ heightRatio: number; routeId: string; widthRatio: number } | null>(
+        (current, route) => (!current || route.widthRatio * route.heightRatio > current.widthRatio * current.heightRatio ? route : current),
+        null
+      );
+
+      return {
+        brokenImages,
+        date,
+        focus: terrain?.getAttribute("data-map-focus") ?? null,
+        formationPathProblems,
+        maxRoute,
+        maxUnit,
+        offscreenUnitRatio: visibleUnits.length > 0 ? offscreenUnits.length / visibleUnits.length : 0,
+        routeCount: routes.length,
+        suspiciousDarkFills,
+        unitCount: visibleUnits.length,
+        zoom: Number(terrain?.getAttribute("data-map-zoom") ?? 0)
+      };
+    }, sample.date);
+
+    visualSamples.push(visualState);
+    expect(visualState.focus, `${sample.date} should keep the WebGL terrain camera on the expected tactical stage`).toBe(sample.expectedFocus);
+    expect(visualState.zoom, `${sample.date} should keep a readable tactical overview`).toBeGreaterThanOrEqual(10.1);
+    expect(visualState.zoom, `${sample.date} should not zoom into a local close-up`).toBeLessThanOrEqual(10.7);
+    expect(visualState.unitCount, `${sample.date} should keep enough operational units visible: ${JSON.stringify(visualState)}`).toBeGreaterThanOrEqual(sample.minimumUnits);
+    expect(visualState.offscreenUnitRatio, `${sample.date} should not push most units outside the camera: ${JSON.stringify(visualState)}`).toBeLessThanOrEqual(0.32);
+    expect(visualState.brokenImages, `${sample.date} should not render broken or zero-size unit images`).toEqual([]);
+    expect(visualState.formationPathProblems, `${sample.date} should not contain default black or unstyled formation paths`).toEqual([]);
+    expect(visualState.suspiciousDarkFills, `${sample.date} should not contain large dark filled SVG blocks`).toEqual([]);
+    expect(visualState.routeCount, `${sample.date} should render tactical routes on the terrain overlay`).toBeGreaterThan(0);
+    expect(visualState.maxRoute?.widthRatio ?? 0, `${sample.date} should not render a runaway route line: ${JSON.stringify(visualState.maxRoute)}`).toBeLessThanOrEqual(1.16);
+    expect(visualState.maxRoute?.heightRatio ?? 0, `${sample.date} should not render a runaway route line: ${JSON.stringify(visualState.maxRoute)}`).toBeLessThanOrEqual(1.05);
+    expect(visualState.maxUnit?.width ?? 0, `${sample.date} unit markers should stay compact after scaling: ${JSON.stringify(visualState.maxUnit)}`).toBeLessThanOrEqual(105);
+    expect(visualState.maxUnit?.height ?? 0, `${sample.date} unit markers should stay compact after scaling: ${JSON.stringify(visualState.maxUnit)}`).toBeLessThanOrEqual(78);
+  }
+
+  expect(visualSamples.map((sample) => sample.focus)).toEqual(samples.map((sample) => sample.expectedFocus));
 }
 
 async function expectNianzhuangPursuitUnitsStayInCameraCore(page: Page) {
@@ -2956,6 +3153,7 @@ async function expectNianzhuangClosingRoutesStayLocal(page: Page) {
 
 async function expectNianzhuangMapFocus(page: Page, expectedFocus: string) {
   await expect(page.locator(".nianzhuang-battle .camera-layer")).toHaveAttribute("data-map-focus", expectedFocus);
+  await expect(page.getByTestId("nianzhuang-terrain-3d")).toHaveAttribute("data-map-focus", expectedFocus);
 }
 
 async function expectNianzhuangStageInView(page: Page) {
@@ -3054,7 +3252,10 @@ async function jumpNianzhuangTimelineTo(page: Page, date: string) {
     points: nianzhuangData.mapPoints,
     timingMode: "compressed"
   });
-  await page.getByTestId("timeline").fill(String(Math.round(timeline.dateToProgress(date) * 1000)));
+  const timelineValue = String(Math.round(timeline.dateToProgress(date) * 1000));
+  await page.getByTestId("timeline").fill(timelineValue);
+  await expect(page.getByTestId("timeline")).toHaveValue(timelineValue);
+  await expect.poll(async () => Number(await page.getByTestId("nianzhuang-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
 }
 
 async function expectAncientEventClickPlaysMeleeCue(page: Page, clickEvent: () => Promise<void>) {
@@ -5690,6 +5891,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectNianzhuangReadableMapText(page);
   await expectNianzhuangCameraStaysTactical(page);
   await expectNianzhuangNoLargeDarkOverlayBlocks(page);
+  await expectNianzhuangFullVisualIntegrity(page);
   await expectNianzhuangPursuitUnitsStayInCameraCore(page);
   await expectNianzhuangPursuitUnitsAttachToRouteHeads(page);
   await expectNianzhuangNoResultSpoilers(page);
@@ -5780,7 +5982,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     "pla-south-pursuit",
     "pla-southwest-closing-line"
   ]);
-  await expectNianzhuangCoreBattlefieldZoom(page, 0.48, 0.78);
+  await expectNianzhuangCoreBattlefieldZoom(page, 0.48, 0.68);
   await expectNianzhuangNoResultSpoilers(page);
   await expectVisibleUnitsUseReadableBattleArea(
     page,
@@ -5900,7 +6102,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectNianzhuangLocalBattlefieldSpread(
     page,
     ["huang-nianzhuang-defense-ring", "pla-west-trench-approach", "pla-north-trench-approach", "pla-east-trench-approach"],
-    0.34,
+    0.32,
     0.36
   );
   await expectRouteVisibleWithUnit(page, "pla-artillery-zhoujiazhai");
@@ -5969,8 +6171,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     page,
     ".nianzhuang-battle",
     ["huang-inner-recoil", "huang-north-fragment-recoil", "huang-east-fragment-recoil", "huang-south-fragment-recoil"],
-    0.18,
-    0.32
+    0.14,
+    0.24
   );
   await jumpNianzhuangTimelineTo(page, "1948-11-19T23:30");
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", ["huang-nianzhuang-defense-ring"]);

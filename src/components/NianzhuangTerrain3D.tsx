@@ -114,12 +114,12 @@ const sceneTransitionMinimumOpacity = 0.08;
 const sceneTransitionExitingOpacity = 0.84;
 const sceneTransitionProgress = 0.006;
 const stageCameraZooms: Record<string, number> = {
-  nianzhuangBreakthrough: 10.62,
-  nianzhuangCompression: 10.68,
-  nianzhuangFinal: 10.6,
-  nianzhuangPocket: 10.48,
-  nianzhuangPursuit: 10.3,
-  nianzhuangRelief: 10.36
+  nianzhuangBreakthrough: 10.44,
+  nianzhuangCompression: 10.48,
+  nianzhuangFinal: 10.44,
+  nianzhuangPocket: 10.38,
+  nianzhuangPursuit: 10.28,
+  nianzhuangRelief: 10.22
 };
 
 const historicalBaseBounds: TacticalPoint[] = [
@@ -203,6 +203,16 @@ const nianzhuangTerrainStyle: StyleSpecification = {
       data: tacticalTerrainLineData
     },
     "nianzhuang-real-dem": {
+      type: "raster-dem",
+      tiles: [terrainTileUrl],
+      bounds: nianzhuangSourceBounds,
+      encoding: "terrarium",
+      tileSize: 256,
+      minzoom: minCachedTileZoom,
+      maxzoom: cachedTerrainTileZoom,
+      attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
+    },
+    "nianzhuang-hillshade-dem": {
       type: "raster-dem",
       tiles: [terrainTileUrl],
       bounds: nianzhuangSourceBounds,
@@ -296,7 +306,7 @@ const nianzhuangTerrainStyle: StyleSpecification = {
     {
       id: "nianzhuang-dem-hillshade",
       type: "hillshade",
-      source: "nianzhuang-real-dem",
+      source: "nianzhuang-hillshade-dem",
       paint: {
         "hillshade-accent-color": "#756f4d",
         "hillshade-exaggeration": hillshadeExaggeration,
@@ -928,7 +938,7 @@ function OverlayRouteUnit({
       data-unit-route-progress={placement.routeProgress.toFixed(4)}
       data-ship-label={formationUnit.label}
       data-testid={`formation-unit-${line.id}-${formationUnit.id}`}
-      transform={`translate(${placement.point[0]} ${placement.point[1]})`}
+      transform={`translate(${placement.point[0]} ${placement.point[1]}) scale(0.72)`}
     >
       <RaisedForceMarker faction={markerFaction} label={formationUnit.badgeLabel ?? line.unitBadgeLabel} testId={`force-echelon-${line.id}-${formationUnit.id}`} />
       <UnitIcon badgeLabel={formationUnit.badgeLabel ?? line.unitBadgeLabel} icon={icon} isActive={routeProgress > 0 && routeProgress < 1} facingX={placement.facingX} faction={markerFaction} />
@@ -1304,7 +1314,9 @@ export function NianzhuangTerrain3D({
   const lastFocusRef = useRef(currentFocus);
   const [geometry, setGeometry] = useState<OverlayGeometry | null>(null);
   const latestStateRef = useRef({ activeEvent, progress, routeStates, visibleEffects });
+  const latestCameraRef = useRef({ currentFocus });
   latestStateRef.current = { activeEvent, progress, routeStates, visibleEffects };
+  latestCameraRef.current = { currentFocus };
   const routeAnchors = useMemo(() => activeAnchorIds(routeStates), [routeStates]);
 
   const syncOverlayGeometry = useMemo(
@@ -1370,7 +1382,7 @@ export function NianzhuangTerrain3D({
       container.dataset.terrainLoaded = map.loaded() ? "true" : "false";
       const center = map.getCenter();
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
-      container.dataset.mapFocus = currentFocus;
+      container.dataset.mapFocus = latestCameraRef.current.currentFocus;
       container.dataset.mapZoom = map.getZoom().toFixed(2);
       container.dataset.mapMaxZoom = map.getMaxZoom().toFixed(2);
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";

@@ -1265,6 +1265,16 @@ h1 {
   opacity: 0.98;
 }
 
+.battle-salvo-effect .salvo-trace {
+  fill: none;
+  stroke: rgba(142, 62, 42, 0.34);
+  stroke-dasharray: 7 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
 .salvo-shell-trace {
   fill: none;
   stroke: rgba(255, 221, 126, 0.82);
@@ -2061,6 +2071,156 @@ h1 {
 .nianzhuang-battle .nianzhuang-maplibre-tactical-overlay .fortified-line text {
   font-size: 15px;
   stroke-width: 3px;
+}
+
+.nianzhuang-battle .nianzhuang-formation-layer {
+  pointer-events: none;
+}
+
+.nianzhuang-battle .nianzhuang-formation path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-formation-shadow {
+  fill: none;
+  stroke: rgba(45, 31, 18, 0.14);
+  stroke-width: 7;
+  transform: translate(4px, 5px);
+}
+
+.nianzhuang-battle .nianzhuang-formation-body {
+  fill: none;
+  stroke-dasharray: 7 5;
+  stroke-width: 2.4;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-body {
+  stroke: rgba(178, 54, 39, 0.62);
+}
+
+.nianzhuang-battle .nianzhuang-formation-nationalist .nianzhuang-formation-body {
+  stroke: rgba(43, 104, 171, 0.62);
+}
+
+.nianzhuang-battle .nianzhuang-formation-infantry-block .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-remnant-pocket .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-command-post .nianzhuang-formation-body {
+  fill: rgba(43, 104, 171, 0.045);
+  stroke-dasharray: 5 4;
+}
+
+.nianzhuang-battle .nianzhuang-formation-infantry-block .nianzhuang-formation-shadow,
+.nianzhuang-battle .nianzhuang-formation-remnant-pocket .nianzhuang-formation-shadow,
+.nianzhuang-battle .nianzhuang-formation-command-post .nianzhuang-formation-shadow {
+  fill: rgba(44, 31, 19, 0.035);
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist.nianzhuang-formation-assault-echelon .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-communist.nianzhuang-formation-trench-work .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation-communist.nianzhuang-formation-blocking-line .nianzhuang-formation-body {
+  fill: none;
+  stroke: rgba(188, 49, 36, 0.66);
+}
+
+.nianzhuang-battle .nianzhuang-formation-front-line,
+.nianzhuang-battle .nianzhuang-formation-rank-guide {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-formation-front-line {
+  stroke: rgba(255, 232, 142, 0.78);
+  stroke-width: 3.6;
+}
+
+.nianzhuang-battle .nianzhuang-formation-rank-guide {
+  stroke: rgba(127, 84, 48, 0.22);
+  stroke-dasharray: 4 7;
+  stroke-width: 1.1;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-rank-guide {
+  stroke: rgba(130, 38, 29, 0.24);
+}
+
+.nianzhuang-battle .nianzhuang-formation.is-route-anchor .nianzhuang-formation-body,
+.nianzhuang-battle .nianzhuang-formation.is-route-anchor .nianzhuang-formation-front-line {
+  stroke: rgba(255, 213, 92, 0.98);
+  stroke-width: 4.2;
+}
+
+.nianzhuang-battle .nianzhuang-formation-ranks {
+  filter: drop-shadow(2px 3px 2px rgba(35, 24, 16, 0.18));
+}
+
+.nianzhuang-battle .nianzhuang-formation-rank-dot {
+  fill: rgba(55, 116, 185, 0.86);
+  stroke: rgba(18, 63, 125, 0.78);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-rank-dot {
+  fill: rgba(202, 63, 45, 0.88);
+  stroke: rgba(119, 34, 27, 0.78);
+}
+
+.nianzhuang-battle .nianzhuang-formation-rank-dot-command-post {
+  fill: rgba(224, 178, 80, 0.9);
+  stroke: rgba(104, 65, 23, 0.78);
+}
+
+.nianzhuang-battle .nianzhuang-formation-icon {
+  filter: drop-shadow(2px 4px 2px rgba(35, 24, 16, 0.2));
+}
+
+.nianzhuang-battle .nianzhuang-formation-icon path,
+.nianzhuang-battle .nianzhuang-formation-icon circle {
+  fill: rgba(70, 124, 186, 0.82);
+  stroke: rgba(26, 69, 132, 0.78);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.3;
+  vector-effect: non-scaling-stroke;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-icon path,
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-icon circle {
+  fill: rgba(207, 77, 54, 0.84);
+  stroke: rgba(119, 39, 29, 0.78);
+}
+
+.nianzhuang-battle .nianzhuang-command-post-icon path:first-child,
+.nianzhuang-battle .nianzhuang-echelon-chevron path {
+  fill: none;
+}
+
+.nianzhuang-battle .nianzhuang-command-post-icon path:nth-child(2) {
+  fill: rgba(229, 193, 87, 0.88);
+  stroke: rgba(91, 62, 24, 0.76);
+}
+
+.nianzhuang-battle .nianzhuang-formation text {
+  fill: rgba(68, 44, 24, 0.72);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(238, 224, 184, 0.78);
+  stroke-width: 3px;
+}
+
+.nianzhuang-battle .nianzhuang-formation-communist text {
+  fill: rgba(118, 35, 27, 0.78);
+}
+
+.nianzhuang-battle .nianzhuang-formation-nationalist text {
+  fill: rgba(25, 67, 126, 0.78);
 }
 
 .nianzhuang-battle .river {
