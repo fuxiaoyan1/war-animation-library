@@ -1,3 +1,3 @@
 display_name: GitHub Submit Assistant
-short_description: Prepare update notes, disclaimer checks, validation, commit, and push for war-animation releases.
-default_prompt: Use this skill to prepare the war-animation repository for a GitHub update: inspect all dirty work, update release notes and disclaimers, run validation, commit everything, and push.
+short_description: Prepare update notes, source index, disclaimer checks, validation, commit, and push for war-animation releases.
+default_prompt: Use this skill to prepare the war-animation repository for a GitHub update: inspect all dirty work, update release notes, source website index, and disclaimers, run validation, commit everything, and push.

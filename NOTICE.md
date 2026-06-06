@@ -2,7 +2,7 @@
 
 This repository mixes original software with third-party runtime media assets.
 
-For the full project-level disclaimer, including historical-information limits, copyright handling, non-commercial intent, and the maintainers' peace-and-anti-war statement, read [DISCLAIMER.md](DISCLAIMER.md).
+For the full project-level disclaimer, including historical-information limits, source website entry points, copyright handling, non-commercial intent, and the maintainers' peace-and-anti-war statement, read [DISCLAIMER.md](DISCLAIMER.md). For a website-level source index, read [SOURCE_INDEX.md](SOURCE_INDEX.md).
 
 ## Code
 
@@ -14,6 +14,7 @@ Media files under `public/` are not automatically MIT licensed. They are include
 
 The detailed source log is maintained in:
 
+- `SOURCE_INDEX.md`
 - `docs/sources/audio.md`
 - `docs/sources/unit-icons.md`
 - `docs/sources/*`

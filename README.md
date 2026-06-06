@@ -20,7 +20,7 @@ Highlights:
 - Nianzhuang now uses a real-terrain tactical map with staged camera focus for Xin'anzhen withdrawal, Xuzhou relief, Daxujia blocking, Nianzhuang compression, final pocket, and Nizhuang endgame.
 - Nianzhuang defense has layered village lines, corps-level Nationalist labels, PLA column assault axes, relief blocking, trench approaches, final compression, and remnant clean-up contact.
 - Regression gates now verify source-route continuity, unit visibility windows, effect-to-route binding, tactical camera focus, map interaction, terrain rendering, and key late-stage combat density.
-- A repository-level [DISCLAIMER.md](DISCLAIMER.md) now documents the educational/non-commercial intent, source limits, third-party media terms, and the maintainers' peace-and-anti-war position.
+- A repository-level [DISCLAIMER.md](DISCLAIMER.md) now documents the educational/non-commercial intent, source limits, third-party media terms, source website entry points, and the maintainers' peace-and-anti-war position.
 - A repository-local GitHub submit skill records the future submission workflow so update notes, source notes, disclaimers, validation, commits, and pushes are handled consistently.
 
 Full update note: [docs/updates/war-animation-update-2026-06-06.md](docs/updates/war-animation-update-2026-06-06.md)
@@ -88,6 +88,7 @@ The latest series work focused on naval and air-war animation quality:
 - `src/components`: React animation views and shared renderers.
 - `src/lib`: timeline math, projection helpers, map interaction, unit badge logic, and audio helpers.
 - `public`: runtime media assets used by the demos.
+- `SOURCE_INDEX.md`: website-level source index for historical references, maps, terrain, software, fonts, audio, and asset traceability.
 - `docs/sources`: historical references, audio attribution, asset notes, and uncertainty records.
 - `docs/war-animation-handoff.md`: detailed production handoff and accumulated animation rules.
 - `agents/skills/animation-assistant`: reusable Codex skill, references, and project health-check script.
@@ -145,10 +146,10 @@ Use it before publishing repository updates. It enforces update notes, source/di
 
 This project is an educational, open-source, non-commercial historical animation library. We love peace and oppose war. The animations are source-backed but simplified visualizations, not authoritative historical, legal, political, military, or cartographic advice.
 
-Read [DISCLAIMER.md](DISCLAIMER.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before reusing the project, redistributing assets, or relying on any historical interpretation.
+Read [DISCLAIMER.md](DISCLAIMER.md), [SOURCE_INDEX.md](SOURCE_INDEX.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before reusing the project, redistributing assets, or relying on any historical interpretation.
 
 ## Licensing
 
 Code in this repository is released under the MIT License. Media assets are not automatically MIT licensed. They come from mixed public-domain, CC0, attribution-required, non-commercial, or not-yet-fully-verified sources.
 
-Read [DISCLAIMER.md](DISCLAIMER.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before redistributing assets or using them commercially. Treat the included media as demo/runtime assets with source-specific terms unless a file is explicitly documented as public domain or CC0.
+Read [DISCLAIMER.md](DISCLAIMER.md), [SOURCE_INDEX.md](SOURCE_INDEX.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before redistributing assets or using them commercially. Treat the included media as demo/runtime assets with source-specific terms unless a file is explicitly documented as public domain or CC0.

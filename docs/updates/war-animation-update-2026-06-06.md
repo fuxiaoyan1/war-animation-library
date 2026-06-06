@@ -10,7 +10,7 @@
 - 新增本地常驻预览发布脚本与 LaunchAgent 工作流，便于固定访问 `http://127.0.0.1:5177/`。
 - 扩展 Playwright 门禁：不仅验证页面加载，还验证路线时间窗、单位可见性、特效绑定、镜头焦点、地图交互、三维底图和关键战术关系。
 - 新增或补充大量本地地图瓦片、真实地形瓦片、影像瓦片和专用战术叠加层。
-- 新增根目录 `DISCLAIMER.md`，并在 README/NOTICE 中显著链接，声明项目的历史资料、版权、非商业意图和反战立场。
+- 新增根目录 `DISCLAIMER.md`，并在 README/NOTICE 中显著链接，声明项目的历史资料、来源网站入口、版权、非商业意图和反战立场。
 - 新增仓库内 `github-submit-assistant` skill，用于后续每次 GitHub 更新前自动检查免责声明、来源说明、更新说明、验证、提交和推送事项。
 
 ## 韩信十面埋伏：垓下之战
@@ -76,7 +76,7 @@
 
 - 项目是开源、非商业、教育和技术实验性质。
 - 项目热爱和平、反对战争，不美化战争、不宣扬仇恨或军事扩张。
-- 每部动画的信息来源以 `docs/sources/*` 为准，动画中的时间、地点、路线、兵力关系、镜头和叙事均有压缩和近似。
+- 每部动画的信息来源以 `SOURCE_INDEX.md` 和 `docs/sources/*` 为准，动画中的时间、地点、路线、兵力关系、镜头和叙事均有压缩和近似。
 - 代码按 MIT 发布；媒体、地图、音频、字体、图标等第三方素材不自动适用 MIT，必须按各自来源条款处理。
 - 如发现信息错误、版权风险或署名问题，应通过 issue/维护者联系渠道修正、替换或移除。
 
@@ -88,4 +88,3 @@
 - `npm run preview:local -- --skip-build`
 - Playwright：`campaign data quality gates`
 - Playwright：`gaixia ambush uses terrain map ten-sided formations and pipa score`
-

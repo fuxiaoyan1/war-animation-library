@@ -16,9 +16,11 @@ Use this skill before any GitHub-facing update of the war-animation repository, 
    - `git diff --name-status origin/main`
 2. Treat user instruction "submit all current project work" as permission to stage every tracked and untracked change with `git add -A`, including changes not made by the current agent.
 3. Write or update a dated file under `docs/updates/` that explains user-facing changes relative to GitHub `origin/main`.
-4. Ensure the root `DISCLAIMER.md` exists and README/NOTICE link to it prominently.
+4. Ensure the root `DISCLAIMER.md` and `SOURCE_INDEX.md` exist, and README/NOTICE link to them prominently.
 5. For every new animation or any changed information/media source:
    - update the relevant `docs/sources/*` file;
+   - update `SOURCE_INDEX.md` when a source website is added, removed, or materially reclassified;
+   - confirm `DISCLAIMER.md` directly links the current source websites or the maintained source website index;
    - mention source/licensing changes in the update note;
    - preserve the statement that the project is open-source, non-commercial in intent, loves peace, and opposes war.
 6. Run validation before commit:
@@ -39,6 +41,7 @@ The disclaimer must say, in substance:
 - The maintainers love peace and oppose war.
 - Animations do not glorify violence or endorse political, military, ethnic, national, religious, or ideological positions.
 - Historical data is source-backed but compressed, approximate, and not authoritative advice.
+- External source websites are visible from the disclaimer and `SOURCE_INDEX.md`, not hidden only in per-animation source notes.
 - Code is MIT unless otherwise stated.
 - Media, maps, audio, fonts, and unit markers may carry separate terms and are not automatically MIT licensed.
 - Rights concerns should be handled by correcting attribution, replacing material, or removing it.
@@ -51,7 +54,7 @@ Keep the final user response short but include:
 - pushed remote and branch;
 - update note path;
 - disclaimer path;
+- source index path;
 - skill path;
 - verification commands that passed;
 - any command that could not be run or any push failure.
-
