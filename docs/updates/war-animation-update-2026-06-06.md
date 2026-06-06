@@ -1,10 +1,18 @@
 # 战争动画藏书馆更新说明
 
+War Animation Library Update Notes
+
 更新时间：2026-06-06
+
+Updated: 2026-06-06
 
 对比基准：GitHub 远端 `origin/main` 的 `fd3a660a`。本地提交前基准为 `66eb1b3e`，本地相对远端已有 30 个未推送提交。本次说明聚焦用户特别要求的两部动画：`韩信十面埋伏：垓下之战` 与 `淮海战役：碾庄圩围歼战`。
 
+Baseline: GitHub remote `origin/main` at `fd3a660a`; the local pre-submit baseline was `66eb1b3e`, with 30 local commits ahead of the remote. This note focuses on the two animations requested by the user: `Han Xin's Ten-Sided Ambush: Battle of Gaixia` and `Huaihai Campaign: Nianzhuang Encirclement`.
+
 ## 总体变化
+
+## Overall Changes
 
 - 两部动画都从早期 SVG/概念战术图升级为真实地形与战术覆盖叠加的 3D 地图视图。
 - 新增本地常驻预览发布脚本与 LaunchAgent 工作流，便于固定访问 `http://127.0.0.1:5177/`。
@@ -13,9 +21,15 @@
 - 新增根目录 `DISCLAIMER.md`，并在 README/NOTICE 中显著链接，声明项目的历史资料、来源网站入口、版权、非商业意图和反战立场。
 - 新增仓库内 `github-submit-assistant` skill，用于后续每次 GitHub 更新前自动检查免责声明、来源说明、更新说明、验证、提交和推送事项。
 
+English summary: both highlighted animations were upgraded from earlier conceptual/SVG tactical maps to real-terrain 3D tactical views. The update also adds persistent local preview tooling, broader Playwright gates, explicit source/disclaimer governance, and a repository-local GitHub submit skill.
+
 ## 韩信十面埋伏：垓下之战
 
+## Han Xin's Ten-Sided Ambush: Battle of Gaixia
+
 ### 相对 GitHub 远端的主要更新
+
+### Main Changes Compared With GitHub Remote
 
 - 从概念化包围图升级为真实 GIS/MapLibre 三维地形底图，加入本地缓存的高分辨率影像瓦片和 Terrarium 高程瓦片。
 - 新增 `GaixiaTerrain3D` 战术覆盖层，把地形、河流、营垒、阵形、路线、单位、事件点和特效统一投射到真实地形地图上。
@@ -31,7 +45,11 @@
 - 项羽突围和后续追击不再像自由离场：保留东口护退骑卒、项羽小股东南突围、阴陵追骑、东城快战、乌江方向终局的追逃链条。
 - 单位图标、路线和阵形连续性增强：完成路线保留彩色战术记忆，未交接或未消灭单位不提前消失。
 
+English summary: Gaixia now uses a real GIS/MapLibre terrain base with historical tactical overlays. Camera stages were tightened around the active fight, and the dawn breakthrough now includes visible Chu resistance instead of making the Han assault look uncontested.
+
 ### 垓下新增/强化的回归门禁
+
+### New or Strengthened Gaixia Regression Gates
 
 - 三维真实地形层必须渲染，MapLibre 战术覆盖层必须存在。
 - 当前事件的单位必须位于地图核心区，不能靠在视窗顶部或被大面积空地挤出中心。
@@ -41,9 +59,15 @@
 - 主近战特效不能被项羽小股突围线抢占；突破楚营必须先表现阻击与近战。
 - 夜间冲围、南口封锁、东口反压、项羽追逃等关键路线必须有来源路线和自然交接。
 
+English summary: regression gates now check terrain rendering, tactical camera centering, visible Chu defenders during dawn assault, multiple route-bound melee effects, and route continuity through breakout and pursuit stages.
+
 ## 淮海战役：碾庄圩围歼战
 
+## Huaihai Campaign: Nianzhuang Encirclement
+
 ### 相对 GitHub 远端的主要更新
+
+### Main Changes Compared With GitHub Remote
 
 - 从平面战术图升级为 `NianzhuangTerrain3D` 真实地形/影像底图，加入本地缓存地形与影像瓦片，叠加战术路线、阵地、村落、水网、道路和铁路。
 - 战场范围扩大并重新组织镜头：新安镇撤退、碾庄圩核心、大许家阻援、徐州东援、外围村落试攻、对壕近迫、总攻突破、倪庄终局分别进入合适的相机阶段。
@@ -58,7 +82,11 @@
 - 修复单位连续性：黄兵团固定防御单位、残部回缩、华野攻坚/清剿单位、徐州东援单位按时间显示或隐藏，不再无因消失或残留在错误阶段。
 - 调整单位/阵形视觉：去除容易误读的头点/密集圆点，增加更清晰的队列、标签和方向表达。
 
+English summary: Nianzhuang now uses a real-terrain tactical map, staged camera focus, layered Nationalist defensive lines, continuous PLA assault/blocking/cleanup routes, and a clearer late-pocket fight instead of a single-line collapse.
+
 ### 碾庄新增/强化的回归门禁
+
+### New or Strengthened Nianzhuang Regression Gates
 
 - 碾庄时间轴必须覆盖 1948-11-06T18:00 至 1948-11-22T20:00。
 - 徐州东援必须被阻止在碾庄以西，不得穿过阻援线。
@@ -70,17 +98,30 @@
 - 残点清剿阶段必须显示东、北、南方向残部与华野清剿单位的接触，不允许把最终阶段画成单线推进。
 - 三维地图、地形层、战术覆盖层、单位可读尺寸、路线可见性和特效绑定都有 Playwright 覆盖。
 
+English summary: gates now verify the 1948-11-06 to 1948-11-22 timeline, blocked Xuzhou relief, preliminary attacks before the final assault, trench approaches after 1948-11-15, staged defensive-line visibility, combat-focused cameras, and late-stage cleanup contacts.
+
 ## 免责声明与来源治理
+
+## Disclaimer and Source Governance
 
 本次新增 `DISCLAIMER.md` 并更新 README/NOTICE。核心声明包括：
 
+This update adds `DISCLAIMER.md` and updates README/NOTICE. The core statements are:
+
 - 项目是开源、非商业、教育和技术实验性质。
+  The project is open-source, non-commercial in maintainer intent, educational, and technical.
 - 项目热爱和平、反对战争，不美化战争、不宣扬仇恨或军事扩张。
+  The project loves peace and opposes war; it does not glorify war, promote hatred, or promote military expansion.
 - 每部动画的信息来源以 `SOURCE_INDEX.md` 和 `docs/sources/*` 为准，动画中的时间、地点、路线、兵力关系、镜头和叙事均有压缩和近似。
+  Animation sources are governed by `SOURCE_INDEX.md` and `docs/sources/*`; dates, locations, routes, force relationships, cameras, and narrative sequencing are compressed and approximate.
 - 代码按 MIT 发布；媒体、地图、音频、字体、图标等第三方素材不自动适用 MIT，必须按各自来源条款处理。
+  Code is MIT licensed; third-party media, maps, audio, fonts, and icons are not automatically MIT licensed and must be handled under their own source terms.
 - 如发现信息错误、版权风险或署名问题，应通过 issue/维护者联系渠道修正、替换或移除。
+  Information errors, rights risks, or attribution issues should be handled through correction, replacement, or removal.
 
 ## 已验证
+
+## Verified
 
 - `git diff --check`
 - `npm exec tsc -- -b`
@@ -88,3 +129,5 @@
 - `npm run preview:local -- --skip-build`
 - Playwright：`campaign data quality gates`
 - Playwright：`gaixia ambush uses terrain map ten-sided formations and pipa score`
+
+The listed commands and targeted Playwright gates passed for this update.

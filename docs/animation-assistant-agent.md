@@ -1,10 +1,16 @@
 # 动画助手智能体设计
 
+Animation Assistant Agent Design
+
 ## 定位
 
 动画助手负责把一个主题转成“可播放、可暂停、可回放、可拖拽时间轴、可验证、可常驻运行”的网页动画作品。它不是单纯写页面，而是完成从资料、数据模型、视觉叙事、交互控制、自动化验收到长期复用记忆的闭环。
 
+The animation assistant turns a topic into a web animation that can be played, paused, replayed, scrubbed on a timeline, verified, and optionally operated as a persistent local demo. It is not only a page builder; it owns the loop from source research, data modeling, visual storytelling, interaction controls, automated validation, and durable reusable memory.
+
 已沉淀为 Codex Skill：
+
+It has been materialized as a Codex skill:
 
 - `agents/skills/animation-assistant/SKILL.md`
 - `agents/skills/animation-assistant/references/prompt-patterns.md`
@@ -13,7 +19,13 @@
 
 ## 本次开发复盘
 
+## Development Retrospective
+
+This retrospective records how the original animation experiment became a reusable, source-backed animation workflow. The durable rules should be kept in `agents/skills/animation-assistant/SKILL.md`; this file explains the reasoning and project history behind those rules.
+
 ### 阶段 1：从试验项目到可运行页面
+
+### Phase 1: From Experiment to Running Page
 
 - 创建桌面项目 `战争动画藏书馆`。
 - 采用 Vite + React + TypeScript，保持轻量。
@@ -21,7 +33,11 @@
 - 用结构化数据驱动二战德法战役时间线。
 - 实现播放、暂停、回放、时间轴拖拽和事件跳转。
 
+English summary: the first phase created a lightweight Vite + React + TypeScript project, separated data and rendering, added source/test directories, and implemented the core playback controls.
+
 ### 阶段 2：从手绘地图到真实地图
+
+### Phase 2: From Hand-Drawn Map to Real Map
 
 - 初版手绘 SVG 地图粗糙，用户反馈有效。
 - 引入 `d3-geo`、`topojson-client`、`world-atlas`。
@@ -29,20 +45,32 @@
 - 发现 `fitExtent` 使用 Polygon 可能被球面方向解释错，导致地图缩成一团。
 - 修复为 `MultiPoint` bounds。
 
+English summary: the map moved from rough SVG drawing to geographic coordinates using `d3-geo`, `topojson-client`, and `world-atlas`; a projection fitting issue was fixed by using `MultiPoint` bounds.
+
 ### 阶段 3：从粗箭头到军事态势表达
+
+### Phase 3: From Thick Arrows to Tactical Situation Display
 
 - 用户反馈态势线过粗、遮挡地图。
 - 改为细线、弱光晕、方向虚点。
 - 德军推进线加入坦克引导符号。
 - 当前战役点加入爆炸冲击波，过后保留静态战斗星标。
 
+English summary: thick arrows were replaced with thinner routes, halos, direction markers, unit icons, and event effects that preserve readable tactical context.
+
 ### 阶段 4：从固定视角到阶段镜头
+
+### Phase 4: From Fixed View to Staged Camera
 
 - 后期战役向法国南部和巴黎/贡比涅发展，固定北法视窗看不到后续。
 - 先尝试 SVG transform/camera follow，和 `preserveAspectRatio=slice` 组合不稳定。
 - 最终改成阶段化投影视窗：北法/低地国家、法国本土、巴黎-贡比涅。
 
+English summary: a single fixed viewport failed as the campaign moved south and east, so the renderer moved toward staged camera/projection windows.
+
 ### 阶段 5：从一次性演示到常驻产品
+
+### Phase 5: From One-Off Demo to Persistent Product
 
 - 原私有工作区曾用 macOS LaunchAgent 常驻运行生产预览。
 - 开源仓库默认不附带本机服务文件；如需常驻运行，可按 `animation-assistant` skill 的通用运行章节自行创建。
@@ -50,7 +78,11 @@
 - macOS LaunchAgent 不要直接从 `Desktop`、`Downloads` 等受 TCC 保护目录设置 `WorkingDirectory` 或读取构建产物；先把 `dist` 发布到 `~/Library/Application Support/<app>`，日志写到 `~/Library/Logs/<app>`，再让 LaunchAgent 服务发布目录。
 - 自建静态服务要覆盖音频 MIME：`.mp3` 返回 `audio/mpeg`，`.ogg` 和 `.oga` 返回 `audio/ogg`。常驻服务验证要包含代表性音乐/SFX 的 `HEAD`，不能只测首页 HTML。
 
+English summary: persistent local operation should serve production assets, publish from a stable app-support directory, log outside protected desktop folders, and verify HTML plus representative media MIME responses.
+
 ## 稳定工作法
+
+## Stable Working Method
 
 1. 先读项目，不凭空改。
 2. 先建数据模型，再写动画。
@@ -60,7 +92,13 @@
 6. 本地长期作品必须常驻运行。
 7. 成功经验写入 skill 和 mempalace。
 
+English summary: read the project first, model before rendering, record sources, treat user screenshots as ground truth, turn fixes into regression points, keep long-term demos operable, and preserve reusable lessons.
+
 ## 战争系列规则
+
+## War-Series Rules
+
+The following Chinese checklist is the detailed production rule set accumulated across the war-animation series. In English: keep the series homepage as the main entry, classify wars consistently, keep future animations around five minutes unless requested otherwise, compress long sparse timelines, preserve simultaneity for multi-front wars, use era-appropriate icons/audio, keep maps interactive and camera-safe, verify routes/effects/subtitles/audio with Playwright, and document sources and licensing changes.
 
 - 默认入口应是战争系列主页，而不是某一部动画。
 - 主页按“古代战争 / 现代战争”分架：拿破仑时代及其后的战争归入现代战争，更早战争归入古代战争。
@@ -107,6 +145,10 @@
 
 ## 标准提示词
 
+## Standard Prompt
+
+The standard prompt below is intentionally kept in Chinese because it is used directly with the project owner's workflow. It asks the animation assistant to gather sources, model events/routes/timeline/cameras, build full controls, choose era-appropriate icons/audio, keep maps interactive, verify with Playwright screenshots, and persist reusable lessons.
+
 ```text
 使用 animation-assistant，把 <主题> 做成一个数据驱动的交互式网页动画。
 
@@ -138,7 +180,11 @@
 
 ## 可继续增强
 
+## Future Enhancements
+
 - 增加脚本自动生成 Vite 动画项目模板。
 - 增加 GeoJSON/TopoJSON 自动视窗计算脚本。
 - 增加视觉评分清单：地图占比、标签重叠、线宽、动态效果节制。
 - 增加“旁白字幕轨”和“导出视频/GIF”能力。
+
+English summary: future work can add a Vite project generator, automatic GeoJSON/TopoJSON viewport computation, a visual quality scoring checklist, narration subtitle tracks, and video/GIF export.
