@@ -33,6 +33,7 @@ import {
 const mapWidth = 4800;
 const mapHeight = 2880;
 const nianzhuangMinMapScale = 0.86;
+const nianzhuangMaxMapScale = 3.35;
 const nianzhuangViewportCenterX = mapWidth / 2;
 const nianzhuangViewportCenterY = mapHeight / 2;
 const nianzhuangInteractionBounds = {
@@ -49,6 +50,7 @@ type NianzhuangCameraStageId =
   | "nianzhuangRelief"
   | "nianzhuangBreakthrough"
   | "nianzhuangCompression"
+  | "nianzhuangSecondWall"
   | "nianzhuangFinal";
 
 type NianzhuangCameraStage = {
@@ -65,6 +67,12 @@ type NianzhuangFocusState = {
   ratio: number;
   rawRatio: number;
   transitionProgress: number;
+};
+
+type NianzhuangFocusStep = {
+  date: string;
+  focus: NianzhuangCameraStageId;
+  transitionProgress?: number;
 };
 
 const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraStage> = {
@@ -123,6 +131,17 @@ const nianzhuangCameraStages: Record<NianzhuangCameraStageId, NianzhuangCameraSt
     scale: 1.86,
     terrainZoom: 11.32
   },
+  nianzhuangSecondWall: {
+    center: [117.878, 34.292],
+    focusRoutePoints: [
+      [117.828, 34.258],
+      [117.918, 34.258],
+      [117.918, 34.322],
+      [117.828, 34.322]
+    ],
+    scale: 3.12,
+    terrainZoom: 11.82
+  },
   nianzhuangFinal: {
     center: [117.902, 34.286],
     focusRoutePoints: [
@@ -144,9 +163,10 @@ const focusSteps = [
   { date: "1948-11-15T02:00", focus: "nianzhuangPocket" },
   { date: "1948-11-19T10:00", focus: "nianzhuangBreakthrough" },
   { date: "1948-11-19T21:15", focus: "nianzhuangCompression" },
-  { date: "1948-11-20T05:30", focus: "nianzhuangFinal" },
+  { date: "1948-11-19T22:30", focus: "nianzhuangSecondWall" },
+  { date: "1948-11-20T05:15", focus: "nianzhuangFinal", transitionProgress: 0.006 },
   { date: "1948-11-22T16:00", focus: "nianzhuangFinal" }
-] satisfies Array<{ date: string; focus: NianzhuangCameraStageId }>;
+] satisfies NianzhuangFocusStep[];
 
 const nianzhuangFocusTransitionProgress = 0.042;
 
@@ -276,9 +296,10 @@ function focusTransitionState(progress: number): NianzhuangFocusState {
   const previousStep = timelineSteps[activeIndex - 1] ?? activeStep;
   const nextStep = timelineSteps[activeIndex + 1];
   const availableProgressBeforeNextStep = nextStep ? Math.max(0, nextStep.fromProgress - activeStep.fromProgress) : nianzhuangFocusTransitionProgress;
+  const requestedTransitionProgress = activeStep.transitionProgress ?? nianzhuangFocusTransitionProgress;
   const transitionProgress =
     previousStep.focus !== activeStep.focus
-      ? Math.max(0.001, Math.min(nianzhuangFocusTransitionProgress, availableProgressBeforeNextStep || nianzhuangFocusTransitionProgress))
+      ? Math.max(0.001, Math.min(requestedTransitionProgress, availableProgressBeforeNextStep || requestedTransitionProgress))
       : 0;
   const rawRatio = transitionProgress > 0 ? (progress - activeStep.fromProgress) / transitionProgress : 1;
   const isTransitioning = previousStep.focus !== activeStep.focus && rawRatio < 1;
@@ -434,7 +455,7 @@ export function NianzhuangBattleAnimation() {
     svgRef,
     zoomIn,
     zoomOut
-  } = useMapInteraction(mapWidth, mapHeight, currentFocus, activeMapView, { minScale: nianzhuangMinMapScale });
+  } = useMapInteraction(mapWidth, mapHeight, currentFocus, activeMapView, { maxScale: nianzhuangMaxMapScale, minScale: nianzhuangMinMapScale });
 
   useEffect(() => {
     scoreRef.current = new WarScore(musicSource);

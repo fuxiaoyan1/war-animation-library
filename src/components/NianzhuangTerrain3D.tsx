@@ -120,6 +120,7 @@ const sceneTransitionProgress = 0.012;
 const stageCameraZooms: Record<string, number> = {
   nianzhuangBreakthrough: 10.44,
   nianzhuangCompression: 10.5,
+  nianzhuangSecondWall: 10.57,
   nianzhuangFinal: 10.42,
   nianzhuangPocket: 10.31,
   nianzhuangPursuit: 10.15,
@@ -131,6 +132,15 @@ const denseAssaultStart = "1948-11-19T10:00";
 const majorFieldworkLabelIds = new Set(["pla-encirclement", "outer-defense", "second-defense", "final-core"]);
 const quietPointKinds = new Set(["front"]);
 const fullTraceRouteIds = new Set(["huang-nianzhuang-defense-ring", "huang-final-core-defense", "huang-east-remnant-defense"]);
+const secondWallContextRouteIds = new Set([
+  "xuzhou-relief-east",
+  "xuzhou-relief-second-thrust",
+  "xuzhou-relief-contained",
+  "pla-relief-block-line",
+  "pla-relief-depth-line",
+  "pla-relief-lateral-seal",
+  "pla-relief-counterpush"
+]);
 
 const historicalBaseBounds: TacticalPoint[] = [
   [nianzhuangSourceBounds[0], nianzhuangSourceBounds[1]],
@@ -541,6 +551,10 @@ function shouldShowRouteLabel(routeState: ProjectedRouteState) {
   return routeState.active && routeState.line.id.startsWith("xuzhou-relief");
 }
 
+function shouldRenderRouteInFocus(routeState: ProjectedRouteState, currentFocus: string) {
+  return currentFocus !== "nianzhuangSecondWall" || !secondWallContextRouteIds.has(routeState.line.id);
+}
+
 function isFormationVisible(formation: NianzhuangTacticalFormation, progress: number, dateToProgress: (date: string) => number) {
   const start = dateToProgress(formation.start);
   const end = formation.end ? dateToProgress(formation.end) : 1;
@@ -587,7 +601,7 @@ function cameraCenterBoundsForFocus(currentFocus: string) {
     };
   }
 
-  if (currentFocus === "nianzhuangCompression" || currentFocus === "nianzhuangFinal") {
+  if (currentFocus === "nianzhuangCompression" || currentFocus === "nianzhuangSecondWall" || currentFocus === "nianzhuangFinal") {
     return {
       east: 117.99,
       north: 34.38,
@@ -639,7 +653,7 @@ function cameraForMapView(
       Math.max(cameraCenterBounds.south, Math.min(cameraCenterBounds.north, fittedCenter[1] + userPanY / 14500 / Math.max(mapView.scale, 0.1)))
     ] as TacticalPoint,
     pitch: tacticalCameraPitch,
-    zoom: Math.max(9.95, Math.min(11.65, stageZoom + (mapBaseView.scale - nianzhuangBaseMapScale) * 0.16 + userZoomDelta * 0.66))
+    zoom: Math.max(9.95, Math.min(12.28, stageZoom + (mapBaseView.scale - nianzhuangBaseMapScale) * 0.16 + userZoomDelta * 0.66))
   };
 }
 
@@ -913,6 +927,7 @@ function OverlayFormation({ activeAnchors, formation }: { activeAnchors: Set<str
   const isActiveAnchor = [formation.id, ...(formation.anchorIds ?? [])].some((anchor) => activeAnchors.has(anchor));
   const isArea = formation.kind === "infantry-block" || formation.kind === "remnant-pocket" || formation.kind === "command-post";
   const frontPoints = formation.kind === "infantry-block" ? formation.points.slice(0, 2) : formation.points;
+  const rankMarkSize = formation.kind === "command-post" ? 4.8 : formation.kind === "remnant-pocket" ? 4.4 : 3.8;
   return (
     <g
       className={`nianzhuang-formation nianzhuang-formation-${formation.faction} nianzhuang-formation-${formation.kind} ${isActiveAnchor ? "is-route-anchor" : ""}`}
@@ -928,12 +943,10 @@ function OverlayFormation({ activeAnchors, formation }: { activeAnchors: Set<str
       ))}
       <g className="nianzhuang-formation-ranks" data-testid={`nianzhuang-formation-ranks-${formation.id}`}>
         {formation.rankPoints.map((point, index) => (
-          <circle
+          <path
             key={`${formation.id}-rank-${index}`}
-            className={`nianzhuang-formation-rank-dot nianzhuang-formation-rank-dot-${formation.kind}`}
-            cx={point[0]}
-            cy={point[1]}
-            r={formation.kind === "command-post" ? 3.7 : formation.kind === "remnant-pocket" ? 3.1 : 2.6}
+            className={`nianzhuang-formation-rank-mark nianzhuang-formation-rank-mark-${formation.kind}`}
+            d={`M ${point[0] - rankMarkSize} ${point[1] + 2} L ${point[0] + rankMarkSize} ${point[1] - 2}`}
           />
         ))}
       </g>
@@ -941,7 +954,7 @@ function OverlayFormation({ activeAnchors, formation }: { activeAnchors: Set<str
         <g className="nianzhuang-formation-icon nianzhuang-command-post-icon" transform={`translate(${formation.labelPoint[0]} ${formation.labelPoint[1]})`}>
           <path d="M 0 -18 L 0 12" />
           <path d="M 0 -18 L 18 -10 L 0 -2 Z" />
-          <circle cx="0" cy="14" r="5" />
+          <path className="nianzhuang-command-post-base" d="M -6 10 H 6 L 4 18 H -4 Z" />
         </g>
       )}
       {(formation.kind === "blocking-line" || formation.kind === "assault-echelon" || formation.kind === "trench-work") &&
@@ -1059,7 +1072,6 @@ function OverlayRoute({ isCurrentRoute, routeState }: { isCurrentRoute: boolean;
           <path className="front-halo nianzhuang-route-shadow" d={routePath} />
           <path className="front-route nianzhuang-route-line" d={routePath} />
           <path className="front-direction nianzhuang-route-highlight" d={routePath} />
-          <circle cx={markerPoint[0]} cy={markerPoint[1]} r={active ? 4.6 : 3.2} />
         </g>
       )}
       {showUnits && (
@@ -1140,12 +1152,14 @@ function OverlayEffect({ effect }: { effect: ProjectedEffectState }) {
 function NianzhuangTacticalOverlay({
   activeAnchors,
   activeRouteIds,
+  currentFocus,
   dateToProgress,
   geometry,
   progress
 }: {
   activeAnchors: Set<string>;
   activeRouteIds: Set<string>;
+  currentFocus: string;
   dateToProgress: (date: string) => number;
   geometry: OverlayGeometry;
   progress: number;
@@ -1244,9 +1258,11 @@ function NianzhuangTacticalOverlay({
         })}
       </g>
       <g className="nianzhuang-routes">
-        {geometry.routes.map((route) => (
-          <OverlayRoute key={route.line.id} isCurrentRoute={activeRouteIds.has(route.line.id) || (route.active && route.isUnitVisible)} routeState={route} />
-        ))}
+        {geometry.routes
+          .filter((route) => shouldRenderRouteInFocus(route, currentFocus))
+          .map((route) => (
+            <OverlayRoute key={route.line.id} isCurrentRoute={activeRouteIds.has(route.line.id) || (route.active && route.isUnitVisible)} routeState={route} />
+          ))}
       </g>
       <g className="battle-effect-layer" data-testid="battle-effect-layer">
         {geometry.effects.map((effect) => (
@@ -1417,9 +1433,9 @@ export function NianzhuangTerrain3D({
   const lastFocusRef = useRef(currentFocus);
   const [geometry, setGeometry] = useState<OverlayGeometry | null>(null);
   const latestStateRef = useRef({ activeEvent, progress, routeStates, visibleEffects });
-  const latestCameraRef = useRef({ currentFocus });
+  const latestCameraRef = useRef({ currentFocus, focusRoutePoints, mapBaseView, mapView, terrainZoom });
   latestStateRef.current = { activeEvent, progress, routeStates, visibleEffects };
-  latestCameraRef.current = { currentFocus };
+  latestCameraRef.current = { currentFocus, focusRoutePoints, mapBaseView, mapView, terrainZoom };
   const routeAnchors = useMemo(() => activeAnchorIds(routeStates), [routeStates]);
 
   const syncOverlayGeometry = useMemo(
@@ -1466,7 +1482,7 @@ export function NianzhuangTerrain3D({
       keyboard: false,
       maxBounds: nianzhuangBounds,
       maxPitch: 62,
-      maxZoom: 13.5,
+      maxZoom: 13.9,
       minZoom: 9.85,
       pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
       pitch: initialCamera.pitch,
@@ -1495,6 +1511,16 @@ export function NianzhuangTerrain3D({
 
     map.once("load", () => {
       map.setTerrain({ source: "nianzhuang-real-dem", exaggeration: terrainExaggeration });
+      const latestCamera = latestCameraRef.current;
+      map.jumpTo(
+        cameraForMapView(
+          latestCamera.mapBaseView,
+          latestCamera.mapBaseView,
+          latestCamera.focusRoutePoints,
+          latestCamera.currentFocus,
+          latestCamera.terrainZoom
+        )
+      );
       syncMetadata();
     });
     map.on("render", syncOverlayGeometry);
@@ -1565,7 +1591,7 @@ export function NianzhuangTerrain3D({
       data-testid="nianzhuang-terrain-3d"
       data-visible-basemap="drawn-historical-tactical-terrain"
     >
-      {geometry && <NianzhuangTacticalOverlay activeAnchors={routeAnchors} activeRouteIds={activeRouteIds} dateToProgress={dateToProgress} geometry={geometry} progress={progress} />}
+      {geometry && <NianzhuangTacticalOverlay activeAnchors={routeAnchors} activeRouteIds={activeRouteIds} currentFocus={currentFocus} dateToProgress={dateToProgress} geometry={geometry} progress={progress} />}
     </div>
   );
 }

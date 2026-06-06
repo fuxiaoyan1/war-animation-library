@@ -42,6 +42,13 @@ export type GaixiaTerrainRouteState = {
 };
 
 export type GaixiaTerrainEffectPlacement = {
+  contacts?: Array<{
+    chuPoint: TacticalPoint;
+    chuRouteId: string;
+    hanPoint: TacticalPoint;
+    hanRouteId: string;
+    point: TacticalPoint;
+  }>;
   chuPoint?: TacticalPoint;
   chuRouteId?: string;
   hanPoint?: TacticalPoint;
@@ -54,6 +61,7 @@ type GaixiaTerrain3DProps = {
   activeEffectPlacement: GaixiaTerrainEffectPlacement;
   activeEvent: GaixiaEvent;
   activeRouteIds: Set<string>;
+  cameraZoomBoost?: number;
   focusCoordinates: TacticalPoint;
   focusRoutePoints: TacticalPoint[];
   height: number;
@@ -65,6 +73,7 @@ type GaixiaTerrain3DProps = {
 };
 
 type ProjectedOverlayRouteState = Omit<GaixiaTerrainRouteState, "labelPoint" | "markerPoint" | "visiblePoints"> & {
+  formationPreludePoints: TacticalPoint[];
   labelPoint: TacticalPoint | null;
   markerPoint: TacticalPoint | null;
   visiblePoints: TacticalPoint[];
@@ -166,7 +175,7 @@ const historicalTerrainBaseData = featureCollection([
 const historicalWaterData = featureCollection(rivers.map((river) => lineFeature(river.id, river.points)));
 const historicalContourData = featureCollection(terrainContours.map((contour) => lineFeature(contour.id, contour.points, { elevation: contour.elevation, kind: contour.kind })));
 
-function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinates: TacticalPoint, focusRoutePoints: TacticalPoint[]) {
+function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinates: TacticalPoint, focusRoutePoints: TacticalPoint[], cameraZoomBoost = 0) {
   const hasRouteContext = focusRoutePoints.length > 1;
   const longitudes = focusRoutePoints.map((point) => point[0]);
   const latitudes = focusRoutePoints.map((point) => point[1]);
@@ -195,7 +204,7 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
       10.15,
       Math.min(
         15.25,
-        clampedStageZoom + (mapBaseView.scale - 0.9) * 0.55 + userZoomDelta * 1.55
+        clampedStageZoom + (mapBaseView.scale - 0.9) * 0.55 + cameraZoomBoost + userZoomDelta * 1.55
       )
     )
   };
@@ -425,6 +434,10 @@ function midpoint(a: TacticalPoint, b: TacticalPoint) {
   return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] as TacticalPoint;
 }
 
+function routeLength(points: TacticalPoint[]) {
+  return points.slice(0, -1).reduce((sum, point, index) => sum + Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]), 0);
+}
+
 function pointAtRatio(points: TacticalPoint[], ratio: number) {
   if (points.length < 2) {
     return points[0] ?? [0, 0];
@@ -456,6 +469,42 @@ function normalAtRatio(points: TacticalPoint[], ratio: number) {
   const dy = next[1] - previous[1];
   const length = Math.hypot(dx, dy) || 1;
   return [-dy / length, dx / length] as TacticalPoint;
+}
+
+function routeFacingX(points: TacticalPoint[], routeProgress: number): 1 | -1 {
+  const previous = pointAtRatio(points, Math.max(0, routeProgress - 0.018));
+  const next = pointAtRatio(points, Math.min(1, routeProgress + 0.018));
+  return next[0] - previous[0] < -0.01 ? -1 : 1;
+}
+
+function routeDirectionVector(points: TacticalPoint[], routeProgress: number) {
+  const previous = pointAtRatio(points, Math.max(0, routeProgress - 0.018));
+  const current = pointAtRatio(points, routeProgress);
+  const next = pointAtRatio(points, Math.min(1, routeProgress + 0.018));
+  const dx = current[0] - previous[0] || next[0] - previous[0] || 1;
+  const dy = current[1] - previous[1] || next[1] - previous[1] || 0;
+  const length = Math.hypot(dx, dy) || 1;
+  return { x: dx / length, y: dy / length };
+}
+
+function routeLocalOffset(point: TacticalPoint, direction: { x: number; y: number }, offset: TacticalPoint) {
+  const [along, cross] = offset;
+  return [point[0] + direction.x * along - direction.y * cross, point[1] + direction.y * along + direction.x * cross] as TacticalPoint;
+}
+
+function formationUnitPlacement(points: TacticalPoint[], progress: number, offset: TacticalPoint, offsetScale = 1) {
+  const totalLength = Math.max(routeLength(points), 1);
+  const [along, cross] = offset;
+  const rawProgress = progress + (along * offsetScale) / totalLength;
+  const unitProgress = clamp(rawProgress);
+  const pointOnRoute = pointAtRatio(points, unitProgress);
+  const direction = routeDirectionVector(points, unitProgress);
+  const clampedAlongOverflow = rawProgress < 0 ? rawProgress * totalLength : rawProgress > 1 ? (rawProgress - 1) * totalLength : 0;
+  return {
+    facingX: routeFacingX(points, unitProgress),
+    point: routeLocalOffset(pointOnRoute, direction, [clampedAlongOverflow, cross * offsetScale]),
+    routeProgress: unitProgress
+  };
 }
 
 function formationFrontSamples(points: TacticalPoint[], count: number) {
@@ -623,8 +672,24 @@ function projectEffectPlacement(map: maplibregl.Map, placement: GaixiaTerrainEff
   if (!point) {
     return null;
   }
+  const contacts = placement.contacts
+    ?.map((contact) => {
+      const contactPoint = projectPoint(map, contact.point);
+      const hanPoint = projectPoint(map, contact.hanPoint);
+      const chuPoint = projectPoint(map, contact.chuPoint);
+      return contactPoint && hanPoint && chuPoint
+        ? {
+            ...contact,
+            chuPoint,
+            hanPoint,
+            point: contactPoint
+          }
+        : null;
+    })
+    .filter((contact): contact is NonNullable<typeof contact> => Boolean(contact));
   return {
     ...placement,
+    contacts,
     chuPoint: placement.chuPoint ? projectPoint(map, placement.chuPoint) ?? undefined : undefined,
     hanPoint: placement.hanPoint ? projectPoint(map, placement.hanPoint) ?? undefined : undefined,
     point
@@ -751,6 +816,7 @@ function computeOverlayGeometry({
     }),
     routes: projectedRoutes.map((state) => ({
       ...state,
+      formationPreludePoints: projectLine(map, state.route.formationPrelude ?? []),
       labelPoint: projectPoint(map, state.labelPoint),
       markerPoint: projectPoint(map, state.markerPoint),
       visiblePoints: projectLine(map, state.visiblePoints)
@@ -844,19 +910,53 @@ function ActiveEffect({ event, placement }: { event: GaixiaEvent; placement: Gai
     );
   }
 
+  const contacts = placement.contacts?.length
+    ? placement.contacts
+    : placement.hanPoint && placement.chuPoint && placement.hanRouteId && placement.chuRouteId
+      ? [
+          {
+            chuPoint: placement.chuPoint,
+            chuRouteId: placement.chuRouteId,
+            hanPoint: placement.hanPoint,
+            hanRouteId: placement.hanRouteId,
+            point: placement.point
+          }
+        ]
+      : [];
+
   return (
-    <g
-      className="gaixia-melee-effect"
-      data-chu-route={placement.chuRouteId ?? ""}
-      data-effect-source={placement.source}
-      data-han-route={placement.hanRouteId ?? ""}
-      data-testid="gaixia-melee-effect"
-      transform={`translate(${point[0]} ${point[1]})`}
-    >
-      {placement.hanPoint && placement.chuPoint && <path className="gaixia-contact-tether" d={buildPath([placement.hanPoint, point, placement.chuPoint])} />}
-      <circle r="28" />
-      <circle r="48" />
-      <path d="M -24 -24 L 24 24 M 24 -24 L -24 24" />
+    <g className="gaixia-melee-effects">
+      {contacts.length > 0 ? (
+        contacts.map((contact, index) => (
+          <g
+            key={`${contact.hanRouteId}-${contact.chuRouteId}-${index}`}
+            className={`gaixia-melee-effect ${index === 0 ? "is-primary-contact" : "is-secondary-contact"}`}
+            data-chu-route={contact.chuRouteId}
+            data-effect-source={placement.source}
+            data-han-route={contact.hanRouteId}
+            data-testid="gaixia-melee-effect"
+            transform={`translate(${contact.point[0]} ${contact.point[1]})`}
+          >
+            <path className="gaixia-contact-tether" d={buildPath([contact.hanPoint, contact.point, contact.chuPoint])} />
+            <circle r={index === 0 ? 28 : 22} />
+            <circle r={index === 0 ? 48 : 38} />
+            <path d="M -24 -24 L 24 24 M 24 -24 L -24 24" />
+          </g>
+        ))
+      ) : (
+        <g
+          className="gaixia-melee-effect is-primary-contact"
+          data-chu-route=""
+          data-effect-source={placement.source}
+          data-han-route=""
+          data-testid="gaixia-melee-effect"
+          transform={`translate(${point[0]} ${point[1]})`}
+        >
+          <circle r="28" />
+          <circle r="48" />
+          <path d="M -24 -24 L 24 24 M 24 -24 L -24 24" />
+        </g>
+      )}
     </g>
   );
 }
@@ -929,12 +1029,10 @@ function OverlayFormation({ activeAnchorIds, formation }: { activeAnchorIds: Set
       ))}
       <g className="gaixia-formation-ranks" data-testid={`gaixia-formation-ranks-${formation.id}`}>
         {formation.rankPoints.map((point, index) => (
-          <circle
+          <path
             key={`${formation.id}-rank-${index}`}
-            className={`gaixia-formation-rank-dot gaixia-formation-rank-dot-${formation.kind}`}
-            cx={point[0]}
-            cy={point[1]}
-            r={formation.kind === "infantry-block" ? 2.8 : formation.kind === "crossbow-line" ? 2.4 : 3}
+            className={`gaixia-formation-rank-mark gaixia-formation-rank-mark-${formation.kind}`}
+            d={`M ${(point[0] - 4.2).toFixed(1)} ${point[1].toFixed(1)} L ${(point[0] + 4.2).toFixed(1)} ${point[1].toFixed(1)}`}
           />
         ))}
       </g>
@@ -1128,13 +1226,14 @@ function GaixiaTacticalOverlay({
 
       <g className="gaixia-routes">
         {geometry.routes.map((state) => {
-          const { active, facingX, isComplete, isVisible, labelPoint, markerPoint, route, routeProgress, showUnits, visiblePoints } = state;
+          const { active, formationPreludePoints, isComplete, isVisible, labelPoint, markerPoint, route, routeProgress, showUnits, visiblePoints } = state;
           if (!isVisible || visiblePoints.length < 2 || !markerPoint) {
             return null;
           }
           const labelOffset = route.labelOffset ?? [10, -12];
           const isCurrentRoute = activeRouteIds.has(route.id);
           const showRouteLabel = Boolean(labelPoint && active);
+          const formationRoutePoints = formationPreludePoints.length > 0 ? [...formationPreludePoints, ...visiblePoints] : visiblePoints;
           return (
             <g
               key={route.id}
@@ -1143,6 +1242,7 @@ function GaixiaTacticalOverlay({
               data-route-id={route.id}
               data-route-kind={route.routeKind}
               data-route-current={isCurrentRoute ? "true" : "false"}
+              data-formation-prelude-count={route.formationPrelude?.length ?? 0}
               data-position-anchor={route.positionAnchor ?? ""}
               data-unit-visible={showUnits ? "true" : "false"}
               data-ground-elevation={reliefElevationAtPoint(route.points[Math.min(route.points.length - 1, Math.max(0, Math.round(routeProgress * (route.points.length - 1))))]).toFixed(0)}
@@ -1153,17 +1253,22 @@ function GaixiaTacticalOverlay({
               <path className="gaixia-route-highlight" d={buildPath(visiblePoints)} />
               {active && (route.routeKind === "ambush" || route.routeKind === "pursuit") && <circle className="gaixia-ambush-pulse" cx={markerPoint[0]} cy={markerPoint[1]} r={route.routeKind === "pursuit" ? 14 : 18} />}
               {showUnits &&
-                routeUnitOffsets(route).map((offset, index) => (
-                  <g
-                    key={`${route.id}-unit-${index}`}
-                    className="gaixia-unit-holder"
-                    data-ground-elevation={reliefElevationAtPoint(state.markerPoint ?? route.points[0]).toFixed(0)}
-                    data-testid={`gaixia-route-unit-${route.id}-${index}`}
-                    transform={`translate(${markerPoint[0] + offset[0]} ${markerPoint[1] + offset[1]})`}
-                  >
-                    <GaixiaUnitIcon kind={route.unitKind} facingX={facingX} />
-                  </g>
-                ))}
+                routeUnitOffsets(route).map((offset, index) => {
+                  const placement = formationUnitPlacement(formationRoutePoints, 1, offset, 0.72);
+                  return (
+                    <g
+                      key={`${route.id}-unit-${index}`}
+                      className="gaixia-unit-holder"
+                      data-ground-elevation={reliefElevationAtPoint(state.markerPoint ?? route.points[0]).toFixed(0)}
+                      data-route-progress={routeProgress.toFixed(4)}
+                      data-unit-route-progress={placement.routeProgress.toFixed(4)}
+                      data-testid={`gaixia-route-unit-${route.id}-${index}`}
+                      transform={`translate(${placement.point[0]} ${placement.point[1]})`}
+                    >
+                      <GaixiaUnitIcon kind={route.unitKind} facingX={placement.facingX} />
+                    </g>
+                  );
+                })}
               {showRouteLabel && labelPoint && (
                 <text className="gaixia-route-label" x={labelPoint[0] + labelOffset[0]} y={labelPoint[1] + labelOffset[1]}>
                   {route.label}
@@ -1213,7 +1318,18 @@ function GaixiaTacticalOverlay({
   );
 }
 
-export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRouteIds, focusCoordinates, focusRoutePoints, mapBaseView, mapView, progress, projectedRoutes }: GaixiaTerrain3DProps) {
+export function GaixiaTerrain3D({
+  activeEffectPlacement,
+  activeEvent,
+  activeRouteIds,
+  cameraZoomBoost = 0,
+  focusCoordinates,
+  focusRoutePoints,
+  mapBaseView,
+  mapView,
+  progress,
+  projectedRoutes
+}: GaixiaTerrain3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -1249,7 +1365,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       return;
     }
 
-    const initialCamera = cameraForMapView(mapView, mapBaseView, focusCoordinates, focusRoutePoints);
+    const initialCamera = cameraForMapView(mapView, mapBaseView, focusCoordinates, focusRoutePoints, cameraZoomBoost);
     const map = new maplibregl.Map({
       attributionControl: false,
       bearing: initialCamera.bearing,
@@ -1328,7 +1444,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
     }
     const activeEventChanged = lastCameraEventIdRef.current !== activeEvent.id;
     lastCameraEventIdRef.current = activeEvent.id;
-    const camera = cameraForMapView(activeEventChanged ? mapBaseView : mapView, mapBaseView, focusCoordinates, focusRoutePoints);
+    const camera = cameraForMapView(activeEventChanged ? mapBaseView : mapView, mapBaseView, focusCoordinates, focusRoutePoints, cameraZoomBoost);
     if (activeEventChanged) {
       map.easeTo({
         ...camera,
@@ -1339,7 +1455,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       map.jumpTo(camera);
     }
     syncOverlayGeometry();
-  }, [activeEvent.id, focusCoordinates, focusRoutePoints, mapBaseView, mapView, syncOverlayGeometry]);
+  }, [activeEvent.id, cameraZoomBoost, focusCoordinates, focusRoutePoints, mapBaseView, mapView, syncOverlayGeometry]);
 
   useEffect(() => {
     syncOverlayGeometry();
@@ -1366,6 +1482,7 @@ export function GaixiaTerrain3D({ activeEffectPlacement, activeEvent, activeRout
       data-projection="webgl-gis-terrain"
       data-camera-mode="stable-tactical-stages"
       data-camera-transition-ms={`${cameraTransitionDurationMs}`}
+      data-camera-zoom-boost={cameraZoomBoost.toFixed(2)}
       data-camera-pitch={`${tacticalCameraPitch}`}
       data-route-fit-zoom="disabled"
     >

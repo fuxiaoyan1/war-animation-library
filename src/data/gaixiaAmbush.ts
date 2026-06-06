@@ -90,6 +90,8 @@ export type GaixiaRoute = {
   start: string;
   end: string;
   points: Array<[number, number]>;
+  /** Extra route points before `points[0]`, used to keep multi-unit formations continuous through route handoffs. */
+  formationPrelude?: Array<[number, number]>;
   positionAnchor?: string;
   routeKind: "advance" | "blockade" | "ambush" | "retreat" | "breakout" | "pursuit" | "song";
   labelOffset?: [number, number];
@@ -707,6 +709,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "chu-center-block",
     labelOffset: [-122, -18],
+    formationPrelude: [
+      [117.58, 33.48],
+      [117.49, 33.4],
+      [117.47, 33.39]
+    ],
     unitOffsets: [
       [0, 0],
       [22, -16],
@@ -731,6 +738,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "chu-east-cavalry-screen",
     labelOffset: [16, -24],
+    formationPrelude: [
+      [117.58, 33.48],
+      [117.49, 33.4],
+      [117.47, 33.38]
+    ],
     unitOffsets: [
       [0, 0],
       [26, 14]
@@ -754,6 +766,11 @@ export const routes: GaixiaRoute[] = [
     unitVisibleUntil: "BCE-0202-12-01T21:59",
     positionAnchor: "chu-south-infantry-line",
     labelOffset: [-118, 22],
+    formationPrelude: [
+      [117.49, 33.4],
+      [117.47, 33.39],
+      [117.45, 33.34]
+    ],
     unitOffsets: [
       [0, 0],
       [22, 14]
@@ -796,6 +813,10 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T00:40",
     positionAnchor: "west-camp-gate",
     labelOffset: [-130, 18],
+    formationPrelude: [
+      [117.45, 33.36],
+      [117.43, 33.35]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, 16]
@@ -818,6 +839,10 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T00:40",
     positionAnchor: "han-west-infantry-block",
     labelOffset: [-124, -22],
+    formationPrelude: [
+      [117.29, 33.37],
+      [117.355, 33.36]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, -14],
@@ -841,6 +866,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "west-camp-gate",
     labelOffset: [-112, 24],
+    formationPrelude: [
+      [117.33, 33.36],
+      [117.305, 33.36],
+      [117.28, 33.35]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, -14],
@@ -1038,6 +1068,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T00:30",
     positionAnchor: "chu-east-cavalry-screen",
     labelOffset: [18, 22],
+    formationPrelude: [
+      [117.51, 33.36],
+      [117.54, 33.33],
+      [117.5, 33.33]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, 14]
@@ -1060,6 +1095,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T00:30",
     positionAnchor: "east-gap-gate",
     labelOffset: [18, -28],
+    formationPrelude: [
+      [117.57, 33.295],
+      [117.548, 33.312],
+      [117.5, 33.32]
+    ],
     unitOffsets: [
       [0, 0],
       [28, -12]
@@ -1082,6 +1122,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T00:30",
     positionAnchor: "east-gap-gate",
     labelOffset: [16, 18],
+    formationPrelude: [
+      [117.54, 33.33],
+      [117.5, 33.33],
+      [117.47, 33.34]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, 16]
@@ -1105,6 +1150,10 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "han-east-crossbow-line",
     labelOffset: [16, -26],
+    formationPrelude: [
+      [117.6, 33.29],
+      [117.64, 33.28]
+    ],
     unitOffsets: [
       [0, 0],
       [24, 14],
@@ -1115,6 +1164,92 @@ export const routes: GaixiaRoute[] = [
       [117.59, 33.3],
       [117.555, 33.315],
       [117.532, 33.326]
+    ]
+  },
+  {
+    id: "chu-inner-rearguard-stand",
+    label: "楚军内营后卫短拒",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-02T04:05",
+    end: "BCE-0202-12-02T04:55",
+    visibleUntil: "BCE-0202-12-02T05:20",
+    unitVisibleUntil: "BCE-0202-12-02T05:05",
+    positionAnchor: "chu-inner-rampart",
+    labelOffset: [-122, -20],
+    formationPrelude: [
+      [117.5, 33.36],
+      [117.47, 33.35],
+      [117.45, 33.33]
+    ],
+    unitOffsets: [
+      [0, 0],
+      [-24, 14],
+      [24, -14]
+    ],
+    points: [
+      [117.485, 33.34],
+      [117.47, 33.333],
+      [117.455, 33.326],
+      [117.44, 33.318]
+    ]
+  },
+  {
+    id: "chu-south-gate-rearguard",
+    label: "楚南口残阵拒止",
+    faction: "chu",
+    unitKind: "chu-infantry",
+    routeKind: "blockade",
+    start: "BCE-0202-12-02T04:10",
+    end: "BCE-0202-12-02T05:10",
+    visibleUntil: "BCE-0202-12-02T05:25",
+    unitVisibleUntil: "BCE-0202-12-02T05:10",
+    positionAnchor: "chu-south-infantry-line",
+    labelOffset: [-118, 24],
+    formationPrelude: [
+      [117.455, 33.28],
+      [117.45, 33.31],
+      [117.45, 33.33]
+    ],
+    unitOffsets: [
+      [0, 0],
+      [24, 14]
+    ],
+    points: [
+      [117.462, 33.292],
+      [117.47, 33.304],
+      [117.478, 33.314],
+      [117.486, 33.322]
+    ]
+  },
+  {
+    id: "chu-east-gate-rearguard",
+    label: "楚东口骑卒护退",
+    faction: "chu",
+    unitKind: "chu-cavalry",
+    routeKind: "retreat",
+    start: "BCE-0202-12-02T04:18",
+    end: "BCE-0202-12-02T05:30",
+    visibleUntil: "BCE-0202-12-02T05:40",
+    unitVisibleUntil: "BCE-0202-12-02T05:31",
+    positionAnchor: "east-gap-gate",
+    labelOffset: [16, 22],
+    formationPrelude: [
+      [117.532, 33.327],
+      [117.515, 33.325],
+      [117.5, 33.33]
+    ],
+    unitOffsets: [
+      [0, 0],
+      [-24, 14]
+    ],
+    points: [
+      [117.505, 33.322],
+      [117.522, 33.313],
+      [117.538, 33.3],
+      [117.555, 33.284],
+      [117.575, 33.262]
     ]
   },
   {
@@ -1129,13 +1264,18 @@ export const routes: GaixiaRoute[] = [
     unitVisibleUntil: "BCE-0202-12-02T06:20",
     positionAnchor: "east-breakout-corridor",
     labelOffset: [14, 20],
+    formationPrelude: [
+      [117.47, 33.35],
+      [117.45, 33.33],
+      [117.48, 33.322]
+    ],
     unitOffsets: [
       [0, 0],
       [-26, 12]
     ],
     points: [
-      [117.45, 33.33],
-      [117.52, 33.3],
+      [117.505, 33.312],
+      [117.535, 33.295],
       [117.6, 33.24],
       [117.65, 33.16],
       [117.72, 33.1]
@@ -1152,6 +1292,10 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "chu-south-infantry-line",
     labelOffset: [-120, 18],
+    formationPrelude: [
+      [117.45, 33.29],
+      [117.46, 33.25]
+    ],
     unitOffsets: [
       [0, 0],
       [22, 14]
@@ -1172,6 +1316,11 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T22:10",
     end: "BCE-0202-12-02T00:40",
     positionAnchor: "bawangcheng-outer-rampart",
+    formationPrelude: [
+      [117.315, 33.36],
+      [117.345, 33.36],
+      [117.372, 33.35]
+    ],
     unitOffsets: [
       [0, 0],
       [-22, -12]
@@ -1192,6 +1341,11 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-01T22:20",
     end: "BCE-0202-12-02T00:50",
     positionAnchor: "chu-inner-rampart",
+    formationPrelude: [
+      [117.38, 33.51],
+      [117.45, 33.44],
+      [117.47, 33.45]
+    ],
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -1214,6 +1368,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T05:00",
     positionAnchor: "old-channel-ditch",
     labelOffset: [-116, 24],
+    formationPrelude: [
+      [117.44, 33.14],
+      [117.45, 33.23],
+      [117.452, 33.258]
+    ],
     unitOffsets: [
       [0, 0],
       [24, 16],
@@ -1237,6 +1396,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "east-gap-gate",
     labelOffset: [18, -18],
+    formationPrelude: [
+      [117.59, 33.3],
+      [117.555, 33.315],
+      [117.532, 33.326]
+    ],
     unitOffsets: [
       [0, 0],
       [24, 14]
@@ -1259,6 +1423,12 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "east-gap-gate",
     labelOffset: [18, 24],
+    formationPrelude: [
+      [117.64, 33.28],
+      [117.6, 33.29],
+      [117.57, 33.31],
+      [117.63, 33.25]
+    ],
     unitOffsets: [
       [0, 0],
       [30, -14]
@@ -1280,6 +1450,12 @@ export const routes: GaixiaRoute[] = [
     end: "BCE-0202-12-02T02:10",
     visibleUntil: "BCE-0202-12-02T04:20",
     positionAnchor: "east-gap-gate",
+    formationPrelude: [
+      [117.515, 33.318],
+      [117.558, 33.3],
+      [117.525, 33.322],
+      [117.47, 33.34]
+    ],
     unitOffsets: [
       [0, 0],
       [-22, 14],
@@ -1321,6 +1497,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T05:10",
     positionAnchor: "chu-inner-rampart",
     labelOffset: [-118, -18],
+    formationPrelude: [
+      [117.46, 33.31],
+      [117.45, 33.33],
+      [117.5, 33.36]
+    ],
     unitOffsets: [
       [0, 0],
       [22, 14]
@@ -1341,6 +1522,12 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T03:05",
     end: "BCE-0202-12-02T04:50",
     positionAnchor: "chu-inner-rampart",
+    formationPrelude: [
+      [117.48, 33.41],
+      [117.485, 33.387],
+      [117.49, 33.366],
+      [117.47, 33.45]
+    ],
     unitOffsets: [
       [0, 0],
       [24, -14]
@@ -1362,6 +1549,12 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T03:10",
     end: "BCE-0202-12-02T05:00",
     positionAnchor: "chu-south-infantry-line",
+    formationPrelude: [
+      [117.43, 33.22],
+      [117.445, 33.26],
+      [117.462, 33.274],
+      [117.42, 33.08]
+    ],
     unitOffsets: [
       [0, 0],
       [-22, 14]
@@ -1385,6 +1578,12 @@ export const routes: GaixiaRoute[] = [
     end: "BCE-0202-12-02T05:05",
     positionAnchor: "west-camp-gate",
     labelOffset: [-116, 8],
+    formationPrelude: [
+      [117.37, 33.38],
+      [117.392, 33.366],
+      [117.41, 33.354],
+      [117.31, 33.36]
+    ],
     unitOffsets: [
       [0, 0],
       [-24, -14]
@@ -1403,23 +1602,29 @@ export const routes: GaixiaRoute[] = [
     faction: "han",
     unitKind: "han-cavalry",
     routeKind: "ambush",
-    start: "BCE-0202-12-02T03:20",
-    end: "BCE-0202-12-02T05:20",
+    start: "BCE-0202-12-02T04:18",
+    end: "BCE-0202-12-02T05:35",
     visibleUntil: "BCE-0202-12-02T06:40",
     positionAnchor: "han-southeast-cavalry-ambush",
     labelOffset: [14, -24],
+    formationPrelude: [
+      [117.54, 33.27],
+      [117.56, 33.285],
+      [117.59, 33.25],
+      [117.52, 33.305],
+      [117.51, 33.313]
+    ],
     unitOffsets: [
       [0, 0],
       [-30, 16]
     ],
     points: [
-      [117.74, 33.12],
-      [117.68, 33.18],
-      [117.64, 33.24],
-      [117.6, 33.24],
-      [117.55, 33.28],
-      [117.52, 33.3],
-      [117.49, 33.3]
+      [117.51, 33.313],
+      [117.528, 33.3],
+      [117.555, 33.275],
+      [117.59, 33.238],
+      [117.625, 33.205],
+      [117.655, 33.175]
     ]
   },
   {
@@ -1428,20 +1633,27 @@ export const routes: GaixiaRoute[] = [
     faction: "han",
     unitKind: "han-cavalry",
     routeKind: "pursuit",
-    start: "BCE-0202-12-02T04:45",
+    start: "BCE-0202-12-02T04:40",
     end: "BCE-0202-12-02T06:30",
     positionAnchor: "yinling-pursuit-corridor",
+    formationPrelude: [
+      [117.528, 33.3],
+      [117.555, 33.275],
+      [117.59, 33.238],
+      [117.625, 33.205],
+      [117.655, 33.175]
+    ],
     unitOffsets: [
       [0, 0],
       [-30, 16],
       [-58, -12]
     ],
     points: [
-      [117.49, 33.3],
-      [117.55, 33.28],
-      [117.56, 33.27],
-      [117.62, 33.21],
-      [117.68, 33.14],
+      [117.528, 33.3],
+      [117.555, 33.275],
+      [117.6, 33.235],
+      [117.64, 33.19],
+      [117.685, 33.14],
       [117.72, 33.1]
     ]
   },
@@ -1456,6 +1668,10 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T08:00",
     unitVisibleUntil: "BCE-0202-12-02T07:05",
     positionAnchor: "yinling-pursuit-corridor",
+    formationPrelude: [
+      [117.65, 33.16],
+      [117.72, 33.1]
+    ],
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -1478,6 +1694,11 @@ export const routes: GaixiaRoute[] = [
     visibleUntil: "BCE-0202-12-02T08:00",
     positionAnchor: "yinling-pursuit-corridor",
     labelOffset: [16, -18],
+    formationPrelude: [
+      [117.75, 33.08],
+      [117.73, 33.11],
+      [117.76, 33.09]
+    ],
     unitOffsets: [
       [0, 0],
       [22, -14]
@@ -1498,6 +1719,10 @@ export const routes: GaixiaRoute[] = [
     start: "BCE-0202-12-02T06:10",
     end: "BCE-0202-12-02T07:50",
     positionAnchor: "yinling-pursuit-corridor",
+    formationPrelude: [
+      [117.62, 33.21],
+      [117.68, 33.14]
+    ],
     unitOffsets: [
       [0, 0],
       [-28, 16]
@@ -1676,14 +1901,17 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "决战收束",
     location: "垓下外围",
     coordinates: [117.49, 33.32],
-    summary: "汉军从北、南、西三面切入，东南骑兵截断退路，楚军阵列被切碎后只剩项羽小股骑兵冲出。",
-    detail: "多条伏击线同时高亮，表现“十面”不是同一方向重复推进，而是步兵切割、弩阵压制、骑兵截击同步收紧后逼出小股突围。",
+    summary: "汉军从北、南、西三面切入，但楚军内营后卫、南口残阵和东口护退骑卒仍在短拒，突破变成营内近战后才逼出项羽小股骑兵。",
+    detail: "多条伏击线同时高亮，楚军残阵不再提前消失：内营后卫顶住西北切入，南口残阵迎住南路，东口骑卒护着突围线后退。画面应先看到接触与阻击，再看到小股突围。",
     significance: "楚汉战争在战术层面进入不可逆结局。",
     routeIds: [
       "han-dawn-assault-north",
       "han-dawn-assault-south",
       "han-dawn-assault-west",
       "han-dawn-cavalry-cutoff",
+      "chu-inner-rearguard-stand",
+      "chu-south-gate-rearguard",
+      "chu-east-gate-rearguard",
       "chu-breakout-southeast",
       "han-cavalry-pursuit-yinling"
     ],
@@ -1696,10 +1924,10 @@ export const battleEvents: GaixiaEvent[] = [
     phase: "残局突围",
     location: "阴陵方向",
     coordinates: [117.69, 33.13],
-    summary: "楚军主力已散，项羽率小股骑兵向东南冲出，汉骑沿阴陵方向追上。",
-    detail: "红色突围线只保留小股骑兵，蓝色追击线随后压上，避免把突围画成无人阻拦的离场。",
+    summary: "楚军主力已散，内营和南口后卫逐段被压垮，东口护退骑卒仍短暂遮护，项羽率小股骑兵向东南冲出，汉骑沿阴陵方向追上。",
+    detail: "红色突围线只保留小股骑兵，楚东口护退线与蓝色追击线同时出现一段时间，避免把突围画成无人阻拦的离场。",
     significance: "突围不是脱离战场，而是进入被追击的残局。",
-    routeIds: ["chu-breakout-southeast", "han-cavalry-pursuit-yinling"],
+    routeIds: ["chu-east-gate-rearguard", "chu-breakout-southeast", "han-cavalry-pursuit-yinling"],
     cue: "melee"
   },
   {
@@ -1757,7 +1985,7 @@ export const narrationCues: GaixiaNarrationCue[] = [
     start: "BCE-0202-12-02T04:20",
     end: "BCE-0202-12-02T08:00",
     title: "终幕 / 追击至乌江",
-    text: "黎明后汉军北、南、西三面切入，东南骑兵截断退路。项羽小股突围后仍被汉骑追击，东城快战与乌江终局接上垓下的军事因果。"
+    text: "黎明后汉军北、南、西三面切入，先与楚军内营后卫、南口残阵和东口护退骑卒发生短促近战，随后东南骑兵截断退路。项羽小股突围后仍被汉骑追击，东城快战与乌江终局接上垓下的军事因果。"
   }
 ];
 

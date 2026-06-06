@@ -336,10 +336,18 @@ const huangEastRemnantUnits: FormationUnit[] = [
 
 const huangRemnantFallbackUnits: FormationUnit[] = [
   { id: "command-fallback", label: "黄部由内圩东撤", badgeLabel: "黄", icon: "infantry", offset: [0, -28] },
-  { id: "64-fallback", label: "", badgeLabel: "64", icon: "infantry", offset: [-92, 28] },
-  { id: "25-fallback", label: "", badgeLabel: "25", icon: "infantry", offset: [-184, -26] },
-  { id: "44-fallback", label: "", badgeLabel: "44", icon: "infantry", offset: [-276, 26] },
-  { id: "100-fallback", label: "", badgeLabel: "100", icon: "infantry", offset: [-368, -24] }
+  { id: "64-fallback", label: "", badgeLabel: "64", icon: "infantry", offset: [-82, 26] }
+];
+
+const huangRemnantFallbackNorthUnits: FormationUnit[] = [
+  { id: "25-fallback-north", label: "25军由内圩北撤", badgeLabel: "25", icon: "infantry", offset: [0, -26] },
+  { id: "108-fallback-north", label: "", badgeLabel: "108", icon: "infantry", offset: [-86, 24] }
+];
+
+const huangRemnantFallbackSouthUnits: FormationUnit[] = [
+  { id: "44-fallback-south", label: "44军南撤", badgeLabel: "44", icon: "infantry", offset: [0, 28] },
+  { id: "100-fallback-south", label: "", badgeLabel: "100", icon: "infantry", offset: [-86, -24] },
+  { id: "159-fallback-south", label: "", badgeLabel: "159", icon: "infantry", offset: [-172, 24] }
 ];
 
 const huangFinalNorthUnits: FormationUnit[] = [
@@ -1657,7 +1665,7 @@ export const frontLines: FrontLine[] = [
     to: "east-remnant-pocket",
     routeKind: "land",
     positionAnchor: "east-remnant-village-worksites",
-    start: "1948-11-20T05:30",
+    start: "1948-11-21T08:00",
     end: "1948-11-22T16:00",
     unitIcon: "infantry",
     formationUnits: huangEastRemnantUnits,
@@ -1668,14 +1676,16 @@ export const frontLines: FrontLine[] = [
       [117.936, 34.286],
       [117.952, 34.302]
     ],
+    visibleFrom: "1948-11-21T08:00",
     visibleUntil: "1948-11-22T20:00",
+    unitVisibleFrom: "1948-11-21T08:00",
     unitVisibleUntil: "1948-11-22T18:00"
   },
   {
     id: "huang-remnant-fallback-east",
     faction: "nationalist",
-    label: "内圩残部退向大院上吴庄",
-    from: "inner-pocket",
+    label: "内圩东缘残部退向小院上吴庄",
+    from: "final-east-core",
     to: "east-remnant-pocket",
     routeKind: "land",
     positionAnchor: "east-remnant-village-worksites",
@@ -1684,12 +1694,65 @@ export const frontLines: FrontLine[] = [
     unitIcon: "infantry",
     formationUnits: huangRemnantFallbackUnits,
     waypoints: [
-      [117.895, 34.294],
-      [117.922, 34.298],
+      [117.904, 34.293],
+      [117.918, 34.296],
+      [117.932, 34.299],
       [117.944, 34.301]
     ],
+    formationPrelude: [
+      [117.872, 34.292],
+      [117.884, 34.292],
+      [117.893, 34.292]
+    ],
     visibleUntil: "1948-11-22T20:00",
-    unitVisibleUntil: "1948-11-22T16:00"
+    unitVisibleUntil: "1948-11-21T08:00"
+  },
+  {
+    id: "huang-remnant-fallback-north",
+    faction: "nationalist",
+    label: "25军残部退向尤家湖",
+    from: "final-north-core",
+    to: "remnant-north-village",
+    routeKind: "land",
+    positionAnchor: "north-remnant-worksite",
+    start: "1948-11-20T05:30",
+    end: "1948-11-21T08:00",
+    unitIcon: "infantry",
+    formationUnits: huangRemnantFallbackNorthUnits,
+    waypoints: [
+      [117.878, 34.318],
+      [117.884, 34.332]
+    ],
+    formationPrelude: [
+      [117.872, 34.292],
+      [117.875, 34.306]
+    ],
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-21T08:00"
+  },
+  {
+    id: "huang-remnant-fallback-south",
+    faction: "nationalist",
+    label: "44/100军残部南撤三里庄",
+    from: "final-south-core",
+    to: "remnant-south-village",
+    routeKind: "land",
+    positionAnchor: "south-remnant-worksite",
+    start: "1948-11-20T05:30",
+    end: "1948-11-21T08:00",
+    unitIcon: "infantry",
+    formationUnits: huangRemnantFallbackSouthUnits,
+    waypoints: [
+      [117.884, 34.266],
+      [117.896, 34.254],
+      [117.906, 34.246]
+    ],
+    formationPrelude: [
+      [117.872, 34.292],
+      [117.872, 34.274]
+    ],
+    visibleUntil: "1948-11-22T20:00",
+    unitVisibleUntil: "1948-11-21T08:00"
   },
   {
     id: "pla-remnant-mop-up-north",
@@ -1723,9 +1786,15 @@ export const frontLines: FrontLine[] = [
     unitIcon: "infantryPva",
     formationUnits: plaMopUpEastUnits,
     waypoints: [
-      [117.916, 34.294],
-      [117.936, 34.298],
+      [117.906, 34.293],
+      [117.918, 34.296],
+      [117.934, 34.299],
       [117.944, 34.301]
+    ],
+    formationPrelude: [
+      [117.902, 34.292],
+      [117.898, 34.292],
+      [117.893, 34.292]
     ],
     visibleUntil: "1948-11-22T20:00",
     unitVisibleUntil: "1948-11-22T18:50"
@@ -3222,6 +3291,8 @@ export const battleEvents: BattleEvent[] = [
       "huang-south-remnant-sortie",
       "pla-south-remnant-counterpress",
       "huang-remnant-fallback-east",
+      "huang-remnant-fallback-north",
+      "huang-remnant-fallback-south",
       "huang-east-remnant-defense",
       "xuzhou-relief-contained",
       "pla-relief-depth-line",

@@ -10,25 +10,22 @@ The demo opens on the library shelf. Each card launches an interactive animation
 
 ## Latest Update
 
-The latest major update adds `淮海战役：碾庄圩围歼战` and keeps the recent Atlantic convoy plus Gaixia refinements in the library.
+The latest major update refines `韩信十面埋伏：垓下之战` and `淮海战役：碾庄圩围歼战` with real-terrain tactical maps, tighter camera framing, stronger route continuity, and visible contested combat at key breakthrough moments.
 
 Highlights:
 
-- Added the Nianzhuangwei encirclement battle from the first phase of the Huaihai Campaign, focused on Huang Baitao's Seventh Army Group rather than the later Shuangduiji/Huang Wei phase.
-- Modeled the battle as a larger multi-force map: Xin'anzhen withdrawal, Nianzhuang pocket, Xuzhou relief attempt, Daxujia blocking line, preliminary village attacks, trench approaches, November 19 general assault, first-line breakthrough, final compression, and Nizhuang endgame.
-- Expanded the Nianzhuang battlefield to a 2400x1440 SVG canvas with smaller unit icons, three fortified lines, PLA column-level assault axes, Nationalist corps-level defense sectors, and village strongpoints for the attack details.
-- Added route continuity gates so Huang's force, PLA pursuit columns, Xuzhou relief columns, blocking troops, trench approaches, artillery, and final pursuit all have visible source routes instead of appearing abruptly.
-- Added source notes for the Nianzhuang timeline and a distinct `The Thunderer` background score.
-- Added the Atlantic convoy/submarine battle of HX 229 / SC 122, including dual convoy movement, wolfpack convergence, torpedo attacks, escort ASW, VLR air patrols, U-384's loss, and the German attack breakoff.
-- Reworked submarine combat semantics: U-boats, escorts, and convoys stay online unless sunk or handed off; torpedo/depth-charge effects bind to live route positions; submarine combat no longer uses naval salvo trace lines.
-- Expanded the Gaixia battlefield into a larger tactical map with directly drawn ridges, lowland corridors, river channels, camp walls, and pursuit roads.
-- Reworked the battle from a simple encirclement into layered infantry, cavalry, crossbow, feigned-gap, counterpress, night-breakout, dawn-assault, and pursuit actions.
-- Fixed unit continuity so forces no longer disappear, turn into unclear grey shadows, or remain stranded after their tactical role has handed off.
-- Bound melee effects to the live positions of opposing Han and Chu units, so combat effects occur where units actually meet.
-- Added complete source routes for later reinforcements and pursuit forces, including the final Xiang Yu retreat line toward Wujiang with Han cavalry behind it.
-- Added Playwright gates for submarine route/effect coherence, map scale, route color semantics, effect alignment, reinforcement origin routes, south-line handoff, night-blocking lines, and pursuit geometry.
+- Gaixia now uses a real GIS/MapLibre terrain map with local imagery and elevation tiles, historical fieldworks, formations, route anchors, and multi-point melee contact effects.
+- Gaixia dawn assault no longer shows Han forces entering an empty camp: Chu inner rearguard, south-gate remnants, and east-gate covering cavalry are visible and tested.
+- Gaixia close camera stages keep the active battle surface centered during the tenth-hour songs, farewell, and dawn assault moments.
+- Nianzhuang now uses a real-terrain tactical map with staged camera focus for Xin'anzhen withdrawal, Xuzhou relief, Daxujia blocking, Nianzhuang compression, final pocket, and Nizhuang endgame.
+- Nianzhuang defense has layered village lines, corps-level Nationalist labels, PLA column assault axes, relief blocking, trench approaches, final compression, and remnant clean-up contact.
+- Regression gates now verify source-route continuity, unit visibility windows, effect-to-route binding, tactical camera focus, map interaction, terrain rendering, and key late-stage combat density.
+- A repository-level [DISCLAIMER.md](DISCLAIMER.md) now documents the educational/non-commercial intent, source limits, third-party media terms, and the maintainers' peace-and-anti-war position.
+- A repository-local GitHub submit skill records the future submission workflow so update notes, source notes, disclaimers, validation, commits, and pushes are handled consistently.
 
-Full update note: [docs/updates/war-animation-update-2026-05-27.md](docs/updates/war-animation-update-2026-05-27.md)
+Full update note: [docs/updates/war-animation-update-2026-06-06.md](docs/updates/war-animation-update-2026-06-06.md)
+
+Previous major update note: [docs/updates/war-animation-update-2026-05-27.md](docs/updates/war-animation-update-2026-05-27.md)
 
 ## Current Library
 
@@ -136,8 +133,22 @@ agents/skills/animation-assistant/
 
 Use it as a portable Codex skill for building new campaign-map animations. It encodes the hard-earned rules around map projections, compressed timelines, realistic unit markers, audio assets, controls, source notes, and Playwright gates.
 
+The GitHub submission workflow lives at:
+
+```text
+agents/skills/github-submit-assistant/
+```
+
+Use it before publishing repository updates. It enforces update notes, source/disclaimer checks, validation, local commits, and GitHub pushes.
+
+## Peace, Sources, and Disclaimer
+
+This project is an educational, open-source, non-commercial historical animation library. We love peace and oppose war. The animations are source-backed but simplified visualizations, not authoritative historical, legal, political, military, or cartographic advice.
+
+Read [DISCLAIMER.md](DISCLAIMER.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before reusing the project, redistributing assets, or relying on any historical interpretation.
+
 ## Licensing
 
 Code in this repository is released under the MIT License. Media assets are not automatically MIT licensed. They come from mixed public-domain, CC0, attribution-required, non-commercial, or not-yet-fully-verified sources.
 
-Read [NOTICE.md](NOTICE.md) and `docs/sources/*` before redistributing assets or using them commercially. Treat the included media as demo/runtime assets with source-specific terms unless a file is explicitly documented as public domain or CC0.
+Read [DISCLAIMER.md](DISCLAIMER.md), [NOTICE.md](NOTICE.md), and `docs/sources/*` before redistributing assets or using them commercially. Treat the included media as demo/runtime assets with source-specific terms unless a file is explicitly documented as public domain or CC0.

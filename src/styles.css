@@ -2200,21 +2200,20 @@ h1 {
   filter: drop-shadow(2px 3px 2px rgba(35, 24, 16, 0.18));
 }
 
-.nianzhuang-battle .nianzhuang-formation-rank-dot {
-  fill: rgba(55, 116, 185, 0.86);
-  stroke: rgba(18, 63, 125, 0.78);
-  stroke-width: 0.9;
+.nianzhuang-battle .nianzhuang-formation-rank-mark {
+  fill: none;
+  stroke: rgba(38, 70, 112, 0.62);
+  stroke-linecap: round;
+  stroke-width: 2.1;
   vector-effect: non-scaling-stroke;
 }
 
-.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-rank-dot {
-  fill: rgba(202, 63, 45, 0.88);
-  stroke: rgba(119, 34, 27, 0.78);
+.nianzhuang-battle .nianzhuang-formation-communist .nianzhuang-formation-rank-mark {
+  stroke: rgba(139, 40, 30, 0.68);
 }
 
-.nianzhuang-battle .nianzhuang-formation-rank-dot-command-post {
-  fill: rgba(224, 178, 80, 0.9);
-  stroke: rgba(104, 65, 23, 0.78);
+.nianzhuang-battle .nianzhuang-formation-rank-mark-command-post {
+  stroke: rgba(104, 65, 23, 0.68);
 }
 
 .nianzhuang-battle .nianzhuang-formation-icon {
@@ -2245,6 +2244,11 @@ h1 {
 .nianzhuang-battle .nianzhuang-command-post-icon path:nth-child(2) {
   fill: rgba(229, 193, 87, 0.88);
   stroke: rgba(91, 62, 24, 0.76);
+}
+
+.nianzhuang-battle .nianzhuang-command-post-icon .nianzhuang-command-post-base {
+  fill: rgba(109, 72, 30, 0.78);
+  stroke: rgba(63, 44, 24, 0.72);
 }
 
 .nianzhuang-battle .nianzhuang-formation text {
@@ -4420,29 +4424,31 @@ h1 {
   filter: drop-shadow(3px 5px 3px rgba(29, 23, 18, 0.22));
 }
 
-.gaixia-formation-rank-dot {
-  fill: rgba(68, 138, 177, 0.9);
-  stroke: rgba(24, 74, 106, 0.8);
-  stroke-width: 0.9;
+.gaixia-formation-rank-mark {
+  fill: none;
+  stroke: rgba(64, 127, 166, 0.88);
+  stroke-linecap: round;
+  stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
 }
 
-.gaixia-formation-chu .gaixia-formation-rank-dot {
-  fill: rgba(197, 63, 48, 0.92);
-  stroke: rgba(102, 32, 27, 0.82);
+.gaixia-formation-chu .gaixia-formation-rank-mark {
+  stroke: rgba(188, 62, 48, 0.9);
 }
 
-.gaixia-formation-rank-dot-crossbow-line {
-  fill: rgba(78, 127, 184, 0.88);
+.gaixia-formation-rank-mark-crossbow-line {
+  stroke: rgba(70, 117, 177, 0.88);
+  stroke-width: 2;
 }
 
-.gaixia-formation-rank-dot-cavalry-screen,
-.gaixia-formation-rank-dot-ambush-line {
-  fill: rgba(69, 151, 177, 0.9);
+.gaixia-formation-rank-mark-cavalry-screen,
+.gaixia-formation-rank-mark-ambush-line {
+  stroke: rgba(58, 137, 162, 0.9);
+  stroke-width: 2.4;
 }
 
-.gaixia-formation-chu .gaixia-formation-rank-dot-cavalry-screen {
-  fill: rgba(185, 65, 52, 0.92);
+.gaixia-formation-chu .gaixia-formation-rank-mark-cavalry-screen {
+  stroke: rgba(184, 63, 51, 0.9);
 }
 
 .gaixia-formation-icon path,
@@ -4695,11 +4701,23 @@ h1 {
   animation: meleeRing 1.1s ease-out 3 both;
 }
 
+.gaixia-melee-effect.is-secondary-contact {
+  opacity: 0.82;
+}
+
+.gaixia-melee-effect.is-secondary-contact circle {
+  stroke-width: 1.7;
+}
+
 .gaixia-melee-effect path {
   stroke: #7f2f24;
   stroke-linecap: round;
   stroke-width: 5;
   animation: meleeFlash 1.1s ease-out 3 both;
+}
+
+.gaixia-melee-effect.is-secondary-contact path:not(.gaixia-contact-tether) {
+  stroke-width: 4;
 }
 
 .gaixia-melee-effect .gaixia-contact-tether {

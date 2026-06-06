@@ -109,6 +109,7 @@ type CampaignDataModule = {
   }>;
   routes?: Array<{
     end: string;
+    formationPrelude?: Array<[number, number]>;
     id: string;
     points?: Array<[number, number]>;
     positionAnchor?: string;
@@ -467,6 +468,41 @@ async function expectGaixiaVisibleUnitCount(page: Page, minimumCount: number) {
   await expect.poll(async () => page.locator(".gaixia-unit-holder").count()).toBeGreaterThanOrEqual(minimumCount);
 }
 
+async function expectGaixiaCurrentUnitsCentered(page: Page, label: string) {
+  await page.waitForTimeout(1250);
+  const placement = await page.evaluate(() => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    if (!stage) {
+      return null;
+    }
+    const units = Array.from(document.querySelectorAll<SVGGElement>('.gaixia-route[data-route-current="true"] .gaixia-unit-holder'))
+      .map((unit) => {
+        const box = unit.getBoundingClientRect();
+        return {
+          x: ((box.left + box.right) / 2 - stage.left) / stage.width,
+          y: ((box.top + box.bottom) / 2 - stage.top) / stage.height
+        };
+      })
+      .filter((point) => point.x >= -0.08 && point.x <= 1.08 && point.y >= -0.08 && point.y <= 1.08);
+    if (units.length === 0) {
+      return null;
+    }
+    return {
+      averageY: units.reduce((sum, unit) => sum + unit.y, 0) / units.length,
+      count: units.length,
+      maxY: Math.max(...units.map((unit) => unit.y)),
+      minY: Math.min(...units.map((unit) => unit.y))
+    };
+  });
+
+  expect(placement, `${label} should have current units in the tactical viewport`).not.toBeNull();
+  expect(placement?.count, `${label} should have enough current units to judge camera centering`).toBeGreaterThanOrEqual(8);
+  expect(placement?.averageY, `${label} current battle should not sit near the top edge`).toBeGreaterThanOrEqual(0.38);
+  expect(placement?.averageY, `${label} current battle should not sit too low`).toBeLessThanOrEqual(0.6);
+  expect(placement?.minY, `${label} current units should clear the title/subtitle band`).toBeGreaterThanOrEqual(0.18);
+  expect(placement?.maxY, `${label} current units should remain in the map core`).toBeLessThanOrEqual(0.82);
+}
+
 async function expectGaixiaCompletedRouteLabelsHidden(page: Page) {
   await expect(page.locator(".gaixia-route.is-complete .gaixia-route-label")).toHaveCount(0);
 }
@@ -549,6 +585,7 @@ async function expectGaixiaWebglTerrainIsRendered(page: Page) {
   await expect(layer).toHaveAttribute("data-terrain-tile-cache-zoom", "14");
   await expect(layer).toHaveAttribute("data-camera-mode", "stable-tactical-stages");
   await expect(layer).toHaveAttribute("data-camera-transition-ms", "1100");
+  await expect(layer).toHaveAttribute("data-camera-zoom-boost", "0.00");
   await expect(layer).toHaveAttribute("data-camera-pitch", "54");
   await expect(layer).toHaveAttribute("data-route-fit-zoom", "disabled");
   await expect.poll(async () => await layer.getAttribute("data-map-raster-layer-ids")).toBe("");
@@ -626,10 +663,43 @@ async function expectGaixiaCameraStaysSmooth(page: Page) {
   const minZoom = Math.min(...zooms);
   const adjacentDelta = samples.slice(1).map((sample, index) => Math.abs(sample.zoom - samples[index].zoom));
   const uniqueCenters = new Set(samples.map((sample) => sample.center)).size;
+  const byId = new Map(samples.map((sample) => [sample.eventId, sample]));
+  const secondActClosePrep = byId.get("ten-sided-ring");
+  const tenthHourClose = byId.get("songs-of-chu");
+  const dawnClose = byId.get("dawn-assault");
+  const pursuitStart = byId.get("xiangyu-breakout");
+  const preTenthHourStageIds = ["han-counterpress-east-gap", "ten-sided-ring"];
+  const closeStageIds = ["songs-of-chu", "farewell"];
 
-  expect(maxZoom - minZoom, `camera zoom range should stay narrow: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.7);
-  expect(Math.max(...adjacentDelta), `adjacent event zoom jump should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.35);
-  expect(uniqueCenters, "gaixia should use a small number of tactical camera stages, not event-by-event reframing").toBeLessThanOrEqual(4);
+  expect(secondActClosePrep, `missing pre-tenth-hour camera sample: ${JSON.stringify(samples)}`).toBeDefined();
+  expect(tenthHourClose, `missing tenth-hour close camera sample: ${JSON.stringify(samples)}`).toBeDefined();
+  expect(dawnClose, `missing dawn close camera sample: ${JSON.stringify(samples)}`).toBeDefined();
+  expect(pursuitStart, `missing pursuit camera sample: ${JSON.stringify(samples)}`).toBeDefined();
+
+  for (const eventId of preTenthHourStageIds) {
+    const sample = byId.get(eventId);
+    expect(sample, `missing pre-tenth-hour camera sample for ${eventId}: ${JSON.stringify(samples)}`).toBeDefined();
+    expect(Math.abs((sample?.zoom ?? 0) - (secondActClosePrep?.zoom ?? 0)), `pre-tenth-hour events should stay at the broader encirclement zoom: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.04);
+    expect(sample?.center, `pre-tenth-hour events should stay at the broader encirclement position: ${JSON.stringify(samples)}`).toBe(secondActClosePrep?.center);
+  }
+
+  const closeScaleRatio = Math.pow(2, (tenthHourClose?.zoom ?? 0) - (secondActClosePrep?.zoom ?? 0));
+  expect(closeScaleRatio, `tenth-hour tactical zoom should be about 2x larger: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(1.9);
+
+  for (const eventId of closeStageIds) {
+    const sample = byId.get(eventId);
+    expect(sample, `missing close tactical camera sample for ${eventId}: ${JSON.stringify(samples)}`).toBeDefined();
+    expect(Math.abs((sample?.zoom ?? 0) - (tenthHourClose?.zoom ?? 0)), `close tactical stage should keep the same zoom from tenth hour through act three: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.04);
+    expect(sample?.center, `close tactical stage should keep the same position from tenth hour through act three: ${JSON.stringify(samples)}`).toBe(tenthHourClose?.center);
+  }
+  expect(Math.abs((dawnClose?.zoom ?? 0) - (tenthHourClose?.zoom ?? 0)), `dawn close-up should keep the same 2x tactical zoom while following the action: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.04);
+  expect(dawnClose?.center, `dawn close-up should pan, not return to the broader camera: ${JSON.stringify(samples)}`).not.toBe(secondActClosePrep?.center);
+
+  expect(maxZoom - minZoom, `camera zoom range should stay controlled for a 2x close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(1.08);
+  expect(Math.max(...adjacentDelta), `adjacent event zoom jump should stay controlled for the planned tenth-hour close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(1.08);
+  expect(pursuitStart?.zoom, `pursuit should return to the previous broader tactical ratio: ${JSON.stringify(samples)}`).toBeLessThanOrEqual((tenthHourClose?.zoom ?? 0) - 0.65);
+  expect(Math.abs((pursuitStart?.zoom ?? 0) - (secondActClosePrep?.zoom ?? 0)), `pursuit should restore the pre-close zoom ratio: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.12);
+  expect(uniqueCenters, "gaixia should use a small number of tactical camera stages, not event-by-event reframing").toBeLessThanOrEqual(5);
 }
 
 async function expectGaixiaMapControlsDoNotCoverRealTerrain(page: Page) {
@@ -776,6 +846,41 @@ async function expectGaixiaMeleeEffectBetweenVisibleUnits(page: Page) {
   expect(alignment?.hanRouteId).not.toBe("");
   expect(alignment?.chuRouteId).not.toBe("");
   expect(alignment?.distanceFromMidpoint).toBeLessThan(6);
+}
+
+async function expectGaixiaDawnAssaultHasContestedCampBreakthrough(page: Page) {
+  const contestedState = await page.evaluate(() => {
+    const currentRoutes = Array.from(document.querySelectorAll<SVGGElement>('.gaixia-route[data-route-current="true"]'));
+    const currentRouteIds = currentRoutes.map((route) => route.getAttribute("data-route-id") ?? "");
+    const visibleChuDefenders = currentRoutes
+      .filter((route) => route.getAttribute("data-unit-visible") === "true")
+      .filter((route) => route.classList.contains("gaixia-route-chu"))
+      .map((route) => route.getAttribute("data-route-id") ?? "");
+    const contactEffects = Array.from(document.querySelectorAll<SVGGElement>('[data-testid="gaixia-melee-effect"]')).map((effect) => ({
+      chuRoute: effect.getAttribute("data-chu-route") ?? "",
+      hanRoute: effect.getAttribute("data-han-route") ?? "",
+      source: effect.getAttribute("data-effect-source") ?? ""
+    }));
+
+    return {
+      contactEffects,
+      currentRouteIds,
+      visibleChuDefenders
+    };
+  });
+
+  expect(contestedState.currentRouteIds, "dawn assault should explicitly include Chu inner-camp resistance routes").toEqual(
+    expect.arrayContaining(["chu-inner-rearguard-stand", "chu-south-gate-rearguard", "chu-east-gate-rearguard"])
+  );
+  expect(contestedState.visibleChuDefenders, "dawn assault should show Chu defenders in the camp, not only Xiang Yu's breakout route").toEqual(
+    expect.arrayContaining(["chu-inner-rearguard-stand", "chu-south-gate-rearguard", "chu-east-gate-rearguard"])
+  );
+  expect(contestedState.contactEffects.length, "dawn assault should show multiple melee contact points across the camp").toBeGreaterThanOrEqual(3);
+  expect(Array.from(new Set(contestedState.contactEffects.map((effect) => effect.chuRoute))), "dawn melee effects should bind to multiple Chu defenders").toEqual(
+    expect.arrayContaining(["chu-inner-rearguard-stand", "chu-south-gate-rearguard", "chu-east-gate-rearguard"])
+  );
+  expect(contestedState.contactEffects[0]?.chuRoute, "primary dawn melee contact should not be the breakout route").not.toBe("chu-breakout-southeast");
+  expect(contestedState.contactEffects.every((effect) => effect.source === "route-contact"), "dawn melee effects should be route-bound contacts").toBe(true);
 }
 
 async function expectRealisticUnitIcon(
@@ -1758,12 +1863,39 @@ function expectGaixiaRoutePositionAnchor(routeId: string, expectedAnchor: string
   expect(route!.positionAnchor, `gaixia route ${routeId} should be tied to a visible position or fieldwork`).toBe(expectedAnchor);
 }
 
+function expectGaixiaRouteHasPrelude(routeId: string, minimumPreludePoints: number) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  expect(route!.formationPrelude?.length ?? 0, `gaixia route ${routeId} should keep formation prelude continuity`).toBeGreaterThanOrEqual(
+    minimumPreludePoints
+  );
+}
+
 function routeCoordinate(routeId: string, index: number) {
   const route = gaixiaData.routes.find((item) => item.id === routeId);
   expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
   const point = route!.points[index < 0 ? route!.points.length + index : index];
   expect(point, `gaixia route ${routeId} point ${index} exists`).toBeTruthy();
   return point;
+}
+
+function gaixiaRouteCoordinates(routeId: string) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  return route!.points;
+}
+
+function minRouteDistance(routeIdA: string, routeIdB: string) {
+  const routeA = gaixiaRouteCoordinates(routeIdA);
+  const routeB = gaixiaRouteCoordinates(routeIdB);
+  return Math.min(...routeA.flatMap((pointA) => routeB.map((pointB) => Math.hypot(pointA[0] - pointB[0], pointA[1] - pointB[1]))));
+}
+
+function gaixiaRoutePointAtDate(routeId: string, date: string) {
+  const route = gaixiaData.routes.find((item) => item.id === routeId);
+  expect(route, `gaixia route ${routeId} exists`).toBeTruthy();
+  const progress = Math.min(1, Math.max(0, (toTime(date) - toTime(route!.start)) / Math.max(1, toTime(route!.end) - toTime(route!.start))));
+  return routePointAtProgress(route!.points, progress);
 }
 
 function expectRouteEndsBehind(frontRouteId: string, rearRouteId: string) {
@@ -2379,6 +2511,23 @@ async function expectRouteVisible(page: Page, routeId: string) {
   await expect(route).toHaveAttribute("data-route-visible", "true");
 }
 
+async function expectRouteVisibleState(page: Page, routeId: string) {
+  const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
+  await expect(route).toHaveCount(1);
+  await expect(route).toHaveAttribute("data-route-visible", "true");
+  await expect(route).toHaveAttribute("data-route-rendered", "true");
+}
+
+async function expectNianzhuangRouteHeadDotsRemoved(page: Page) {
+  await expect(page.locator(".nianzhuang-battle .route-stroke-shell > circle")).toHaveCount(0);
+}
+
+async function expectNianzhuangFormationDotsRemoved(page: Page) {
+  await expect(page.locator(".nianzhuang-battle .nianzhuang-formation-ranks circle")).toHaveCount(0);
+  await expect(page.locator(".nianzhuang-battle .nianzhuang-command-post-icon circle")).toHaveCount(0);
+  await expect(page.locator(".nianzhuang-battle .nianzhuang-formation-rank-mark").first()).toBeVisible();
+}
+
 async function expectRouteTransitionPhase(page: Page, routeId: string, phase: "entering" | "exiting" | "present") {
   const route = page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`);
   await expect(route).toBeVisible();
@@ -2726,7 +2875,10 @@ async function collectNianzhuangCameraSamples(page: Page) {
     "1948-11-11T12:30",
     "1948-11-13T18:00",
     "1948-11-19T10:00",
+    "1948-11-19T22:00",
     "1948-11-19T23:30",
+    "1948-11-20T03:30",
+    "1948-11-20T05:30",
     "1948-11-20T18:00",
     "1948-11-22T17:00"
   ];
@@ -2764,7 +2916,7 @@ async function expectNianzhuangCameraStaysTactical(page: Page) {
   const pocketSample = samples.find((sample) => sample.date === "1948-11-10T18:00");
   const assaultSamples = samples.filter((sample) => sample.date >= "1948-11-19T10:00");
 
-  expect(Math.max(...zooms), `Nianzhuang camera should keep a tactical overview instead of zooming into a local close-up: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(11.55);
+  expect(Math.max(...zooms), `Nianzhuang camera should keep the second-wall close-up bounded: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(12.28);
   expect(Math.min(...zooms), `Nianzhuang camera should keep enough terrain detail: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(10.15);
   expect(Math.min(...assaultSamples.map((sample) => sample.zoom)), `Nianzhuang assault and encirclement stages should zoom in after the pocket battle begins: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
     11.05
@@ -2773,8 +2925,14 @@ async function expectNianzhuangCameraStaysTactical(page: Page) {
   expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera should keep visible stage-to-stage zoom changes: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(
     0.8
   );
-  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(1.45);
-  expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.62);
+  expect(Math.max(...zooms) - Math.min(...zooms), `Nianzhuang camera zoom range should stay controlled: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(2.08);
+  expect(Math.max(...adjacentDelta), `Nianzhuang adjacent camera zoom jumps should stay smooth: ${JSON.stringify(samples)}`).toBeLessThanOrEqual(0.92);
+  expect(samples.find((sample) => sample.date === "1948-11-20T03:30")?.zoom ?? 0, `Second-wall assault should zoom tighter than the first-line breakthrough stage: ${JSON.stringify(samples)}`).toBeGreaterThan(
+    (samples.find((sample) => sample.date === "1948-11-19T22:00")?.zoom ?? 0) + 0.5
+  );
+  expect(samples.find((sample) => sample.date === "1948-11-20T05:30")?.zoom ?? Number.POSITIVE_INFINITY, `Cleanup should return to the final-pocket tactical ratio: ${JSON.stringify(samples)}`).toBeLessThan(
+    (samples.find((sample) => sample.date === "1948-11-20T03:30")?.zoom ?? 0) - 0.45
+  );
   expect(pursuitSamples[0].lng - pursuitSamples.at(-1)!.lng, `Pursuit camera should follow the westward moving armies: ${JSON.stringify(pursuitSamples)}`).toBeGreaterThan(0.08);
   expect(pursuitSamples.every((sample) => sample.lng >= 117.86 && sample.lng <= 118.22), `Pursuit camera should stay between the mobile column and Nianzhuang context: ${JSON.stringify(pursuitSamples)}`).toBe(true);
 }
@@ -3006,7 +3164,8 @@ async function expectNianzhuangFullVisualIntegrity(page: Page) {
     { date: "1948-11-13T18:00", expectedFocus: "nianzhuangPocket", maximumZoom: 11.25, minimumUnits: 18, minimumZoom: 10.9 },
     { date: "1948-11-18T01:00", expectedFocus: "nianzhuangPocket", maximumZoom: 11.25, minimumUnits: 24, minimumZoom: 10.9 },
     { date: "1948-11-19T22:00", expectedFocus: "nianzhuangCompression", maximumZoom: 11.55, minimumUnits: 30, minimumZoom: 11.1 },
-    { date: "1948-11-20T01:45", expectedFocus: "nianzhuangCompression", maximumZoom: 11.55, minimumUnits: 30, minimumZoom: 11.1 },
+    { date: "1948-11-20T01:45", expectedFocus: "nianzhuangSecondWall", maximumZoom: 12.28, minimumUnits: 30, minimumZoom: 12.05 },
+    { date: "1948-11-20T03:30", expectedFocus: "nianzhuangSecondWall", maximumZoom: 12.28, minimumUnits: 30, minimumZoom: 12.05 },
     { date: "1948-11-20T06:00", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
     { date: "1948-11-21T12:00", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
     { date: "1948-11-22T16:30", expectedFocus: "nianzhuangFinal", maximumZoom: 11.55, minimumUnits: 24, minimumZoom: 11.0 },
@@ -3864,6 +4023,8 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaEventHasRoutes("ten-sided-ring", ["han-east-counterpress", "chu-probe-east-gap", "han-west-counterpress", "chu-south-screen-recoil", "han-south-locking-line"]);
   expectGaixiaEventHasRoutes("songs-of-chu", ["chu-night-breakout-check", "han-night-east-gap-block"]);
   expectGaixiaEventHasRoutes("farewell", ["chu-camp-array-center", "chu-camp-fragmentation"]);
+  expectGaixiaEventHasRoutes("dawn-assault", ["chu-inner-rearguard-stand", "chu-south-gate-rearguard", "chu-east-gate-rearguard"]);
+  expectGaixiaEventHasRoutes("xiangyu-breakout", ["chu-east-gate-rearguard", "chu-breakout-southeast", "han-cavalry-pursuit-yinling"]);
   expectGaixiaEventHasRoutes("wujiang-end", ["chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang"]);
   expectGaixiaRouteWindow("chu-retreat-gaixia", { unitVisibleUntil: "BCE-0202-12-01T18:19" });
   expectGaixiaRouteWindow("chu-camp-array-center", { start: "BCE-0202-12-01T18:00", visibleUntil: "BCE-0202-12-02T04:20" });
@@ -3888,7 +4049,43 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRoutePositionAnchor("han-tighten-east", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-night-east-gap-block", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("chu-night-breakout-check", "east-gap-gate");
+  expectGaixiaRoutePositionAnchor("chu-inner-rearguard-stand", "chu-inner-rampart");
+  expectGaixiaRoutePositionAnchor("chu-south-gate-rearguard", "chu-south-infantry-line");
+  expectGaixiaRoutePositionAnchor("chu-east-gate-rearguard", "east-gap-gate");
   expectGaixiaRoutePositionAnchor("han-dawn-cavalry-cutoff", "han-southeast-cavalry-ambush");
+  for (const [routeId, minimumPreludePoints] of [
+    ["chu-camp-array-center", 3],
+    ["chu-camp-array-east", 3],
+    ["chu-camp-array-south", 3],
+    ["han-west-fallback", 2],
+    ["han-west-counterpress", 3],
+    ["chu-east-counterpush", 3],
+    ["han-east-cavalry-yield", 3],
+    ["chu-probe-east-gap", 3],
+    ["han-east-counterpress", 2],
+    ["chu-south-screen-recoil", 2],
+    ["han-tighten-west", 3],
+    ["han-tighten-north", 3],
+    ["han-south-locking-line", 3],
+    ["han-tighten-east", 3],
+    ["han-night-east-gap-block", 4],
+    ["chu-night-breakout-check", 4],
+    ["chu-camp-fragmentation", 3],
+    ["han-dawn-assault-north", 4],
+    ["han-dawn-assault-south", 4],
+    ["han-dawn-assault-west", 4],
+    ["han-dawn-cavalry-cutoff", 5],
+    ["chu-inner-rearguard-stand", 3],
+    ["chu-south-gate-rearguard", 3],
+    ["chu-east-gate-rearguard", 3],
+    ["chu-breakout-southeast", 3],
+    ["han-cavalry-pursuit-yinling", 4],
+    ["chu-dongcheng-last-stand", 2],
+    ["chu-wujiang-final-flight", 3],
+    ["han-cavalry-pursuit-wujiang", 2]
+  ] as const) {
+    expectGaixiaRouteHasPrelude(routeId, minimumPreludePoints);
+  }
   const chuInnerRampart = gaixiaData.fieldworks.find((fieldwork) => fieldwork.id === "chu-inner-rampart")!.coordinates;
   for (const routeId of [
     "han-west-infantry",
@@ -3930,12 +4127,52 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectGaixiaRouteWindow("han-dawn-assault-north", { start: "BCE-0202-12-02T03:05", end: "BCE-0202-12-02T04:50" });
   expectGaixiaRouteWindow("han-dawn-assault-south", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:00" });
   expectGaixiaRouteWindow("han-dawn-assault-west", { start: "BCE-0202-12-02T03:10", end: "BCE-0202-12-02T05:05" });
-  expectGaixiaRouteWindow("han-dawn-cavalry-cutoff", { start: "BCE-0202-12-02T03:20", end: "BCE-0202-12-02T05:20" });
-  expectGaixiaRouteWindow("han-cavalry-pursuit-yinling", { start: "BCE-0202-12-02T04:45", end: "BCE-0202-12-02T06:30" });
+  expectGaixiaRouteWindow("han-dawn-cavalry-cutoff", { start: "BCE-0202-12-02T04:18", end: "BCE-0202-12-02T05:35" });
+  expectGaixiaRouteWindow("chu-inner-rearguard-stand", {
+    start: "BCE-0202-12-02T04:05",
+    end: "BCE-0202-12-02T04:55",
+    unitVisibleUntil: "BCE-0202-12-02T05:05",
+    visibleUntil: "BCE-0202-12-02T05:20"
+  });
+  expectGaixiaRouteWindow("chu-south-gate-rearguard", {
+    start: "BCE-0202-12-02T04:10",
+    end: "BCE-0202-12-02T05:10",
+    unitVisibleUntil: "BCE-0202-12-02T05:10",
+    visibleUntil: "BCE-0202-12-02T05:25"
+  });
+  expectGaixiaRouteWindow("chu-east-gate-rearguard", {
+    start: "BCE-0202-12-02T04:18",
+    end: "BCE-0202-12-02T05:30",
+    unitVisibleUntil: "BCE-0202-12-02T05:31",
+    visibleUntil: "BCE-0202-12-02T05:40"
+  });
+  expectGaixiaRouteWindow("han-cavalry-pursuit-yinling", { start: "BCE-0202-12-02T04:40", end: "BCE-0202-12-02T06:30" });
   expectGaixiaRouteWindow("chu-breakout-southeast", { end: "BCE-0202-12-02T06:20", unitVisibleUntil: "BCE-0202-12-02T06:20" });
   expectGaixiaRouteWindow("chu-dongcheng-last-stand", { start: "BCE-0202-12-02T06:20", unitVisibleUntil: "BCE-0202-12-02T07:05" });
   expectGaixiaRouteWindow("chu-wujiang-final-flight", { start: "BCE-0202-12-02T07:05", end: "BCE-0202-12-02T08:00" });
   expectGaixiaRouteWindow("han-cavalry-pursuit-wujiang", { start: "BCE-0202-12-02T06:10", end: "BCE-0202-12-02T07:50" });
+  expect(routeCoordinate("han-dawn-cavalry-cutoff", -1)[0], "dawn cavalry cutoff should hold the outer southeast escape lane, not pierce back through the Chu camp").toBeGreaterThanOrEqual(117.64);
+  expect(routeCoordinate("han-dawn-cavalry-cutoff", -1)[1], "dawn cavalry cutoff should tail the breakout route instead of driving deep into the camp center").toBeLessThanOrEqual(33.18);
+  expect(minRouteDistance("han-dawn-cavalry-cutoff", "chu-breakout-southeast"), "dawn cavalry cutoff should coordinate with the Chu breakout lane").toBeLessThanOrEqual(0.035);
+  expect(minRouteDistance("han-dawn-cavalry-cutoff", "han-cavalry-pursuit-yinling"), "dawn cavalry cutoff should hand off naturally to the pursuit cavalry").toBeLessThanOrEqual(0.035);
+  expect(minRouteDistance("han-dawn-assault-north", "chu-inner-rearguard-stand"), "north dawn assault should contact Chu inner rearguard instead of entering an empty camp").toBeLessThanOrEqual(0.035);
+  expect(minRouteDistance("han-dawn-assault-west", "chu-inner-rearguard-stand"), "west dawn assault should contact Chu inner rearguard instead of entering an empty camp").toBeLessThanOrEqual(0.035);
+  expect(minRouteDistance("han-dawn-assault-south", "chu-south-gate-rearguard"), "south dawn assault should hit the Chu south-gate rearguard").toBeLessThanOrEqual(0.035);
+  expect(minRouteDistance("han-dawn-cavalry-cutoff", "chu-east-gate-rearguard"), "dawn cutoff should meet Chu east-gate rearguard before the pursuit handoff").toBeLessThanOrEqual(0.035);
+  const dawnCutoffRoute = gaixiaData.routes.find((route) => route.id === "han-dawn-cavalry-cutoff")!;
+  for (let index = 1; index < dawnCutoffRoute.points.length; index += 1) {
+    expect(dawnCutoffRoute.points[index][0], "dawn cutoff cavalry should move southeast with the pursuit lane, not reverse through the Chu camp").toBeGreaterThanOrEqual(dawnCutoffRoute.points[index - 1][0]);
+    expect(dawnCutoffRoute.points[index][1], "dawn cutoff cavalry should press down the escape lane, not climb back toward the camp center").toBeLessThanOrEqual(dawnCutoffRoute.points[index - 1][1]);
+  }
+  const dawnCutoffPoint = gaixiaRoutePointAtDate("han-dawn-cavalry-cutoff", "BCE-0202-12-02T04:20");
+  const dawnChuPoint = gaixiaRoutePointAtDate("chu-breakout-southeast", "BCE-0202-12-02T04:20");
+  expect(Math.hypot(dawnCutoffPoint[0] - dawnChuPoint[0], dawnCutoffPoint[1] - dawnChuPoint[1]), "dawn cutoff cavalry should be in near contact with the breakout point, not far down the road").toBeLessThanOrEqual(0.03);
+  expect(dawnCutoffPoint[1] - dawnChuPoint[1], "dawn cutoff cavalry should sit on the outer southeast side, not above or behind the Chu center").toBeLessThanOrEqual(0);
+  const pursuitHandOffCutoffPoint = gaixiaRoutePointAtDate("han-dawn-cavalry-cutoff", "BCE-0202-12-02T05:30");
+  const pursuitHandOffHanPoint = gaixiaRoutePointAtDate("han-cavalry-pursuit-yinling", "BCE-0202-12-02T05:30");
+  const pursuitHandOffChuPoint = gaixiaRoutePointAtDate("chu-breakout-southeast", "BCE-0202-12-02T05:30");
+  expect(Math.hypot(pursuitHandOffCutoffPoint[0] - pursuitHandOffChuPoint[0], pursuitHandOffCutoffPoint[1] - pursuitHandOffChuPoint[1]), "cutoff cavalry should still tail the Chu breakout at the pursuit handoff").toBeLessThanOrEqual(0.05);
+  expect(Math.hypot(pursuitHandOffHanPoint[0] - pursuitHandOffChuPoint[0], pursuitHandOffHanPoint[1] - pursuitHandOffChuPoint[1]), "pursuit cavalry should be the unit taking over close contact by Xiang Yu's breakout event").toBeLessThanOrEqual(0.03);
   expectRouteEndsBehind("chu-wujiang-final-flight", "han-cavalry-pursuit-wujiang");
   expect(gaixiaData.terrainReliefSurfaces, "gaixia should model terrain as raised tactical surfaces").toHaveLength(7);
   expect(gaixiaData.terrainReliefSurfaces.every((surface) => surface.elevation >= surface.baseElevation)).toBe(true);
@@ -4312,15 +4549,29 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     });
   }
   expectNianzhuangRouteWindow("huang-east-remnant-defense", {
-    start: "1948-11-20T05:30",
+    start: "1948-11-21T08:00",
     end: "1948-11-22T16:00",
+    visibleFrom: "1948-11-21T08:00",
+    unitVisibleFrom: "1948-11-21T08:00",
     unitVisibleUntil: "1948-11-22T18:00",
     visibleUntil: "1948-11-22T20:00"
   });
   expectNianzhuangRouteWindow("huang-remnant-fallback-east", {
     start: "1948-11-20T05:30",
     end: "1948-11-21T08:00",
-    unitVisibleUntil: "1948-11-22T16:00",
+    unitVisibleUntil: "1948-11-21T08:00",
+    visibleUntil: "1948-11-22T20:00"
+  });
+  expectNianzhuangRouteWindow("huang-remnant-fallback-north", {
+    start: "1948-11-20T05:30",
+    end: "1948-11-21T08:00",
+    unitVisibleUntil: "1948-11-21T08:00",
+    visibleUntil: "1948-11-22T20:00"
+  });
+  expectNianzhuangRouteWindow("huang-remnant-fallback-south", {
+    start: "1948-11-20T05:30",
+    end: "1948-11-21T08:00",
+    unitVisibleUntil: "1948-11-21T08:00",
     visibleUntil: "1948-11-22T20:00"
   });
   expectNianzhuangRouteWindow("pla-relief-counterpush", {
@@ -4440,9 +4691,11 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
     ["huang-north-fragment-recoil", ["huang-second-wall-collapse"]],
     ["huang-east-fragment-recoil", ["huang-second-wall-collapse"]],
     ["huang-south-fragment-recoil", ["huang-second-wall-collapse"]],
-    ["huang-final-core-defense", ["huang-remnant-fallback-east", "huang-east-remnant-defense"]],
-    ["huang-second-wall-collapse", ["huang-remnant-fallback-east", "huang-east-remnant-defense"]],
+    ["huang-final-core-defense", ["huang-remnant-fallback-east", "huang-remnant-fallback-north", "huang-remnant-fallback-south"]],
+    ["huang-second-wall-collapse", ["huang-remnant-fallback-east", "huang-remnant-fallback-north", "huang-remnant-fallback-south"]],
     ["huang-remnant-fallback-east", ["huang-east-remnant-defense"]],
+    ["huang-remnant-fallback-north", ["huang-east-remnant-defense"]],
+    ["huang-remnant-fallback-south", ["huang-east-remnant-defense"]],
     ["huang-north-remnant-sortie", ["huang-east-remnant-defense", "huang-final-north-collapse"]],
     ["huang-south-remnant-sortie", ["huang-east-remnant-defense", "huang-final-south-collapse"]],
     ["huang-east-remnant-defense", ["huang-final-north-collapse", "huang-final-east-collapse", "huang-final-south-collapse", "huang-nizhuang-final-flight"]]
@@ -4517,10 +4770,16 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expectNianzhuangRouteUsesSource("pla-final-compression-east", "inner-east-line", "final-east-core", 3);
   expectNianzhuangRouteUsesSource("pla-final-compression-south", "inner-south-line", "final-south-core", 3);
   expectNianzhuangRouteUsesSource("pla-final-compression-west", "inner-west-line", "final-west-core", 3);
-  expectNianzhuangRouteUsesSource("huang-remnant-fallback-east", "inner-pocket", "east-remnant-pocket", 3);
+  expectNianzhuangRouteUsesSource("huang-remnant-fallback-east", "final-east-core", "east-remnant-pocket", 4);
+  expectNianzhuangRouteHasPrelude("huang-remnant-fallback-east", 3);
+  expectNianzhuangRouteUsesSource("huang-remnant-fallback-north", "final-north-core", "remnant-north-village", 2);
+  expectNianzhuangRouteHasPrelude("huang-remnant-fallback-north", 2);
+  expectNianzhuangRouteUsesSource("huang-remnant-fallback-south", "final-south-core", "remnant-south-village", 3);
+  expectNianzhuangRouteHasPrelude("huang-remnant-fallback-south", 2);
   expectNianzhuangRouteUsesSource("huang-east-remnant-defense", "east-remnant-pocket", "east-remnant-pocket", 4);
   expectNianzhuangRouteUsesSource("pla-remnant-mop-up-north", "final-north-core", "remnant-north-village", 2);
-  expectNianzhuangRouteUsesSource("pla-remnant-mop-up-east", "final-east-core", "east-remnant-pocket", 3);
+  expectNianzhuangRouteUsesSource("pla-remnant-mop-up-east", "final-east-core", "east-remnant-pocket", 4);
+  expectNianzhuangRouteHasPrelude("pla-remnant-mop-up-east", 3);
   expectNianzhuangRouteUsesSource("pla-remnant-mop-up-south", "final-south-core", "remnant-south-village", 2);
   expectNianzhuangRouteUsesSource("pla-remnant-mop-up-west", "final-west-core", "remnant-southwest-block", 4);
   expectNianzhuangRouteUsesSource("huang-north-remnant-sortie", "remnant-north-village", "final-north-core", 2);
@@ -4607,16 +4866,20 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
   expect(nianzhuangRoute("huang-second-wall-collapse").unitVisibleUntil, "huang second wall collapse should not disappear immediately at the pocket event").toBe(
     "1948-11-20T18:00"
   );
-  expect(nianzhuangRoute("huang-remnant-fallback-east").formationUnits?.length, "huang remnant fallback should keep units moving from the core").toBeGreaterThanOrEqual(
-    3
+  expect(nianzhuangRoute("huang-remnant-fallback-east").formationUnits?.length, "huang east fallback should keep command and east remnants moving from the core").toBeGreaterThanOrEqual(
+    2
   );
-  expect(nianzhuangRoute("huang-remnant-fallback-east").unitVisibleUntil, "huang remnant fallback should stay visible until final collapse routes take over").toBe(
-    "1948-11-22T16:00"
+  expect(nianzhuangRoute("huang-remnant-fallback-east").unitVisibleUntil, "huang remnant fallback should hand over to fixed remnant positions after arrival").toBe(
+    "1948-11-21T08:00"
   );
+  expect(nianzhuangRoute("huang-remnant-fallback-north").formationUnits?.length, "huang north fallback should explain where north remnants came from").toBeGreaterThanOrEqual(2);
+  expect(nianzhuangRoute("huang-remnant-fallback-south").formationUnits?.length, "huang south fallback should explain where south remnants came from").toBeGreaterThanOrEqual(3);
   expect(nianzhuangRoute("huang-east-remnant-defense").formationUnits?.length, "huang remnant defense should keep east village remnants visible").toBeGreaterThanOrEqual(
     4
   );
-  expectNianzhuangRouteHasBadges("huang-remnant-fallback-east", ["25", "44", "64", "100", "黄"]);
+  expectNianzhuangRouteHasBadges("huang-remnant-fallback-east", ["64", "黄"]);
+  expectNianzhuangRouteHasBadges("huang-remnant-fallback-north", ["25", "108"]);
+  expectNianzhuangRouteHasBadges("huang-remnant-fallback-south", ["44", "100", "159"]);
   expectNianzhuangRouteHasBadges("huang-east-remnant-defense", ["25", "44", "64", "100", "黄"]);
   expectNianzhuangRouteHasBadges("pla-remnant-mop-up-north", ["突", "炮"]);
   expectNianzhuangRouteHasBadges("pla-remnant-mop-up-east", ["突", "炮", "封"]);
@@ -5250,7 +5513,7 @@ test("mongol and qin animations load with ancient warfare pacing", async ({ page
 });
 
 test("gaixia ambush uses terrain map ten-sided formations and pipa score", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(140_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
   await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -5352,8 +5615,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-formation-chu-center-block")).toContainText("楚中军步阵");
   await expect(page.getByTestId("gaixia-formation-chu-east-cavalry-screen")).toContainText("楚骑东侧屏卫");
   await expect(page.getByTestId("gaixia-formation-chu-south-infantry-line")).toContainText("楚南侧步阵");
-  await expect.poll(async () => page.locator(".gaixia-formation-rank-dot").count()).toBeGreaterThanOrEqual(120);
-  await expect(page.getByTestId("gaixia-formation-ranks-chu-center-block").locator(".gaixia-formation-rank-dot")).toHaveCount(42);
+  await expect(page.locator(".gaixia-formation-rank-dot")).toHaveCount(0);
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-mark").count()).toBeGreaterThanOrEqual(120);
+  await expect(page.getByTestId("gaixia-formation-ranks-chu-center-block").locator(".gaixia-formation-rank-mark")).toHaveCount(42);
   await expect.poll(async () => page.locator(".gaixia-formation-front-line").count()).toBeGreaterThanOrEqual(3);
   await expect.poll(async () => page.locator(".gaixia-formation-rank-guide").count()).toBeGreaterThanOrEqual(10);
   await expect.poll(async () => page.locator(".gaixia-formation-front-standard").count()).toBeGreaterThanOrEqual(2);
@@ -5363,6 +5627,7 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-east-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-chu-camp-array-south-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toHaveAttribute("data-position-anchor", "chu-center-block");
+  await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toHaveAttribute("data-formation-prelude-count", "3");
   await expect(page.getByTestId("gaixia-route-chu-camp-array-east")).toHaveAttribute("data-position-anchor", "chu-east-cavalry-screen");
   await expect(page.getByTestId("gaixia-route-chu-camp-array-south")).toHaveAttribute("data-position-anchor", "chu-south-infantry-line");
   await expectGaixiaCompletedRouteLabelsHidden(page);
@@ -5386,8 +5651,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-formation-han-north-crossbow-line")).toContainText("汉北岸弩阵");
   await expect(page.getByTestId("gaixia-formation-han-east-crossbow-line")).toContainText("东口交叉弩网");
   await expect(page.getByTestId("gaixia-formation-han-command-post")).toContainText("韩信中军");
-  await expect.poll(async () => page.locator(".gaixia-formation-rank-dot").count()).toBeGreaterThanOrEqual(140);
-  await expect(page.getByTestId("gaixia-formation-ranks-han-north-crossbow-line").locator(".gaixia-formation-rank-dot")).toHaveCount(24);
+  await expect(page.locator(".gaixia-formation-rank-dot")).toHaveCount(0);
+  await expect.poll(async () => page.locator(".gaixia-formation-rank-mark").count()).toBeGreaterThanOrEqual(140);
+  await expect(page.getByTestId("gaixia-formation-ranks-han-north-crossbow-line").locator(".gaixia-formation-rank-mark")).toHaveCount(24);
   await expect.poll(async () => page.locator(".gaixia-formation-rank-guide").count()).toBeGreaterThanOrEqual(18);
   await expect(page.locator(".gaixia-camp-tent")).toHaveCount(4);
   await expect(page.locator(".gaixia-formation-crossbow-icon")).toHaveCount(6);
@@ -5438,7 +5704,9 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-unit-chu-east-counterpush-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-unit-han-east-cavalry-yield-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toHaveAttribute("data-position-anchor", "west-camp-gate");
+  await expect(page.getByTestId("gaixia-route-han-west-counterpress")).toHaveAttribute("data-formation-prelude-count", "3");
   await expect(page.getByTestId("gaixia-route-chu-east-counterpush")).toHaveAttribute("data-position-anchor", "chu-east-cavalry-screen");
+  await expect(page.getByTestId("gaixia-route-chu-east-counterpush")).toHaveAttribute("data-formation-prelude-count", "3");
   await expect(page.getByTestId("gaixia-fieldwork-west-camp-gate")).toHaveAttribute("data-route-anchor", "true");
   await expect(page.getByTestId("gaixia-formation-chu-east-cavalry-screen")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
@@ -5504,12 +5772,14 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-han-tighten-east")).toHaveAttribute("data-position-anchor", "east-gap-gate");
   await expect(page.getByTestId("gaixia-route-han-night-east-gap-block")).toHaveAttribute("data-position-anchor", "east-gap-gate");
   await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toHaveAttribute("data-position-anchor", "east-gap-gate");
+  await expect(page.getByTestId("gaixia-route-chu-night-breakout-check")).toHaveAttribute("data-formation-prelude-count", "4");
   await expect(page.getByTestId("gaixia-fieldwork-east-gap-gate")).toHaveAttribute("data-route-anchor", "true");
   await expectGaixiaCompletedRouteLabelsHidden(page);
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toHaveCount(0);
   await expect(page.locator(".gaixia-route[data-route-kind='song']")).toHaveCount(1);
   await expectGaixiaVisibleUnitCount(page, 24);
+  await expectGaixiaCurrentUnitsCentered(page, "four-sided Chu songs");
 
   await page.getByTestId("event-list").getByRole("button", { name: /楚军营阵碎裂与霸王别姬/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("楚军营阵碎裂与霸王别姬");
@@ -5517,21 +5787,45 @@ test("gaixia ambush uses terrain map ten-sided formations and pipa score", async
   await expect(page.getByTestId("gaixia-route-chu-camp-array-center")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-camp-fragmentation")).toBeVisible();
   await expectGaixiaVisibleUnitCount(page, 24);
+  await expectGaixiaCurrentUnitsCentered(page, "farewell camp fragmentation");
 
   await page.getByTestId("event-list").getByRole("button", { name: /黎明合击与楚军溃散/ }).click();
-  await expect(page.getByTestId("active-event-card")).toContainText("东南骑兵截断退路");
+  await expect(page.getByTestId("active-event-card")).toContainText("楚军内营后卫");
+  await expect(page.locator(".detail-card")).toContainText("先看到接触与阻击");
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-north")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-south")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-assault-west")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-dawn-cavalry-cutoff")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-inner-rearguard-stand")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-south-gate-rearguard")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-east-gate-rearguard")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-inner-rearguard-stand-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-south-gate-rearguard-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-east-gate-rearguard-0")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-chu-inner-rearguard-stand")).toHaveAttribute("data-position-anchor", "chu-inner-rampart");
+  await expect(page.getByTestId("gaixia-route-chu-south-gate-rearguard")).toHaveAttribute("data-position-anchor", "chu-south-infantry-line");
+  await expect(page.getByTestId("gaixia-route-chu-east-gate-rearguard")).toHaveAttribute("data-position-anchor", "east-gap-gate");
+  await expect(page.getByTestId("gaixia-route-han-dawn-assault-west")).toHaveAttribute("data-formation-prelude-count", "4");
+  await expect(page.getByTestId("gaixia-route-han-dawn-cavalry-cutoff")).toHaveAttribute("data-formation-prelude-count", "5");
+  await expect(page.getByTestId("gaixia-route-chu-inner-rearguard-stand")).toHaveAttribute("data-formation-prelude-count", "3");
+  await expect(page.getByTestId("gaixia-route-chu-south-gate-rearguard")).toHaveAttribute("data-formation-prelude-count", "3");
+  await expect(page.getByTestId("gaixia-route-chu-east-gate-rearguard")).toHaveAttribute("data-formation-prelude-count", "3");
   await expect(page.getByTestId("gaixia-tactical-graphic-ea-dawn-pocket")).toContainText("EA 黎明合击切割区");
-  await expectGaixiaVisibleRouteCount(page, 12);
-  await expectGaixiaVisibleUnitCount(page, 20);
+  await expectGaixiaVisibleRouteCount(page, 15);
+  await expectGaixiaVisibleUnitCount(page, 28);
   await expectGaixiaRouteStaysInMapStage(page, "han-dawn-assault-west");
   await expectGaixiaRouteStaysInMapStage(page, "han-dawn-cavalry-cutoff");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-inner-rearguard-stand");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-south-gate-rearguard");
+  await expectGaixiaRouteStaysInMapStage(page, "chu-east-gate-rearguard");
   await expectGaixiaMeleeEffectBetweenVisibleUnits(page);
+  await expectGaixiaDawnAssaultHasContestedCampBreakthrough(page);
+  await expectGaixiaCurrentUnitsCentered(page, "dawn assault");
 
   await page.getByTestId("event-list").getByRole("button", { name: /项羽率骑兵东南突围/ }).click();
+  await expect(page.getByTestId("active-event-card")).toContainText("东口护退骑卒");
+  await expect(page.getByTestId("gaixia-route-chu-east-gate-rearguard")).toBeVisible();
+  await expect(page.getByTestId("gaixia-route-unit-chu-east-gate-rearguard-0")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-chu-breakout-southeast")).toBeVisible();
   await expect(page.getByTestId("gaixia-route-han-cavalry-pursuit-yinling")).toBeVisible();
   await expect(page.getByTestId("gaixia-point-yinling")).toContainText("阴陵");
@@ -6228,7 +6522,7 @@ test("korean war animation uses era matched carrier aircraft infantry and tank m
 });
 
 test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit", async ({ page }) => {
-  test.setTimeout(220_000);
+  test.setTimeout(360_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await openCampaignFromHome(page, "nianzhuang");
@@ -6293,7 +6587,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   }
   await expectRouteUnitLabels(page, "pla-east-closing-position", [/封口前卫|合围梯队/]);
   for (const routeId of ["huang-deploy-north", "huang-deploy-east", "huang-deploy-south", "huang-deploy-west"]) {
-    await expectRouteVisible(page, routeId);
+    await expectRouteVisibleState(page, routeId);
     await expect(page.locator(`.nianzhuang-battle .front-line[data-route-id="${routeId}"]`)).toHaveAttribute("data-unit-visible", "false");
   }
   await expectRouteVisibleWithUnit(page, "huang-deploy-command");
@@ -6518,7 +6812,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
 
   await jumpToEventByName(page, /第一道围墙被突破/);
   await expectNianzhuangStageInView(page);
-  await expectNianzhuangMapFocus(page, "nianzhuangCompression");
+  await expectNianzhuangMapFocus(page, "nianzhuangSecondWall");
   await expectNianzhuangInnerDefense(page);
   await expectNianzhuangFragmentedOuterDefense(page);
   await expectRouteVisibleWithUnit(page, "huang-inner-recoil");
@@ -6558,7 +6852,15 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await jumpNianzhuangTimelineTo(page, "1948-11-20T01:30");
   await expectRouteVisibleWithUnit(page, "huang-east-night-counterattack");
   await jumpNianzhuangTimelineTo(page, "1948-11-20T02:00");
-  await expectNianzhuangMapFocus(page, "nianzhuangCompression");
+  await expectNianzhuangMapFocus(page, "nianzhuangSecondWall");
+  await expectRenderedRoutesExclude(page, ".nianzhuang-battle", [
+    "xuzhou-relief-east",
+    "xuzhou-relief-second-thrust",
+    "xuzhou-relief-contained",
+    "pla-relief-block-line",
+    "pla-relief-depth-line",
+    "pla-relief-counterpush"
+  ]);
   for (const routeId of ["pla-second-wall-west", "pla-second-wall-north", "pla-second-wall-south", "pla-second-wall-east"]) {
     await expectRouteVisibleWithUnit(page, routeId);
   }
@@ -6582,7 +6884,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
 
   await jumpToEventByName(page, /第二道围墙被突破/);
   await expectNianzhuangStageInView(page);
-  await expectNianzhuangMapFocus(page, "nianzhuangCompression");
+  await expectNianzhuangMapFocus(page, "nianzhuangSecondWall");
   await expect(page.getByTestId("current-date")).toContainText("1948年11月20日 03:30");
   await expectNianzhuangLocalBattlefieldSpread(
     page,
@@ -6615,7 +6917,7 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectNianzhuangNoResultSpoilers(page);
 
   await jumpNianzhuangTimelineTo(page, "1948-11-20T04:30");
-  await expectNianzhuangMapFocus(page, "nianzhuangCompression");
+  await expectNianzhuangMapFocus(page, "nianzhuangSecondWall");
   await expectRouteVisibleWithUnit(page, "huang-final-core-defense");
   await expectRouteVisibleWithUnit(page, "huang-second-wall-collapse");
   await expectRouteBadgeLabels(page, "pla-final-compression-ring", ["突", "炮", "封"]);
@@ -6647,7 +6949,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectRouteVisibleWithUnit(page, "huang-final-core-defense");
   await expectRouteVisibleWithUnit(page, "huang-second-wall-collapse");
   await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-east");
-  await expectRouteVisibleWithUnit(page, "huang-east-remnant-defense");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-north");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-south");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-north");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-east");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-south");
@@ -6668,12 +6971,15 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     "pla-final-compression-west",
     "huang-final-north-collapse",
     "huang-final-east-collapse",
-    "huang-final-south-collapse"
+    "huang-final-south-collapse",
+    "huang-east-remnant-defense"
   ]);
   await expectNianzhuangLocalBattlefieldSpread(
     page,
     [
       "huang-remnant-fallback-east",
+      "huang-remnant-fallback-north",
+      "huang-remnant-fallback-south",
       "pla-remnant-mop-up-north",
       "pla-remnant-mop-up-east",
       "pla-remnant-mop-up-south",
@@ -6692,6 +6998,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-south");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-west");
   await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-east");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-north");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-south");
   await expectRouteVisibleWithUnit(page, "huang-final-core-defense");
   await expectRouteVisibleWithUnit(page, "huang-second-wall-collapse");
   await expectRouteVisible(page, "xuzhou-relief-east");
@@ -6708,11 +7016,21 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     "pla-general-assault-west",
     "pla-general-assault-north",
     "pla-general-assault-south",
-    "pla-general-assault-east"
+    "pla-general-assault-east",
+    "huang-east-remnant-defense"
   ]);
   await jumpNianzhuangTimelineTo(page, "1948-11-20T08:00");
   await expectRouteVisibleWithUnit(page, "huang-final-core-defense");
   await expectRouteVisibleWithUnit(page, "huang-second-wall-collapse");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-east");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-north");
+  await expectRouteVisibleWithUnit(page, "huang-remnant-fallback-south");
+  await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-east");
+  await expectNianzhuangRoutesMakeContact(page, "pla-remnant-mop-up-east", "huang-remnant-fallback-east", 180);
+  await expectNianzhuangRoutesMakeContact(page, "pla-remnant-mop-up-north", "huang-remnant-fallback-north", 190);
+  await expectNianzhuangRoutesMakeContact(page, "pla-remnant-mop-up-south", "huang-remnant-fallback-south", 190);
+  await expectNianzhuangRouteHeadDotsRemoved(page);
+  await expectNianzhuangFormationDotsRemoved(page);
   await expectRenderedRoutesExclude(page, ".nianzhuang-battle", [
     "pla-second-wall-west",
     "pla-second-wall-north",
@@ -6721,7 +7039,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
     "pla-final-compression-ring",
     "pla-final-compression-east",
     "pla-final-compression-south",
-    "pla-final-compression-west"
+    "pla-final-compression-west",
+    "huang-east-remnant-defense"
   ]);
   await jumpNianzhuangTimelineTo(page, "1948-11-21T12:00");
   await expectNianzhuangMapFocus(page, "nianzhuangFinal");
@@ -6734,6 +7053,8 @@ test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and f
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-east");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-south");
   await expectRouteVisibleWithUnit(page, "pla-remnant-mop-up-west");
+  await expectNianzhuangRoutesMakeContact(page, "pla-remnant-mop-up-east", "huang-east-remnant-defense", 210);
+  await expectNianzhuangFormationDotsRemoved(page);
   await expectRouteBadgeLabels(page, "pla-remnant-mop-up-east", ["突", "炮", "封"]);
   await expectRouteBadgeLabels(page, "pla-remnant-mop-up-west", ["封", "突", "炮"]);
   await expectRouteBadgeLabels(page, "huang-east-remnant-defense", ["64", "25", "159", "44", "100", "黄"]);

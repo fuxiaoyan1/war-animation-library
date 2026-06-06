@@ -2,6 +2,8 @@
 
 This repository mixes original software with third-party runtime media assets.
 
+For the full project-level disclaimer, including historical-information limits, copyright handling, non-commercial intent, and the maintainers' peace-and-anti-war statement, read [DISCLAIMER.md](DISCLAIMER.md).
+
 ## Code
 
 The application source code, tests, and agent workflow files are MIT licensed unless a file states otherwise.
@@ -35,3 +37,5 @@ Raw source/reference folders such as `public/assets/unit-icons/source/` and `pub
 ## Practical Rule
 
 Use the code freely under MIT. Audit or replace media assets before publishing derivative commercial work, redistributing asset packs, or claiming the whole repository is fully open-source under one license.
+
+For every new animation, and for every old animation whose information sources or media assets materially change, update the relevant `docs/sources/*` file and keep the disclaimer visible in the repository.

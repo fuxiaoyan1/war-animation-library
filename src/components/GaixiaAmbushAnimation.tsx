@@ -31,12 +31,13 @@ const gaixiaInteractionBounds = {
 };
 const musicSource = publicPath("/audio/shi-mian-mai-fu-pipa.mp3");
 
-type GaixiaCameraStageId = "camp-approach" | "encirclement" | "pursuit";
+type GaixiaCameraStageId = "camp-approach" | "encirclement" | "encirclement-close" | "encirclement-close-dawn" | "pursuit";
 
 type GaixiaCameraStage = {
   center: [number, number];
   focusRoutePoints: Array<[number, number]>;
   scale: number;
+  zoomBoost?: number;
 };
 
 const gaixiaCameraStages: Record<GaixiaCameraStageId, GaixiaCameraStage> = {
@@ -60,6 +61,28 @@ const gaixiaCameraStages: Record<GaixiaCameraStageId, GaixiaCameraStage> = {
     ],
     scale: 0.88
   },
+  "encirclement-close": {
+    center: [117.56, 33.32],
+    focusRoutePoints: [
+      [117.16, 33.52],
+      [117.2, 33.08],
+      [117.68, 33.17],
+      [117.76, 33.42]
+    ],
+    scale: 1.76,
+    zoomBoost: 0.55
+  },
+  "encirclement-close-dawn": {
+    center: [117.61, 33.32],
+    focusRoutePoints: [
+      [117.16, 33.52],
+      [117.2, 33.08],
+      [117.68, 33.17],
+      [117.76, 33.42]
+    ],
+    scale: 1.76,
+    zoomBoost: 0.55
+  },
   pursuit: {
     center: [117.75, 32.99],
     focusRoutePoints: [
@@ -79,9 +102,9 @@ const eventCameraStage: Record<string, GaixiaCameraStageId> = {
   "west-counterpush-yield": "encirclement",
   "han-counterpress-east-gap": "encirclement",
   "ten-sided-ring": "encirclement",
-  "songs-of-chu": "encirclement",
-  farewell: "encirclement",
-  "dawn-assault": "encirclement",
+  "songs-of-chu": "encirclement-close",
+  farewell: "encirclement-close",
+  "dawn-assault": "encirclement-close-dawn",
   "xiangyu-breakout": "pursuit",
   "dongcheng-last-stand": "pursuit",
   "wujiang-end": "pursuit"
@@ -307,6 +330,11 @@ function routeStatePriority(state: GaixiaTerrainRouteState) {
   return 2;
 }
 
+function contactPriority(pair: { chuRoute: GaixiaTerrainRouteState; distance: number; hanRoute: GaixiaTerrainRouteState }) {
+  const chuBreakoutPenalty = pair.chuRoute.route.routeKind === "breakout" ? 0.04 : 0;
+  return pair.distance + routeStatePriority(pair.hanRoute) * 0.01 + routeStatePriority(pair.chuRoute) * 0.01 + chuBreakoutPenalty;
+}
+
 function activeEffectPlacementForEvent(event: GaixiaEvent, projectedRoutes: GaixiaTerrainRouteState[], fallbackPoint: [number, number]): GaixiaTerrainEffectPlacement {
   if (event.cue === "song") {
     const songRoute = projectedRoutes.find((state) => event.routeIds.includes(state.route.id) && state.route.routeKind === "song" && state.isVisible);
@@ -323,7 +351,7 @@ function activeEffectPlacementForEvent(event: GaixiaEvent, projectedRoutes: Gaix
   const chuRoutes = candidates.filter((state) => state.route.faction === "chu");
 
   if (hanRoutes.length > 0 && chuRoutes.length > 0) {
-    const bestPair = hanRoutes
+    const pairs = hanRoutes
       .flatMap((hanRoute) =>
         chuRoutes.map((chuRoute) => ({
           chuRoute,
@@ -331,14 +359,38 @@ function activeEffectPlacementForEvent(event: GaixiaEvent, projectedRoutes: Gaix
           hanRoute
         }))
       )
-      .sort((a, b) => a.distance - b.distance)[0];
+      .sort((a, b) => contactPriority(a) - contactPriority(b));
+    const defenderPairs = pairs.filter((pair) => pair.chuRoute.route.routeKind !== "breakout");
+    const breakoutPairs = pairs.filter((pair) => pair.chuRoute.route.routeKind === "breakout");
+    const usedChuRoutes = new Set<string>();
+    const contacts: NonNullable<GaixiaTerrainEffectPlacement["contacts"]> = [];
+
+    for (const pair of [...defenderPairs, ...breakoutPairs]) {
+      if (contacts.length >= 3) {
+        break;
+      }
+      if (usedChuRoutes.has(pair.chuRoute.route.id)) {
+        continue;
+      }
+
+      contacts.push({
+        chuPoint: pair.chuRoute.markerPoint,
+        chuRouteId: pair.chuRoute.route.id,
+        hanPoint: pair.hanRoute.markerPoint,
+        hanRouteId: pair.hanRoute.route.id,
+        point: midpoint(pair.hanRoute.markerPoint, pair.chuRoute.markerPoint)
+      });
+      usedChuRoutes.add(pair.chuRoute.route.id);
+    }
+    const primaryContact = contacts[0];
 
     return {
-      chuPoint: bestPair.chuRoute.markerPoint,
-      chuRouteId: bestPair.chuRoute.route.id,
-      hanPoint: bestPair.hanRoute.markerPoint,
-      hanRouteId: bestPair.hanRoute.route.id,
-      point: midpoint(bestPair.hanRoute.markerPoint, bestPair.chuRoute.markerPoint),
+      contacts,
+      chuPoint: primaryContact.chuPoint,
+      chuRouteId: primaryContact.chuRouteId,
+      hanPoint: primaryContact.hanPoint,
+      hanRouteId: primaryContact.hanRouteId,
+      point: primaryContact.point,
       source: "route-contact"
     };
   }
@@ -591,6 +643,7 @@ export function GaixiaAmbushAnimation() {
             height={mapHeight}
             mapBaseView={activeMapView}
             mapView={mapView}
+            cameraZoomBoost={activeCameraStage.zoomBoost ?? 0}
             progress={progress}
             projectedRoutes={geographicRoutes}
           />
