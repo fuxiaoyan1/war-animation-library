@@ -22,6 +22,11 @@ Important limits:
 | [Encyclopaedia Britannica](https://www.britannica.com/) | Campaign, battle, and biography cross-checking | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md`, `docs/sources/crusades.md`, `docs/sources/eastern-front.md`, `docs/sources/gulf-war-1991.md`, `docs/sources/korean-war.md`, `docs/sources/mongol-empire.md`, `docs/sources/napoleonic-wars.md`, `docs/sources/punic-wars.md`, `docs/sources/qin-unification.md`, `docs/sources/tsushima-battle.md` |
 | [World History Encyclopedia](https://www.worldhistory.org/) | Ancient campaign and empire references | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md`, `docs/sources/mongol-empire.md`, `docs/sources/qin-unification.md` |
 | [Livius](https://www.livius.org/) | Ancient biography and campaign cross-checking | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md` |
+| [LacusCurtius](https://penelope.uchicago.edu/) | Online classical texts for Polybius and ancient formation-battle evidence | `docs/sources/top-formation-battles.md` |
+| [Perseus Digital Library](https://www.perseus.tufts.edu/) | Online classical texts for Livy, Caesar, Xenophon, and battle evidence | `docs/sources/top-formation-battles.md` |
+| [Wikisource Chinese](https://zh.wikisource.org/) | Chinese historical text reference for Fei River and related records | `docs/sources/top-formation-battles.md` |
+| [Iran Chamber Society](https://www.iranchamber.com/) | Arrian/Gaugamela source excerpt reference | `docs/sources/top-formation-battles.md` |
+| [Cambridge Core](https://www.cambridge.org/) | Scholarly Gaugamela battlefield visibility/location reference | `docs/sources/top-formation-battles.md` |
 | [United States Holocaust Memorial Museum Encyclopedia](https://encyclopedia.ushmm.org/) | Eastern Front and Operation Barbarossa reference | `docs/sources/eastern-front.md` |
 | [Wikipedia](https://en.wikipedia.org/) | Explicitly marked cross-check source for Tsushima | `docs/sources/tsushima-battle.md` |
 | [U.S. Army Center of Military History](https://history.army.mil/) | Korean War campaign reference | `docs/sources/korean-war.md` |
@@ -40,6 +45,10 @@ Important limits:
 | [Australian War Memorial](https://www.awm.gov.au/) | Bismarck Sea background reference | `docs/sources/bismarck-sea-air-battle.md` |
 | [Royal Australian Air Force](https://www.airforce.gov.au/) | Bismarck Sea air history reference | `docs/sources/bismarck-sea-air-battle.md` |
 | [National Museum of the U.S. Air Force](https://www.nationalmuseum.af.mil/) | Big Week, Bismarck Sea, and Korean War air references | `docs/sources/big-week-air-battle.md`, `docs/sources/bismarck-sea-air-battle.md`, `docs/sources/korean-war.md` |
+| [National Army Museum](https://www.nam.ac.uk/) | Waterloo institutional reference | `docs/sources/top-formation-battles.md` |
+| [Historical Association](https://www.history.org.uk/) | Agincourt archer-stake reference | `docs/sources/top-formation-battles.md` |
+| [Musee de l'Armee](https://www.musee-armee.fr/) | Agincourt institutional reference | `docs/sources/top-formation-battles.md` |
+| [Battlefields Trust](https://www.battlefieldstrust.com/) | Agincourt and battlefield map/reference hub | `docs/sources/top-formation-battles.md` |
 | [Uboat.net](https://uboat.net/) | Atlantic convoy and U-boat operational references | `docs/sources/atlantic-convoy-battle.md` |
 | [Society for Nautical Research](https://snr.org.uk/) | Tsushima tactical narrative reference | `docs/sources/tsushima-battle.md` |
 | [U.S. Naval Institute](https://www.usni.org/) | Tsushima tactical reference | `docs/sources/tsushima-battle.md` |
@@ -55,6 +64,8 @@ Important limits:
 | [MapLibre](https://maplibre.org/) | 3D terrain implementation reference | `docs/sources/gaixia-ambush.md` |
 | [AWS Terrain Tiles Registry](https://registry.opendata.aws/terrain-tiles/) | Terrarium DEM terrain-tile source | `docs/sources/gaixia-ambush.md` |
 | [Esri World Imagery](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer) | Imagery reference for terrain/map reconstruction | `docs/sources/gaixia-ambush.md` |
+| [Natural Earth](https://www.naturalearthdata.com/) | Shared base geography candidate for future formation-battle maps | `docs/sources/top-formation-battles.md` |
+| [OpenStreetMap](https://www.openstreetmap.org/) | Modern geography, settlement, road, river, and battlefield context reference | `docs/sources/top-formation-battles.md` |
 | [ZeoSeven Fonts](https://fonts.zeoseven.com/) | Font source | `docs/sources/typography.md` |
 | [ZeoSeven Fonts API](https://fontsapi.zeoseven.com/) | Font CSS delivery source | `docs/sources/typography.md` |
 
@@ -103,3 +114,4 @@ Current source logs:
 - `docs/sources/tsushima-battle.md`
 - `docs/sources/typography.md`
 - `docs/sources/unit-icons.md`
+- `docs/sources/top-formation-battles.md`

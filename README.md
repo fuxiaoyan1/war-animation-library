@@ -129,6 +129,8 @@ The latest series work focused on naval and air-war animation quality:
   演示运行时使用的媒体素材。
 - `SOURCE_INDEX.md`: website-level source index for historical references, maps, terrain, software, fonts, audio, and asset traceability.
   网站级来源索引，覆盖历史资料、地图、地形、软件、字体、音频和素材追溯。
+- `docs/plans`: bilingual long-term production plans and implementation roadmaps.
+  双语长期生产计划和实现路线图。
 - `docs/sources`: historical references, audio attribution, asset notes, and uncertainty records.
   历史参考、音频署名、素材说明和不确定性记录。
 - `docs/war-animation-handoff.md`: detailed production handoff and accumulated animation rules.

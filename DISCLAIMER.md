@@ -28,10 +28,10 @@ Historical and institutional references:
 历史和机构资料来源：
 
 - [中国哲学书电子化计划](https://ctext.org/), [固镇县人民政府](https://www.guzhen.gov.cn/), [中国军网](https://www.81.cn/), [华夏经纬网](https://www.huaxia.com/), [Berkshire Publishing](https://www.berkshirepublishing.com/)
-- [Encyclopaedia Britannica](https://www.britannica.com/), [World History Encyclopedia](https://www.worldhistory.org/), [Livius](https://www.livius.org/), [United States Holocaust Memorial Museum Encyclopedia](https://encyclopedia.ushmm.org/), [Wikipedia](https://en.wikipedia.org/)
+- [Encyclopaedia Britannica](https://www.britannica.com/), [World History Encyclopedia](https://www.worldhistory.org/), [Livius](https://www.livius.org/), [LacusCurtius](https://penelope.uchicago.edu/), [Perseus Digital Library](https://www.perseus.tufts.edu/), [Wikisource Chinese](https://zh.wikisource.org/), [Iran Chamber Society](https://www.iranchamber.com/), [Cambridge Core](https://www.cambridge.org/), [United States Holocaust Memorial Museum Encyclopedia](https://encyclopedia.ushmm.org/), [Wikipedia](https://en.wikipedia.org/)
 - [U.S. Army Center of Military History](https://history.army.mil/), [U.S. Naval History and Heritage Command](https://www.history.navy.mil/), [U.S. Department of Defense](https://www.defense.gov/), [Air Force Historical Support Division](https://www.afhistory.af.mil/), [U.S. Marine Corps](https://www.marines.mil/), [Army University Press](https://www.armyupress.army.mil/)
 - [National WWII Museum](https://www.nationalww2museum.org/), [Imperial War Museums](https://www.iwm.org.uk/), [National Museum of the Royal Navy](https://www.nmrn.org.uk/), [Royal Museums Greenwich](https://www.rmg.co.uk/), [Royal Navy Museums](https://www.royalnavymuseums.org.uk/)
-- [Royal Air Force](https://www.raf.mod.uk/), [RAF Museum](https://www.rafmuseum.org.uk/), [Australian War Memorial](https://www.awm.gov.au/), [Royal Australian Air Force](https://www.airforce.gov.au/), [National Museum of the U.S. Air Force](https://www.nationalmuseum.af.mil/)
+- [Royal Air Force](https://www.raf.mod.uk/), [RAF Museum](https://www.rafmuseum.org.uk/), [Australian War Memorial](https://www.awm.gov.au/), [Royal Australian Air Force](https://www.airforce.gov.au/), [National Museum of the U.S. Air Force](https://www.nationalmuseum.af.mil/), [National Army Museum](https://www.nam.ac.uk/), [Historical Association](https://www.history.org.uk/), [Musee de l'Armee](https://www.musee-armee.fr/), [Battlefields Trust](https://www.battlefieldstrust.com/)
 - [Uboat.net](https://uboat.net/), [Society for Nautical Research](https://snr.org.uk/), [U.S. Naval Institute](https://www.usni.org/), [Mikasa Historic Memorial Warship](https://kinenkan-mikasa.or.jp/), [Harry S. Truman Library](https://www.trumanlibrary.gov/)
 - [Newton](https://www.newton.com.tw/), [Line of Departure](https://www.lineofdeparture.army.mil/)
 
@@ -39,7 +39,7 @@ Maps, terrain, software, and fonts:
 
 地图、地形、软件和字体：
 
-- [MapLibre](https://maplibre.org/), [AWS Terrain Tiles Registry](https://registry.opendata.aws/terrain-tiles/), [Esri World Imagery](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer), [ZeoSeven Fonts](https://fonts.zeoseven.com/), [ZeoSeven Fonts API](https://fontsapi.zeoseven.com/)
+- [MapLibre](https://maplibre.org/), [AWS Terrain Tiles Registry](https://registry.opendata.aws/terrain-tiles/), [Esri World Imagery](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer), [Natural Earth](https://www.naturalearthdata.com/), [OpenStreetMap](https://www.openstreetmap.org/), [ZeoSeven Fonts](https://fonts.zeoseven.com/), [ZeoSeven Fonts API](https://fontsapi.zeoseven.com/)
 
 Media, audio, and asset traceability:
 

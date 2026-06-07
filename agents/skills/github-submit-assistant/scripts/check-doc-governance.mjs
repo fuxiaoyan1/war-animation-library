@@ -69,6 +69,12 @@ const bilingualFiles = [
   'agents/README.md',
   'docs/animation-assistant-agent.md',
   'agents/skills/github-submit-assistant/SKILL.md',
+  ...fs.existsSync(path.join(root, 'docs/plans'))
+    ? fs.readdirSync(path.join(root, 'docs/plans'))
+        .filter((name) => name.endsWith('.md'))
+        .map((name) => `docs/plans/${name}`)
+        .sort()
+    : [],
   ...fs.existsSync(path.join(root, 'docs/updates'))
     ? fs.readdirSync(path.join(root, 'docs/updates'))
         .filter((name) => name.endsWith('.md'))
