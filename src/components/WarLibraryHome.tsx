@@ -24,6 +24,13 @@ const wars: WarEntry[] = [
     description: "西西里、汉尼拔越岭、坎尼、扎马与迦太基陷落。"
   },
   {
+    id: "cannae",
+    title: "坎尼会战：双重合围",
+    era: "古代战争",
+    period: "公元前216",
+    description: "罗马密集步兵压入凸月中军，迦太基骑兵清翼，非洲重步兵内折完成合围。"
+  },
+  {
     id: "qin",
     title: "大秦统一中国战史",
     era: "古代战争",

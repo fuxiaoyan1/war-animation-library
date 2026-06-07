@@ -3858,6 +3858,7 @@ async function countPlayedAudio(page: Page, sourceFragment: string) {
 const campaignIds = [
   "alexander",
   "punic",
+  "cannae",
   "qin",
   "gaixia",
   "caesar",
@@ -3881,7 +3882,7 @@ const campaignIds = [
   "gulf"
 ] as const;
 
-const temporarySharedMusicCampaignIds = new Set<(typeof campaignIds)[number]>(["big-week", "bismarck-sea", "britain-air"]);
+const temporarySharedMusicCampaignIds = new Set<(typeof campaignIds)[number]>(["big-week", "bismarck-sea", "britain-air", "cannae"]);
 
 async function openCampaignFromHome(page: Page, campaignId: (typeof campaignIds)[number]) {
   await page.goto("/");
@@ -5172,6 +5173,7 @@ test("war library home lists ancient and modern animations", async ({ page }) =>
     .toEqual([
       "亚历山大大帝征服史",
       "罗马与迦太基：三次布匿战争史",
+      "坎尼会战：双重合围",
       "大秦统一中国战史",
       "韩信十面埋伏：垓下之战",
       "凯撒大帝战争史",

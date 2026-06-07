@@ -19,11 +19,11 @@ Important limits:
 | [中国军网](https://www.81.cn/) | Nianzhuang battle narrative reference | `docs/sources/nianzhuang-battle.md` |
 | [华夏经纬网](https://www.huaxia.com/) | Nianzhuang battle narrative reference | `docs/sources/nianzhuang-battle.md` |
 | [Berkshire Publishing](https://www.berkshirepublishing.com/) | Huaihai Campaign reference | `docs/sources/nianzhuang-battle.md` |
-| [Encyclopaedia Britannica](https://www.britannica.com/) | Campaign, battle, and biography cross-checking | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md`, `docs/sources/crusades.md`, `docs/sources/eastern-front.md`, `docs/sources/gulf-war-1991.md`, `docs/sources/korean-war.md`, `docs/sources/mongol-empire.md`, `docs/sources/napoleonic-wars.md`, `docs/sources/punic-wars.md`, `docs/sources/qin-unification.md`, `docs/sources/tsushima-battle.md` |
-| [World History Encyclopedia](https://www.worldhistory.org/) | Ancient campaign and empire references | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md`, `docs/sources/mongol-empire.md`, `docs/sources/qin-unification.md` |
+| [Encyclopaedia Britannica](https://www.britannica.com/) | Campaign, battle, and biography cross-checking | `docs/sources/alexander-conquests.md`, `docs/sources/cannae-battle.md`, `docs/sources/caesar-wars.md`, `docs/sources/crusades.md`, `docs/sources/eastern-front.md`, `docs/sources/gulf-war-1991.md`, `docs/sources/korean-war.md`, `docs/sources/mongol-empire.md`, `docs/sources/napoleonic-wars.md`, `docs/sources/punic-wars.md`, `docs/sources/qin-unification.md`, `docs/sources/tsushima-battle.md` |
+| [World History Encyclopedia](https://www.worldhistory.org/) | Ancient campaign and empire references | `docs/sources/alexander-conquests.md`, `docs/sources/cannae-battle.md`, `docs/sources/caesar-wars.md`, `docs/sources/mongol-empire.md`, `docs/sources/qin-unification.md` |
 | [Livius](https://www.livius.org/) | Ancient biography and campaign cross-checking | `docs/sources/alexander-conquests.md`, `docs/sources/caesar-wars.md` |
-| [LacusCurtius](https://penelope.uchicago.edu/) | Online classical texts for Polybius and ancient formation-battle evidence | `docs/sources/top-formation-battles.md` |
-| [Perseus Digital Library](https://www.perseus.tufts.edu/) | Online classical texts for Livy, Caesar, Xenophon, and battle evidence | `docs/sources/top-formation-battles.md` |
+| [LacusCurtius](https://penelope.uchicago.edu/) | Online classical texts for Polybius and ancient formation-battle evidence | `docs/sources/cannae-battle.md`, `docs/sources/top-formation-battles.md` |
+| [Perseus Digital Library](https://www.perseus.tufts.edu/) | Online classical texts for Livy, Caesar, Xenophon, and battle evidence | `docs/sources/cannae-battle.md`, `docs/sources/top-formation-battles.md` |
 | [Wikisource Chinese](https://zh.wikisource.org/) | Chinese historical text reference for Fei River and related records | `docs/sources/top-formation-battles.md` |
 | [Iran Chamber Society](https://www.iranchamber.com/) | Arrian/Gaugamela source excerpt reference | `docs/sources/top-formation-battles.md` |
 | [Cambridge Core](https://www.cambridge.org/) | Scholarly Gaugamela battlefield visibility/location reference | `docs/sources/top-formation-battles.md` |
@@ -73,7 +73,7 @@ Important limits:
 
 | Website | Role in source logs | Source files |
 | --- | --- | --- |
-| [Wikimedia Commons](https://commons.wikimedia.org/) | Public-domain, government-work, and media-file references | `docs/sources/audio.md`, `docs/sources/midway-battle.md`, `docs/sources/qin-unification.md`, `docs/sources/tsushima-battle.md`, `docs/sources/unit-icons.md` |
+| [Wikimedia Commons](https://commons.wikimedia.org/) | Public-domain, government-work, and media-file references | `docs/sources/audio.md`, `docs/sources/cannae-battle.md`, `docs/sources/midway-battle.md`, `docs/sources/qin-unification.md`, `docs/sources/tsushima-battle.md`, `docs/sources/unit-icons.md` |
 | [Wikimedia upload CDN](https://upload.wikimedia.org/) | Direct media-file delivery URLs recorded for traceability | `docs/sources/audio.md` |
 | [Project Gutenberg](https://www.gutenberg.org/) | Public-domain audio recording source | `docs/sources/audio.md` |
 | [FiftySounds](https://www.fiftysounds.com/) | Attribution-required music source | `docs/sources/audio.md` |
@@ -95,6 +95,7 @@ Current source logs:
 - `docs/sources/battle-of-france.md`
 - `docs/sources/big-week-air-battle.md`
 - `docs/sources/bismarck-sea-air-battle.md`
+- `docs/sources/cannae-battle.md`
 - `docs/sources/caesar-wars.md`
 - `docs/sources/crusades.md`
 - `docs/sources/eastern-front.md`

@@ -5038,6 +5038,331 @@ h1 {
   line-height: 1.65;
 }
 
+.cannae-formation-battle {
+  --cannae-rome: #5d94bd;
+  --cannae-rome-dark: #163e60;
+  --cannae-carthage: #d18a3b;
+  --cannae-carthage-dark: #8a2c25;
+  --cannae-ground: #b59e67;
+  --cannae-ink: #fff0c4;
+}
+
+.cannae-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.cannae-stage {
+  min-height: calc(100vh - 136px);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(245, 209, 126, 0.12), transparent 32rem),
+    linear-gradient(180deg, #172629, #111715 68%, #0b0e0d);
+}
+
+.cannae-formation-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 136px);
+  border-radius: 30px;
+  background: #1b2928;
+}
+
+.cannae-ground {
+  fill: url("#cannaeGround");
+}
+
+.cannae-dust {
+  fill: url("#cannaeDustPattern");
+  opacity: 0.78;
+}
+
+.cannae-river,
+.cannae-river-bank {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-river {
+  stroke: rgba(87, 139, 158, 0.74);
+  stroke-width: 26;
+  filter: drop-shadow(0 6px 14px rgba(20, 49, 58, 0.32));
+}
+
+.cannae-river-bank {
+  stroke: rgba(241, 220, 155, 0.24);
+  stroke-dasharray: 16 16;
+  stroke-width: 4;
+}
+
+.cannae-terrain-label {
+  fill: rgba(42, 42, 28, 0.74);
+  stroke: rgba(255, 234, 176, 0.34);
+  stroke-width: 3px;
+  font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
+  font-size: 18px;
+  font-weight: 900;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.cannae-formation-map[data-phase="africanWingsTurn"] .cannae-terrain-label,
+.cannae-formation-map[data-phase="encirclement"] .cannae-terrain-label,
+.cannae-formation-map[data-phase="collapse"] .cannae-terrain-label {
+  opacity: 0.36;
+}
+
+.cannae-camp {
+  fill: rgba(52, 42, 28, 0.18);
+  stroke: rgba(255, 226, 151, 0.38);
+  stroke-dasharray: 10 8;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-camp-roman {
+  fill: rgba(67, 116, 153, 0.18);
+}
+
+.cannae-camp-carthage {
+  fill: rgba(170, 77, 45, 0.18);
+}
+
+.cannae-camp-label {
+  font-size: 16px;
+}
+
+.cannae-formation-map[data-phase="africanWingsTurn"] .cannae-camp-label,
+.cannae-formation-map[data-phase="encirclement"] .cannae-camp-label,
+.cannae-formation-map[data-phase="collapse"] .cannae-camp-label {
+  opacity: 0;
+}
+
+.cannae-pressure-arrows path,
+.cannae-wing-pressure path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-pressure-arrows path {
+  stroke: rgba(255, 226, 132, 0.88);
+  stroke-dasharray: 12 13;
+  stroke-width: 5;
+  filter: drop-shadow(0 0 8px rgba(255, 210, 111, 0.28));
+}
+
+.cannae-wing-pressure path {
+  stroke: rgba(255, 126, 91, 0.82);
+  stroke-width: 6;
+  filter: drop-shadow(0 0 8px rgba(184, 48, 35, 0.24));
+}
+
+.cannae-center-bend-guide {
+  fill: none;
+  stroke: rgba(255, 246, 201, 0.32);
+  stroke-dasharray: 8 10;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-formation-block {
+  filter: url("#cannaeSoftShadow");
+}
+
+.cannae-formation-block path {
+  stroke: rgba(255, 242, 191, 0.76);
+  stroke-width: 2.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-faction-rome path {
+  fill: url("#cannaeRome");
+}
+
+.cannae-faction-carthage path {
+  fill: url("#cannaeCarthage");
+}
+
+.cannae-role-cavalry path {
+  stroke-dasharray: 9 5;
+}
+
+.cannae-role-command path {
+  fill: rgba(250, 215, 111, 0.92);
+  stroke: rgba(70, 34, 20, 0.82);
+}
+
+.cannae-formation-block text {
+  fill: #fff2c2;
+  stroke: rgba(31, 17, 9, 0.78);
+  stroke-width: 3px;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: 18px;
+  font-weight: 900;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+.cannae-rank-dot,
+.cannae-roman-depth-line {
+  fill: rgba(255, 245, 203, 0.66);
+  stroke: rgba(27, 22, 14, 0.42);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-roman-depth-line {
+  stroke: rgba(230, 239, 237, 0.42);
+  stroke-dasharray: 8 8;
+}
+
+.cannae-command-standard line {
+  stroke: rgba(58, 26, 17, 0.82);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-encirclement-ring {
+  fill: rgba(141, 38, 30, 0.1);
+  stroke: rgba(255, 222, 124, 0.94);
+  stroke-dasharray: 18 10;
+  stroke-linecap: round;
+  stroke-width: 7;
+  filter:
+    drop-shadow(0 0 12px rgba(255, 214, 112, 0.34))
+    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-melee-sparks line {
+  stroke: rgba(255, 244, 190, 0.9);
+  stroke-linecap: round;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 7px rgba(255, 202, 88, 0.72));
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-focus-frame rect {
+  fill: none;
+  stroke: rgba(255, 239, 180, 0.18);
+  stroke-dasharray: 12 14;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-legend {
+  top: auto;
+  right: 14px;
+  bottom: 88px;
+  left: auto;
+}
+
+.cannae-legend span[data-side="rome"]::before {
+  background: var(--cannae-rome);
+}
+
+.cannae-legend span[data-side="carthage"]::before {
+  background: var(--cannae-carthage);
+}
+
+.cannae-legend span[data-side="schematic"]::before {
+  background: repeating-linear-gradient(90deg, rgba(255, 226, 132, 0.9) 0 5px, rgba(64, 43, 22, 0.3) 5px 10px);
+}
+
+.cannae-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: min(650px, calc(100% - 28px));
+}
+
+.cannae-metrics span {
+  background:
+    linear-gradient(135deg, rgba(255, 222, 128, 0.15), rgba(181, 61, 48, 0.12)),
+    rgba(8, 14, 13, 0.62);
+}
+
+.cannae-subtitle {
+  width: min(620px, calc(100% - 520px));
+}
+
+.cannae-story-panel {
+  display: grid;
+  gap: 12px;
+  max-height: calc(100vh - 136px);
+  overflow: auto;
+}
+
+.cannae-story-card {
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(247, 237, 213, 0.12), rgba(247, 237, 213, 0.05)),
+    rgba(8, 14, 13, 0.78);
+}
+
+.cannae-story-card h3 {
+  margin: 0 0 12px;
+  color: var(--cannae-ink);
+  font-size: 1rem;
+}
+
+.cannae-evidence-card ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cannae-evidence-card li {
+  padding-left: 14px;
+  border-left: 3px solid rgba(217, 169, 67, 0.72);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.cannae-evidence-card li[data-certainty="contested"] {
+  border-left-color: rgba(211, 74, 56, 0.78);
+}
+
+.cannae-timeline-list .event-list {
+  grid-template-columns: repeat(7, minmax(190px, 1fr));
+}
+
+.cannae-source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cannae-source-grid a {
+  display: grid;
+  gap: 8px;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid rgba(247, 237, 213, 0.14);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.16);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.cannae-source-grid a:hover {
+  border-color: rgba(217, 169, 67, 0.64);
+}
+
+.cannae-source-grid span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.52;
+}
+
 @keyframes breathe {
   from {
     transform: scale(0.98);
@@ -5274,6 +5599,30 @@ h1 {
   .story-panel {
     max-height: none;
   }
+
+  .cannae-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cannae-stage,
+  .cannae-formation-map {
+    min-height: 72vh;
+  }
+
+  .cannae-story-panel {
+    max-height: none;
+  }
+
+  .cannae-subtitle {
+    width: auto;
+  }
+
+  .cannae-legend {
+    top: auto;
+    bottom: 122px;
+    left: 14px;
+    right: 14px;
+  }
 }
 
 @media (max-width: 680px) {
@@ -5367,6 +5716,16 @@ h1 {
     min-height: 70vh;
   }
 
+  .cannae-stage,
+  .cannae-formation-map {
+    min-height: 70vh;
+    border-radius: 24px;
+  }
+
+  .cannae-formation-block text {
+    font-size: 15px;
+  }
+
   .outcome-panel {
     left: 10px;
     right: 10px;
@@ -5395,6 +5754,17 @@ h1 {
 
   .map-legend span {
     font-size: 0.68rem;
+  }
+
+  .cannae-legend {
+    top: auto;
+    bottom: 114px;
+    left: 10px;
+    right: 10px;
+  }
+
+  .cannae-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .trafalgar-battle .map-legend {
