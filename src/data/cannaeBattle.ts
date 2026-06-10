@@ -367,7 +367,7 @@ const romanBreakupTracks = tracksBetween(
   romanFinalScatterPoints,
   { facingX: 1, stagger: 0.026 }
 );
-const carthaginianForwardTracks = carthaginianBandTracks("cart-center-forward", 4, 16, [16.204, 41.2885], [16.166, 41.2882], {
+const carthaginianForwardTracks = carthaginianBandTracks("cart-center-forward", 4, 16, [16.204, 41.2885], [16.172, 41.2882], {
   axis: carthaginianFacingAxis,
   bowFrom: 0.001,
   bowTo: 0.003,
@@ -377,7 +377,7 @@ const carthaginianForwardTracks = carthaginianBandTracks("cart-center-forward", 
   toWidth: 0.0195,
   width: 0.024
 });
-const carthaginianYieldTracks = carthaginianBandTracks("cart-center-yield", 4, 16, [16.166, 41.2882], [16.176, 41.2874], {
+const carthaginianYieldTracks = carthaginianBandTracks("cart-center-yield", 4, 16, [16.172, 41.2882], [16.181, 41.2874], {
   axis: carthaginianFacingAxis,
   bowFrom: 0.003,
   bowTo: -0.010,
@@ -385,7 +385,7 @@ const carthaginianYieldTracks = carthaginianBandTracks("cart-center-yield", 4, 1
   rowStep: 0.00072,
   width: 0.024
 });
-const carthaginianCenterHoldTracks = carthaginianBandTracks("cart-center-hold", 3, 16, [16.176, 41.2874], [16.1742, 41.2871], {
+const carthaginianCenterHoldTracks = carthaginianBandTracks("cart-center-hold", 3, 16, [16.181, 41.2874], [16.1806, 41.2871], {
   axis: carthaginianFacingAxis,
   bowFrom: -0.010,
   bowTo: -0.008,
@@ -440,14 +440,14 @@ const numidianCavalryTracks = cavalryTracks("numidian-cav", [16.202, 41.2636], [
 const heavyRearTracks = bentTracksBetween(
   "heavy-rear",
   formationGrid([16.132, 41.309], 3, 7, [-0.6, -1], 0.00082, 0.0012),
-  formationGrid([16.1546, 41.292], 3, 7, [0.3, -1], 0.00034, 0.00048),
+  formationGrid([16.1562, 41.292], 3, 7, [0.3, -1], 0.00034, 0.00048),
   (from, to) => [16.1175, Math.max(from[1], to[1]) + 0.0018],
   { facingX: 1, stagger: 0.02 }
 );
 const numidianRearTracks = bentTracksBetween(
   "numidian-rear",
   formationGrid([16.132, 41.2705], 3, 7, [-0.6, 1], 0.00082, 0.0012),
-  formationGrid([16.1546, 41.2807], 3, 7, [0.3, 1], 0.00034, 0.00048),
+  formationGrid([16.1562, 41.2807], 3, 7, [0.3, 1], 0.00034, 0.00048),
   (from, to) => [16.1175, Math.min(from[1], to[1]) - 0.0018],
   { facingX: 1, stagger: 0.02 }
 );
@@ -461,7 +461,7 @@ export const mapPoints: CannaePoint[] = [
   { id: "center-pocket", label: "中军凹袋", coordinates: [16.164, 41.287], kind: "plain", confidence: "schematic", revealAt: "BCE-0216-08-02T10:45" },
   { id: "roman-core", label: "罗马纵深核心", coordinates: [16.163, 41.2865], kind: "command", confidence: "schematic", revealAt: "BCE-0216-08-02T13:10" },
   { id: "rear-seal", label: "后口封闭", coordinates: [16.152, 41.2864], kind: "route", confidence: "schematic", revealAt: "BCE-0216-08-02T12:20" },
-  { id: "paullus-fall", label: "Paullus 终局", coordinates: [16.158, 41.284], kind: "command", confidence: "probable", revealAt: "BCE-0216-08-02T15:10" },
+  { id: "paullus-fall", label: "Paullus 终局", coordinates: [16.1598, 41.2849], kind: "command", confidence: "probable", revealAt: "BCE-0216-08-02T15:10" },
   { id: "roman-collapse-site", label: "罗马组织崩溃区", coordinates: [16.16, 41.286], kind: "result", confidence: "schematic", revealAt: "BCE-0216-08-02T15:35" }
 ];
 
@@ -638,10 +638,10 @@ export const formations: CannaeFormation[] = [
     end: "BCE-0216-08-02T10:45",
     labelCoordinates: [16.186, 41.288],
     coordinates: [
-      [16.158, 41.299],
-      [16.176, 41.295],
-      [16.166, 41.288],
-      [16.176, 41.281],
+      [16.166, 41.299],
+      [16.184, 41.295],
+      [16.172, 41.288],
+      [16.184, 41.281],
       [16.166, 41.2768]
     ]
   },
@@ -655,11 +655,11 @@ export const formations: CannaeFormation[] = [
     end: "BCE-0216-08-02T15:35",
     labelCoordinates: [16.174, 41.287],
     coordinates: [
-      [16.159, 41.298],
-      [16.176, 41.294],
-      [16.174, 41.287],
-      [16.176, 41.281],
-      [16.159, 41.277]
+      [16.166, 41.298],
+      [16.182, 41.294],
+      [16.181, 41.287],
+      [16.182, 41.281],
+      [16.166, 41.277]
     ]
   },
   {
@@ -760,11 +760,11 @@ export const tacticalGraphics: CannaeTacticalGraphic[] = [
     revealAt: "BCE-0216-08-02T10:45",
     labelCoordinates: [16.179, 41.291],
     points: [
-      [16.159, 41.298],
-      [16.176, 41.294],
-      [16.174, 41.287],
-      [16.176, 41.281],
-      [16.159, 41.276]
+      [16.166, 41.298],
+      [16.182, 41.294],
+      [16.181, 41.287],
+      [16.182, 41.281],
+      [16.166, 41.276]
     ]
   },
   {
@@ -795,8 +795,8 @@ export const tacticalGraphics: CannaeTacticalGraphic[] = [
       [16.1175, 41.303],
       [16.125, 41.2965],
       [16.143, 41.2935],
-      [16.1546, 41.292],
-      [16.1546, 41.2807],
+      [16.1562, 41.292],
+      [16.1562, 41.2807],
       [16.143, 41.2793],
       [16.125, 41.2768],
       [16.132, 41.2705]
@@ -810,11 +810,11 @@ export const tacticalGraphics: CannaeTacticalGraphic[] = [
     revealAt: "BCE-0216-08-02T13:10",
     labelCoordinates: [16.164, 41.286],
     points: [
-      [16.1546, 41.292],
+      [16.1562, 41.292],
       [16.1668, 41.29225],
-      [16.1742, 41.2871],
+      [16.1806, 41.2871],
       [16.1668, 41.28055],
-      [16.1546, 41.2807],
+      [16.1562, 41.2807],
       [16.1691, 41.28645]
     ]
   }
@@ -981,7 +981,7 @@ export const routes: CannaeRoute[] = [
       [16.204, 41.2885],
       [16.191, 41.291],
       [16.177, 41.2901],
-      [16.166, 41.2882]
+      [16.172, 41.2882]
     ],
     unitTracks: carthaginianForwardTracks,
     unitOffsets: centerArcOffsets
@@ -1002,13 +1002,13 @@ export const routes: CannaeRoute[] = [
     formationPrelude: [
       [16.191, 41.291],
       [16.177, 41.2901],
-      [16.166, 41.2882]
+      [16.172, 41.2882]
     ],
     points: [
-      [16.166, 41.2882],
-      [16.168, 41.288],
-      [16.176, 41.2874],
-      [16.174, 41.2866]
+      [16.172, 41.2882],
+      [16.174, 41.288],
+      [16.181, 41.2874],
+      [16.179, 41.2866]
     ],
     unitTracks: carthaginianYieldTracks,
     unitOffsets: centerArcOffsets
@@ -1027,14 +1027,14 @@ export const routes: CannaeRoute[] = [
     positionAnchor: "carthaginian-concave-center",
     confidence: "schematic",
     formationPrelude: [
-      [16.176, 41.294],
-      [16.174, 41.287],
-      [16.176, 41.281]
+      [16.182, 41.294],
+      [16.181, 41.287],
+      [16.182, 41.281]
     ],
     points: [
-      [16.176, 41.2874],
-      [16.1748, 41.2872],
-      [16.1742, 41.2871]
+      [16.181, 41.2874],
+      [16.1808, 41.2872],
+      [16.1806, 41.2871]
     ],
     unitTracks: carthaginianCenterHoldTracks,
     unitOffsets: centerArcOffsets
@@ -1085,7 +1085,7 @@ export const routes: CannaeRoute[] = [
     faction: "carthaginian",
     unitKind: "carthaginian-cavalry",
     routeKind: "cavalry",
-    start: "BCE-0216-08-02T07:20",
+    start: "BCE-0216-08-02T06:00",
     end: "BCE-0216-08-02T10:25",
     visibleUntil: "BCE-0216-08-02T12:20",
     unitVisibleUntil: "BCE-0216-08-02T10:25",
@@ -1106,7 +1106,7 @@ export const routes: CannaeRoute[] = [
     faction: "carthaginian",
     unitKind: "numidian-cavalry",
     routeKind: "cavalry",
-    start: "BCE-0216-08-02T07:20",
+    start: "BCE-0216-08-02T06:00",
     end: "BCE-0216-08-02T10:50",
     visibleUntil: "BCE-0216-08-02T13:00",
     unitVisibleUntil: "BCE-0216-08-02T10:50",
@@ -1143,7 +1143,7 @@ export const routes: CannaeRoute[] = [
       [16.1175, 41.303],
       [16.125, 41.2965],
       [16.143, 41.2935],
-      [16.1546, 41.292]
+      [16.1562, 41.292]
     ],
     unitTracks: heavyRearTracks,
     unitOffsets: cavalryRearSealOffsets
@@ -1170,7 +1170,7 @@ export const routes: CannaeRoute[] = [
       [16.1175, 41.2768],
       [16.125, 41.2793],
       [16.143, 41.2799],
-      [16.1546, 41.2807]
+      [16.1562, 41.2807]
     ],
     unitTracks: numidianRearTracks,
     unitOffsets: cavalryRearSealOffsets
@@ -1240,15 +1240,15 @@ export const routes: CannaeRoute[] = [
     formationPrelude: [
       [16.1658, 41.29265],
       [16.1658, 41.28015],
-      [16.176, 41.2874],
-      [16.1546, 41.292],
-      [16.1546, 41.2807]
+      [16.181, 41.2874],
+      [16.1562, 41.292],
+      [16.1562, 41.2807]
     ],
     points: [
       [16.1668, 41.29225],
-      [16.1738, 41.2914],
-      [16.1744, 41.2871],
-      [16.1738, 41.2812],
+      [16.1755, 41.2914],
+      [16.1806, 41.2871],
+      [16.1755, 41.2812],
       [16.1668, 41.28055]
     ],
     unitTracks: pocketTightenTracks,
@@ -1289,8 +1289,8 @@ export const routes: CannaeRoute[] = [
     confidence: "probable",
     points: [
       [16.1618, 41.2851],
-      [16.1596, 41.2845],
-      [16.1579, 41.284]
+      [16.1608, 41.285],
+      [16.1598, 41.2849]
     ],
     unitOffsets: commandOffsets
   }
@@ -1307,7 +1307,7 @@ export const battleEvents: CannaeEvent[] = [
     summary: "罗马军团从营地方向进入平原，尚未完全列成最终纵深集团。",
     detail: "坎尼不是开场即完成列阵。罗马先以多列进入战场，再逐渐堆成厚实中军；汉尼拔保留较薄但有弹性的中军，两翼和骑兵等待发挥空间。",
     significance: "部署阶段说明双方作战意图：罗马依靠纵深和人数压迫中军，汉尼拔则把两翼与骑兵留作决定性力量。",
-    routeIds: ["roman-infantry-deploy", "roman-left-cavalry", "roman-right-cavalry"],
+    routeIds: ["roman-infantry-deploy", "roman-left-cavalry", "roman-right-cavalry", "carthaginian-heavy-cavalry-clear", "numidian-fix-roman-left"],
     confidence: "schematic"
   },
   {
@@ -1320,7 +1320,7 @@ export const battleEvents: CannaeEvent[] = [
     summary: "迦太基中军前凸，两端由非洲重步兵和骑兵支撑。",
     detail: "Polybius 叙述汉尼拔把中军做成向前突出的弧形。凸出的中军主动接敌，非洲重步兵置于两端，暂不提前内折。",
     significance: "观众先看到“为什么罗马会压进去”，后续凹袋才有因果。",
-    routeIds: ["carthaginian-center-forward", "african-left-hold", "african-right-hold", "hannibal-command-observe"],
+    routeIds: ["carthaginian-center-forward", "african-left-hold", "african-right-hold", "carthaginian-heavy-cavalry-clear", "numidian-fix-roman-left", "hannibal-command-observe"],
     confidence: "probable"
   },
   {
@@ -1341,9 +1341,9 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "carthaginian-center-forward",
         earliest: "BCE-0216-08-02T09:45",
         romanPoint: [16.158, 41.2878],
-        carthaginianPoint: [16.166, 41.2882],
-        point: [16.162, 41.288],
-        distanceThreshold: 0.024
+        carthaginianPoint: [16.172, 41.2882],
+        point: [16.166, 41.288],
+        distanceThreshold: 0.03
       },
       {
         romanRouteId: "roman-right-cavalry",
@@ -1414,8 +1414,8 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "carthaginian-center-yield",
         earliest: "BCE-0216-08-02T10:45",
         romanPoint: [16.1702, 41.2872],
-        carthaginianPoint: [16.176, 41.2874],
-        point: [16.1731, 41.2873],
+        carthaginianPoint: [16.181, 41.2874],
+        point: [16.175, 41.2873],
         distanceThreshold: 0.028
       }
     ],
@@ -1457,9 +1457,9 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "carthaginian-center-hold",
         earliest: "BCE-0216-08-02T12:45",
         romanPoint: [16.168, 41.2866],
-        carthaginianPoint: [16.1742, 41.2871],
+        carthaginianPoint: [16.1806, 41.2871],
         point: [16.1696, 41.2871],
-        distanceThreshold: 0.025
+        distanceThreshold: 0.032
       }
     ],
     confidence: "probable"
@@ -1482,8 +1482,8 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "heavy-cavalry-rear-ride",
         earliest: "BCE-0216-08-02T13:20",
         romanPoint: [16.1588, 41.2902],
-        carthaginianPoint: [16.1546, 41.292],
-        point: [16.1563, 41.291],
+        carthaginianPoint: [16.1562, 41.292],
+        point: [16.1572, 41.291],
         distanceThreshold: 0.026
       },
       {
@@ -1491,8 +1491,8 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "numidian-rear-pressure",
         earliest: "BCE-0216-08-02T13:20",
         romanPoint: [16.1588, 41.2824],
-        carthaginianPoint: [16.1546, 41.2807],
-        point: [16.1563, 41.2817],
+        carthaginianPoint: [16.1562, 41.2807],
+        point: [16.1572, 41.2817],
         distanceThreshold: 0.026
       }
     ],
@@ -1516,9 +1516,9 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "carthaginian-center-hold",
         earliest: "BCE-0216-08-02T14:05",
         romanPoint: [16.168, 41.2866],
-        carthaginianPoint: [16.1742, 41.2871],
+        carthaginianPoint: [16.1806, 41.2871],
         point: [16.1696, 41.287],
-        distanceThreshold: 0.025
+        distanceThreshold: 0.032
       },
       {
         romanRouteId: "roman-core-compression",
@@ -1543,8 +1543,8 @@ export const battleEvents: CannaeEvent[] = [
         carthaginianRouteId: "heavy-cavalry-rear-ride",
         earliest: "BCE-0216-08-02T14:05",
         romanPoint: [16.1588, 41.2898],
-        carthaginianPoint: [16.1546, 41.292],
-        point: [16.1563, 41.2909],
+        carthaginianPoint: [16.1562, 41.292],
+        point: [16.1572, 41.2909],
         distanceThreshold: 0.026
       }
     ],
@@ -1556,7 +1556,7 @@ export const battleEvents: CannaeEvent[] = [
     title: "Paullus 殉战，罗马指挥核心崩溃",
     phase: "终幕 / 指挥与崩溃",
     location: "罗马核心",
-    coordinates: [16.158, 41.284],
+    coordinates: [16.1598, 41.2849],
     summary: "罗马指挥节点失去组织能力，坎尼会战进入终局。",
     detail: "Livy 记载执政官 Paullus 在战斗中阵亡。这里以指挥标识和压缩核心标注终局，不表现血腥细节，重点是组织崩溃和围歼结果。",
     significance: "把重点人物/指挥节点放在终局阶段标出，延续垓下/碾庄结尾对关键单位和结果的处理方法。",
@@ -1567,9 +1567,9 @@ export const battleEvents: CannaeEvent[] = [
         romanRouteId: "paullus-command-collapse",
         carthaginianRouteId: "carthaginian-pocket-tighten",
         earliest: "BCE-0216-08-02T15:10",
-        romanPoint: [16.1579, 41.284],
+        romanPoint: [16.1598, 41.2849],
         carthaginianPoint: [16.1668, 41.28055],
-        point: [16.162, 41.2823],
+        point: [16.163, 41.2828],
         distanceThreshold: 0.022
       }
     ],

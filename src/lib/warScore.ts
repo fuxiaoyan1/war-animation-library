@@ -11,6 +11,11 @@ type SfxClip = {
   maxDuration?: number;
 };
 
+type WarScoreOptions = {
+  loopEndSeconds?: number;
+  volume?: number;
+};
+
 const defaultMusicSource = publicPath("/audio/semper-fidelis-march.mp3");
 
 const sfxClips: Record<SfxKey, SfxClip> = {
@@ -50,7 +55,7 @@ export class WarScore {
   private cueTimers = new Map<number, SfxKey>();
   private stopTimers = new Set<number>();
 
-  constructor(private readonly musicSource = defaultMusicSource) {}
+  constructor(private readonly musicSource = defaultMusicSource, private readonly options: WarScoreOptions = {}) {}
 
   async start() {
     this.ensureMusic();
@@ -60,6 +65,9 @@ export class WarScore {
     }
 
     try {
+      if (this.options.loopEndSeconds && this.music.currentTime >= this.options.loopEndSeconds) {
+        this.music.currentTime = 0;
+      }
       await this.music.play();
     } catch {
       // Browsers may reject playback until a user gesture. The next control click will retry.
@@ -144,9 +152,18 @@ export class WarScore {
     }
 
     const music = new Audio(publicPath(this.musicSource));
-    music.loop = true;
+    music.loop = !this.options.loopEndSeconds;
     music.preload = "auto";
-    music.volume = 0.72;
+    music.volume = this.options.volume ?? 0.72;
+    if (this.options.loopEndSeconds) {
+      music.addEventListener("timeupdate", () => {
+        if (music.currentTime < this.options.loopEndSeconds!) {
+          return;
+        }
+        music.currentTime = 0;
+        void music.play().catch(() => {});
+      });
+    }
     this.music = music;
   }
 

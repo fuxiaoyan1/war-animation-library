@@ -2789,12 +2789,13 @@ function expectCannaeCommandAppearsOnlyAtEndgame() {
   expect(final[0], "Paullus final marker should stay in the collapsing core instead of moving through formations").toBeLessThan(earliest[0]);
 }
 
-function expectCannaeNoDodgeRuntimeAssetSource() {
+function expectCannaeUsesTrackedBaiduRuntimeAssetSource() {
   const cannaeIconSourceText = readFileSync(resolve(__dirname, "../docs/sources/cannae-battle.md"), "utf8");
   const cannaeGeneratorText = readFileSync(resolve(__dirname, "../scripts/generate-cannae-unit-assets.mjs"), "utf8");
-  expect(cannaeGeneratorText, "Cannae runtime icon generator should not depend on rejected source-site or Dodge images").not.toMatch(/dodge|Theodore Ayrault Dodge|vhv|pngimg/i);
-  expect(cannaeGeneratorText, "Cannae runtime icon generator should use the current 0 A.D. source-image chain").toMatch(/cannae-0ad/);
-  expect(cannaeIconSourceText, "Cannae source doc should record 0 A.D. runtime sources").toMatch(/cannae-0ad/);
+  expect(cannaeGeneratorText, "Cannae runtime icon generator should not depend on rejected source-site, Dodge, or 0 A.D. images").not.toMatch(/dodge|Theodore Ayrault Dodge|vhv|pngimg|cannae-0ad/i);
+  expect(cannaeGeneratorText, "Cannae runtime icon generator should use the tracked Baidu local source-image chain").toMatch(/cannae-baidu/);
+  expect(cannaeIconSourceText, "Cannae source doc should record Baidu runtime sources and local/private usage limits").toMatch(/cannae-baidu/);
+  expect(cannaeIconSourceText, "Cannae source doc should record license uncertainty for Baidu-discovered markers").toMatch(/许可状态不明|license (?:is )?not verified|license uncertainty/i);
 }
 
 function expectCannaeNoProductionNarration() {
@@ -7292,7 +7293,7 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
   expectCannaeNoContactBeforeRomanPressure();
   expectCannaeRiverBankRoutesStayOutOfWater();
   expectCannaeCommandAppearsOnlyAtEndgame();
-  expectCannaeNoDodgeRuntimeAssetSource();
+  expectCannaeUsesTrackedBaiduRuntimeAssetSource();
   expectCannaeNoProductionNarration();
   expectCannaePocketDoesNotOrbitRomanCore();
   expectCannaeNoCarthaginianTracksInsideRomanCore();
@@ -7305,7 +7306,8 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
   expectCannaeEventFocus("african-wings-turn", ["african-left-inward-turn", "african-right-inward-turn"]);
   expectCannaeEventFocus("rear-seal", ["heavy-cavalry-rear-ride", "numidian-rear-pressure"]);
   expectCannaeEventFocus("paullus-endgame", ["paullus-command-collapse", "roman-core-breakup"]);
-  expectCannaeEventFocus("deployment-begins", ["roman-infantry-deploy", "roman-left-cavalry", "roman-right-cavalry"]);
+  expectCannaeEventFocus("deployment-begins", ["roman-infantry-deploy", "roman-left-cavalry", "roman-right-cavalry", "carthaginian-heavy-cavalry-clear", "numidian-fix-roman-left"]);
+  expectCannaeEventFocus("hannibal-convex-center", ["carthaginian-center-forward", "african-left-hold", "african-right-hold", "carthaginian-heavy-cavalry-clear", "numidian-fix-roman-left"]);
   expectCannaeEventContactAnchors("roman-deep-advance", 3);
   expectCannaeEventContactAnchors("african-wings-turn", 3);
   expectCannaeEventContactAnchors("rear-seal", 2);
@@ -7334,6 +7336,14 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
     start: "BCE-0216-08-02T14:25",
     unitVisibleUntil: "BCE-0216-08-02T15:42",
     visibleUntil: "BCE-0216-08-02T16:00"
+  });
+  expectCannaeRouteWindow("carthaginian-heavy-cavalry-clear", {
+    start: "BCE-0216-08-02T06:00",
+    unitVisibleUntil: "BCE-0216-08-02T10:25"
+  });
+  expectCannaeRouteWindow("numidian-fix-roman-left", {
+    start: "BCE-0216-08-02T06:00",
+    unitVisibleUntil: "BCE-0216-08-02T10:50"
   });
   expect(cannaeData.battleEvents.find((event) => event.id === "roman-deep-advance")?.date).toBe("BCE-0216-08-02T09:45");
   expect(cannaeData.battleEvents.find((event) => event.id === "african-wings-turn")?.date).toBe("BCE-0216-08-02T12:45");
@@ -7369,6 +7379,7 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
   await expectMapCanMoveHorizontallyUnderPointer(page);
   await expectMapZoomButtonsWork(page);
   await expectScoreUsesMusic(page, "/audio/wikimedia-the-gladiator-us-marine-band.ogg");
+  await expect(page.getByTestId("score-toggle")).toHaveAttribute("data-music-loop-end", "164");
   await expect(page.getByTestId("current-date")).toContainText("06:00");
   await expect(page.getByTestId("narration-subtitle")).toContainText("清晨部署");
   await expect(page.getByTestId("cannae-terrain-3d")).toBeVisible();
@@ -7392,6 +7403,8 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
   await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-forward");
   await expectCannaeRouteVisibleWithUnit(page, "african-left-hold");
   await expectCannaeRouteVisibleWithUnit(page, "african-right-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-heavy-cavalry-clear");
+  await expectCannaeRouteVisibleWithUnit(page, "numidian-fix-roman-left");
   await expectCannaeRouteVisibleWithUnit(page, "hannibal-command-observe");
   await expectCannaeCurrentEventInsideMapCore(page);
   await expectCannaeReadableUnitAssets(page);
@@ -7404,6 +7417,8 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
       "carthaginian-center-forward",
       "african-left-hold",
       "african-right-hold",
+      "carthaginian-heavy-cavalry-clear",
+      "numidian-fix-roman-left",
       "hannibal-command-observe"
     ],
     0.34,
@@ -7418,6 +7433,8 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
       "carthaginian-center-forward",
       "african-left-hold",
       "african-right-hold",
+      "carthaginian-heavy-cavalry-clear",
+      "numidian-fix-roman-left",
       "hannibal-command-observe"
     ],
     0.72
@@ -7429,6 +7446,8 @@ test("cannae battle rebuild shows pitched double envelopment with readable ancie
   await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-forward");
   await expectCannaeRouteVisibleWithUnit(page, "african-left-hold");
   await expectCannaeRouteVisibleWithUnit(page, "african-right-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-heavy-cavalry-clear");
+  await expectCannaeRouteVisibleWithUnit(page, "numidian-fix-roman-left");
   await expectCannaeRouteVisibleWithUnit(page, "hannibal-command-observe");
   await expectCannaeCurrentEventInsideMapCore(page);
   await expect(page.getByTestId("cannae-melee-effect")).toHaveCount(0);

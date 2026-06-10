@@ -47,6 +47,12 @@ This rebuild creates a standalone `Battle of Cannae` library entry under the rep
 - 2026-06-10 r17 fixed opening and late-stage camera behavior: the interaction minimum zoom was lowered from `0.9` to `0.46`, so the wide deployment camera is no longer forced back into a cropped close view. Rear-seal, compression, and endgame centers now follow the visible unit envelope instead of only the event point.
 - 2026-06-10 r17 调整图标显示层：运行时仍使用已记录来源的 0 A.D. 加工资产，但 Cannae marker 的显示缩放降为 `0.62`，去掉额外饱和/亮度/对比滤镜，改用轻量阴影，先解决地图尺度下头像贴纸过大、黑块感和拥挤问题。
 - 2026-06-10 r17 adjusted the marker rendering layer: runtime assets still use the documented 0 A.D.-derived source set, but Cannae markers now render at `0.62` scale, remove the extra saturation/brightness/contrast filter, and use a lighter shadow, reducing oversized portrait-card, dark-cluster, and crowding artifacts at map scale.
+- 2026-06-10 r18 换掉 Cannae 运行时 0 A.D. 头像链，改用 `public/assets/unit-icons/source/cannae-baidu/` 下的 Baidu 候选源图重新生成八类 Cannae marker；许可状态不明，限定为本地/私有非商业演示并记录公开发布前替换要求。
+- 2026-06-10 r18 replaced the Cannae runtime 0 A.D. portrait chain with Baidu-discovered source images under `public/assets/unit-icons/source/cannae-baidu/` and regenerated all eight Cannae marker kinds. License status is unverified, so these are limited to local/private non-commercial demo use and require replacement or authorization before public release.
+- 2026-06-10 r18 修正坎尼动线：迦太基骑兵从 06:00 部署阶段即可见，避免突然出现；中军接触/退让/保持线整体移到罗马正面东侧，避免穿入罗马核心；后封口骑兵端点贴近罗马后肩；Paullus route 收缩为终局核心内短标识。
+- 2026-06-10 r18 movement correction: Carthaginian cavalry is visible from the 06:00 deployment stage, the center contact/yield/hold lines are moved east/front of the Roman core, rear-seal cavalry closes closer to the Roman rear shoulder, and the Paullus route is reduced to a short endgame in-core marker.
+- 2026-06-10 r18 保留 Cannae 独立配乐 `The Gladiator`，但通过 `WarScore` 的 `loopEndSeconds=164` 在结尾掌声前循环，避免换成已用曲目或让掌声进入战斗背景。
+- 2026-06-10 r18 keeps Cannae's unique `The Gladiator` score but uses `WarScore` `loopEndSeconds=164` to loop before the ending applause, avoiding both music reuse and applause in the battle background.
 
 English summary: Cannae now has a standalone MapLibre pitched tactical animation, a 300-second hour-level data model, source-backed phases, route handoffs, visible opening deployment, source-image-processed ancient unit markers, denser formation movement, event-bound contact effects, source documentation, and mature smoke gates.
 
@@ -95,6 +101,8 @@ The gate verifies:
 - 2026-06-10 r17 adjusted the marker rendering layer: runtime assets still use the documented 0 A.D.-derived source set, but Cannae markers now render at `0.62` scale, remove the extra saturation/brightness/contrast filter, and use a lighter shadow, reducing oversized portrait-card, dark-cluster, and crowding artifacts at map scale.
 - 百度图片和其他素材站可作为候选发现渠道，但不能作为无记录的运行时替换来源。若后续改用百度发现的 Cannae 图标，必须保存原始 URL、本地源图路径、下载/加工脚本、许可状态或不确定性，并在公开发布前替换为许可明确的素材或按许可证处理。
 - Baidu Images and other asset sites may be used as candidate-discovery channels, but they cannot become untracked runtime replacements. If a future Cannae icon uses a Baidu-discovered source, the original URL, local source path, download/processing script, license status or uncertainty, and public-release handling must be documented.
+- 2026-06-10 r18 已采用 Baidu 候选图作为 Cannae 本地运行时素材链，并在 `docs/sources/cannae-battle.md` 与 `docs/sources/unit-icons.md` 记录直链、本地路径、许可不确定性和公开发布限制。
+- 2026-06-10 r18 adopted Baidu candidates as the Cannae local runtime source chain and recorded direct URLs, local paths, license uncertainty, and public-release limits in `docs/sources/cannae-battle.md` and `docs/sources/unit-icons.md`.
 
 ## 视觉证据
 
@@ -187,6 +195,10 @@ The 2026-06-10 r12 recheck shows no browser console errors across ten phases. Re
 2026-06-10 r17 复核指标显示：10 个阶段均无浏览器控制台错误和请求失败；开场渲染 355 个单位，联合包围盒 `centerXRatio≈0.506`、`widthRatio≈0.939`，说明全景部署已展开且未被过紧相机裁切；凸阵阶段 `widthRatio≈0.841`；后封口、压缩和 Paullus 终局的主体中心分别约为 `0.575`、`0.558`、`0.562`，均回到战术视窗核心；16:00 结果阶段单位 marker 为 0。
 
 The 2026-06-10 r17 recheck shows no browser console errors or request failures across ten phases. The opening renders 355 units with a visible-unit union of `centerXRatio≈0.506` and `widthRatio≈0.939`, so the wide deployment view is spread out without camera cropping. The convex stage has `widthRatio≈0.841`. Rear-seal, compression, and Paullus endgame center ratios are about `0.575`, `0.558`, and `0.562`, keeping the battle mass in the tactical viewport core. At 16:00 the result state has 0 unit markers.
+
+2026-06-10 r18 复核证据保存到 `artifacts/cannae-rebuild-20260610-r18/`：`00-deployment.png`、`01-convex.png`、`02-roman-contact.png`、`03-cavalry-clearance.png`、`04-concavity.png`、`05-wing-turn.png`、`06-rear-seal.png`、`07-compression.png`、`08-paullus.png`、`09-result.png` 和 `visual-audit.json`。10 个阶段均无浏览器控制台错误和请求失败；开场渲染 397 个单位，迦太基重骑与努米底骑兵各 21 个单位从 06:00 即可见，避免后续突然出现；开场联合包围盒 `centerXRatio≈0.540`、`widthRatio≈1.006`，凸阵阶段 `widthRatio≈0.934`，后封口/压缩/Paullus 终局主体中心分别约为 `0.612`、`0.610`、`0.616`；`data-music-loop-end=164`，避开原曲后段掌声；16:00 结果阶段单位 marker 为 0。
+
+The 2026-06-10 r18 evidence is saved under `artifacts/cannae-rebuild-20260610-r18/`: `00-deployment.png`, `01-convex.png`, `02-roman-contact.png`, `03-cavalry-clearance.png`, `04-concavity.png`, `05-wing-turn.png`, `06-rear-seal.png`, `07-compression.png`, `08-paullus.png`, `09-result.png`, and `visual-audit.json`. All ten phases have no browser console errors or request failures. The opening renders 397 units; Carthaginian heavy cavalry and Numidian cavalry each render 21 visible units from 06:00, preventing later pop-in. The opening visible-unit union is `centerXRatio≈0.540`, `widthRatio≈1.006`; the convex stage has `widthRatio≈0.934`; rear-seal, compression, and Paullus endgame center ratios are about `0.612`, `0.610`, and `0.616`. `data-music-loop-end=164` avoids the applause section in the source recording. At 16:00 the result state has 0 unit markers.
 
 ## 已验证 / 已重新验证
 

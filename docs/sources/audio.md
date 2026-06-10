@@ -237,7 +237,8 @@
 - OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/The_Gladiator_-_U.S._Marine_Band.ogg>
 - 版权状态：Wikimedia Commons 文件为美国政府作品/公有领域标注；当前项目在本机环境中作为历史动画演示使用。
 - 本地校验：文件大小 `9,197,033 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `187.664s`，约 `388kbps`。
-- 使用位置：`坎尼会战`。该曲未被其他战争动画使用，满足当前系列配乐不重复规则。
+- 使用位置：`坎尼会战`。该曲未被其他战争动画使用，满足当前系列配乐不重复规则。2026-06-10 起，`CannaeBattleAnimation` 通过 `WarScore` 的 `loopEndSeconds=164` 在结尾掌声前循环，保留曲目唯一性并避免掌声进入战斗动画背景。
+  Usage: `Battle of Cannae`. This track is not used by other war animations and satisfies the series background-music uniqueness rule. Since 2026-06-10, `CannaeBattleAnimation` uses `WarScore` with `loopEndSeconds=164` to loop before the ending applause, preserving the unique track while keeping applause out of the battle background.
 
 ### Ride of the Valkyries
 

@@ -32,6 +32,7 @@ const cannaeInteractionBounds = {
   west: 16.06
 };
 const musicSource = publicPath("/audio/wikimedia-the-gladiator-us-marine-band.ogg");
+const cannaeMusicLoopEndSeconds = 164;
 
 type CannaeCameraStageId = "deployment" | "convex" | "contact" | "cavalry" | "pocket" | "rearSeal" | "compression" | "endgame";
 
@@ -532,7 +533,7 @@ export function CannaeBattleAnimation() {
   });
 
   useEffect(() => {
-    scoreRef.current = new WarScore(musicSource);
+    scoreRef.current = new WarScore(musicSource, { loopEndSeconds: cannaeMusicLoopEndSeconds });
     return () => {
       void scoreRef.current?.stop();
       scoreRef.current = null;
@@ -644,7 +645,14 @@ export function CannaeBattleAnimation() {
             <RotateCcw size={18} />
             回放
           </button>
-          <button type="button" data-testid="score-toggle" data-music-source={musicSource} onClick={() => void toggleScore()} aria-label={isScoreEnabled ? "关闭循环战争配乐" : "开启循环战争配乐"}>
+          <button
+            type="button"
+            data-testid="score-toggle"
+            data-music-loop-end={`${cannaeMusicLoopEndSeconds}`}
+            data-music-source={musicSource}
+            onClick={() => void toggleScore()}
+            aria-label={isScoreEnabled ? "关闭循环战争配乐" : "开启循环战争配乐"}
+          >
             {isScoreEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             配乐{isScoreEnabled ? (isScoreRunning ? "循环中" : "待播放") : "关闭"}
           </button>
