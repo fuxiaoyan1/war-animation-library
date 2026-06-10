@@ -225,7 +225,30 @@
 - 直接 MP3：<https://www.fiftysounds.com/music/only-the-braves.mp3>
 - 许可状态：FiftySounds 页面标注可用于商业和非商业项目，但 `ATTRIBUTION IS REQUIRED`。页面要求署名信息为 `Track: Only the Braves` 和 `Music by https://www.fiftysounds.com`。
 - 本地校验：文件大小 `5,851,496 bytes`，MP3，Stereo，44100Hz，320kbps，`afinfo` 估算时长约 `146.260s`。
-- 使用位置：`罗马与迦太基：三次布匿战争史`。
+- 使用位置：`罗马与迦太基：三次布匿战争史`。`坎尼会战` 曾短暂试用该曲以替换低码率单声道录音，随后改为独立配乐 `The Gladiator`，避免和三次布匿战争总史复用。
+
+### The Gladiator
+
+- 文件：`public/audio/wikimedia-the-gladiator-us-marine-band.ogg`
+- 曲目：`The Gladiator`。
+- 作曲：John Philip Sousa。
+- 演奏/来源标注：United States Marine Band；Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:The_Gladiator_-_U.S._Marine_Band.ogg>
+- OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/The_Gladiator_-_U.S._Marine_Band.ogg>
+- 版权状态：Wikimedia Commons 文件为美国政府作品/公有领域标注；当前项目在本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `9,197,033 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长约 `187.664s`，约 `388kbps`。
+- 使用位置：`坎尼会战`。该曲未被其他战争动画使用，满足当前系列配乐不重复规则。
+
+### Ride of the Valkyries
+
+- 文件：`public/audio/wikimedia-ride-of-the-valkyries.ogg`
+- 曲目：`Ride of the Valkyries`，选自 Wagner《Die Walkure》。
+- 来源标注：American Symphony Orchestra for Edison Records；Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Richard_Wagner_-_Ride_of_the_Valkyries.ogg>
+- OGG：<https://upload.wikimedia.org/wikipedia/commons/2/29/Richard_Wagner_-_Ride_of_the_Valkyries.ogg>
+- 版权状态：Wikimedia Commons 文件页标注为 public domain / Edison Records 公有领域录音；当前项目在本机环境中作为历史动画演示使用。
+- 本地校验：文件大小 `2,298,632 bytes`，Ogg Vorbis，Monaural，44100Hz，`afinfo` 估算时长约 `257.675s`，约 `70kbps`。
+- 使用位置：曾用于 `坎尼会战`，2026-06-09 后撤下。撤下原因：该本地文件为低码率单声道历史录音，用户反馈配乐清晰度差；Cannae 现改用 `public/audio/wikimedia-the-gladiator-us-marine-band.ogg`。
 
 ## 配乐分配原则
 

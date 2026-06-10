@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import { homedir, userInfo } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -12,6 +12,8 @@ const label = "com.asukarei.war-animation-lab-5177";
 const launchAgentsDir = resolve(home, "Library/LaunchAgents");
 const deployRoot = resolve(home, "Library/Application Support/war-animation-lab-oss");
 const deployDist = resolve(deployRoot, "dist");
+const deployDistPrevious = resolve(deployRoot, "dist.previous");
+const deployDistStaging = resolve(deployRoot, "dist.staging");
 const deployServer = resolve(deployRoot, "serve-dist.mjs");
 const logDir = resolve(home, "Library/Logs/war-animation-lab");
 const plistPath = resolve(launchAgentsDir, `${label}.plist`);
@@ -123,8 +125,14 @@ function copyDeployFiles() {
     throw new Error("dist/index.html is missing; run npm run build first or omit --skip-build.");
   }
   mkdirSync(deployRoot, { recursive: true });
-  rmSync(deployDist, { recursive: true, force: true });
-  cpSync(sourceDist, deployDist, { recursive: true });
+  rmSync(deployDistStaging, { recursive: true, force: true });
+  rmSync(deployDistPrevious, { recursive: true, force: true });
+  cpSync(sourceDist, deployDistStaging, { recursive: true });
+  if (existsSync(deployDist)) {
+    renameSync(deployDist, deployDistPrevious);
+  }
+  renameSync(deployDistStaging, deployDist);
+  rmSync(deployDistPrevious, { recursive: true, force: true });
   cpSync(sourceServer, deployServer);
 }
 

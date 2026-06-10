@@ -1,4 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   battleEvents as jutlandBattleEvents,
   campaignEnd as jutlandCampaignEnd,
@@ -14,6 +17,7 @@ import * as battleOfBritainData from "../src/data/battleOfBritain";
 import * as bigWeekData from "../src/data/bigWeekAirBattle";
 import * as bismarckSeaData from "../src/data/bismarckSeaAirBattle";
 import * as caesarData from "../src/data/caesarWars";
+import * as cannaeData from "../src/data/cannaeBattle";
 import * as crusadesData from "../src/data/crusades";
 import * as easternFrontData from "../src/data/easternFront";
 import * as gaixiaData from "../src/data/gaixiaAmbush";
@@ -30,6 +34,8 @@ import * as punicData from "../src/data/punicWars";
 import * as qinData from "../src/data/qinUnification";
 import * as trafalgarData from "../src/data/trafalgarBattle";
 import * as tsushimaData from "../src/data/tsushimaBattle";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const jutlandTimeline = createCampaignTimeline({
   activeSpans: jutlandFrontLines.map(({ end, start }) => ({ end, start })),
@@ -138,6 +144,7 @@ const genericCampaignData: Array<[string, CampaignDataModule]> = [
   ["mongolEmpire", mongolData as CampaignDataModule],
   ["qinUnification", qinData as CampaignDataModule],
   ["gaixiaAmbush", gaixiaData as unknown as CampaignDataModule],
+  ["cannaeBattle", cannaeData as unknown as CampaignDataModule],
   ["alexanderConquests", alexanderData as CampaignDataModule],
   ["caesarWars", caesarData as CampaignDataModule],
   ["pacificWar", pacificWarData as CampaignDataModule],
@@ -161,6 +168,7 @@ const intentionalQuietCombatLikeEvents = new Set([
   "sc122-first-contact",
   "wolfpacks-converge",
   "run-to-north",
+  "battle-result",
   "songs-of-chu",
   "uxbridge-quiet-before-raid",
   "farewell"
@@ -1086,7 +1094,8 @@ async function expectRealisticUnitAsset(
 async function expectTransparentMarkerAsset(
   page: Page,
   assetPath: string,
-  expectedSize: { height: number; width: number } = { height: 360, width: 900 }
+  expectedSize: { height: number; width: number } = { height: 360, width: 900 },
+  options: { maxAlphaRatio?: number; maxBboxHeightRatio?: number; minOpaquePixels?: number; minVisibleMean?: number } = {}
 ) {
   const stats = await page.evaluate(async (path) => {
     const image = new Image();
@@ -1104,6 +1113,7 @@ async function expectTransparentMarkerAsset(
     context.drawImage(image, 0, 0);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let opaque = 0;
+    let visibleLuma = 0;
     let minX = canvas.width;
     let minY = canvas.height;
     let maxX = -1;
@@ -1113,6 +1123,8 @@ async function expectTransparentMarkerAsset(
       for (let x = 0; x < canvas.width; x += 1) {
         const alpha = pixels[(y * canvas.width + x) * 4 + 3];
         if (alpha > 8) {
+          const offset = (y * canvas.width + x) * 4;
+          visibleLuma += (pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722) / 255;
           opaque += 1;
           minX = Math.min(minX, x);
           maxX = Math.max(maxX, x);
@@ -1127,6 +1139,7 @@ async function expectTransparentMarkerAsset(
       bboxHeightRatio: (maxY - minY + 1) / canvas.height,
       bboxWidthRatio: (maxX - minX + 1) / canvas.width,
       height: canvas.height,
+      meanVisibleLuma: opaque > 0 ? visibleLuma / opaque : 0,
       opaque,
       width: canvas.width
     };
@@ -1134,11 +1147,12 @@ async function expectTransparentMarkerAsset(
 
   expect(stats.width).toBe(expectedSize.width);
   expect(stats.height).toBe(expectedSize.height);
-  expect(stats.opaque).toBeGreaterThan(18_000);
+  expect(stats.opaque).toBeGreaterThan(options.minOpaquePixels ?? 18_000);
   expect(stats.alphaRatio).toBeGreaterThan(0.05);
-  expect(stats.alphaRatio).toBeLessThan(assetPath.includes("chariot") ? 0.38 : 0.32);
+  expect(stats.alphaRatio).toBeLessThan(options.maxAlphaRatio ?? (assetPath.includes("chariot") ? 0.38 : 0.32));
   expect(stats.bboxWidthRatio).toBeGreaterThan(0.42);
-  expect(stats.bboxHeightRatio).toBeLessThan(0.76);
+  expect(stats.bboxHeightRatio).toBeLessThan(options.maxBboxHeightRatio ?? 0.76);
+  expect(stats.meanVisibleLuma, `${assetPath} should not regress to a near-black silhouette`).toBeGreaterThan(options.minVisibleMean ?? 0.16);
 }
 
 async function expectTsushimaWarshipScale(page: Page) {
@@ -2486,6 +2500,751 @@ function expectNianzhuangEffectUsesRoutes(effectId: string, fromRouteId: string,
   if (effect?.type === "salvo") {
     expect(effect.fromRouteId).toBe(fromRouteId);
     expect(effect.toRouteId).toBe(toRouteId);
+  }
+}
+
+function cannaeRoute(routeId: string) {
+  const route = cannaeData.routes.find((item) => item.id === routeId);
+  expect(route, `cannae route ${routeId} exists`).toBeTruthy();
+  return route!;
+}
+
+function expectCannaeRouteWindow(
+  routeId: string,
+  expectation: Partial<Pick<(typeof cannaeData.routes)[number], "end" | "start" | "unitVisibleUntil" | "visibleUntil">>
+) {
+  const route = cannaeRoute(routeId);
+  if (expectation.start) {
+    expect(route.start, `cannae route ${routeId} start`).toBe(expectation.start);
+  }
+  if (expectation.end) {
+    expect(route.end, `cannae route ${routeId} end`).toBe(expectation.end);
+  }
+  if (expectation.visibleUntil) {
+    expect(route.visibleUntil, `cannae route ${routeId} visibleUntil`).toBe(expectation.visibleUntil);
+  }
+  if (expectation.unitVisibleUntil) {
+    expect(route.unitVisibleUntil, `cannae route ${routeId} unitVisibleUntil`).toBe(expectation.unitVisibleUntil);
+  }
+}
+
+function expectCannaeEventFocus(eventId: string, routeIds: string[]) {
+  const event = cannaeData.battleEvents.find((item) => item.id === eventId);
+  expect(event, `cannae event ${eventId} exists`).toBeTruthy();
+  for (const routeId of routeIds) {
+    expect(event?.routeIds, `cannae event ${eventId} should reference ${routeId}`).toContain(routeId);
+  }
+}
+
+function expectCannaePrelude(routeId: string, minimumPoints: number) {
+  const route = cannaeRoute(routeId);
+  expect(route.formationPrelude?.length ?? 0, `cannae route ${routeId} should preserve handoff prelude`).toBeGreaterThanOrEqual(
+    minimumPoints
+  );
+}
+
+async function jumpCannaeTimelineTo(page: Page, date: string) {
+  const duration = toTime(cannaeData.campaignEnd) - toTime(cannaeData.campaignStart);
+  const timelineValue = String(Math.round(((toTime(date) - toTime(cannaeData.campaignStart)) / duration) * 1000));
+  await page.getByTestId("timeline").fill(timelineValue);
+  await expect(page.getByTestId("timeline")).toHaveValue(timelineValue);
+  await expect.poll(async () => Number(await page.getByTestId("cannae-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+}
+
+async function expectCannaeRouteVisible(page: Page, routeId: string) {
+  const route = page.locator(`.cannae-battle .cannae-route[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-route-id", routeId);
+}
+
+async function expectCannaeRouteVisibleWithUnit(page: Page, routeId: string) {
+  const route = page.locator(`.cannae-battle .cannae-route[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-unit-visible", "true");
+  await expect(route.locator(".cannae-unit-holder").first()).toBeVisible();
+}
+
+async function expectCannaeRouteVisibleWithoutUnit(page: Page, routeId: string) {
+  const route = page.locator(`.cannae-battle .cannae-route[data-route-id="${routeId}"]`);
+  await expect(route).toBeVisible();
+  await expect(route).toHaveAttribute("data-unit-visible", "false");
+  await expect(route.locator(".cannae-unit-holder")).toHaveCount(0);
+}
+
+async function expectCannaeRenderedRoutesInclude(page: Page, routeIds: string[]) {
+  const visibleRoutes = await page
+    .locator(".cannae-battle .cannae-route")
+    .evaluateAll((routes) =>
+      routes
+        .filter((route) => route.getAttribute("data-unit-visible") !== "false" || route.getAttribute("data-route-current") === "true")
+        .map((route) => route.getAttribute("data-route-id"))
+        .filter((routeId): routeId is string => Boolean(routeId))
+    );
+
+  for (const routeId of routeIds) {
+    expect(visibleRoutes, `cannae should render ${routeId}`).toContain(routeId);
+  }
+}
+
+async function expectCannaeVisibleUnitsUseReadableBattleArea(page: Page, routeIds: string[], minimumWidthRatio: number, minimumHeightRatio: number) {
+  const spread = await page.evaluate((routes) => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    const wanted = new Set(routes);
+    const boxes = [...document.querySelectorAll<SVGGElement>(".cannae-battle .cannae-route")]
+      .filter((route) => wanted.has(route.getAttribute("data-route-id") ?? ""))
+      .flatMap((route) => [...route.querySelectorAll<SVGGElement>(".cannae-unit-holder")])
+      .map((unit) => unit.getBoundingClientRect())
+      .filter((box) => box.width > 0 && box.height > 0);
+
+    if (!stage || boxes.length === 0) {
+      return null;
+    }
+
+    const left = Math.min(...boxes.map((box) => box.left));
+    const right = Math.max(...boxes.map((box) => box.right));
+    const top = Math.min(...boxes.map((box) => box.top));
+    const bottom = Math.max(...boxes.map((box) => box.bottom));
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+
+    return {
+      centerXRatio: (centerX - stage.left) / stage.width,
+      centerYRatio: (centerY - stage.top) / stage.height,
+      heightRatio: (bottom - top) / stage.height,
+      widthRatio: (right - left) / stage.width
+    };
+  }, routeIds);
+
+  expect(spread).not.toBeNull();
+  expect(spread?.widthRatio, `${routeIds.join(", ")} should fill the stage instead of clustering in the center`).toBeGreaterThan(
+    minimumWidthRatio
+  );
+  expect(spread?.heightRatio, `${routeIds.join(", ")} should fill the stage instead of clustering in the center`).toBeGreaterThan(
+    minimumHeightRatio
+  );
+  expect(spread?.widthRatio, `${routeIds.join(", ")} should not be cropped by an over-tight camera`).toBeLessThan(1.02);
+  expect(spread?.heightRatio, `${routeIds.join(", ")} should not be cropped by an over-tight camera`).toBeLessThan(0.9);
+  expect(spread?.centerXRatio).toBeGreaterThan(0.24);
+  expect(spread?.centerXRatio).toBeLessThan(0.76);
+  expect(spread?.centerYRatio).toBeGreaterThan(0.24);
+  expect(spread?.centerYRatio).toBeLessThan(0.76);
+}
+
+async function expectCannaeAllRouteUnitsMostlyVisible(page: Page, routeIds: string[], minimumVisibleRatio = 0.72) {
+  const visibility = await page.evaluate((routes) => {
+    const stage = document.querySelector('[data-testid="map-stage"]')?.getBoundingClientRect();
+    return routes.map((routeId) => {
+      const units = [...document.querySelectorAll<SVGGElement>(`.cannae-battle .cannae-route[data-route-id="${routeId}"] .cannae-unit-holder`)]
+        .map((unit) => unit.getBoundingClientRect())
+        .filter((box) => box.width > 0 && box.height > 0);
+      const visibleUnits = stage
+        ? units.filter((box) => box.right >= stage.left && box.left <= stage.right && box.bottom >= stage.top && box.top <= stage.bottom)
+        : [];
+      return {
+        routeId,
+        total: units.length,
+        visible: visibleUnits.length
+      };
+    });
+  }, routeIds);
+
+  for (const route of visibility) {
+    expect(route.total, `${route.routeId} should render route units`).toBeGreaterThan(0);
+    expect(route.visible / Math.max(1, route.total), `${route.routeId} units should mostly remain inside the tactical viewport`).toBeGreaterThanOrEqual(
+      minimumVisibleRatio
+    );
+  }
+}
+
+async function expectCannaeReadableUnitAssets(page: Page) {
+  const expectedAssets = {
+    "african-infantry": "/assets/unit-icons/cannae-african-infantry.webp",
+    "carthaginian-cavalry": "/assets/unit-icons/cannae-carthaginian-cavalry.webp",
+    "carthaginian-infantry": "/assets/unit-icons/cannae-carthaginian-infantry.webp",
+    "hannibal-command": "/assets/unit-icons/cannae-hannibal-command.webp",
+    "numidian-cavalry": "/assets/unit-icons/cannae-numidian-cavalry.webp",
+    "paullus-command": "/assets/unit-icons/cannae-paullus-command.webp",
+    "roman-cavalry": "/assets/unit-icons/cannae-roman-cavalry.webp",
+    "roman-legion": "/assets/unit-icons/cannae-roman-legion.webp"
+  };
+
+  for (const [kind, path] of Object.entries(expectedAssets)) {
+    const response = await page.request.head(path);
+    expect(response.ok(), `${path} should be available`).toBe(true);
+    expect(response.headers()["content-type"]).toContain("image");
+    expect(Number(response.headers()["content-length"]), `${path} should be processed source art, not a tiny placeholder`).toBeGreaterThan(24_000);
+    const markerStats = await page.evaluate(async (assetPath) => {
+      const image = new Image();
+      image.src = assetPath;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        throw new Error("2d canvas unavailable");
+      }
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let alphaSum = 0;
+      let nearBlackOpaque = 0;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        const alpha = pixels[offset + 3] / 255;
+        alphaSum += alpha;
+        if (alpha > 0.88 && pixels[offset] < 24 && pixels[offset + 1] < 24 && pixels[offset + 2] < 24) {
+          nearBlackOpaque += 1;
+        }
+      }
+      return {
+        alphaMean: alphaSum / (canvas.width * canvas.height),
+        nearBlackOpaqueRatio: nearBlackOpaque / (canvas.width * canvas.height),
+        naturalHeight: image.naturalHeight,
+        naturalWidth: image.naturalWidth
+      };
+    }, path);
+    expect(markerStats.alphaMean, `${path} should be a transparent marker, not a full portrait card`).toBeGreaterThan(0.06);
+    expect(markerStats.alphaMean, `${path} should be a transparent marker, not a full portrait card`).toBeLessThan(0.29);
+    expect(markerStats.nearBlackOpaqueRatio, `${path} should not regress into a black silhouette`).toBeLessThan(0.05);
+    expect(markerStats.naturalWidth).toBeGreaterThanOrEqual(kind.includes("cavalry") ? 540 : 400);
+    const renderedCount = await page.locator(`.cannae-unit-image[data-asset-kind="${kind}"]`).count();
+    if (renderedCount > 0) {
+      await expect(page.locator(`.cannae-unit-image[data-asset-kind="${kind}"]`).first()).toHaveAttribute("href", path);
+    }
+  }
+
+  expect(expectedAssets["roman-legion"]).not.toBe(expectedAssets["carthaginian-infantry"]);
+  expect(expectedAssets["roman-cavalry"]).not.toBe(expectedAssets["carthaginian-cavalry"]);
+  await expect(page.locator(".cannae-unit-badge text"), "Cannae markers should use image-first assets, not large text badges").toHaveCount(0);
+}
+
+async function expectCannaeCurrentEventInsideMapCore(page: Page) {
+  await expect.poll(async () => Number(await page.getByTestId("cannae-terrain-3d").getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+  await expectCurrentEventInsideMapCore(page);
+}
+
+function expectCannaeRouteUnitCount(routeId: string, minimumCount: number) {
+  const route = cannaeRoute(routeId);
+  expect(route.unitTracks?.length ?? route.unitOffsets?.length ?? 0, `cannae route ${routeId} should carry enough combat unit markers`).toBeGreaterThanOrEqual(
+    minimumCount
+  );
+}
+
+function expectCannaeRouteUsesIndependentUnitTracks(routeId: string, minimumCount: number) {
+  const route = cannaeRoute(routeId);
+  expect(route.unitTracks?.length ?? 0, `cannae route ${routeId} should use independently controlled unit tracks`).toBeGreaterThanOrEqual(
+    minimumCount
+  );
+}
+
+function expectCannaePocketDoesNotOrbitRomanCore() {
+  const route = cannaeRoute("carthaginian-pocket-tighten");
+  const points = route.points;
+  const first = points[0];
+  const last = points.at(-1)!;
+  const closureDistance = Math.hypot(first[0] - last[0], first[1] - last[1]);
+  expect(closureDistance, "Cannae pocket-tighten should not be a closed route that makes infantry orbit the Roman core").toBeGreaterThan(0.006);
+  expect(route.unitTracks?.length ?? 0, "Cannae compression should use short pressure tracks, not route-offset orbiting").toBeGreaterThanOrEqual(45);
+}
+
+function expectCannaeEventContactAnchors(eventId: string, minimumCount: number) {
+  const event = cannaeData.battleEvents.find((item) => item.id === eventId);
+  expect(event, `cannae event ${eventId} exists`).toBeTruthy();
+  expect(event?.contactAnchors?.length ?? 0, `cannae event ${eventId} should bind melee to declared contact anchors`).toBeGreaterThanOrEqual(
+    minimumCount
+  );
+}
+
+function expectCannaeNoContactBeforeRomanPressure() {
+  const convexEvent = cannaeData.battleEvents.find((item) => item.id === "hannibal-convex-center");
+  const romanAdvance = cannaeRoute("roman-deep-advance");
+  const centerYield = cannaeRoute("carthaginian-center-yield");
+  expect(convexEvent?.cue, "Cannae convex deployment should not fire melee before Roman contact").toBeUndefined();
+  expect(convexEvent?.contactAnchors?.length ?? 0).toBe(0);
+  expect(toTime(centerYield.start), "Carthaginian center should yield only after contact pressure is underway").toBeGreaterThan(
+    toTime(romanAdvance.start)
+  );
+}
+
+function expectCannaeRiverBankRoutesStayOutOfWater() {
+  const riverMaxSouth = Math.min(...cannaeData.rivers.flatMap((river) => river.points.map((point) => point[1])));
+  const bankLimit = riverMaxSouth - 0.001;
+  for (const routeId of ["roman-right-cavalry", "carthaginian-heavy-cavalry-clear"]) {
+    const route = cannaeRoute(routeId);
+    const routeNorth = Math.max(...route.points.map((point) => point[1]));
+    expect(routeNorth, `${routeId} should fight along the river bank, not inside the river`).toBeLessThan(bankLimit);
+  }
+}
+
+function expectCannaeCommandAppearsOnlyAtEndgame() {
+  const command = cannaeRoute("paullus-command-collapse");
+  const earliest = command.points[0];
+  const final = command.points.at(-1)!;
+  expect(earliest[0], "Paullus should appear inside the collapsing Roman core, not walk in from the rear camp").toBeGreaterThan(16.156);
+  expect(toTime(command.start), "Paullus command route should be an endgame marker path only").toBeGreaterThanOrEqual(
+    toTime("BCE-0216-08-02T14:45")
+  );
+  expect(toTime(command.unitVisibleFrom ?? command.start), "Paullus marker should not roam as a lone unit before the endgame").toBeGreaterThanOrEqual(
+    toTime("BCE-0216-08-02T15:00")
+  );
+  expect(final[0], "Paullus final marker should stay in the collapsing core instead of moving through formations").toBeLessThan(earliest[0]);
+}
+
+function expectCannaeNoDodgeRuntimeAssetSource() {
+  const cannaeIconSourceText = readFileSync(resolve(__dirname, "../docs/sources/cannae-battle.md"), "utf8");
+  const cannaeGeneratorText = readFileSync(resolve(__dirname, "../scripts/generate-cannae-unit-assets.mjs"), "utf8");
+  expect(cannaeGeneratorText, "Cannae runtime icon generator should not depend on rejected source-site or Dodge images").not.toMatch(/dodge|Theodore Ayrault Dodge|vhv|pngimg/i);
+  expect(cannaeGeneratorText, "Cannae runtime icon generator should use the current 0 A.D. source-image chain").toMatch(/cannae-0ad/);
+  expect(cannaeIconSourceText, "Cannae source doc should record 0 A.D. runtime sources").toMatch(/cannae-0ad/);
+}
+
+function expectCannaeNoProductionNarration() {
+  const combinedText = [
+    ...cannaeData.battleEvents.flatMap((event) => [event.title, event.phase, event.summary, event.detail, event.significance]),
+    ...cannaeData.narrationCues.flatMap((cue) => [cue.title, cue.text])
+  ].join("\n");
+  expect(combinedText, "Cannae narration should be war explanation, not animation-making narration").not.toMatch(/镜头|动画|复盘|摆拍/);
+}
+
+function expectCannaeRomanCavalryDoesNotCrossCarthaginianLine() {
+  const left = cannaeRoute("roman-left-cavalry");
+  const right = cannaeRoute("roman-right-cavalry");
+  const heavy = cannaeRoute("carthaginian-heavy-cavalry-clear");
+  const numidian = cannaeRoute("numidian-fix-roman-left");
+  const romanLeftMaxLng = Math.max(...left.points.map((point) => point[0]));
+  const romanRightMaxLng = Math.max(...right.points.map((point) => point[0]));
+  const heavyFinalLng = heavy.points.at(-1)![0];
+  const numidianFinalLng = numidian.points.at(-1)![0];
+  expect(romanRightMaxLng, "Roman right cavalry should be stopped before/at heavy cavalry clearance, not run through Hannibal's horse").toBeLessThanOrEqual(
+    heavyFinalLng + 0.012
+  );
+  expect(romanLeftMaxLng, "Roman left cavalry should be pressed by Numidians, not cross through them").toBeLessThanOrEqual(numidianFinalLng + 0.012);
+}
+
+function expectCannaeCavalryStaysOutsideInfantryWings() {
+  const heavyClear = cannaeRoute("carthaginian-heavy-cavalry-clear");
+  const numidianFix = cannaeRoute("numidian-fix-roman-left");
+  const heavyRear = cannaeRoute("heavy-cavalry-rear-ride");
+  const numidianRear = cannaeRoute("numidian-rear-pressure");
+  const africanNorthEdge = 41.2992;
+  const africanSouthEdge = 41.2748;
+  const heavyClearSamples = sampleCannaePolyline(heavyClear.points);
+  const numidianFixSamples = sampleCannaePolyline(numidianFix.points);
+  const heavyRearSamples = (heavyRear.unitTracks ?? []).flatMap(sampleCannaeTrack);
+  const numidianRearSamples = (numidianRear.unitTracks ?? []).flatMap(sampleCannaeTrack);
+
+  expect(heavyClearSamples.every((point) => point[1] > africanNorthEdge), "Carthaginian heavy cavalry should fight outside the northern infantry wing, not cut through it").toBe(true);
+  expect(numidianFixSamples.every((point) => point[1] < africanSouthEdge), "Numidian cavalry should fight outside the southern infantry wing, not cut through it").toBe(true);
+  expect(
+    heavyRearSamples.filter((point) => point[0] > cannaeRomanCoreBounds.west && point[1] < cannaeRomanCoreBounds.north).length,
+    "Heavy cavalry rear ride should come around the outside and touch the upper rear shoulder, not pass through the infantry pocket"
+  ).toBe(0);
+  expect(
+    numidianRearSamples.filter((point) => point[0] > cannaeRomanCoreBounds.west && point[1] > cannaeRomanCoreBounds.south).length,
+    "Numidian rear pressure should come around the outside and touch the lower rear shoulder, not pass through the infantry pocket"
+  ).toBe(0);
+}
+
+const cannaeRomanCoreBounds = {
+  east: 16.1731,
+  north: 41.2909,
+  south: 41.2817,
+  west: 16.1548
+};
+
+const cannaeRomanRearCoreBounds = {
+  east: 16.164,
+  north: 41.2909,
+  south: 41.2817,
+  west: 16.1548
+};
+
+function pointInsideBounds(point: [number, number], bounds: typeof cannaeRomanCoreBounds) {
+  return point[0] > bounds.west && point[0] < bounds.east && point[1] > bounds.south && point[1] < bounds.north;
+}
+
+function sampleCannaeTrack(track: NonNullable<ReturnType<typeof cannaeRoute>["unitTracks"]>[number]) {
+  return Array.from({ length: 13 }, (_, index) => {
+    const progress = index / 12;
+    if (track.control) {
+      const a: [number, number] = [
+        track.from[0] + (track.control[0] - track.from[0]) * progress,
+        track.from[1] + (track.control[1] - track.from[1]) * progress
+      ];
+      const b: [number, number] = [
+        track.control[0] + (track.to[0] - track.control[0]) * progress,
+        track.control[1] + (track.to[1] - track.control[1]) * progress
+      ];
+      return [a[0] + (b[0] - a[0]) * progress, a[1] + (b[1] - a[1]) * progress] as [number, number];
+    }
+    return [
+      track.from[0] + (track.to[0] - track.from[0]) * progress,
+      track.from[1] + (track.to[1] - track.from[1]) * progress
+    ] as [number, number];
+  });
+}
+
+function cannaeTrackPointAt(track: NonNullable<ReturnType<typeof cannaeRoute>["unitTracks"]>[number], progress: number) {
+  if (track.control) {
+    const a: [number, number] = [
+      track.from[0] + (track.control[0] - track.from[0]) * progress,
+      track.from[1] + (track.control[1] - track.from[1]) * progress
+    ];
+    const b: [number, number] = [
+      track.control[0] + (track.to[0] - track.control[0]) * progress,
+      track.control[1] + (track.to[1] - track.control[1]) * progress
+    ];
+    return [a[0] + (b[0] - a[0]) * progress, a[1] + (b[1] - a[1]) * progress] as [number, number];
+  }
+  return [
+    track.from[0] + (track.to[0] - track.from[0]) * progress,
+    track.from[1] + (track.to[1] - track.from[1]) * progress
+  ] as [number, number];
+}
+
+function averageLng(points: Array<[number, number]>) {
+  return points.reduce((sum, point) => sum + point[0], 0) / Math.max(1, points.length);
+}
+
+function sampleCannaePolyline(points: Array<[number, number]>) {
+  return points.slice(0, -1).flatMap((point, index) =>
+    Array.from({ length: 19 }, (_, step) => {
+      const next = points[index + 1];
+      const ratio = step / 18;
+      return [point[0] + (next[0] - point[0]) * ratio, point[1] + (next[1] - point[1]) * ratio] as [number, number];
+    })
+  );
+}
+
+function expectCannaeNoCarthaginianTracksInsideRomanCore() {
+  const routeIds = [
+    "african-left-inward-turn",
+    "african-right-inward-turn",
+    "carthaginian-pocket-tighten",
+    "heavy-cavalry-rear-ride",
+    "numidian-rear-pressure"
+  ];
+  for (const routeId of routeIds) {
+    const route = cannaeRoute(routeId);
+    const intrusions = (route.unitTracks ?? []).flatMap(sampleCannaeTrack).filter((point) => pointInsideBounds(point, cannaeRomanRearCoreBounds));
+    expect(intrusions, `${routeId} should not run Carthaginian units through the Roman core`).toHaveLength(0);
+  }
+}
+
+function expectCannaeNoCarthaginianRouteLinesInsideRomanCore() {
+  const routeIds = [
+    "african-left-inward-turn",
+    "african-right-inward-turn",
+    "carthaginian-pocket-tighten",
+    "heavy-cavalry-rear-ride",
+    "numidian-rear-pressure"
+  ];
+  for (const routeId of routeIds) {
+    const route = cannaeRoute(routeId);
+    const intrusions = sampleCannaePolyline(route.points).filter((point) => pointInsideBounds(point, cannaeRomanRearCoreBounds));
+    expect(intrusions, `${routeId} route line should not visually cut through the Roman core`).toHaveLength(0);
+  }
+}
+
+function expectCannaePocketHasOutsidePressureSides() {
+  const pocket = cannaeRoute("carthaginian-pocket-tighten");
+  const northPress = (pocket.unitTracks ?? []).filter((track) => track.id.startsWith("pocket-left-press"));
+  const southPress = (pocket.unitTracks ?? []).filter((track) => track.id.startsWith("pocket-right-press"));
+  const eastPress = cannaeRoute("carthaginian-center-hold").unitTracks ?? [];
+  const heavyRear = cannaeRoute("heavy-cavalry-rear-ride").unitTracks ?? [];
+  const numidianRear = cannaeRoute("numidian-rear-pressure").unitTracks ?? [];
+  const centerYield = cannaeRoute("carthaginian-center-yield");
+  const heavyRearTo = heavyRear.map((track) => track.to);
+  const numidianRearTo = numidianRear.map((track) => track.to);
+
+  expect(northPress.length, "Cannae pocket needs a northern African-infantry pressure wall").toBeGreaterThan(12);
+  expect(southPress.length, "Cannae pocket needs a southern African-infantry pressure wall").toBeGreaterThan(12);
+  expect(heavyRear.length, "Cannae rear mouth should be sealed by heavy cavalry, not by infantry orbiting behind Romans").toBeGreaterThanOrEqual(18);
+  expect(numidianRear.length, "Cannae lower rear pressure should be carried by cavalry from the outside").toBeGreaterThanOrEqual(18);
+  expect(eastPress.length, "Cannae pocket needs an eastern center pressure wall, not troops inside the Roman block").toBeGreaterThan(10);
+  expect(northPress.every((track) => track.to[1] > cannaeRomanCoreBounds.north), "Northern pressure wall must stay north of the Roman core").toBe(
+    true
+  );
+  expect(southPress.every((track) => track.to[1] < cannaeRomanCoreBounds.south), "Southern pressure wall must stay south of the Roman core").toBe(
+    true
+  );
+  expect(northPress.every((track) => track.to[0] > cannaeRomanRearCoreBounds.east), "Northern pressure wall must stay outside the Roman rear shoulder").toBe(
+    true
+  );
+  expect(southPress.every((track) => track.to[0] > cannaeRomanRearCoreBounds.east), "Southern pressure wall must stay outside the Roman rear shoulder").toBe(
+    true
+  );
+  expect(eastPress.every((track) => track.to[0] > cannaeRomanCoreBounds.east), "Center pressure wall must stay east/front of the Roman core").toBe(
+    true
+  );
+  expect(averageLng(heavyRearTo), "Heavy cavalry rear seal must close near the upper rear shoulder, not far west in empty ground").toBeGreaterThanOrEqual(
+    cannaeRomanCoreBounds.west - 0.001
+  );
+  expect(
+    heavyRearTo.filter((point) => point[1] > cannaeRomanCoreBounds.north).length / Math.max(1, heavyRearTo.length),
+    "Most heavy cavalry rear-seal units must sit above the Roman core shoulder"
+  ).toBeGreaterThan(0.7);
+  expect(averageLng(numidianRearTo), "Numidian rear pressure must close near the lower rear shoulder, not far west in empty ground").toBeGreaterThanOrEqual(
+    cannaeRomanCoreBounds.west - 0.001
+  );
+  expect(
+    numidianRearTo.filter((point) => point[1] < cannaeRomanCoreBounds.south).length / Math.max(1, numidianRearTo.length),
+    "Most Numidian rear-pressure units must sit below the Roman core shoulder"
+  ).toBeGreaterThan(0.7);
+  expect(heavyRearTo.filter((point) => pointInsideBounds(point, cannaeRomanCoreBounds))).toHaveLength(0);
+  expect(numidianRearTo.filter((point) => pointInsideBounds(point, cannaeRomanCoreBounds))).toHaveLength(
+    0
+  );
+  expect(
+    averageLng((centerYield.unitTracks ?? []).map((track) => track.to)),
+    "Carthaginian center yielding should go back to its own side instead of through the Roman core"
+  ).toBeGreaterThan(averageLng((centerYield.unitTracks ?? []).map((track) => track.from)));
+  expect(
+    sampleCannaePolyline(pocket.points).filter((point) => pointInsideBounds(point, cannaeRomanCoreBounds)),
+    "Cannae pocket-tighten route line must not visually cut through the intact Roman block"
+  ).toHaveLength(0);
+}
+
+function expectCannaeSynchronizedPressureGeometry() {
+  const romanCompression = cannaeRoute("roman-core-compression");
+  const centerYield = cannaeRoute("carthaginian-center-yield");
+  const centerHold = cannaeRoute("carthaginian-center-hold");
+  const leftTurn = cannaeRoute("african-left-inward-turn");
+  const rightTurn = cannaeRoute("african-right-inward-turn");
+  const romanStartLng = averageLng((romanCompression.unitTracks ?? []).map((track) => track.from));
+  const romanMidLng = averageLng((romanCompression.unitTracks ?? []).map((track) => cannaeTrackPointAt(track, 0.42)));
+  const centerMidLng = averageLng((centerYield.unitTracks ?? []).map((track) => cannaeTrackPointAt(track, 0.55)));
+
+  expect(toTime(romanCompression.start), "Roman core pressure must start when the Carthaginian center begins yielding, not after a visual dead gap").toBeLessThanOrEqual(
+    toTime(centerYield.start)
+  );
+  expect(toTime(romanCompression.end), "Roman core pressure must continue through the pocket closure window").toBeGreaterThan(
+    toTime(centerYield.end)
+  );
+  expect(romanMidLng, "Roman infantry must visibly keep pressing into the concavity instead of waiting while the center yields").toBeGreaterThan(
+    romanStartLng + 0.002
+  );
+  expect(
+    centerMidLng - romanMidLng,
+    "Roman pressure and Carthaginian yielding center must stay close enough to read as contact"
+  ).toBeLessThan(0.014);
+  expect((centerHold.unitTracks ?? []).every((track) => track.to[0] > cannaeRomanCoreBounds.east), "Carthaginian center hold must stay in front of the Roman core, not disappear or enter it").toBe(true);
+  expect((leftTurn.unitTracks ?? []).every((track) => track.to[1] > cannaeRomanCoreBounds.north), "African left wing should press the north side from outside").toBe(true);
+  expect((rightTurn.unitTracks ?? []).every((track) => track.to[1] < cannaeRomanCoreBounds.south), "African right wing should press the south side from outside").toBe(true);
+}
+
+function expectCannaeRearSealClosesNearCore() {
+  const heavyRear = cannaeRoute("heavy-cavalry-rear-ride").points.at(-1)!;
+  const numidianRear = cannaeRoute("numidian-rear-pressure").points.at(-1)!;
+  expect(heavyRear[0], "heavy cavalry rear seal should sit on the rear shoulder, not far away in empty ground").toBeGreaterThanOrEqual(
+    cannaeRomanCoreBounds.west - 0.001
+  );
+  expect(heavyRear[0], "heavy cavalry rear seal should not intrude through the Roman core").toBeLessThanOrEqual(
+    cannaeRomanCoreBounds.west + 0.002
+  );
+  expect(numidianRear[0], "Numidian rear pressure should sit on the rear shoulder, not far away in empty ground").toBeGreaterThanOrEqual(
+    cannaeRomanCoreBounds.west - 0.001
+  );
+  expect(numidianRear[0], "Numidian rear pressure should not intrude through the Roman core").toBeLessThanOrEqual(
+    cannaeRomanCoreBounds.west + 0.002
+  );
+  expect(heavyRear[1], "heavy cavalry should seal the upper rear shoulder").toBeGreaterThan(cannaeRomanCoreBounds.north - 0.001);
+  expect(numidianRear[1], "Numidian cavalry should seal the lower rear shoulder").toBeLessThan(cannaeRomanCoreBounds.south + 0.001);
+}
+
+function expectCannaeFinalCollapseData() {
+  const compression = cannaeRoute("roman-core-compression");
+  const breakup = cannaeRoute("roman-core-breakup");
+  const paullus = cannaeRoute("paullus-command-collapse");
+  const compressionUnits = compression.unitTracks?.length ?? compression.unitOffsets?.length ?? 0;
+  const breakupUnits = breakup.unitTracks?.length ?? breakup.unitOffsets?.length ?? 0;
+  const collapsePoint = cannaeData.mapPoints.find((point) => point.id === "roman-collapse-site");
+  const paullusEvent = cannaeData.battleEvents.find((event) => event.id === "paullus-endgame");
+  const resultEvent = cannaeData.battleEvents.find((event) => event.id === "battle-result");
+  const finalRemnantLatBuckets = new Map<number, number>();
+  const finalRemnantLngBuckets = new Map<number, number>();
+
+  for (const track of breakup.unitTracks ?? []) {
+    const [lng, lat] = track.to;
+    const lngBucket = Math.round(lng / 0.0005);
+    const latBucket = Math.round(lat / 0.0005);
+    finalRemnantLngBuckets.set(lngBucket, (finalRemnantLngBuckets.get(lngBucket) ?? 0) + 1);
+    finalRemnantLatBuckets.set(latBucket, (finalRemnantLatBuckets.get(latBucket) ?? 0) + 1);
+  }
+
+  expect(compression.unitVisibleUntil, "Cannae compressed Roman main body should not remain visible through the final result").toBe(
+    "BCE-0216-08-02T14:35"
+  );
+  expect(breakup.unitVisibleUntil, "Cannae broken Roman remnants should leave before the final result state").toBe(
+    "BCE-0216-08-02T15:42"
+  );
+  expect(paullus.unitVisibleUntil, "Paullus command marker should be an endgame casualty marker, not a surviving final unit").toBe(
+    "BCE-0216-08-02T15:18"
+  );
+  expect(compressionUnits, "Cannae compression should still show the full Roman mass before collapse").toBeGreaterThanOrEqual(80);
+  expect(breakupUnits, "Cannae collapse remnants should be sparse, not another full formation").toBeGreaterThanOrEqual(24);
+  expect(breakupUnits, "Cannae collapse remnants should be sparse, not another full formation").toBeLessThanOrEqual(32);
+  expect(compressionUnits / Math.max(1, breakupUnits), "Cannae final remnants should be much smaller than the compressed Roman core").toBeGreaterThan(
+    5
+  );
+  expect(Math.max(...finalRemnantLngBuckets.values()), "Cannae collapse remnants should not resolve to tidy vertical files").toBeLessThanOrEqual(
+    6
+  );
+  expect(Math.max(...finalRemnantLatBuckets.values()), "Cannae collapse remnants should not resolve to tidy horizontal ranks").toBeLessThanOrEqual(
+    8
+  );
+  expect(collapsePoint?.label).toBe("罗马组织崩溃区");
+  expect(collapsePoint?.kind).toBe("result");
+  expect(collapsePoint?.revealAt).toBe("BCE-0216-08-02T15:35");
+  expect(paullusEvent?.routeIds, "Paullus endgame should focus on broken remnants instead of the intact compressed Roman block").not.toContain(
+    "roman-core-compression"
+  );
+  expect(resultEvent?.routeIds, "Cannae result should keep Paullus outcome in the result layer").toContain("paullus-command-collapse");
+  expect(resultEvent?.routeIds, "Cannae result should not keep the intact compressed Roman block as the active result focus").not.toContain(
+    "roman-core-compression"
+  );
+  expect(cannaeRoute("carthaginian-pocket-tighten").unitVisibleUntil, "Cannae result should not leave an ordered Carthaginian compression wall standing at 16:00").toBe(
+    "BCE-0216-08-02T15:45"
+  );
+  expect(cannaeRoute("carthaginian-center-hold").unitVisibleUntil, "Cannae result should not leave the center pressure line standing at 16:00").toBe(
+    "BCE-0216-08-02T15:45"
+  );
+  expect(cannaeRoute("heavy-cavalry-rear-ride").unitVisibleUntil, "Cannae result should keep rear-seal traces but remove ordered cavalry markers").toBe(
+    "BCE-0216-08-02T15:45"
+  );
+  expect(cannaeRoute("numidian-rear-pressure").unitVisibleUntil, "Cannae result should keep rear-pressure traces but remove ordered cavalry markers").toBe(
+    "BCE-0216-08-02T15:45"
+  );
+}
+
+async function expectCannaeMeleeUsesContactAnchors(page: Page, routeIds: string[]) {
+  const effects = await page.locator('[data-testid="cannae-melee-effect"]').evaluateAll((nodes) => {
+    const routeUnitCenters = (routeId: string) =>
+      [...document.querySelectorAll<SVGGElement>(`.cannae-route[data-route-id="${routeId}"] .cannae-unit-holder`)]
+        .map((unit) => unit.getBoundingClientRect())
+        .filter((box) => box.width > 0 && box.height > 0)
+        .map((box) => ({
+          x: box.left + box.width / 2,
+          y: box.top + box.height / 2
+        }));
+
+    return nodes.map((node) => {
+      const contactCircle = node.querySelector("circle");
+      const box = (contactCircle ?? node).getBoundingClientRect();
+      const carthaginianRoute = node.getAttribute("data-carthaginian-route") ?? "";
+      const romanRoute = node.getAttribute("data-roman-route") ?? "";
+      const effectCenter = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      const romanUnitDistances = routeUnitCenters(romanRoute).map((center) => Math.hypot(effectCenter.x - center.x, effectCenter.y - center.y));
+      const carthaginianUnitDistances = routeUnitCenters(carthaginianRoute).map((center) => Math.hypot(effectCenter.x - center.x, effectCenter.y - center.y));
+      const distanceToRoman = Math.min(...romanUnitDistances, Number.POSITIVE_INFINITY);
+      const distanceToCarthaginian = Math.min(...carthaginianUnitDistances, Number.POSITIVE_INFINITY);
+
+      return {
+        carthaginianRoute,
+        distanceToCarthaginian,
+        distanceToRoman,
+        romanRoute,
+        source: node.getAttribute("data-effect-source") ?? ""
+      };
+    });
+  });
+  expect(effects.length, "Cannae active event should render melee effects").toBeGreaterThan(0);
+  expect(effects.every((effect) => effect.source === "event-contact"), "Cannae melee effects should use event contact anchors").toBe(true);
+  expect(
+    effects.every((effect) => Math.min(effect.distanceToRoman, effect.distanceToCarthaginian) < 170),
+    "Cannae melee effects should stay near visible fighting units, not empty terrain"
+  ).toBe(true);
+  for (const routeId of routeIds) {
+    expect(
+      effects.some((effect) => effect.romanRoute === routeId || effect.carthaginianRoute === routeId),
+      `Cannae melee effect should bind to ${routeId}`
+    ).toBe(true);
+  }
+}
+
+async function expectCannaeNoRenderedCarthaginianIntrusionIntoRomanCore(page: Page, routeIds: string[]) {
+  const intrusion = await page.evaluate((routes) => {
+    const romanUnits = [...document.querySelectorAll<SVGGElement>('.cannae-route[data-route-id="roman-core-compression"] .cannae-unit-holder')]
+      .map((unit) => unit.getBoundingClientRect())
+      .filter((box) => box.width > 0 && box.height > 0);
+    if (romanUnits.length === 0) {
+      return null;
+    }
+    const romanBounds = {
+      bottom: Math.max(...romanUnits.map((box) => box.bottom)),
+      left: Math.min(...romanUnits.map((box) => box.left)),
+      right: Math.max(...romanUnits.map((box) => box.right)),
+      top: Math.min(...romanUnits.map((box) => box.top))
+    };
+    const inner = {
+      bottom: romanBounds.top + (romanBounds.bottom - romanBounds.top) * 0.8,
+      left: romanBounds.left + (romanBounds.right - romanBounds.left) * 0.18,
+      right: romanBounds.left + (romanBounds.right - romanBounds.left) * 0.82,
+      top: romanBounds.top + (romanBounds.bottom - romanBounds.top) * 0.2
+    };
+    const carthaginianUnits = routes.flatMap((routeId) =>
+      [...document.querySelectorAll<SVGGElement>(`.cannae-route[data-route-id="${routeId}"] .cannae-unit-holder`)]
+        .map((unit) => unit.getBoundingClientRect())
+        .filter((box) => box.width > 0 && box.height > 0)
+        .map((box) => ({
+          routeId,
+          x: box.left + box.width / 2,
+          y: box.top + box.height / 2
+        }))
+    );
+    const inside = carthaginianUnits.filter((unit) => unit.x > inner.left && unit.x < inner.right && unit.y > inner.top && unit.y < inner.bottom);
+    return {
+      inside: inside.length,
+      routeIds: [...new Set(inside.map((unit) => unit.routeId))],
+      total: carthaginianUnits.length
+    };
+  }, routeIds);
+
+  expect(intrusion).not.toBeNull();
+  expect(intrusion?.total, `${routeIds.join(", ")} should render units for visual intrusion check`).toBeGreaterThan(0);
+  expect(
+    intrusion?.inside ?? 0,
+    `${routeIds.join(", ")} should not visually place Carthaginian units inside the Roman core (${intrusion?.routeIds.join(", ")})`
+  ).toBeLessThanOrEqual(Math.max(2, Math.floor((intrusion?.total ?? 0) * 0.04)));
+}
+
+async function expectCannaeCompletedRouteKeepsCombatMotion(page: Page, routeId: string, firstDate: string, secondDate: string) {
+  const route = page.locator(`.cannae-battle .cannae-route[data-route-id="${routeId}"]`);
+  const firstUnit = route.locator(".cannae-unit-holder").first();
+  const transformPoint = async () => {
+    const transform = await firstUnit.getAttribute("transform");
+    const match = transform?.match(/translate\(([-0-9.]+) ([-0-9.]+)\)/);
+    return match ? { transform, x: Number(match[1]), y: Number(match[2]) } : null;
+  };
+  await jumpCannaeTimelineTo(page, firstDate);
+  await expect(route).toHaveAttribute("data-unit-visible", "true");
+  await expect(route).toHaveAttribute("data-unit-motion", "pressure");
+  const firstPoint = await transformPoint();
+  expect(firstPoint, `${routeId} should expose a rendered unit transform`).not.toBeNull();
+  await jumpCannaeTimelineTo(page, secondDate);
+  await expect(route).toHaveAttribute("data-unit-visible", "true");
+  await expect.poll(async () => (await transformPoint())?.transform, { message: `${routeId} should keep kinetic combat pressure after route completion` }).not.toBe(
+    firstPoint?.transform
+  );
+  const secondPoint = await transformPoint();
+  const movement = secondPoint && firstPoint ? Math.hypot(secondPoint.x - firstPoint.x, secondPoint.y - firstPoint.y) : 0;
+  expect(movement, `${routeId} pressure motion should be subtle battlefield friction, not wave-dance jitter`).toBeLessThan(8);
+}
+
+async function dragCannaeTimelineAndExpectUnits(page: Page, value: number, expectedText: RegExp, expectedRouteIds: string[]) {
+  const timeline = page.getByTestId("timeline");
+  const box = await timeline.boundingBox();
+  expect(box).not.toBeNull();
+  const targetX = (box?.x ?? 0) + (box?.width ?? 0) * (value / 1000);
+  const centerY = (box?.y ?? 0) + (box?.height ?? 0) / 2;
+
+  await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) * 0.5, centerY);
+  await page.mouse.down();
+  await page.mouse.move(targetX, centerY, { steps: 12 });
+  await page.mouse.up();
+
+  await expect(page.getByTestId("current-date")).toContainText(expectedText);
+  for (const routeId of expectedRouteIds) {
+    await expectCannaeRouteVisibleWithUnit(page, routeId);
   }
 }
 
@@ -3882,7 +4641,7 @@ const campaignIds = [
   "gulf"
 ] as const;
 
-const temporarySharedMusicCampaignIds = new Set<(typeof campaignIds)[number]>(["big-week", "bismarck-sea", "britain-air", "cannae"]);
+const temporarySharedMusicCampaignIds = new Set<(typeof campaignIds)[number]>(["big-week", "bismarck-sea", "britain-air"]);
 
 async function openCampaignFromHome(page: Page, campaignId: (typeof campaignIds)[number]) {
   await page.goto("/");
@@ -5173,7 +5932,7 @@ test("war library home lists ancient and modern animations", async ({ page }) =>
     .toEqual([
       "亚历山大大帝征服史",
       "罗马与迦太基：三次布匿战争史",
-      "坎尼会战：双重合围",
+      "坎尼会战",
       "大秦统一中国战史",
       "韩信十面埋伏：垓下之战",
       "凯撒大帝战争史",
@@ -6523,6 +7282,293 @@ test("korean war animation uses era matched carrier aircraft infantry and tank m
   expect(consoleErrors).toEqual([]);
 });
 
+test("cannae battle rebuild shows pitched double envelopment with readable ancient units", async ({ page }) => {
+  test.setTimeout(180_000);
+  const { apiFailures, consoleErrors } = collectFailures(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  expect(cannaeData.playbackDurationSeconds).toBe(300);
+  expect(cannaeData.battleEvents).toHaveLength(10);
+  expectCannaeNoContactBeforeRomanPressure();
+  expectCannaeRiverBankRoutesStayOutOfWater();
+  expectCannaeCommandAppearsOnlyAtEndgame();
+  expectCannaeNoDodgeRuntimeAssetSource();
+  expectCannaeNoProductionNarration();
+  expectCannaePocketDoesNotOrbitRomanCore();
+  expectCannaeNoCarthaginianTracksInsideRomanCore();
+  expectCannaeNoCarthaginianRouteLinesInsideRomanCore();
+  expectCannaePocketHasOutsidePressureSides();
+  expectCannaeSynchronizedPressureGeometry();
+  expectCannaeFinalCollapseData();
+  expectCannaeCavalryStaysOutsideInfantryWings();
+  expectCannaeEventFocus("center-becomes-concave", ["carthaginian-center-yield", "roman-core-compression"]);
+  expectCannaeEventFocus("african-wings-turn", ["african-left-inward-turn", "african-right-inward-turn"]);
+  expectCannaeEventFocus("rear-seal", ["heavy-cavalry-rear-ride", "numidian-rear-pressure"]);
+  expectCannaeEventFocus("paullus-endgame", ["paullus-command-collapse", "roman-core-breakup"]);
+  expectCannaeEventFocus("deployment-begins", ["roman-infantry-deploy", "roman-left-cavalry", "roman-right-cavalry"]);
+  expectCannaeEventContactAnchors("roman-deep-advance", 3);
+  expectCannaeEventContactAnchors("african-wings-turn", 3);
+  expectCannaeEventContactAnchors("rear-seal", 2);
+  expectCannaeEventContactAnchors("encirclement-compression", 3);
+  expectCannaePrelude("carthaginian-center-yield", 3);
+  expectCannaePrelude("roman-core-compression", 3);
+  expectCannaePrelude("heavy-cavalry-rear-ride", 3);
+  expectCannaePrelude("numidian-rear-pressure", 3);
+  expectCannaePrelude("african-left-inward-turn", 2);
+  expectCannaePrelude("african-right-inward-turn", 2);
+  expectCannaeRouteWindow("roman-infantry-deploy", {
+    end: "BCE-0216-08-02T08:15",
+    start: "BCE-0216-08-02T06:00",
+    unitVisibleUntil: "BCE-0216-08-02T08:10"
+  });
+  expectCannaeRouteWindow("roman-deep-advance", {
+    start: "BCE-0216-08-02T08:10",
+    unitVisibleUntil: "BCE-0216-08-02T10:05"
+  });
+  expectCannaeRouteWindow("roman-core-compression", {
+    start: "BCE-0216-08-02T10:05",
+    unitVisibleUntil: "BCE-0216-08-02T14:35",
+    visibleUntil: "BCE-0216-08-02T16:00"
+  });
+  expectCannaeRouteWindow("roman-core-breakup", {
+    start: "BCE-0216-08-02T14:25",
+    unitVisibleUntil: "BCE-0216-08-02T15:42",
+    visibleUntil: "BCE-0216-08-02T16:00"
+  });
+  expect(cannaeData.battleEvents.find((event) => event.id === "roman-deep-advance")?.date).toBe("BCE-0216-08-02T09:45");
+  expect(cannaeData.battleEvents.find((event) => event.id === "african-wings-turn")?.date).toBe("BCE-0216-08-02T12:45");
+  expect(cannaeData.battleEvents.find((event) => event.id === "rear-seal")?.date).toBe("BCE-0216-08-02T13:20");
+  expect(toTime(cannaeRoute("african-left-inward-turn").start)).toBeGreaterThan(toTime(cannaeRoute("carthaginian-center-yield").start));
+  expect(toTime(cannaeRoute("heavy-cavalry-rear-ride").start)).toBeGreaterThanOrEqual(toTime(cannaeRoute("carthaginian-heavy-cavalry-clear").end));
+  expectCannaeRouteUnitCount("roman-infantry-deploy", 100);
+  expectCannaeRouteUnitCount("roman-deep-advance", 100);
+  expectCannaeRouteUnitCount("roman-core-compression", 100);
+  expectCannaeRouteUnitCount("african-left-inward-turn", 15);
+  expectCannaeRouteUnitCount("african-right-inward-turn", 15);
+  expectCannaeRouteUnitCount("carthaginian-center-hold", 36);
+  expectCannaeRouteUnitCount("carthaginian-pocket-tighten", 28);
+  expectCannaeRouteUsesIndependentUnitTracks("roman-infantry-deploy", 100);
+  expectCannaeRouteUsesIndependentUnitTracks("roman-deep-advance", 100);
+  expectCannaeRouteUsesIndependentUnitTracks("carthaginian-center-yield", 40);
+  expectCannaeRouteUsesIndependentUnitTracks("carthaginian-center-hold", 36);
+  expectCannaeRouteUsesIndependentUnitTracks("african-left-inward-turn", 20);
+  expectCannaeRouteUsesIndependentUnitTracks("african-right-inward-turn", 20);
+  expectCannaeRouteUsesIndependentUnitTracks("carthaginian-pocket-tighten", 45);
+  expectCannaeRomanCavalryDoesNotCrossCarthaginianLine();
+  expectCannaeRearSealClosesNearCore();
+
+  await openCampaignFromHome(page, "cannae");
+  await installAudioSpy(page);
+  await expect(page.getByTestId("cannae-app")).toBeVisible();
+  await expect(page.getByTestId("cannae-app")).toHaveAttribute("data-playback-duration", "300");
+  await expect(page.getByRole("heading", { name: "坎尼会战" })).toBeVisible();
+  await expectOnlyWarNameInMapTitle(page, "坎尼会战");
+  await expectMapFirstLayout(page);
+  await expectLowImpactTicker(page, /rgba\(246, 234, 196, 0\.72\)/);
+  await expectMapCanMoveUnderPointer(page);
+  await expectMapCanMoveHorizontallyUnderPointer(page);
+  await expectMapZoomButtonsWork(page);
+  await expectScoreUsesMusic(page, "/audio/wikimedia-the-gladiator-us-marine-band.ogg");
+  await expect(page.getByTestId("current-date")).toContainText("06:00");
+  await expect(page.getByTestId("narration-subtitle")).toContainText("清晨部署");
+  await expect(page.getByTestId("cannae-terrain-3d")).toBeVisible();
+  await expect(page.getByTestId("cannae-terrain-3d")).toHaveAttribute("data-renderer", "maplibre-pitched-tactical-map");
+  await expect(page.getByTestId("cannae-terrain-3d")).toHaveAttribute("data-camera-pitch", "56");
+  await expect(page.getByTestId("cannae-terrain-3d")).toHaveAttribute("data-visible-basemap", "drawn-historical-tactical-terrain");
+  await expect(page.getByTestId("cannae-maplibre-tactical-overlay")).toHaveAttribute("data-projection", "maplibre-pitched-geographic-overlay");
+  await expect(page.getByTestId("camera-layer")).toHaveAttribute("data-projection", "maplibre-control-only");
+  await expect(page.getByTestId("cannae-terrain-layer")).toBeVisible();
+  await expect(page.getByTestId("cannae-river-layer")).toContainText("奥凡托河");
+  await expect(page.getByTestId("cannae-region-river-corridor")).toContainText("河岸限制带");
+  await expect(page.getByTestId("cannae-formation-layer")).toBeVisible();
+  await expect(page.getByTestId("cannae-formation-roman-deployment-columns")).toHaveCount(0);
+  await expect(page.getByTestId("cannae-formation-carthaginian-convex-center")).toHaveCount(0);
+  await expect(page.getByTestId("cannae-formation-african-left-wing")).toHaveCount(0);
+  await expect(page.getByTestId("cannae-formation-carthaginian-left-cavalry-wing")).toHaveCount(0);
+  await expect(page.getByTestId("cannae-formation-roman-compressed-core")).toHaveCount(0);
+  await expectCannaeRouteVisibleWithUnit(page, "roman-infantry-deploy");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-left-cavalry");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-right-cavalry");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-forward");
+  await expectCannaeRouteVisibleWithUnit(page, "african-left-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "african-right-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "hannibal-command-observe");
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expectCannaeReadableUnitAssets(page);
+  await expectCannaeVisibleUnitsUseReadableBattleArea(
+    page,
+    [
+      "roman-infantry-deploy",
+      "roman-left-cavalry",
+      "roman-right-cavalry",
+      "carthaginian-center-forward",
+      "african-left-hold",
+      "african-right-hold",
+      "hannibal-command-observe"
+    ],
+    0.34,
+    0.18
+  );
+  await expectCannaeAllRouteUnitsMostlyVisible(
+    page,
+    [
+      "roman-infantry-deploy",
+      "roman-left-cavalry",
+      "roman-right-cavalry",
+      "carthaginian-center-forward",
+      "african-left-hold",
+      "african-right-hold",
+      "hannibal-command-observe"
+    ],
+    0.72
+  );
+
+  await jumpToEventByName(page, /汉尼拔凸月形中军前出/);
+  await expect(page.getByTestId("active-event-card")).toContainText("汉尼拔凸月形中军前出");
+  await expect(page.getByTestId("cannae-formation-carthaginian-convex-center")).toContainText("汉尼拔凸月形中军");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-forward");
+  await expectCannaeRouteVisibleWithUnit(page, "african-left-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "african-right-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "hannibal-command-observe");
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expect(page.getByTestId("cannae-melee-effect")).toHaveCount(0);
+  await expect.poll(() => countPlayedAudio(page, "/audio/sfx/swords-clashing.mp3")).toBe(0);
+
+  await jumpToEventByName(page, /罗马纵深集团向中军压入/);
+  await expect(page.getByTestId("active-event-card")).toContainText("罗马纵深集团向中军压入");
+  await expect(page.getByTestId("cannae-formation-roman-deep-mass")).toContainText("罗马重步兵纵深集团");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-deep-advance");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-forward");
+  await expectCannaeRouteVisible(page, "roman-left-cavalry");
+  await expectCannaeRouteVisible(page, "roman-right-cavalry");
+  await expectCannaeVisibleUnitsUseReadableBattleArea(page, ["roman-deep-advance", "carthaginian-center-forward"], 0.18, 0.1);
+  await expectCannaeMeleeUsesContactAnchors(page, ["roman-deep-advance", "carthaginian-center-forward"]);
+
+  await jumpToEventByName(page, /迦太基骑兵清理两翼/);
+  await expect(page.getByTestId("active-event-card")).toContainText("迦太基骑兵清理两翼");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-heavy-cavalry-clear");
+  await expectCannaeRouteVisibleWithUnit(page, "numidian-fix-roman-left");
+  await expectCannaeRouteVisible(page, "roman-left-cavalry");
+  await expectCannaeRouteVisible(page, "roman-right-cavalry");
+  await expectCannaeVisibleUnitsUseReadableBattleArea(page, ["carthaginian-heavy-cavalry-clear", "numidian-fix-roman-left"], 0.18, 0.12);
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expectCannaeMeleeUsesContactAnchors(page, ["roman-right-cavalry", "roman-left-cavalry"]);
+
+  await jumpToEventByName(page, /中军由凸转凹/);
+  await expect(page.getByTestId("active-event-card")).toContainText("中军由凸转凹");
+  await expect(page.getByTestId("cannae-formation-carthaginian-concave-center")).toContainText("中军后退成凹袋");
+  await expect(page.getByTestId("cannae-tactical-graphic-center-yield-zone")).toContainText("中军后退诱入区");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-yield");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-core-compression");
+  await expectCannaeCurrentEventInsideMapCore(page);
+
+  await jumpToEventByName(page, /非洲重步兵从两翼内折/);
+  await expect(page.getByTestId("active-event-card")).toContainText("非洲重步兵从两翼内折");
+  await expect(page.getByTestId("cannae-tactical-graphic-african-wing-turn")).toContainText("两翼内折");
+  await expectCannaeRouteVisibleWithUnit(page, "african-left-inward-turn");
+  await expectCannaeRouteVisibleWithUnit(page, "african-right-inward-turn");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-core-compression");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-hold");
+  await expect(page.locator('.cannae-route[data-route-id="carthaginian-pocket-tighten"] .cannae-unit-holder')).toHaveCount(0);
+  await expectCannaeVisibleUnitsUseReadableBattleArea(page, ["african-left-inward-turn", "african-right-inward-turn", "roman-core-compression", "carthaginian-center-hold"], 0.18, 0.16);
+  await expectCannaeAllRouteUnitsMostlyVisible(page, ["african-left-inward-turn", "african-right-inward-turn", "roman-core-compression", "carthaginian-center-hold"], 0.78);
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expectCannaeMeleeUsesContactAnchors(page, ["african-left-inward-turn", "african-right-inward-turn", "roman-core-compression", "carthaginian-center-hold"]);
+
+  await jumpToEventByName(page, /骑兵绕后封闭罗马后口/);
+  await expect(page.getByTestId("active-event-card")).toContainText("骑兵绕后封闭罗马后口");
+  await expect(page.getByTestId("cannae-tactical-graphic-rear-cavalry-seal")).toContainText("骑兵后封口");
+  await expectCannaeRouteVisibleWithUnit(page, "heavy-cavalry-rear-ride");
+  await expectCannaeRouteVisibleWithUnit(page, "numidian-rear-pressure");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-core-compression");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-hold");
+  await expectCannaeAllRouteUnitsMostlyVisible(page, ["heavy-cavalry-rear-ride", "numidian-rear-pressure", "roman-core-compression"], 0.78);
+  await expectCannaeNoRenderedCarthaginianIntrusionIntoRomanCore(page, ["heavy-cavalry-rear-ride", "numidian-rear-pressure"]);
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expectCannaeMeleeUsesContactAnchors(page, ["heavy-cavalry-rear-ride", "numidian-rear-pressure", "roman-core-compression"]);
+
+  await jumpToEventByName(page, /包围圈压缩/);
+  await expect(page.getByTestId("active-event-card")).toContainText("包围圈压缩");
+  await expect(page.getByTestId("cannae-formation-roman-compressed-core")).toContainText("罗马核心被压缩");
+  await expect(page.getByTestId("cannae-tactical-graphic-roman-compression")).toContainText("罗马集团压缩");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-pocket-tighten");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-hold");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-core-compression");
+  await expectCannaeRenderedRoutesInclude(page, ["heavy-cavalry-rear-ride", "numidian-rear-pressure"]);
+  await expectCannaeVisibleUnitsUseReadableBattleArea(page, ["carthaginian-pocket-tighten", "carthaginian-center-hold", "roman-core-compression", "heavy-cavalry-rear-ride"], 0.2, 0.16);
+  await expectCannaeAllRouteUnitsMostlyVisible(page, ["carthaginian-pocket-tighten", "carthaginian-center-hold", "roman-core-compression", "heavy-cavalry-rear-ride"], 0.72);
+  await expectCannaeNoRenderedCarthaginianIntrusionIntoRomanCore(page, [
+    "carthaginian-center-hold",
+    "african-left-inward-turn",
+    "african-right-inward-turn",
+    "carthaginian-pocket-tighten",
+    "heavy-cavalry-rear-ride",
+    "numidian-rear-pressure"
+  ]);
+  await expectCannaeCompletedRouteKeepsCombatMotion(
+    page,
+    "heavy-cavalry-rear-ride",
+    "BCE-0216-08-02T14:05",
+    "BCE-0216-08-02T14:15"
+  );
+  await expectCannaeCurrentEventInsideMapCore(page);
+  await expectCannaeMeleeUsesContactAnchors(page, ["carthaginian-pocket-tighten", "carthaginian-center-hold", "roman-core-compression"]);
+
+  await jumpToEventByName(page, /Paullus 殉战/);
+  await expect(page.getByTestId("active-event-card")).toContainText("Paullus 殉战");
+  await expectCannaeRouteVisibleWithUnit(page, "paullus-command-collapse");
+  await expectCannaeRouteVisibleWithUnit(page, "roman-core-breakup");
+  await expect(page.locator('.cannae-route[data-route-id="roman-core-breakup"] .cannae-unit-holder')).toHaveCount(30);
+  await expect(page.getByTestId("cannae-unit-paullus-command").first()).toBeVisible();
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-pocket-tighten");
+  await expectCannaeRouteVisibleWithUnit(page, "carthaginian-center-hold");
+  await expectCannaeCurrentEventInsideMapCore(page);
+
+  await jumpToEventByName(page, /坎尼成为双重包围/);
+  await expect(page.getByTestId("active-event-card")).toContainText("坎尼成为双重包围");
+  await expectCannaeRouteVisibleWithoutUnit(page, "roman-core-compression");
+  await expectCannaeRouteVisibleWithoutUnit(page, "roman-core-breakup");
+  await expectCannaeRouteVisibleWithoutUnit(page, "paullus-command-collapse");
+  await expectCannaeRouteVisibleWithoutUnit(page, "carthaginian-pocket-tighten");
+  await expectCannaeRouteVisibleWithoutUnit(page, "carthaginian-center-hold");
+  await expectCannaeRouteVisibleWithoutUnit(page, "heavy-cavalry-rear-ride");
+  await expectCannaeRouteVisibleWithoutUnit(page, "numidian-rear-pressure");
+  await expectCannaeRouteVisibleWithoutUnit(page, "african-left-inward-turn");
+  await expectCannaeRouteVisibleWithoutUnit(page, "african-right-inward-turn");
+  await expectCannaeRouteVisibleWithoutUnit(page, "hannibal-command-observe");
+  await expect(page.locator('.cannae-battle .cannae-route-roman .cannae-unit-holder')).toHaveCount(0);
+  await expect(page.locator('.cannae-battle .cannae-route-carthaginian .cannae-unit-holder')).toHaveCount(0);
+  await expect(page.getByTestId("cannae-point-roman-collapse-site")).toContainText("罗马组织崩溃区");
+  await expect(page.getByTestId("cannae-point-paullus-fall")).toContainText("Paullus 终局");
+
+  await jumpCannaeTimelineTo(page, "BCE-0216-08-02T12:40");
+  await expect(page.getByTestId("current-date")).toContainText("13:00");
+  await expectCannaeRouteVisibleWithUnit(page, "heavy-cavalry-rear-ride");
+  await expectCannaeRouteVisibleWithUnit(page, "numidian-rear-pressure");
+
+  await dragCannaeTimelineAndExpectUnits(page, 910, /15:00/, ["roman-core-breakup", "carthaginian-pocket-tighten"]);
+  await dragCannaeTimelineAndExpectUnits(page, 120, /07:00/, ["roman-infantry-deploy", "carthaginian-center-forward"]);
+
+  await expect(page.getByTestId("cannae-terrain-3d-canvas")).toBeVisible();
+  const terrainStats = await page.getByTestId("cannae-terrain-3d-canvas").evaluate((canvasElement) => {
+    const canvas = canvasElement as HTMLCanvasElement;
+    return {
+      height: canvas.height,
+      urlPrefix: canvas.width > 0 && canvas.height > 0 ? canvas.toDataURL("image/png").slice(0, 30) : "",
+      width: canvas.width,
+      webglContext: canvas.getContext("webgl2") ? "webgl2" : canvas.getContext("webgl") ? "webgl" : "none"
+    };
+  });
+  expect(terrainStats.width).toBeGreaterThan(800);
+  expect(terrainStats.height).toBeGreaterThan(500);
+  expect(terrainStats.webglContext).toMatch(/webgl/);
+  expect(terrainStats.urlPrefix).toBe("data:image/png;base64,iVBORw0K");
+  await expect(page.getByTestId("narration-subtitle")).toHaveCSS("pointer-events", "none");
+  await expect(page.getByTestId("narration-subtitle").locator("p")).toHaveCSS("text-shadow", "none");
+
+  expect(apiFailures).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
 test("nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit", async ({ page }) => {
   test.setTimeout(360_000);
   const { apiFailures, consoleErrors } = collectFailures(page);

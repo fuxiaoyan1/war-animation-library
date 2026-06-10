@@ -5,8 +5,8 @@ import { BattleOfBritainAnimation } from "./components/BattleOfBritainAnimation"
 import { BattleFranceAnimation } from "./components/BattleFranceAnimation";
 import { BigWeekAirBattleAnimation } from "./components/BigWeekAirBattleAnimation";
 import { BismarckSeaAirBattleAnimation } from "./components/BismarckSeaAirBattleAnimation";
+import { CannaeBattleAnimation } from "./components/CannaeBattleAnimation";
 import { CaesarWarsAnimation } from "./components/CaesarWarsAnimation";
-import { CannaeFormationAnimation } from "./components/CannaeFormationAnimation";
 import { CrusadesAnimation } from "./components/CrusadesAnimation";
 import { EasternFrontAnimation } from "./components/EasternFrontAnimation";
 import { GulfWarAnimation } from "./components/GulfWarAnimation";
@@ -34,12 +34,12 @@ export type CampaignKey =
   | "nianzhuang"
   | "napoleonic"
   | "punic"
-  | "cannae"
   | "crusades"
   | "mongol"
   | "qin"
   | "alexander"
   | "caesar"
+  | "cannae"
   | "britain-air"
   | "atlantic-convoy"
   | "big-week"
@@ -143,7 +143,7 @@ function App() {
       {campaign === "britain-air" && <BattleOfBritainAnimation />}
       {campaign === "big-week" && <BigWeekAirBattleAnimation />}
       {campaign === "bismarck-sea" && <BismarckSeaAirBattleAnimation />}
-      {campaign === "cannae" && <CannaeFormationAnimation />}
+      {campaign === "cannae" && <CannaeBattleAnimation />}
       {campaign === "atlantic-convoy" && <AtlanticConvoyBattleAnimation />}
       {campaign === "caesar" && <CaesarWarsAnimation />}
       {campaign === "crusades" && <CrusadesAnimation />}
