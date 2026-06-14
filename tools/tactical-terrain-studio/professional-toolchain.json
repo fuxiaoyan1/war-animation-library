@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Professional GIS, 3D terrain, and game-engine toolchain baseline for war-animation-lab-oss. Tactical Terrain Studio should orchestrate and audit these tools instead of replacing them.",
+  "defaultProductionPolicy": {
+    "target": "game-engine-first",
+    "summary": "Future war animations should be planned as game-engine-capable productions by default. React/MapLibre remains useful as a review UI, lightweight interactive front end, or fallback, but the production map/terrain/unit pipeline should be designed so it can move into Unreal/Unity/Godot or a Web 3D engine without being rebuilt from scratch.",
+    "minimumImplications": [
+      "Every new battle needs a terrain/data package before animation implementation.",
+      "Unit movement should be authored as engine-ready tracks with per-unit transforms, facing, formation membership, visibility, and contact/collision metadata.",
+      "Camera plans should be expressed as cinematic shots and tactical review cameras, not only map zoom numbers.",
+      "Disk cache, derived data, source assets, exported renders, and tile caches must be budgeted before production starts."
+    ]
+  },
+  "tiers": [
+    {
+      "id": "terrain-data",
+      "name": "DEM and Reference Data",
+      "tools": [
+        {
+          "id": "opentopography",
+          "name": "OpenTopography Global Datasets API",
+          "role": "Fetch source DEMs such as SRTM GL1/GL3, NASADEM, ALOS World 3D, Copernicus COP30/COP90, and bathymetry datasets.",
+          "fit": "Primary automated DEM acquisition path when API key and license constraints are acceptable.",
+          "url": "https://portal.opentopography.org/apidocs/"
+        },
+        {
+          "id": "copernicus-dem",
+          "name": "Copernicus DEM GLO-30/GLO-90",
+          "role": "Global DSM source with edited water bodies and river consistency.",
+          "fit": "Preferred modern global terrain source for many battlefields, with source notes that it is DSM rather than bare-earth DTM.",
+          "url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+        },
+        {
+          "id": "nasa-srtm",
+          "name": "NASA SRTM",
+          "role": "Near-global elevation reference covering most land surfaces.",
+          "fit": "Fallback or cross-check source when Copernicus/OpenTopography access is incomplete.",
+          "url": "https://www.earthdata.nasa.gov/data/instruments/srtm"
+        },
+        {
+          "id": "natural-earth",
+          "name": "Natural Earth",
+          "role": "Public-domain vector/raster reference layers at 1:10m, 1:50m, and 1:110m scales.",
+          "fit": "Campaign/regional maps; not sufficient alone for tactical battlefields.",
+          "url": "https://www.naturalearthdata.com/"
+        }
+      ]
+    },
+    {
+      "id": "gis-authoring",
+      "name": "GIS Authoring, Georeferencing, and Terrain Derivatives",
+      "tools": [
+        {
+          "id": "qgis",
+          "name": "QGIS",
+          "role": "Desktop GIS for layer inspection, CRS control, georeferencing, clipping, digitizing, terrain analysis, and QA.",
+          "fit": "Mandatory manual/professional workbench before hard battles are animated.",
+          "url": "https://docs.qgis.org/latest/en/docs/user_manual/managing_data_source/georeferencer.html"
+        },
+        {
+          "id": "gdal",
+          "name": "GDAL",
+          "role": "CLI/library for raster/vector translation, warping, hillshade, slope, aspect, contour, and tile preparation.",
+          "fit": "Mandatory reproducible processing layer behind QGIS work.",
+          "url": "https://gdal.org/en/stable/programs/gdaldem.html"
+        },
+        {
+          "id": "qgis2threejs",
+          "name": "Qgis2threejs",
+          "role": "QGIS plugin for visualizing DEM and vector data in 3D and exporting web/3D assets.",
+          "fit": "Useful for offline terrain look-dev and reference exports; not the default runtime renderer.",
+          "url": "https://plugins.qgis.org/plugins/Qgis2threejs/"
+        },
+        {
+          "id": "blendergis",
+          "name": "BlenderGIS",
+          "role": "Blender bridge for importing GIS vectors, rasters, GeoTIFF DEMs, and OSM data into 3D scenes.",
+          "fit": "Optional cinematic terrain/modeling pipeline when MapLibre terrain is not visually strong enough.",
+          "url": "https://github.com/domlysz/BlenderGIS"
+        }
+      ]
+    },
+    {
+      "id": "tiling",
+      "name": "Tile Production and Hosting",
+      "tools": [
+        {
+          "id": "tippecanoe",
+          "name": "Tippecanoe",
+          "role": "Build vector tilesets from GeoJSON, FlatGeobuf, or CSV features.",
+          "fit": "Primary path for turning battle-specific historical layers into vector tiles when GeoJSON becomes heavy.",
+          "url": "https://github.com/felt/tippecanoe"
+        },
+        {
+          "id": "pmtiles",
+          "name": "PMTiles / Protomaps",
+          "role": "Single-file tiled archive suitable for static hosting with HTTP range requests.",
+          "fit": "Preferred local/static artifact format for battle map packages.",
+          "url": "https://docs.protomaps.com/pmtiles/"
+        },
+        {
+          "id": "martin",
+          "name": "Martin",
+          "role": "Rust tile server for PostGIS, PMTiles, and MBTiles sources.",
+          "fit": "Local or production tile serving when multiple sources need to be combined dynamically.",
+          "url": "https://maplibre.org/martin/"
+        },
+        {
+          "id": "tilemaker",
+          "name": "tilemaker",
+          "role": "Generate OpenStreetMap vector tiles from .osm.pbf extracts without a database.",
+          "fit": "Optional OSM-derived context layer pipeline, not battle-specific historical reconstruction.",
+          "url": "https://tilemaker.org/"
+        },
+        {
+          "id": "maptiler-terrain-rgb",
+          "name": "MapTiler Terrain RGB / Engine",
+          "role": "DEM-to-RGB terrain tile workflow and hosted/on-prem terrain datasets.",
+          "fit": "Commercial/professional alternative for terrain RGB tiles when local GDAL tiling is too weak.",
+          "url": "https://docs.maptiler.com/guides/map-tiling-hosting/data-hosting/rgb-terrain-by-maptiler/"
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "name": "Runtime Rendering",
+      "tools": [
+        {
+          "id": "maplibre",
+          "name": "MapLibre GL JS",
+          "role": "Open WebGL map renderer with raster-dem terrain and geographic overlay support.",
+          "fit": "Default runtime for current React war animations.",
+          "url": "https://www.maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/"
+        },
+        {
+          "id": "cesium",
+          "name": "CesiumJS",
+          "role": "3D globe/terrain/3D Tiles runtime with terrain providers and quantized-mesh terrain.",
+          "fit": "Evaluation candidate for high-relief 3D scenes, broad theaters, or cinematic flythroughs.",
+          "url": "https://cesium.com/learn/cesiumjs-learn/cesiumjs-terrain/"
+        },
+        {
+          "id": "deckgl-terrain",
+          "name": "deck.gl TerrainLayer and TerrainExtension",
+          "role": "GPU terrain mesh reconstruction from height maps and draping of data over terrain.",
+          "fit": "Evaluation candidate for custom WebGL layer composition and analytical overlays.",
+          "url": "https://deck.gl/docs/api-reference/geo-layers/terrain-layer"
+        }
+      ]
+    },
+    {
+      "id": "web-3d-engine",
+      "name": "Web 3D Animation Engines",
+      "tools": [
+        {
+          "id": "maplibre-three-custom-layer",
+          "name": "MapLibre GL JS custom Three.js layer",
+          "role": "Place Three.js GLTF/mesh objects on MapLibre terrain while preserving geographic camera alignment.",
+          "fit": "Best bridge when the app must remain React/Web/MapLibre but needs real 3D unit models, terrain-height placement, and better lighting than SVG overlays.",
+          "url": "https://www.maplibre.org/maplibre-gl-js/docs/examples/adding-3d-models-using-threejs-on-terrain/"
+        },
+        {
+          "id": "threejs",
+          "name": "Three.js",
+          "role": "General-purpose WebGL 3D engine with cameras, animation mixers, instancing, materials, lighting, and custom terrain meshes.",
+          "fit": "Best for self-contained tactical diorama scenes and custom unit animation when geospatial streaming is not the dominant problem.",
+          "url": "https://threejs.org/docs/"
+        },
+        {
+          "id": "babylonjs",
+          "name": "Babylon.js",
+          "role": "Web 3D engine with heightmap ground, thin instances, physics integrations, animation tooling, and crowd/navigation extensions.",
+          "fit": "Good candidate for web-based large unit counts, animated formations, and more game-like battle scenes without leaving the browser.",
+          "url": "https://doc.babylonjs.com/features/featuresDeepDive/mesh/creation/set/ground_hmap"
+        },
+        {
+          "id": "deckgl-trips-terrain",
+          "name": "deck.gl TerrainLayer / TripsLayer / PathLayer",
+          "role": "GPU map visualization layers for terrain meshes, animated tracks, and meter-aware paths.",
+          "fit": "Strong for analytical animated geospatial layers; weaker for full cinematic unit-model battles.",
+          "url": "https://deck.gl/docs/api-reference/geo-layers/trips-layer"
+        }
+      ]
+    },
+    {
+      "id": "game-engine",
+      "name": "Game Engine / Cinematic Simulation Pipeline",
+      "tools": [
+        {
+          "id": "unreal-cesium",
+          "name": "Unreal Engine + Cesium for Unreal",
+          "role": "High-end 3D battlefield simulation, cinematic cameras, landscape/lighting, Nanite/Lumen-style scene fidelity, and streamed geospatial 3D Tiles terrain.",
+          "fit": "Best candidate when a battle needs professional 3D terrain, cinematic rendering, complex camera blocking, physics/collision, or offline video-grade output.",
+          "url": "https://cesium.com/platform/cesium-for-unreal/"
+        },
+        {
+          "id": "unreal-world-partition",
+          "name": "Unreal Engine World Partition / Landscape / Sequencer",
+          "role": "Large terrain streaming, open-world landscape management, and cinematic keyframe sequencing.",
+          "fit": "Use when the battlefield becomes a full 3D scene rather than an interactive web map.",
+          "url": "https://dev.epicgames.com/documentation/unreal-engine/world-partition-in-unreal-engine"
+        },
+        {
+          "id": "unity-terrain-dots",
+          "name": "Unity Terrain + DOTS/ECS + Timeline",
+          "role": "Real-time 3D terrain, scalable entity processing, and timeline-based animation production.",
+          "fit": "Candidate for cross-platform interactive simulations with many independently controlled units, if Unity build/export workflow is acceptable.",
+          "url": "https://docs.unity3d.com/6000.4/Documentation/Manual/script-Terrain.html"
+        },
+        {
+          "id": "godot-3d",
+          "name": "Godot 3D + NavigationAgent3D",
+          "role": "Open-source 3D scenes, navigation/pathfinding, and scriptable animation.",
+          "fit": "Open-source option for lighter game-engine prototypes; terrain/geospatial pipeline is less mature than Unreal/Cesium for professional map work.",
+          "url": "https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_introduction_3d.html"
+        },
+        {
+          "id": "ogc-3d-tiles",
+          "name": "OGC 3D Tiles",
+          "role": "Open standard for streaming massive heterogeneous 3D geospatial datasets.",
+          "fit": "Data interchange target when scenes need to move between CesiumJS, Cesium for Unreal, and other 3D geospatial renderers.",
+          "url": "https://docs.ogc.org/cs/22-025r4/22-025r4.html"
+        }
+      ]
+    },
+    {
+      "id": "military-visual-language",
+      "name": "Military Visual Language",
+      "tools": [
+        {
+          "id": "milsymbol",
+          "name": "milsymbol",
+          "role": "JavaScript generator for MIL-STD-2525 and STANAG APP-6 symbols.",
+          "fit": "Reference for tactical graphic grammar and optional modern-war overlays; ancient unit markers still need era-specific illustrations.",
+          "url": "https://github.com/spatialillusions/milsymbol"
+        },
+        {
+          "id": "arcgis-military-dictionary",
+          "name": "ArcGIS Military Dictionary Styles",
+          "role": "Dictionary-rendered APP-6 and MIL-STD-2525 symbol standards in ArcGIS.",
+          "fit": "Professional reference for standards coverage, not a direct dependency for this React app.",
+          "url": "https://developers.arcgis.com/documentation/mapping-and-location-services/data-visualization/resources/military-symbology-styles/"
+        }
+      ]
+    }
+  ],
+  "baselinePipeline": [
+    "Define battle AOI, historical uncertainty, and tactical feature list.",
+    "Fetch DEM/source reference data through OpenTopography/Copernicus/SRTM and record license/source notes.",
+    "Use QGIS to georeference historical maps and digitize battlefield features with GCP evidence.",
+    "Use GDAL to warp/clip DEM, generate hillshade/slope/contours, and export reproducible derivatives.",
+    "Package historical features as GeoJSON first; promote to Tippecanoe/PMTiles/Martin when feature volume or performance requires it.",
+    "Render in MapLibre by default for map-first tactical animations; evaluate MapLibre+Three, CesiumJS, deck.gl, Babylon.js, or Three.js when SVG overlays cannot carry unit depth, terrain-height placement, lighting, or animated models.",
+    "Escalate to Unreal/Cesium or Unity/Godot only when the scene needs professional cinematic terrain, real 3D camera blocking, collision/physics/navigation, or offline video-grade rendering beyond what a web map can responsibly provide.",
+    "Run Tactical Terrain Studio audits for camera envelope, unit density, route handoffs, feature crossings, closed pockets, winner-remains-on-field, and screenshot evidence."
+  ]
+}

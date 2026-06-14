@@ -3,6 +3,7 @@ import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   battleEvents,
+  contactScrums,
   formations,
   historicalRegions,
   mapPoints,
@@ -10,6 +11,7 @@ import {
   tacticalGraphics,
   terrainFeatures,
   type CannaeEvent,
+  type CannaeContactScrum,
   type CannaeFormation,
   type CannaeRoute,
   type CannaeTacticalGraphic,
@@ -70,29 +72,42 @@ type ProjectedOverlayRouteState = Omit<CannaeTerrainRouteState, "labelPoint" | "
   labelPoint: TacticalPoint | null;
   markerPoint: TacticalPoint | null;
   unitMotion: "march" | "pressure" | "static";
-  unitTrackPlacements?: Array<{ facingX: 1 | -1; point: TacticalPoint; routeProgress: number }>;
+  unitTrackPlacements?: CannaeProjectedUnitPlacement[];
   visiblePoints: TacticalPoint[];
+};
+
+type CannaeProjectedUnitPlacement = {
+  facingX: 1 | -1;
+  point: TacticalPoint;
+  routeId: string;
+  routeProgress: number;
 };
 
 type OverlayGeometry = {
   activeEffectPlacement: CannaeTerrainEffectPlacement | null;
+  contactScrums: Array<CannaeContactScrum & { points: TacticalPoint[]; visibleRatio: number }>;
   eventPins: Array<{ id: string; isCurrent: boolean; passed: boolean; point: TacticalPoint | null; title: string }>;
   formations: Array<CannaeFormation & { labelPoint: TacticalPoint | null; points: TacticalPoint[]; rankGuides: TacticalPoint[][]; rankPoints: TacticalPoint[] }>;
   historicalRegions: Array<{ id: string; kind: string; label: string; labelPoint: TacticalPoint | null; points: TacticalPoint[] }>;
   mapPoints: Array<{ id: string; kind: string; label: string; point: TacticalPoint | null; revealAt?: string }>;
   rivers: Array<{ id: string; label: string; labelPoint: TacticalPoint | null; points: TacticalPoint[] }>;
   routes: ProjectedOverlayRouteState[];
-  tacticalGraphics: Array<CannaeTacticalGraphic & { labelPoint: TacticalPoint | null; points: TacticalPoint[] }>;
+  tacticalGraphics: Array<CannaeTacticalGraphic & { labelPoint: TacticalPoint | null; points: TacticalPoint[]; segments: TacticalPoint[][] }>;
   terrainFeatures: Array<CannaeTerrainFeature & { labelPoint: TacticalPoint | null; points: TacticalPoint[] }>;
 };
 
 const cannaeBounds: [[number, number], [number, number]] = [
-  [16.06, 41.262],
-  [16.238, 41.325]
+  [16.048, 41.256],
+  [16.25, 41.331]
 ];
-const cannaeSourceBounds: [number, number, number, number] = [16.06, 41.262, 16.238, 41.325];
+const cannaeSourceBounds: [number, number, number, number] = [16.048, 41.256, 16.25, 41.331];
+const terrainTileUrl = "/assets/maps/cannae-real-terrain/terrarium/{z}/{x}-{y}.png";
+const cachedTerrainTileZoom = 14;
+const minCachedTileZoom = 10;
+const terrainExaggeration = 1;
+const hillshadeExaggeration = 0.08;
 const cameraTransitionDurationMs = 1050;
-const tacticalCameraPitch = 56;
+const tacticalCameraPitch = 60;
 
 function closedCoordinates(points: TacticalPoint[]) {
   if (points.length === 0) {
@@ -158,6 +173,26 @@ const cannaeTerrainStyle: StyleSpecification = {
     "cannae-historical-water": {
       type: "geojson",
       data: cannaeHistoricalWaterData
+    },
+    "cannae-real-dem": {
+      type: "raster-dem",
+      tiles: [terrainTileUrl],
+      bounds: cannaeSourceBounds,
+      encoding: "terrarium",
+      tileSize: 256,
+      minzoom: minCachedTileZoom,
+      maxzoom: cachedTerrainTileZoom,
+      attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
+    },
+    "cannae-hillshade-dem": {
+      type: "raster-dem",
+      tiles: [terrainTileUrl],
+      bounds: cannaeSourceBounds,
+      encoding: "terrarium",
+      tileSize: 256,
+      minzoom: minCachedTileZoom,
+      maxzoom: cachedTerrainTileZoom,
+      attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
     }
   },
   layers: [
@@ -251,8 +286,23 @@ const cannaeTerrainStyle: StyleSpecification = {
         "line-opacity": 0.86,
         "line-width": 6
       }
+    },
+    {
+      id: "cannae-dem-hillshade",
+      type: "hillshade",
+      source: "cannae-hillshade-dem",
+      paint: {
+        "hillshade-accent-color": "#7a7350",
+        "hillshade-exaggeration": hillshadeExaggeration,
+        "hillshade-highlight-color": "#fff0c3",
+        "hillshade-shadow-color": "#5a563d"
+      }
     }
-  ]
+  ],
+  terrain: {
+    source: "cannae-real-dem",
+    exaggeration: terrainExaggeration
+  }
 };
 
 function clamp(value: number, min = 0, max = 1) {
@@ -335,6 +385,7 @@ function formationUnitPlacement(points: TacticalPoint[], progress: number, offse
   return {
     facingX: routeFacingX(points, unitProgress),
     point: routeLocalOffset(pointOnRoute, direction, [clampedAlongOverflow, cross * offsetScale]),
+    routeId: "",
     routeProgress: unitProgress
   };
 }
@@ -366,11 +417,147 @@ function trackPoint(track: CannaeUnitTrack, progress: number) {
   ] as TacticalPoint;
 }
 
-function trackFacingX(track: CannaeUnitTrack): 1 | -1 {
-  if (track.facingX) {
-    return track.facingX;
+function trackRouteFacingX(map: maplibregl.Map, track: CannaeUnitTrack, routeProgress: number): 1 | -1 {
+  const previous = projectPoint(map, trackPoint(track, Math.max(0, routeProgress - 0.024)));
+  const next = projectPoint(map, trackPoint(track, Math.min(1, routeProgress + 0.024)));
+  if (previous && next && Math.abs(next[0] - previous[0]) > 2) {
+    return next[0] < previous[0] ? -1 : 1;
   }
-  return track.to[0] - track.from[0] < -0.001 ? -1 : 1;
+  return track.facingX ?? (track.to[0] - track.from[0] < -0.001 ? -1 : 1);
+}
+
+function nearestEnemyFacingX(
+  placement: CannaeProjectedUnitPlacement,
+  route: CannaeRoute,
+  candidateRoutes: Array<{ route: CannaeRoute; unitTrackPlacements?: CannaeProjectedUnitPlacement[] }>
+): 1 | -1 {
+  if (route.routeKind === "deploy" || route.unitKind.includes("command")) {
+    return placement.facingX;
+  }
+
+  let nearest: { distance: number; point: TacticalPoint } | null = null;
+
+  for (const candidateRoute of candidateRoutes) {
+    if (candidateRoute.route.faction === route.faction) {
+      continue;
+    }
+    for (const candidate of candidateRoute.unitTrackPlacements ?? []) {
+      const dx = candidate.point[0] - placement.point[0];
+      const dy = candidate.point[1] - placement.point[1];
+      const candidateDistance = Math.hypot(dx, dy);
+      if (!nearest || candidateDistance < nearest.distance) {
+        nearest = { distance: candidateDistance, point: candidate.point };
+      }
+    }
+  }
+
+  if (nearest && nearest.distance < 210 && Math.abs(nearest.point[0] - placement.point[0]) > 2.6) {
+    return nearest.point[0] < placement.point[0] ? -1 : 1;
+  }
+  return placement.facingX;
+}
+
+function routeTrackPlacements(map: maplibregl.Map, state: CannaeTerrainRouteState, progress: number): CannaeProjectedUnitPlacement[] | undefined {
+  if (state.route.unitTracks) {
+    return state.route.unitTracks
+      .map((track) => {
+      const trackIndex = Number(track.id.match(/\d+$/)?.[0] ?? 0);
+      const point = projectPoint(map, trackPoint(track, state.routeProgress));
+      const kineticPoint = point ? kineticPressurePoint(point, state.route, trackIndex, progress, state.routeProgress) : null;
+      return point
+        ? {
+            facingX: trackRouteFacingX(map, track, state.routeProgress),
+            point: kineticPoint ?? point,
+            routeId: state.route.id,
+            routeProgress: state.routeProgress
+        }
+        : null;
+      })
+      .filter((placement): placement is CannaeProjectedUnitPlacement => Boolean(placement));
+  }
+
+  const projectedPrelude = projectLine(map, state.route.formationPrelude ?? []);
+  const projectedVisiblePoints = projectLine(map, state.visiblePoints);
+  const formationRoutePoints = projectedPrelude.length > 0 ? [...projectedPrelude, ...projectedVisiblePoints] : projectedVisiblePoints;
+  if (formationRoutePoints.length < 2) {
+    return undefined;
+  }
+
+  return routeUnitOffsets(state.route).map((offset, index, offsets) => {
+    const [along, cross] = offset;
+    const routeSpread = routeSpreadForKind(state.route);
+    const unitProgress = clamp(1 - (index / Math.max(1, offsets.length - 1)) * routeSpread);
+    const placement = formationUnitPlacement(formationRoutePoints, unitProgress, [along * 0.34, cross], routeOffsetScaleForKind(state.route));
+    return {
+      ...placement,
+      routeId: state.route.id
+    };
+  });
+}
+
+function routeVisualLodModulo(route: CannaeRoute, routeProgress: number, globalProgress: number) {
+  const isLateResult = globalProgress >= 0.9;
+  const isOpening = globalProgress < 0.35;
+  if (route.unitKind.includes("command")) {
+    return 1;
+  }
+  if (isOpening && route.routeKind === "deploy" && !route.unitKind.includes("cavalry")) {
+    return route.faction === "roman" ? 2 : 3;
+  }
+  if (isOpening && route.unitKind.includes("cavalry")) {
+    return 3;
+  }
+  if (route.id === "carthaginian-center-forward" && globalProgress >= 0.34) {
+    return 2;
+  }
+  if ((route.id === "african-left-hold" || route.id === "african-right-hold") && globalProgress >= 0.34) {
+    return 3;
+  }
+  if (route.routeKind === "cavalry" && globalProgress >= 0.34) {
+    return 3;
+  }
+  if (route.routeKind === "advance" && globalProgress < 0.45) {
+    return route.faction === "roman" ? 3 : 2;
+  }
+  if (route.routeKind === "advance" && globalProgress >= 0.35) {
+    return route.faction === "roman" ? 3 : 2;
+  }
+  if (route.routeKind === "yield" && globalProgress >= 0.35) {
+    return 3;
+  }
+  if (route.routeKind === "collapse") {
+    return isLateResult ? 2 : 1;
+  }
+  if (route.routeKind === "compression") {
+    if (route.faction === "roman") {
+      return globalProgress >= 0.45 ? 3 : routeProgress > 0.82 ? 2 : 1;
+    }
+    return isLateResult ? 2 : globalProgress >= 0.45 ? 2 : routeProgress > 0.72 ? 2 : 1;
+  }
+  if (route.routeKind === "wing-turn") {
+    return routeProgress > 0.5 || globalProgress >= 0.5 || isLateResult ? 3 : 2;
+  }
+  if (route.routeKind === "rear-seal") {
+    return isLateResult ? 2 : 1;
+  }
+  return 1;
+}
+
+function routeVisualLodPhase(route: CannaeRoute) {
+  return route.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
+function applyRouteVisualLod(route: CannaeRoute, placements: CannaeProjectedUnitPlacement[] | undefined, routeProgress: number, globalProgress: number) {
+  if (!placements?.length) {
+    return placements;
+  }
+  const modulo = routeVisualLodModulo(route, routeProgress, globalProgress);
+  if (modulo <= 1) {
+    return placements;
+  }
+  const phase = routeVisualLodPhase(route) % modulo;
+  const filtered = placements.filter((_, index) => index === 0 || index === placements.length - 1 || index % modulo === phase);
+  return filtered.length >= Math.min(3, placements.length) ? filtered : placements.slice(0, Math.min(placements.length, 3));
 }
 
 function formationFrontSamples(points: TacticalPoint[], count: number) {
@@ -469,10 +656,22 @@ function isRevealed(revealAt: string | undefined, progress: number, dateToProgre
   return !revealAt || progress >= dateToProgress(revealAt);
 }
 
+function isVisibleWindow(revealAt: string | undefined, visibleUntil: string | undefined, progress: number, dateToProgress: (date: string) => number) {
+  const start = revealAt ? dateToProgress(revealAt) : 0;
+  const end = visibleUntil ? dateToProgress(visibleUntil) : 1;
+  return progress >= start && progress < end;
+}
+
 function isFormationVisible(formation: CannaeFormation, progress: number, dateToProgress: (date: string) => number) {
   const start = dateToProgress(formation.start);
   const end = formation.end ? dateToProgress(formation.end) : 1;
   return progress >= start && progress <= end;
+}
+
+function visibleRatioForWindow(start: string, end: string, progress: number, dateToProgress: (date: string) => number) {
+  const startProgress = dateToProgress(start);
+  const endProgress = dateToProgress(end);
+  return clamp((progress - startProgress) / Math.max(0.0001, endProgress - startProgress));
 }
 
 function routeUnitOffsets(route: CannaeRoute) {
@@ -501,22 +700,50 @@ function routeKineticAmplitude(route: CannaeRoute) {
     return 0;
   }
   if (route.routeKind === "collapse") {
-    return 2.1;
+    return 2.8;
   }
   if (route.routeKind === "compression") {
-    return 1.4;
+    return 1.9;
   }
   if (route.routeKind === "rear-seal" || route.routeKind === "wing-turn") {
-    return 1.2;
+    return 1.55;
   }
   if (route.routeKind === "cavalry") {
-    return 1.1;
+    return 1.35;
   }
   if (route.routeKind === "yield" || route.routeKind === "advance") {
-    return 1;
+    return 1.25;
   }
   if (route.routeKind === "deploy") {
     return 0.45;
+  }
+  return 0;
+}
+
+function routeBattleElasticityAmplitude(route: CannaeRoute) {
+  if (route.unitKind.includes("command") || route.routeKind === "deploy") {
+    return 0;
+  }
+  if (route.routeKind === "collapse") {
+    return route.faction === "roman" ? 3.8 : 2.4;
+  }
+  if (route.routeKind === "compression") {
+    return route.faction === "roman" ? 2.8 : 2.4;
+  }
+  if (route.routeKind === "wing-turn") {
+    return 2.3;
+  }
+  if (route.routeKind === "rear-seal") {
+    return 2.0;
+  }
+  if (route.routeKind === "yield") {
+    return 1.7;
+  }
+  if (route.routeKind === "advance") {
+    return 1.4;
+  }
+  if (route.routeKind === "cavalry") {
+    return 1.2;
   }
   return 0;
 }
@@ -537,12 +764,24 @@ function kineticPressurePoint(point: TacticalPoint, route: CannaeRoute, index: n
   const routeSeed = route.id.length * 0.37 + index * 0.83;
   const activeEnvelope = route.routeKind === "deploy" ? Math.sin(Math.PI * clamp(routeProgress)) : 1;
   const pressure = amplitude * Math.max(0.24, activeEnvelope);
+  const elasticity = routeBattleElasticityAmplitude(route) * Math.max(0, Math.min(1, routeProgress * 1.8));
   const slowPressure = Math.sin(globalProgress * 41 + routeSeed) * pressure * 0.42;
-  const closeOrderFriction = Math.cos(globalProgress * 29 + routeSeed * 1.7) * pressure * 0.18;
-  const disorder = route.routeKind === "collapse" ? Math.sin(globalProgress * 63 + index * 1.41) * pressure * 0.82 : 0;
+  const closeOrderFriction = Math.cos(globalProgress * 29 + routeSeed * 1.7) * pressure * 0.24;
+  const sideJostle =
+    route.routeKind === "compression" || route.routeKind === "wing-turn" || route.routeKind === "rear-seal"
+      ? Math.sin(globalProgress * 57 + index * 0.71) * pressure * 0.26
+      : 0;
+  const disorder = route.routeKind === "collapse" ? Math.sin(globalProgress * 63 + index * 1.41) * pressure * 0.92 : 0;
+  const elasticRank = Math.sin(routeSeed * 1.91 + index * 0.97) * elasticity;
+  const elasticFile = Math.cos(routeSeed * 1.37 + index * 1.29) * elasticity;
+  const collisionPulse = Math.sin(globalProgress * 73 + routeSeed * 0.9) * elasticity * 0.28;
+  const factionPressureX =
+    route.routeKind === "compression" || route.routeKind === "wing-turn" || route.routeKind === "rear-seal"
+      ? (route.faction === "carthaginian" ? -1 : 1) * collisionPulse
+      : 0;
   return [
-    point[0] + slowPressure * 0.26 + disorder * 0.42,
-    point[1] + closeOrderFriction + disorder * 0.28
+    point[0] + slowPressure * 0.28 + sideJostle * 0.2 + disorder * 0.42 + elasticRank * 0.62 + factionPressureX,
+    point[1] + closeOrderFriction + sideJostle * 0.34 + disorder * 0.3 + elasticFile * 0.72
   ] as TacticalPoint;
 }
 
@@ -671,8 +910,33 @@ function computeOverlayGeometry({
   progress: number;
   projectedRoutes: CannaeTerrainRouteState[];
 }) {
+  const routePlacementPass = projectedRoutes.map((state) => ({
+    ...state,
+    formationPreludePoints: projectLine(map, state.route.formationPrelude ?? []),
+    labelPoint: projectPoint(map, state.labelPoint),
+    markerPoint: projectPoint(map, state.markerPoint),
+    unitMotion: routeUnitMotion(state.route),
+    unitTrackPlacements: state.showUnits ? applyRouteVisualLod(state.route, routeTrackPlacements(map, state, progress), state.routeProgress, progress) : undefined,
+    visiblePoints: projectLine(map, state.visiblePoints)
+  }));
+  const routeProjectionPass = routePlacementPass.map((state) => ({
+    ...state,
+    unitTrackPlacements: state.unitTrackPlacements?.map((placement) => ({
+      ...placement,
+      facingX: nearestEnemyFacingX(placement, state.route, routePlacementPass)
+    }))
+  }));
+
   return {
     activeEffectPlacement: activeEffectPlacement ? projectEffectPlacement(map, activeEffectPlacement) : null,
+    contactScrums: contactScrums
+      .filter((scrum) => isVisibleWindow(scrum.start, scrum.end, progress, dateToProgress))
+      .map((scrum) => ({
+        ...scrum,
+        points: projectLine(map, scrum.points),
+        visibleRatio: visibleRatioForWindow(scrum.start, scrum.end, progress, dateToProgress)
+      }))
+      .filter((scrum) => scrum.points.length >= 2),
     eventPins: battleEvents.map((event) => ({
       id: event.id,
       isCurrent: event.id === activeEvent.id,
@@ -708,31 +972,16 @@ function computeOverlayGeometry({
         points
       };
     }),
-    routes: projectedRoutes.map((state) => ({
-      ...state,
-      formationPreludePoints: projectLine(map, state.route.formationPrelude ?? []),
-      labelPoint: projectPoint(map, state.labelPoint),
-      markerPoint: projectPoint(map, state.markerPoint),
-      unitTrackPlacements: state.route.unitTracks
-        ?.map((track) => {
-          const trackIndex = Number(track.id.match(/\d+$/)?.[0] ?? 0);
-          const point = projectPoint(map, trackPoint(track, state.routeProgress));
-          const kineticPoint = point ? kineticPressurePoint(point, state.route, trackIndex, progress, state.routeProgress) : null;
-          return point
-            ? {
-                facingX: trackFacingX(track),
-                point: kineticPoint ?? point,
-                routeProgress: state.routeProgress
-              }
-            : null;
-        })
-        .filter((placement): placement is { facingX: 1 | -1; point: TacticalPoint; routeProgress: number } => Boolean(placement)),
-      unitMotion: routeUnitMotion(state.route),
-      visiblePoints: projectLine(map, state.visiblePoints)
-    })),
+    routes: routeProjectionPass,
     tacticalGraphics: tacticalGraphics
-      .filter((graphic) => isRevealed(graphic.revealAt, progress, dateToProgress))
-      .map((graphic) => ({ ...graphic, labelPoint: projectPoint(map, graphic.labelCoordinates), points: projectLine(map, graphic.points) })),
+      .filter((graphic) => isVisibleWindow(graphic.revealAt, graphic.visibleUntil, progress, dateToProgress))
+      .map((graphic) => {
+        const projectedPoints = projectLine(map, graphic.points);
+        const segments = (graphic.segments ?? [graphic.points])
+          .map((segment) => projectLine(map, segment))
+          .filter((segment) => segment.length >= 2);
+        return { ...graphic, labelPoint: projectPoint(map, graphic.labelCoordinates), points: projectedPoints, segments };
+      }),
     terrainFeatures: terrainFeatures
       .filter((feature) => isRevealed(feature.revealAt, progress, dateToProgress))
       .map((feature) => ({ ...feature, labelPoint: projectPoint(map, feature.labelCoordinates), points: projectLine(map, feature.coordinates) }))
@@ -749,16 +998,16 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
     (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
     (Math.min(...latitudes) + Math.max(...latitudes)) / 2
   ];
-  const fittedWeight = span < 0.032 ? 0.1 : span < 0.05 ? 0.2 : 0.34;
+  const fittedWeight = span < 0.032 ? 0.16 : span < 0.05 ? 0.24 : 0.34;
   const userPanX = mapView.x - mapBaseView.x;
   const userPanY = mapView.y - mapBaseView.y;
   const userZoomDelta = mapView.scale - mapBaseView.scale;
-  const stageScaleBoost = Math.log2(Math.max(cameraScale, 0.46) / 0.78) * 0.72;
+  const stageScaleBoost = Math.log2(Math.max(cameraScale, 0.46) / 0.78) * 0.76;
   const center: TacticalPoint = [
     focusCoordinates[0] * (1 - fittedWeight) + envelopeCenter[0] * fittedWeight - userPanX / 10800 / Math.max(mapView.scale, 0.1),
     focusCoordinates[1] * (1 - fittedWeight) + envelopeCenter[1] * fittedWeight + userPanY / 12800 / Math.max(mapView.scale, 0.1)
   ];
-  const fittedZoom = span < 0.02 ? 13.88 : span < 0.028 ? 13.72 : span < 0.038 ? 13.5 : span < 0.052 ? 13.22 : 12.92;
+  const fittedZoom = span < 0.02 ? 13.56 : span < 0.028 ? 13.48 : span < 0.038 ? 13.3 : span < 0.052 ? 13.08 : 12.86;
   const stageZoom = fittedZoom + stageScaleBoost;
 
   const minZoom = cameraScale < 0.82 ? 11.72 : 12.15;
@@ -767,7 +1016,7 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
     bearing: cameraBearing,
     center: [Math.max(16.075, Math.min(16.222, center[0])), Math.max(41.268, Math.min(41.304, center[1]))] as [number, number],
     pitch: tacticalCameraPitch,
-    zoom: Math.max(minZoom, Math.min(14.55, stageZoom + userZoomDelta * 1.1))
+    zoom: Math.max(minZoom, Math.min(14.62, stageZoom + userZoomDelta * 1.1))
   };
 }
 
@@ -781,25 +1030,40 @@ function markMapCanvas(container: HTMLDivElement, map?: maplibregl.Map | null) {
   return true;
 }
 
-function CannaeUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: CannaeUnitKind }) {
+function CannaeUnitIcon({ facingX, kind, unitIndex }: { facingX: 1 | -1; kind: CannaeUnitKind; unitIndex: number }) {
   const faction = kind.startsWith("roman") || kind.startsWith("paullus") ? "roman" : "carthaginian";
+  const assetVersion = "20260614-runtime-lod-v1";
+  const cannaeUnitAsset = (assetPath: string) => `${publicPath(assetPath)}?v=${assetVersion}`;
   const imageConfig: Record<CannaeUnitKind, { height: number; href: string; width: number }> = {
-    "african-infantry": { height: 68, href: publicPath("/assets/unit-icons/cannae-african-infantry.webp"), width: 56 },
-    "carthaginian-cavalry": { height: 60, href: publicPath("/assets/unit-icons/cannae-carthaginian-cavalry.webp"), width: 84 },
-    "carthaginian-infantry": { height: 68, href: publicPath("/assets/unit-icons/cannae-carthaginian-infantry.webp"), width: 56 },
-    "hannibal-command": { height: 70, href: publicPath("/assets/unit-icons/cannae-hannibal-command.webp"), width: 58 },
-    "numidian-cavalry": { height: 60, href: publicPath("/assets/unit-icons/cannae-numidian-cavalry.webp"), width: 84 },
-    "paullus-command": { height: 70, href: publicPath("/assets/unit-icons/cannae-paullus-command.webp"), width: 58 },
-    "roman-cavalry": { height: 60, href: publicPath("/assets/unit-icons/cannae-roman-cavalry.webp"), width: 84 },
-    "roman-legion": { height: 68, href: publicPath("/assets/unit-icons/cannae-roman-legion.webp"), width: 56 }
+    "african-infantry": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-african-infantry.webp"), width: 41 },
+    "carthaginian-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-cavalry.webp"), width: 81 },
+    "carthaginian-infantry": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-iberian-gaul-infantry.webp"), width: 40 },
+    "hannibal-command": { height: 58, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-command.webp"), width: 46 },
+    "numidian-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-numidian-cavalry.webp"), width: 81 },
+    "paullus-command": { height: 58, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-command.webp"), width: 46 },
+    "roman-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-cavalry.webp"), width: 81 },
+    "roman-legion": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-legion.webp"), width: 39 }
   };
   const config = imageConfig[kind];
   const x = -config.width / 2;
   const y = -config.height / 2;
 
+  const badgeLabel = {
+    "african-infantry": "非",
+    "carthaginian-cavalry": "迦骑",
+    "carthaginian-infantry": "迦",
+    "hannibal-command": "汉",
+    "numidian-cavalry": "努",
+    "paullus-command": "保",
+    "roman-cavalry": "罗骑",
+    "roman-legion": "罗"
+  } satisfies Record<CannaeUnitKind, string>;
+  const isCommand = kind.includes("command");
+  const showBadge = false;
+  const badgeRadius = 8.8;
+
   return (
     <g className={`cannae-unit cannae-unit-${faction} cannae-unit-${kind}`} data-testid={`cannae-unit-${kind}`} data-facing-x={facingX}>
-      <ellipse className="cannae-unit-ground-shadow" cx="10" cy={config.height * 0.39} rx={config.width * 0.28} ry="4.8" />
       <g transform={`scale(${facingX} 1)`}>
         <image
           className="cannae-unit-image"
@@ -812,9 +1076,38 @@ function CannaeUnitIcon({ facingX, kind }: { facingX: 1 | -1; kind: CannaeUnitKi
           height={config.height}
         />
       </g>
-      <g className={`cannae-unit-badge cannae-unit-badge-${faction}`}>
-        <circle cx={-config.width * 0.36} cy={-config.height * 0.34} r="3.8" />
-      </g>
+      {showBadge && (
+        <g className="cannae-unit-badge is-command-badge">
+          <circle cx={-config.width * 0.24} cy={-config.height * 0.33} r={badgeRadius} />
+          <text x={-config.width * 0.24} y={-config.height * 0.33 + 3.3}>
+            {badgeLabel[kind]}
+          </text>
+        </g>
+      )}
+    </g>
+  );
+}
+
+function ScrumStroke({ scrum }: { scrum: OverlayGeometry["contactScrums"][number] }) {
+  const visibleCount = Math.max(2, Math.ceil(scrum.points.length * Math.max(0.25, scrum.visibleRatio)));
+  const points = scrum.points.slice(0, visibleCount);
+  return (
+    <g
+      className={`cannae-contact-scrum cannae-contact-scrum-${scrum.kind}`}
+      data-contact-kind={scrum.kind}
+      data-faction-mix={scrum.factionMix}
+      data-testid={`cannae-contact-scrum-${scrum.id}`}
+      opacity={0.42 + scrum.intensity * 0.34}
+    >
+      <path className="cannae-contact-scrum-shadow" d={buildPath(points)} />
+      <path className="cannae-contact-scrum-line" d={buildPath(points)} />
+      {points.map((point, index) => (
+        <path
+          key={`${scrum.id}-slash-${index}`}
+          className="cannae-contact-scrum-slash"
+          d={`M ${(point[0] - 5 - (index % 2) * 2).toFixed(1)} ${(point[1] - 3 + (index % 3)).toFixed(1)} L ${(point[0] + 5 + (index % 2) * 2).toFixed(1)} ${(point[1] + 3 - (index % 3)).toFixed(1)}`}
+        />
+      ))}
     </g>
   );
 }
@@ -842,16 +1135,16 @@ function ActiveEffect({ placement }: { event: CannaeEvent; placement: CannaeTerr
             transform={`translate(${contact.point[0]} ${contact.point[1]})`}
           >
             <path className="cannae-contact-tether" d={relativeContactPath(contact)} />
-            <circle r={index === 0 ? 27 : 21} />
-            <circle r={index === 0 ? 47 : 36} />
-            <path d="M -23 -23 L 23 23 M 23 -23 L -23 23" />
+            <circle r={index === 0 ? 17 : 13} />
+            <circle r={index === 0 ? 29 : 22} />
+            <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" />
           </g>
         ))
       ) : (
         <g className="cannae-melee-effect is-primary-contact" data-effect-source={placement.source} data-testid="cannae-melee-effect" transform={`translate(${placement.point[0]} ${placement.point[1]})`}>
-          <circle r="27" />
-          <circle r="47" />
-          <path d="M -23 -23 L 23 23 M 23 -23 L -23 23" />
+          <circle r="17" />
+          <circle r="29" />
+          <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" />
         </g>
       )}
     </g>
@@ -902,17 +1195,17 @@ function CannaeTacticalOverlay({
   activeRouteIds: Set<string>;
   geometry: OverlayGeometry;
 }) {
+  const isResultState = activeEvent.id === "battle-result";
   const activeAnchorIds = new Set(
     geometry.routes.filter((state) => state.isVisible && (state.active || activeRouteIds.has(state.route.id))).map((state) => state.route.positionAnchor).filter((anchor): anchor is string => Boolean(anchor))
   );
   return (
-    <svg className="cannae-maplibre-tactical-overlay" data-testid="cannae-maplibre-tactical-overlay" data-projection="maplibre-pitched-geographic-overlay" aria-hidden="true">
-      <defs>
-        <filter id="cannaeUnitGlow" x="-60%" y="-70%" width="220%" height="230%">
-          <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#ffd36f" floodOpacity="0.4" />
-          <feDropShadow dx="0" dy="7" stdDeviation="5" floodColor="#1d1710" floodOpacity="0.42" />
-        </filter>
-      </defs>
+    <svg
+      className={`cannae-maplibre-tactical-overlay ${isResultState ? "is-result-state" : ""}`}
+      data-testid="cannae-maplibre-tactical-overlay"
+      data-projection="maplibre-pitched-geographic-overlay"
+      aria-hidden="true"
+    >
       <g className="cannae-terrain-base" data-testid="cannae-terrain-layer">
         {geometry.terrainFeatures.map((feature) => (
           <g key={feature.id} className={`cannae-terrain-feature cannae-terrain-${feature.kind}`} data-confidence={feature.confidence} data-testid={`cannae-terrain-${feature.id}`}>
@@ -954,7 +1247,9 @@ function CannaeTacticalOverlay({
       <g className="cannae-tactical-graphics" data-testid="cannae-tactical-graphics-layer">
         {geometry.tacticalGraphics.map((graphic) => (
           <g key={graphic.id} className={`cannae-tactical-graphic cannae-tactical-graphic-${graphic.kind}`} data-testid={`cannae-tactical-graphic-${graphic.id}`}>
-            <path d={`${buildPath(graphic.points)}${graphic.kind === "yield-zone" ? " Z" : ""}`} />
+            {graphic.segments.map((segment, index) => (
+              <path key={`${graphic.id}-segment-${index}`} d={`${buildPath(segment)}${graphic.kind === "yield-zone" ? " Z" : ""}`} />
+            ))}
             {graphic.labelPoint && (
               <text x={graphic.labelPoint[0]} y={graphic.labelPoint[1] - 10}>
                 {graphic.label}
@@ -968,6 +1263,11 @@ function CannaeTacticalOverlay({
           <OverlayFormation key={formation.id} activeAnchorIds={activeAnchorIds} formation={formation} />
         ))}
       </g>
+      <g className="cannae-contact-scrums" data-testid="cannae-contact-scrums-layer">
+        {geometry.contactScrums.map((scrum) => (
+          <ScrumStroke key={scrum.id} scrum={scrum} />
+        ))}
+      </g>
       <g className="cannae-routes" data-testid="cannae-route-layer">
         {geometry.routes.map((state) => {
           const { active, formationPreludePoints, isComplete, isVisible, labelPoint, markerPoint, route, routeProgress, showUnits, unitMotion, unitTrackPlacements, visiblePoints } = state;
@@ -976,13 +1276,13 @@ function CannaeTacticalOverlay({
           }
           const labelOffset = route.labelOffset ?? [10, -12];
           const isCurrentRoute = activeRouteIds.has(route.id);
-          const showRouteLabel = Boolean(labelPoint && isCurrentRoute);
-          const formationRoutePoints = formationPreludePoints.length > 0 ? [...formationPreludePoints, ...visiblePoints] : visiblePoints;
+          const showRouteLabel = Boolean(labelPoint && isCurrentRoute && !isResultState);
           return (
             <g
               key={route.id}
               className={`cannae-route cannae-route-${route.faction} cannae-route-${route.routeKind} ${active ? "is-active" : isComplete ? "is-complete" : "is-forming"}`}
               data-confidence={route.confidence}
+              data-faction={route.faction}
               data-formation-prelude-count={route.formationPrelude?.length ?? 0}
               data-position-anchor={route.positionAnchor ?? ""}
               data-route-complete={isComplete ? "true" : "false"}
@@ -997,23 +1297,19 @@ function CannaeTacticalOverlay({
               <path className="cannae-route-line" d={buildPath(visiblePoints)} />
               <path className="cannae-route-highlight" d={buildPath(visiblePoints)} />
               {showUnits &&
-                (unitTrackPlacements ??
-                  routeUnitOffsets(route).map((offset, index, offsets) => {
-                    const [along, cross] = offset;
-                    const routeSpread = routeSpreadForKind(route);
-                    const unitProgress = clamp(1 - (index / Math.max(1, offsets.length - 1)) * routeSpread);
-                    return formationUnitPlacement(formationRoutePoints, unitProgress, [along * 0.34, cross], routeOffsetScaleForKind(route));
-                  })).map((placement, index) => {
+                unitTrackPlacements?.map((placement, index) => {
                   return (
                     <g
                       key={`${route.id}-unit-${index}`}
-                      className="cannae-unit-holder"
+                      className={`cannae-unit-holder cannae-battle-unit cannae-unit-${route.faction === "roman" ? "rome" : "carthage"}`}
+                      data-faction={route.faction}
+                      data-route-id={route.id}
                       data-route-progress={routeProgress.toFixed(4)}
                       data-unit-route-progress={placement.routeProgress.toFixed(4)}
                       data-testid={`cannae-route-unit-${route.id}-${index}`}
                       transform={`translate(${placement.point[0]} ${placement.point[1]})`}
                     >
-                    <CannaeUnitIcon kind={route.unitKind} facingX={placement.facingX} />
+                      <CannaeUnitIcon kind={route.unitKind} facingX={placement.facingX} unitIndex={index} />
                     </g>
                   );
                 })}
@@ -1080,6 +1376,24 @@ export function CannaeTerrain3D({
   const lastCameraEventIdRef = useRef(activeEvent.id);
   const [geometry, setGeometry] = useState<OverlayGeometry | null>(null);
   const latestStateRef = useRef({ activeEffectPlacement, activeEvent, progress, projectedRoutes });
+  const visibleUnitStats = useMemo(() => {
+    const visibleRoutes = projectedRoutes.filter((state) => state.isVisible && state.showUnits);
+    const routeUnitCount = (state: CannaeTerrainRouteState) => {
+      const logicalCount = state.route.unitTracks?.length ?? state.route.unitOffsets?.length ?? 0;
+      const modulo = routeVisualLodModulo(state.route, state.routeProgress, progress);
+      if (modulo <= 1) {
+        return logicalCount;
+      }
+      return Math.max(Math.min(3, logicalCount), Math.ceil(logicalCount / modulo));
+    };
+    return {
+      carthage: visibleRoutes.filter((state) => state.route.faction === "carthaginian").reduce((sum, state) => sum + routeUnitCount(state), 0),
+      leftJaw: visibleRoutes.filter((state) => state.route.id === "african-left-inward-turn" || state.route.id === "carthaginian-pocket-tighten").reduce((sum, state) => sum + routeUnitCount(state), 0),
+      rearClosure: visibleRoutes.filter((state) => state.route.id === "heavy-cavalry-rear-ride" || state.route.id === "numidian-rear-pressure").reduce((sum, state) => sum + routeUnitCount(state), 0),
+      rightJaw: visibleRoutes.filter((state) => state.route.id === "african-right-inward-turn" || state.route.id === "carthaginian-pocket-tighten").reduce((sum, state) => sum + routeUnitCount(state), 0),
+      roman: visibleRoutes.filter((state) => state.route.faction === "roman").reduce((sum, state) => sum + routeUnitCount(state), 0)
+    };
+  }, [progress, projectedRoutes]);
 
   latestStateRef.current = { activeEffectPlacement, activeEvent, progress, projectedRoutes };
 
@@ -1154,7 +1468,10 @@ export function CannaeTerrain3D({
     };
     markMapCanvas(container, map);
 
-    map.once("load", syncMetadata);
+    map.once("load", () => {
+      map.setTerrain({ source: "cannae-real-dem", exaggeration: terrainExaggeration });
+      syncMetadata();
+    });
     map.on("render", syncOverlayGeometry);
     map.on("idle", syncMetadata);
     map.on("move", syncOverlayGeometry);
@@ -1200,17 +1517,26 @@ export function CannaeTerrain3D({
       ref={containerRef}
       className="cannae-terrain-3d"
       data-testid="cannae-terrain-3d"
-      data-renderer="maplibre-pitched-tactical-map"
+      data-renderer="maplibre-real-terrain"
       data-tactical-renderer="maplibre-geographic-overlay"
-      data-terrain-model="drawn-historical-tactical-terrain"
+      data-terrain-model="real-dem-raster-terrain"
       data-visible-basemap="drawn-historical-tactical-terrain"
       data-modern-imagery-visible="false"
-      data-projection="webgl-gis-pitched-camera"
+      data-terrain-exaggeration={`${terrainExaggeration}`}
+      data-hillshade-exaggeration={`${hillshadeExaggeration}`}
+      data-terrain-source={terrainTileUrl}
+      data-terrain-tile-cache-zoom={`${cachedTerrainTileZoom}`}
+      data-projection="webgl-gis-terrain"
       data-camera-mode="stable-tactical-stages"
       data-camera-transition-ms={`${cameraTransitionDurationMs}`}
       data-camera-bearing={`${cameraBearing}`}
       data-camera-pitch={`${tacticalCameraPitch}`}
       data-route-fit-zoom="disabled"
+      data-left-jaw-units={`${visibleUnitStats.leftJaw}`}
+      data-rear-closure-units={`${visibleUnitStats.rearClosure}`}
+      data-right-jaw-units={`${visibleUnitStats.rightJaw}`}
+      data-visible-carthage-units={`${visibleUnitStats.carthage}`}
+      data-visible-roman-units={`${visibleUnitStats.roman}`}
     >
       {geometry && <CannaeTacticalOverlay activeEvent={activeEvent} activeRouteIds={activeRouteIds} geometry={geometry} />}
     </div>

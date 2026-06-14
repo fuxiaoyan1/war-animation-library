@@ -1,89 +1,92 @@
-# 坎尼会战动画资料 / Battle of Cannae Animation Sources
+# 坎尼会战动画资料
 
-## 资料边界 / Source Boundary
+## 资料边界
 
-本动画是战术教学复原，不是逐队考古级测绘。战场采用意大利普利亚奥凡托河（古 Aufidus）平原的地理口径，具体军阵朝向以“罗马纵深压入、汉尼拔中军由凸转凹、两翼骑兵清场、非洲重步兵内折、骑兵封后”的史料逻辑为准。现代地图和 Commons 示意图只作构图参考，不直接当成事实底图。
+本动画表现公元前 216 年 8 月 2 日坎尼会战的阵法级战术过程，不是布匿战争全史，也不是考古级战场测绘。坐标用于保持奥菲杜斯河、罗马营区、迦太基营区、两翼机动和后口闭合的相对关系；单位单元是战术教学抽象，不代表逐百人队或逐骑兵队的精确位置。
 
-This animation is a tactical teaching reconstruction, not an archaeological survey. It uses the Ofanto/Aufidus river plain in Apulia as the geographic frame. The battle geometry follows the source logic: the Roman mass pushes in, Hannibal's center changes from convex to concave, cavalry clears both wings, African heavy infantry turns inward, and cavalry seals the rear. Modern maps and Commons diagrams are composition references only.
+本轮制作只保留用户允许的“斜视战术镜头”设计点。旧坎尼失败稿的组件、脚本、资产链、专项门禁和动线口径不作为制作输入。
 
-## 主要来源 / Main Sources
+## 主要来源
 
-- Polybius, `Histories`, Book 3: <https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Polybius/3*.html>
-  - 用于部署、汉尼拔中军凸形前出、非洲步兵分置两端、骑兵优势、罗马步兵被压入后合围等核心叙事。
-  - Used for deployment, Hannibal's convex center, African infantry on both ends, cavalry superiority, and the Roman infantry mass being enclosed.
-- Livy, `Ab Urbe Condita`, Book 22: <https://www.perseus.tufts.edu/hopper/text?doc=Liv.+22.44>
-  - 用于罗马纵深、河岸/侧翼限制、骑兵与执政官 Paullus 终局等叙事补充。
-  - Used for Roman depth, river/flank constraints, cavalry fighting, and the Paullus endgame.
-- Encyclopaedia Britannica, `Battle of Cannae`: <https://www.britannica.com/event/Battle-of-Cannae>
-  - 用于现代综述、奥凡托河平原和双重包围口径。
-  - Used as a modern reference for the Ofanto plain and the double-envelopment interpretation.
-- World History Encyclopedia, `Battle of Cannae`: <https://www.worldhistory.org/Battle_of_Cannae/>
-  - 用于阶段拆分、双方兵种和战术解释的二手核对。
-  - Used as a secondary check for phases, troop types, and tactical interpretation.
-- Wikimedia Commons, `Maps of the Battle of Cannae`: <https://commons.wikimedia.org/wiki/Category:Maps_of_the_Battle_of_Cannae>
-  - 只作为不同复原图的构图参考；本动画不直接复用其中地图文件。
-  - Used only as diagram-reference context; no Commons battle map is directly reused.
-- OpenStreetMap: <https://www.openstreetmap.org/>
-  - 用于现代奥凡托河、坎尼遗址/周边地名的大致地理参照。
-  - Used for modern river and place-name orientation around the Ofanto and Cannae area.
+- Polybius, `Histories`, Book 3，LacusCurtius 在线文本。用于核对坎尼双方部署、罗马步兵压上、迦太基中央后退、非洲步兵两翼转入、骑兵回卷和战后歼灭叙事：<https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Polybius/3*.html>
+- World History Encyclopedia, `Battle of Cannae`。用于交叉核对坎尼日期、兵力概述、汉尼拔双重包围战术和战役影响：<https://www.worldhistory.org/Battle_of_Cannae/>
+- Encyclopaedia Britannica, `Battle of Cannae`。用于交叉参考战役日期、交战双方和双重包围意义；当前命令行访问被 Cloudflare 拦截，本轮不把它作为可复跑下载证据：<https://www.britannica.com/event/Battle-of-Cannae>
+- 战术图形与单位素材处理参考：项目已沉淀的垓下、碾庄制作流程，尤其是数据层建模、地图首屏主导、低字幕、单元显隐窗口、route/effect 绑定实际接触点和 Playwright 视觉证据流程。
 
-## 建模取舍 / Modeling Choices
+## 五道动线设计证据
 
-- 片长固定 5 分钟，`playbackDurationSeconds = 300`。
-  Runtime is fixed at five minutes through `playbackDurationSeconds = 300`.
-- 时间轴使用 216 BCE 8 月 2 日的小时级锚点，从清晨部署到下午崩溃。古代史料没有逐分钟记录，小时点是动画节奏与战术阶段映射。
-  The timeline uses hour-level anchors on 2 August 216 BCE, from morning deployment to afternoon collapse. Ancient sources do not provide minute-level timing; the hour marks map source-backed phases into animation pacing.
-- 战斗是定点阵法会战，不是大范围运动战；镜头应紧贴中军接触、骑兵清场、翼侧内折、后口封闭和压缩崩溃。
-  This is a fixed-position formation battle, not a broad campaign. Camera stages stay on center contact, cavalry clearance, inward wing turns, rear closure, and compression/collapse.
-- 罗马阵形采用深纵队块表示，开场先从多列进入战场再压成厚实中军，避免首帧就完整静态列阵。
-  The Roman formation is a deep block. It deploys into the field first, then thickens into the center instead of starting as a fully completed array.
-- 迦太基中军先呈凸月形前出，再在罗马压力下逐步后退成凹袋；该形变是动画核心。
-  The Carthaginian center begins as a convex arc and yields into a concave pocket under Roman pressure; this transformation is the visual core.
-- 非洲重步兵初期放在两端/后拒位置，直到罗马压入后才内折，避免过早剧透最终包围。
-  African heavy infantry sits on the ends/refused positions at first and turns inward only after the Roman mass pushes in, avoiding early spoiler geometry.
-- 骑兵分左翼重骑与右翼努米底骑兵：左翼先击溃罗马骑兵，随后绕后封闭；努米底骑兵牵制、追击和侧后压迫分阶段表现。
-  Cavalry is split into heavy cavalry and Numidian cavalry: the heavy cavalry clears the Roman horse first and then seals the rear; Numidians fix, pursue, and press from the side/rear by phase.
-- 终局标注 Paullus/罗马指挥节点和罗马核心崩溃，但不表现血腥细节。项目保持教育、非商业、反战表达。
-  The endgame marks Paullus/Roman command and the collapse of the Roman core without graphic violence. The project remains educational, non-commercial in intent, and anti-war.
-- 2026-06-10 动线修正口径：Polybius/Livy 支持的是“中军接触后退让、两端非洲重步兵内折、骑兵清场后封后”的结构，不支持迦太基步骑兵穿越完整罗马方阵后在敌阵背后重新列队。运行时模型必须把罗马核心作为不可穿越边界，除非表现的是明确的崩溃、突破或残部退散。
-  2026-06-10 movement correction: Polybius/Livy support the structure of center yielding after contact, African heavy infantry turning inward from the ends, and cavalry sealing the rear after clearing the wings. They do not support Carthaginian infantry or cavalry passing through an intact Roman formation and re-forming behind it. The runtime model must treat the Roman core as a no-crossing boundary unless the scene explicitly depicts collapse, breakthrough, or scattered remnants.
-- 可见态势线本身也必须遵守不可穿越边界；即使单位 `unitTracks` 没有穿越，压缩线、封口线或口袋线也不能画成切过完整罗马核心。
-  Visible tactical route lines must obey the same no-crossing boundary. Even when `unitTracks` do not intrude, compression, rear-seal, or pocket lines must not be drawn as cutting through the intact Roman core.
-- 16:00 结果态是战斗后果展示，不是继续交战画面；罗马与迦太基单位 marker 均退场，只保留战术线、Paullus 终局点和“罗马组织崩溃区”等结果标识。
-  The 16:00 result state shows the battle outcome, not continued close combat. Roman and Carthaginian unit markers both leave the map; tactical traces, the Paullus outcome point, and the Roman organizational-collapse result marker remain.
-- 阵法战制作采用五道动线设计工序：先确定代表性单位数量/尺寸/阵形厚度，再反推地图比例和镜头包络，再独立设计两军完整五分钟动线，再按史料合并校正接触点、战斗点和不合理路径，最后完整回放并保存视觉证据。
-  Formation-battle production uses a five-pass movement design loop: choose representative unit count/size/formation thickness, derive map scale and camera envelope, design each side's full five-minute movement independently, integrate and source-check contact points/effects/impossible paths, then replay the whole film and save visual evidence.
-- 2026-06-10 r9 动线口径：`roman-core-compression` 从 10:05 与 `carthaginian-center-yield` 同步开始，罗马核心先继续压入凹袋再被侧后压力压缩，避免中军后退时罗马原地等待。`carthaginian-center-hold` 独立保持正面压力到围歼阶段，防止中军在 13:20-14:05 视觉断档；非洲两翼采用 2x12 浅纵深斜线，从罗马核心南北外侧内折，不再表现为静止柱状队列。
-  2026-06-10 r9 movement model: `roman-core-compression` starts at 10:05 with `carthaginian-center-yield`, so the Roman core continues pressing into the concavity before being compressed by side/rear pressure instead of waiting while the center retreats. `carthaginian-center-hold` independently keeps front pressure through the envelopment phase, preventing the center from visually disappearing around 13:20-14:05. The African wings use shallow 2x12 angled pressure lines and turn inward from outside the Roman north/south edges rather than standing as static pillar-like columns.
-- 2026-06-10 r9 相机口径：开场和凸阵阶段使用偏罗马阵后方的 12 度斜视全景，保证双方部署、罗马骑兵和迦太基展开同屏；进入凹袋、两翼内折、后封口、压缩和终局后切到 -18 度侧后方斜视，仍保持 56 度 pitch，以便稳定展示包围几何。缩放按战术教学阶段变化，避免频繁特写。
-  2026-06-10 r9 camera model: deployment and convex-center stages use a 12-degree pitched wide view biased behind the Roman formation, keeping both deployments, Roman cavalry, and the Carthaginian line in frame. The concavity, wing-turn, rear-seal, compression, and endgame stages switch to a -18-degree side-rear pitched view, still at pitch 56, to show the envelopment geometry. Zoom changes follow teaching stages rather than frequent close-up cuts.
-- 2026-06-10 r12 动线口径：后封口骑兵不再停在远离罗马核心的西侧空地，而是贴近罗马压缩核心的北/南后肩，同时仍保持在罗马核心外侧；Paullus 指挥 marker 不再从早期作为单独单位全程移动，只在 14:50 后作为终局指挥崩溃标识出现，并在结果态前退场。
-  2026-06-10 r12 movement model: rear-sealing cavalry no longer stops in open ground far west of the Roman core. It closes against the northern and southern rear shoulders of the compressed Roman body while staying outside the core. The Paullus command marker no longer roams as a lone unit from early phases; it appears only after 14:50 as an endgame command-collapse marker and exits before the result state.
+1. 单位尺度：动画使用 64 个罗马步兵主单元、30 个罗马崩溃残部单元、10 个罗马骑兵单元、约 66 个迦太基中央/非洲步兵单元、约 40 个迦太基/努米底亚骑兵与后封单元，以及汉尼拔、Paullus 两个小型指挥群。每个作战单元都有独立路径、朝向和显隐窗口，避免整片移动。
+2. 地图/镜头包络：战场压缩在坎尼平原核心，北侧奥菲杜斯河、南侧罗马营区、两翼骑兵空间和后口封闭点同框。当前画布扩大到 `2700x1620`，用更大的战术舞台承载独立单位，避免靠缩小图标把部队压成雾状团块。页面使用成熟系列的地图首屏结构、斜视战术镜头、低字幕和事件跳转。
+3. 双方独立路线：罗马步兵从南向北压上并逐步进入袋形区；迦太基中央从前凸后退为内凹；非洲步兵从左右两翼内折；迦太基骑兵沿外侧击败罗马骑兵后回卷封后，不穿越己方步兵或完整罗马方阵。
+4. 合并接触复核：近战效果只在中央接触、骑兵接触、非洲步兵侧压和骑兵封后等双方当前可见单位之间出现。无人区域不爆特效。
+5. 完整回放：Playwright 需要检查部署、中央诱敌、侧压、后封、压缩和终局；人工截图证据保存到 `artifacts/`，不嵌入会话。
 
-## 地图和不确定性 / Map and Uncertainty
+## 3D 地图与斜视镜头
 
-- 奥凡托河与平原是高置信地理约束；具体战线方向、双方左右翼相对地貌和军阵宽度为 `probable` 或 `schematic`。
-  The Ofanto river and plain are high-confidence geographic constraints; line orientation, exact wing relation to terrain, and formation width are `probable` or `schematic`.
-- 动画坐标用于视觉叙事，不声称每个部队点是考古测绘点。
-  Animation coordinates support visual storytelling and do not claim archaeological precision for every unit point.
-- 所有 `formation`、`route`、`camera` 记录应保留不确定性标签，以便后续找到更好地图或学术资料时替换。
-  `formation`, `route`, and `camera` records keep uncertainty labels so better maps or scholarship can replace them later.
+2026-06-13 的 `09:16` 候选继续作为优化基底，不再向更早失败稿回退。当前 `CannaeTerrain3D` 已对齐垓下、碾庄的成熟地图骨架：MapLibre GL JS 加载本地 Terrarium DEM，使用 `raster-dem` + `setTerrain({ source: "cannae-real-dem", exaggeration: 1 })`，并在同一 WebGL 地理相机上叠加历史战术地形、河流、阵型、路线、单位和接触效果。
 
-## 单位资产 / Unit Assets
+- 地形瓦片：`public/assets/maps/cannae-real-terrain/terrarium/{z}/{x}-{y}.png`
+- 前端证据属性：`data-renderer="maplibre-real-terrain"`、`data-terrain-model="real-dem-raster-terrain"`、`data-projection="webgl-gis-terrain"`、`data-terrain-source="/assets/maps/cannae-real-terrain/terrarium/{z}/{x}-{y}.png"`
+- 斜视战术镜头继续保留：部署从罗马后侧/斜后方看双方入场，侧压、后封和压缩阶段回到罗马后端约 30-40 度的战术视角并切入近景；这个镜头是用户明确允许保留的旧坎尼设计点。
+- 视觉证据保存到 `artifacts/cannae-restore-probe-20260613/0916-dem-balanced-assets-1/` 与 `artifacts/cannae-restore-probe-20260613/reference-structure-compare-2/`。其中 `metrics.pixel.json` 记录坎尼关键帧 `largeDarkComponentCount=0`，用于确认本轮没有大面积黑块/雾状连通块。
 
-- 坎尼专属 marker 由 `scripts/generate-cannae-unit-assets.mjs` 从 `public/assets/unit-icons/source/cannae-baidu/` 下的 Baidu 图片候选源图裁剪、调色、描边、加阴影和阵营角标生成，输出到 `public/assets/unit-icons/cannae-*.webp`。旧 Theodore Ayrault Dodge 图版、VHV/PNGIMG 素材站尝试、0 A.D. 头像链和本轮早期自绘/几何图标均不再作为 Cannae 运行时图标来源。
-  Cannae-specific markers are generated by `scripts/generate-cannae-unit-assets.mjs` from Baidu-discovered candidate images under `public/assets/unit-icons/source/cannae-baidu/`, with cropping, tinting, outline, shadow, and faction badges. The old Theodore Ayrault Dodge plates, VHV/PNGIMG source-site attempt, 0 A.D. portrait chain, and early self-drawn/geometric markers are no longer used as runtime Cannae icon sources.
-- 本地保留运行时源图：`baidu-roman-warrior-3d.jpeg`、`baidu-roman-mounted-soldier.jpeg`、`baidu-ancient-european-soldier.jpeg`、`baidu-numidian-cavalry-history.jpeg` 和 `baidu-ancient-cavalry-lancer.jpeg`。
-  Runtime source images are retained as `baidu-roman-warrior-3d.jpeg`, `baidu-roman-mounted-soldier.jpeg`, `baidu-ancient-european-soldier.jpeg`, `baidu-numidian-cavalry-history.jpeg`, and `baidu-ancient-cavalry-lancer.jpeg`.
-- 直链记录：`baidu-roman-warrior-3d.jpeg` 来自 `https://img2.baidu.com/it/u=2069415824,3225917727&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=501`；`baidu-roman-mounted-soldier.jpeg` 来自 `https://img1.baidu.com/it/u=3592297730,3909263135&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=501`；`baidu-ancient-european-soldier.jpeg` 来自 `https://img0.baidu.com/it/u=3198198010,1152726694&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=871`；`baidu-numidian-cavalry-history.jpeg` 来自 `https://img2.baidu.com/it/u=3688842152,2083128120&fm=253&fmt=auto&app=138&f=JPEG?w=735&h=500`；`baidu-ancient-cavalry-lancer.jpeg` 来自 `https://img0.baidu.com/it/u=1723024674,1090626759&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=869`。
-  Direct URL log: `baidu-roman-warrior-3d.jpeg` came from `https://img2.baidu.com/it/u=2069415824,3225917727&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=501`; `baidu-roman-mounted-soldier.jpeg` from `https://img1.baidu.com/it/u=3592297730,3909263135&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=501`; `baidu-ancient-european-soldier.jpeg` from `https://img0.baidu.com/it/u=3198198010,1152726694&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=871`; `baidu-numidian-cavalry-history.jpeg` from `https://img2.baidu.com/it/u=3688842152,2083128120&fm=253&fmt=auto&app=138&f=JPEG?w=735&h=500`; and `baidu-ancient-cavalry-lancer.jpeg` from `https://img0.baidu.com/it/u=1723024674,1090626759&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=869`.
-- Baidu 候选图许可状态不明；当前仅作为本地/私有非商业演示的可追踪素材使用。公开发布前必须替换为公有领域、宽松许可、已购买或其他授权明确素材，或按实际许可证补齐授权与署名。
-  The Baidu-discovered candidate images have unverified license status; they are used only as tracked local/private non-commercial demo sources. Before public release, replace them with public-domain, permissively licensed, purchased, or otherwise authorized assets, or complete the required attribution and license handling.
-- 本地/私有演示阶段，授权不确定不得成为继续使用黑剪影、泛用图标或低质量占位图的理由；应先满足地图尺度可读性和阵营区分，再把许可不确定性、来源 URL 和公开发布前替换要求写入文档。
-  In local/private demo work, license uncertainty must not justify keeping black silhouettes, generic icons, or low-quality placeholders. First meet map-scale readability and faction distinction, then document license uncertainty, source URLs, and the replacement requirement before public release.
-- 资产要求：罗马红/铜色、迦太基青金色、非洲步兵绿铜色、努米底骑兵土金色；两军必须在地图尺度下一眼可分。黑剪影、泛用占位、同质化兵牌均视为失败。
-  Asset requirements: Roman red/bronze, Carthaginian teal/gold, African green/bronze, Numidian earth/gold; factions must be immediately distinguishable at map scale. Black silhouettes, generic placeholders, and same-looking markers are failures.
-- 2026-06-10 r12 渲染要求：坎尼运行时单位 marker 以图像主体为主，只保留小型阵营色点，不再在每个单位上叠加中文/缩写文字徽章；阵营名称由图例、路线和事件说明承担，避免地图尺度下变成密集文字牌或黑色污点。
-  2026-06-10 r12 rendering requirement: Cannae runtime unit markers are image-first. They keep only a small faction color dot and no longer render Chinese/abbreviated text badges on every unit. Faction names belong in the legend, routes, and event text, preventing marker clusters from becoming dense text cards or dark spots at map scale.
-- 2026-06-10 r18 渲染要求：运行时来源改为 Baidu 候选源图链，地图显示层继续保持 `.cannae-unit-holder .cannae-unit` 缩放为 `0.62` 和轻量阴影；图标验收以地图尺度可读、两军一眼可分、避免黑剪影为第一目标。
-  2026-06-10 r18 rendering requirement: runtime sources now use the Baidu candidate chain, while the map display layer keeps `.cannae-unit-holder .cannae-unit` at `0.62` scale with a light shadow. Icon acceptance prioritizes map-scale readability, immediate faction distinction, and avoidance of black silhouettes.
+## 阵型与时间锚点
+
+- `BCE-0216-08-02T06:30`：双方从营区方向展开。罗马重步兵居中且纵深厚，两翼骑兵护侧；迦太基中央前凸，两翼非洲重步兵保留机动。
+- `BCE-0216-08-02T08:20`：中央接触。罗马重步兵压上，迦太基中央承受压力。
+- `BCE-0216-08-02T10:10`：迦太基中央后退为内凹，罗马因追压进入袋形区域。
+- `BCE-0216-08-02T11:30`：迦太基左翼重骑击败罗马左翼骑兵，开始外侧回卷。
+- `BCE-0216-08-02T12:35`：非洲重步兵两翼内折，形成内层侧压；努米底亚骑兵继续牵制罗马右翼。
+- `BCE-0216-08-02T13:50`：骑兵后口闭合，内层步兵和外层骑兵形成双层围歼。
+- `BCE-0216-08-02T15:10`：罗马厚阵被压缩破碎。
+- `BCE-0216-08-02T17:30`：终局收束。迦太基胜利方仍留在战场，罗马只保留破碎残部态势。
+
+## 单位图标
+
+坎尼单位通过成熟 `UnitIcon` 位图通道渲染，不使用坎尼自建图标生成器。当前本地演示资产：
+
+- `public/assets/unit-icons/cannae-roman-legion.webp`
+- `public/assets/unit-icons/cannae-roman-command.webp`
+- `public/assets/unit-icons/cannae-roman-cavalry.webp`
+- `public/assets/unit-icons/cannae-carthaginian-infantry.webp`
+- `public/assets/unit-icons/cannae-iberian-gaul-infantry.webp`
+- `public/assets/unit-icons/cannae-african-infantry.webp`
+- `public/assets/unit-icons/cannae-carthaginian-command.webp`
+- `public/assets/unit-icons/cannae-carthaginian-cavalry.webp`
+- `public/assets/unit-icons/cannae-numidian-cavalry.webp`
+
+这些资产保存在 `public/assets/unit-icons/source/cannae/`，当前作为本地私人演示素材使用。处理方式是成熟 `UnitIcon` 透明位图通道：裁切、透明 alpha mask、提亮、阵营轻调色、锐化、WebP 导出；不使用旧坎尼自建生成器、文件大小门禁、椭圆地影或盒图式背景。2026-06-12 修正过一次 alpha 污染问题：低透明整图背景会在地图尺度叠成方片/雾状，错误的 ImageMagick 合成还会把彩色图吃成黑剪影；当前导出要求角点全透明、文件保持 sRGB 彩色透明。
+
+2026-06-13 继续做资产平衡修正：不使用生成器，只从 `public/assets/unit-icons/source/cannae/*.png` 的透明源图重新导出 WebP，保留 alpha 通道，调整 RGB 暗部、亮度、饱和度和锐化。目标是去掉骑兵/步兵在地图尺度上的黑团，同时避免过亮刺眼。证据记录在 `artifacts/cannae-restore-probe-20260613/unit-asset-stats-3-balanced.json`：运行 WebP 的 `edgeAlphaMax=0`；骑兵平均亮度约 `91-108`，近黑像素比例约 `0.04%-0.17%`；罗马军团和非洲步兵平均亮度约 `92-93`，近黑像素比例低于 `0.12%`。前端图片 URL 使用 `?v=20260613-asset-balanced-v2` 断开旧黑图缓存。
+
+这些资产仍不是最终授权素材，也不是严格的坎尼时代考据级图像；公开发布前应替换为授权明确的罗马共和国、迦太基、努米底亚、伊比利亚/高卢、非洲步兵参考图或购买素材。
+
+2026-06-14 助手流程复审后，坎尼运行时单位显示改为“逻辑独立、视觉 LOD”：每个单位仍保留独立 route、heading、显隐窗口和接触绑定，但地图尺度只显示前沿、边缘、后封和结果所需的可读实例，避免早中段 150-180 个图标叠成雾状。关键帧运行时证据保存到 `artifacts/cannae-visual-pass-20260614-lod-v7/`，对应 workflow 复审目录为 `artifacts/animation-assistant-workflow/cannae-20260614-lod-v8-review/`。
+
+v7 运行时复审结果：
+
+- `runtime-visual-review-ready`，无运行时视觉警告。
+- 垓下参考帧单位数 `90`，碾庄参考帧单位数 `82`。
+- 坎尼关键帧单位数：部署 `84`，正面压入 `82`，骑兵清场 `76`，凹袋形成 `79`，两翼内折 `93`，后口封闭 `93`，压缩围歼 `108`，终局/结果 `87`。
+- 结果帧保留迦太基胜利方 `68` 个可视单位、罗马残部 `19` 个可视单位，避免“胜利方消失”和“罗马整齐列队”两类失败。
+
+这次还修正了一个证据流程问题：5177 常驻服务读取的是 `~/Library/Application Support/war-animation-lab-oss/dist`，不是仓库 `dist`。源码改完后必须 `npm run build` 并用 `npm run preview:local -- --port 5177 --skip-build` 发布，否则 Playwright/截图会继续抓旧 JS，导致视觉检查和用户所见不一致。
+
+## 音频
+
+- 背景声层：`public/audio/wikimedia-carnyx.ogg`
+- 来源：Wikimedia Commons `File:Carnyx.ogg`，下载 URL：<https://upload.wikimedia.org/wikipedia/commons/e/e6/Carnyx.ogg>
+- 用途：古代战场号角氛围层，当前文件较短，只能作为唯一性占位和时代声层；正式交付应替换为独立、高质量、时长足够的背景配乐。
+- 战斗音效：古代近战事件使用项目已有 `public/audio/sfx/swords-clashing.mp3`，通过 `WarScore.playBattleCue("melee")` 触发。
+
+## 验收重点
+
+- 地图必须主导首屏，不能退回普通页面布局。
+- 罗马和迦太基正面距离必须短，中央接触后才出现战斗效果。
+- 单个作战单位必须独立移动，不能整块方阵平移。
+- 迦太基中央要从前凸变内凹，罗马必须随之压入。
+- 非洲步兵两翼必须内折参与侧压。
+- 迦太基骑兵必须沿外侧机动并封后，不能穿越步兵或罗马方阵。
+- 双层包围必须闭合，不能留大口子。
+- 单位朝向随当前机动和敌方方向调整，不能背对作战对象。
+- 终局胜利方留在战场，罗马残部破碎，不出现双方凭空消失或整齐列队。

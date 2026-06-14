@@ -3029,6 +3029,187 @@ h1 {
   stroke-opacity: 0.1;
 }
 
+.battle-of-britain .map-stage {
+  background:
+    radial-gradient(circle at 56% 43%, rgba(63, 93, 91, 0.18), transparent 20rem),
+    linear-gradient(180deg, #13282d 0%, #193034 52%, #0f2025 100%);
+}
+
+.battle-of-britain.cinematic-mode .map-stage {
+  background:
+    radial-gradient(circle at 58% 38%, rgba(88, 125, 116, 0.14), transparent 23rem),
+    linear-gradient(180deg, #12262c 0%, #193235 52%, #102126 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(209, 231, 207, 0.14),
+    inset 0 0 58px rgba(0, 0, 0, 0.34),
+    0 24px 74px rgba(0, 0, 0, 0.36);
+}
+
+.battle-of-britain.cinematic-mode .battle-map {
+  filter: saturate(0.82) contrast(0.98) brightness(0.92);
+}
+
+.battle-of-britain .cinematic-vignette {
+  background:
+    linear-gradient(180deg, rgba(2, 8, 10, 0.22), transparent 20%, transparent 78%, rgba(2, 8, 10, 0.28)),
+    radial-gradient(circle at 50% 48%, transparent 56%, rgba(0, 0, 0, 0.22) 100%);
+  box-shadow: inset 0 0 64px rgba(0, 0, 0, 0.22);
+}
+
+.battle-of-britain .country {
+  stroke: rgba(43, 66, 63, 0.58);
+  stroke-width: 1;
+  filter: none;
+}
+
+.battle-of-britain .country-core {
+  fill: #8f9f82;
+  opacity: 0.96;
+}
+
+.battle-of-britain .country-context {
+  fill: #7f8d78;
+  opacity: 0.46;
+}
+
+.battle-of-britain .country-france {
+  fill: #a59b7b;
+}
+
+.battle-of-britain .country-belgium,
+.battle-of-britain .country-netherlands,
+.battle-of-britain .country-germany {
+  fill: #839075;
+}
+
+.battle-of-britain .river {
+  stroke: rgba(92, 151, 172, 0.68);
+  stroke-width: 1.8;
+  filter: none;
+}
+
+.battle-of-britain .tactical-grid-layer line {
+  stroke: rgba(186, 222, 214, 0.16);
+  stroke-dasharray: 7 18;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.battle-of-britain .tactical-terrain-layer,
+.battle-of-britain .fortified-line-layer {
+  pointer-events: none;
+}
+
+.battle-of-britain .tactical-terrain-feature path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.battle-of-britain .tactical-terrain-skirt,
+.battle-of-britain .tactical-terrain-wall,
+.battle-of-britain .tactical-terrain-contour-step {
+  display: none;
+}
+
+.battle-of-britain .tactical-terrain-shadow {
+  fill: none;
+  stroke: rgba(10, 32, 36, 0.18);
+  stroke-width: 5.5;
+  filter: none;
+  opacity: 0.4;
+}
+
+.battle-of-britain .tactical-terrain-highlight {
+  fill: none;
+  stroke: rgba(219, 244, 212, 0.5);
+  stroke-dasharray: 12 10;
+  stroke-width: 2.6;
+}
+
+.battle-of-britain .tactical-terrain-surface {
+  fill: none;
+  stroke: rgba(126, 211, 190, 0.64);
+  stroke-dasharray: 12 9;
+  stroke-width: 2.2;
+}
+
+.battle-of-britain .tactical-terrain-ditch .tactical-terrain-highlight {
+  stroke: rgba(133, 196, 255, 0.58);
+  stroke-dasharray: 7 8;
+}
+
+.battle-of-britain .tactical-terrain-ditch .tactical-terrain-surface {
+  stroke: rgba(90, 169, 222, 0.74);
+  stroke-dasharray: 7 8;
+}
+
+.battle-of-britain .tactical-terrain-feature.is-route-anchor .tactical-terrain-highlight,
+.battle-of-britain .tactical-terrain-feature.is-route-anchor .tactical-terrain-surface {
+  stroke: rgba(255, 229, 138, 0.88);
+  stroke-width: 3.4;
+}
+
+.battle-of-britain .tactical-terrain-label,
+.battle-of-britain .fortified-line text {
+  fill: rgba(235, 245, 214, 0.76);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(5, 18, 20, 0.72);
+  stroke-width: 4px;
+}
+
+.battle-of-britain .fortified-line polyline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.battle-of-britain .fortified-line-shadow {
+  stroke: rgba(6, 20, 23, 0.18);
+  stroke-width: 6.2;
+  filter: none;
+}
+
+.battle-of-britain .fortified-line-body {
+  stroke: rgba(255, 218, 120, 0.74);
+  stroke-dasharray: 11 8;
+  stroke-width: 2.6;
+}
+
+.battle-of-britain .fortified-line-crest {
+  stroke: rgba(136, 215, 255, 0.76);
+  stroke-dasharray: 5 8;
+  stroke-width: 1.8;
+}
+
+.battle-of-britain .fortified-line.is-route-anchor .fortified-line-body,
+.battle-of-britain .fortified-line.is-route-anchor .fortified-line-crest {
+  stroke-width: 3.4;
+}
+
+.battle-of-britain .unit-marker {
+  filter: none;
+}
+
+.battle-of-britain .unit-icon-shadow {
+  display: none;
+}
+
+.battle-of-britain .ww2-aircraft-marker.is-active {
+  filter: drop-shadow(0 0 5px rgba(255, 231, 148, 0.36));
+}
+
+.battle-of-britain .line-label,
+.battle-of-britain .active-event-label {
+  font-size: 10px;
+  stroke-width: 3px;
+}
+
 .ship-marker.is-active,
 .carrier-marker.is-active,
 .carrier-essex-marker.is-active,
@@ -4790,7 +4971,7 @@ h1 {
 .cannae-battle .map-stage {
   height: calc(100vh - 104px);
   min-height: calc(100vh - 104px);
-  border-radius: 8px;
+  border-radius: 18px;
   background: #cdbb82;
 }
 
@@ -4903,7 +5084,7 @@ h1 {
   padding: 7px 10px;
   border-color: rgba(83, 72, 46, 0.22);
   border-radius: 12px;
-  background: rgba(246, 234, 196, 0.72);
+  background: rgba(246, 234, 196, 0.64);
   backdrop-filter: none;
 }
 
@@ -4947,14 +5128,14 @@ h1 {
   font-weight: 900;
   paint-order: stroke;
   pointer-events: none;
-  stroke: rgba(239, 226, 190, 0.86);
-  stroke-width: 3px;
+  stroke: rgba(239, 226, 190, 0.62);
+  stroke-width: 2px;
   text-anchor: middle;
 }
 
 .cannae-terrain-feature text {
-  fill: rgba(67, 58, 35, 0.62);
-  font-size: 10px;
+  fill: rgba(67, 58, 35, 0.44);
+  font-size: 8.6px;
   letter-spacing: 0.08em;
 }
 
@@ -4980,8 +5161,8 @@ h1 {
 }
 
 .cannae-region text {
-  fill: rgba(75, 59, 35, 0.84);
-  font-size: 13px;
+  fill: rgba(75, 59, 35, 0.48);
+  font-size: 10px;
   letter-spacing: 0.08em;
 }
 
@@ -4993,7 +5174,7 @@ h1 {
 
 .cannae-river-water {
   fill: none;
-  filter: drop-shadow(0 2px 2px rgba(31, 71, 88, 0.14));
+  filter: none;
   stroke: rgba(45, 150, 168, 0.78);
   stroke-width: 7;
 }
@@ -5007,68 +5188,70 @@ h1 {
 
 .cannae-tactical-graphic path {
   fill: none;
-  stroke-dasharray: 8 6;
-  stroke-width: 3.2;
+  opacity: 0.44;
+  stroke-dasharray: 8 7;
+  stroke-width: 1.8;
 }
 
 .cannae-tactical-graphic-axis path {
-  stroke: rgba(146, 53, 43, 0.62);
+  stroke: rgba(146, 53, 43, 0.22);
   stroke-dasharray: 18 8;
-  stroke-width: 4.4;
+  stroke-width: 1.8;
 }
 
 .cannae-tactical-graphic-yield-zone path {
-  fill: rgba(27, 106, 112, 0.04);
-  stroke: rgba(27, 106, 112, 0.6);
+  fill: rgba(27, 106, 112, 0.012);
+  stroke: rgba(27, 106, 112, 0.24);
 }
 
 .cannae-tactical-graphic-wing-turn path {
-  stroke: rgba(35, 119, 78, 0.72);
+  stroke: rgba(35, 119, 78, 0.34);
   stroke-dasharray: 14 8;
-  stroke-width: 4.2;
+  stroke-width: 2.1;
 }
 
 .cannae-tactical-graphic-rear-seal path {
-  stroke: rgba(38, 95, 133, 0.76);
+  stroke: rgba(38, 95, 133, 0.36);
   stroke-dasharray: 4 7;
-  stroke-width: 5;
+  stroke-width: 2.25;
 }
 
 .cannae-tactical-graphic-compression path {
-  fill: rgba(170, 72, 44, 0.06);
-  stroke: rgba(142, 55, 40, 0.62);
+  fill: rgba(170, 72, 44, 0.018);
+  stroke: rgba(142, 55, 40, 0.3);
 }
 
 .cannae-tactical-graphic text {
-  fill: rgba(56, 60, 36, 0.9);
-  font-size: 10.5px;
+  fill: rgba(56, 60, 36, 0.48);
+  font-size: 7.4px;
   letter-spacing: 0.06em;
+  opacity: 0.48;
 }
 
 .cannae-formation-shadow {
   fill: none;
-  stroke: rgba(41, 31, 21, 0.24);
-  stroke-width: 9;
-  transform: translate(10px, 12px);
+  stroke: rgba(41, 31, 21, 0.12);
+  stroke-width: 5;
+  transform: translate(5px, 6px);
 }
 
 .cannae-formation-deep-infantry-block .cannae-formation-shadow,
 .cannae-formation-compressed-pocket .cannae-formation-shadow,
 .cannae-formation-heavy-infantry-wing .cannae-formation-shadow,
-.cannae-formation-command-post .cannae-formation-shadow {
-  fill: rgba(35, 28, 20, 0.14);
+  .cannae-formation-command-post .cannae-formation-shadow {
+  fill: rgba(35, 28, 20, 0.06);
 }
 
 .cannae-formation-body {
-  fill: rgba(34, 111, 122, 0.07);
-  stroke: rgba(31, 104, 112, 0.58);
+  fill: rgba(34, 111, 122, 0.045);
+  stroke: rgba(31, 104, 112, 0.32);
   stroke-dasharray: 6 4;
   stroke-width: 2.8;
 }
 
 .cannae-formation-roman .cannae-formation-body {
-  fill: rgba(180, 58, 45, 0.08);
-  stroke: rgba(173, 53, 42, 0.66);
+  fill: rgba(180, 58, 45, 0.05);
+  stroke: rgba(173, 53, 42, 0.36);
 }
 
 .cannae-formation-convex-center .cannae-formation-body,
@@ -5081,9 +5264,9 @@ h1 {
 
 .cannae-formation.is-route-anchor .cannae-formation-body,
 .cannae-formation.is-route-anchor .cannae-formation-front-line {
-  stroke: rgba(238, 207, 92, 0.96);
-  stroke-width: 4.8;
-  filter: drop-shadow(0 0 7px rgba(236, 199, 82, 0.4));
+  stroke: rgba(218, 176, 70, 0.48);
+  stroke-width: 2.4;
+  filter: none;
 }
 
 .cannae-formation-front-line,
@@ -5092,34 +5275,34 @@ h1 {
 }
 
 .cannae-formation-front-line {
-  stroke: rgba(255, 237, 154, 0.78);
-  stroke-width: 4.2;
+  stroke: rgba(255, 237, 154, 0.38);
+  stroke-width: 2.2;
 }
 
 .cannae-formation-rank-guide {
-  stroke: rgba(28, 88, 92, 0.22);
+  stroke: rgba(28, 88, 92, 0.14);
   stroke-dasharray: 5 8;
   stroke-width: 1.2;
 }
 
 .cannae-formation-roman .cannae-formation-rank-guide {
-  stroke: rgba(133, 42, 34, 0.22);
+  stroke: rgba(133, 42, 34, 0.14);
 }
 
 .cannae-formation-ranks {
-  filter: drop-shadow(4px 5px 3px rgba(29, 23, 18, 0.24));
+  filter: none;
 }
 
 .cannae-formation-rank-mark {
   fill: none;
-  stroke: rgba(31, 121, 123, 0.9);
+  stroke: rgba(31, 121, 123, 0.58);
   stroke-linecap: round;
   stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
 }
 
 .cannae-formation-roman .cannae-formation-rank-mark {
-  stroke: rgba(192, 63, 51, 0.92);
+  stroke: rgba(192, 63, 51, 0.62);
 }
 
 .cannae-formation-rank-mark-cavalry-wing,
@@ -5129,14 +5312,14 @@ h1 {
 }
 
 .cannae-formation text {
-  fill: rgba(26, 85, 88, 0.94);
-  font-size: 9.5px;
+  fill: rgba(26, 85, 88, 0.74);
+  font-size: 8.4px;
   letter-spacing: 0.08em;
-  opacity: 0.84;
+  opacity: 0.42;
 }
 
 .cannae-formation-roman text {
-  fill: rgba(122, 43, 34, 0.94);
+  fill: rgba(122, 43, 34, 0.74);
 }
 
 .cannae-route-shadow,
@@ -5149,38 +5332,72 @@ h1 {
 }
 
 .cannae-route-shadow {
-  stroke: rgba(43, 34, 23, 0.25);
-  stroke-width: 15;
-  transform: translate(14px, 15px);
+  stroke: rgba(43, 34, 23, 0.05);
+  stroke-width: 3.2;
+  transform: translate(2px, 3px);
 }
 
 .cannae-route-line {
-  stroke-width: 5;
-  filter: drop-shadow(0 4px 4px rgba(57, 42, 24, 0.25));
+  stroke-width: 2.25;
+  filter: none;
 }
 
 .cannae-route-highlight {
-  stroke: rgba(255, 248, 213, 0.54);
+  stroke: rgba(255, 248, 213, 0.26);
   stroke-dasharray: 3 11;
-  stroke-width: 1.6;
+  stroke-width: 1.1;
 }
 
 .cannae-route-roman .cannae-route-line {
-  stroke: rgba(181, 58, 45, 0.92);
+  stroke: rgba(181, 58, 45, 0.78);
 }
 
 .cannae-route-carthaginian .cannae-route-line {
-  stroke: rgba(25, 112, 119, 0.92);
+  stroke: rgba(25, 112, 119, 0.78);
 }
 
 .cannae-route[data-route-current="false"].is-complete .cannae-route-line {
-  stroke-opacity: 0.64;
+  stroke-opacity: 0.44;
 }
 
 .cannae-route[data-route-current="true"] .cannae-route-line {
-  filter:
-    drop-shadow(0 0 5px rgba(255, 236, 152, 0.34))
-    drop-shadow(0 4px 4px rgba(57, 42, 24, 0.25));
+  filter: none;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route-shadow {
+  opacity: 0.2;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route-line {
+  opacity: 0.5;
+  stroke-width: 2.4;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route-highlight {
+  opacity: 0.18;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route[data-faction="carthaginian"] .cannae-route-shadow {
+  opacity: 0.28;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route[data-faction="carthaginian"] .cannae-route-line {
+  opacity: 0.82;
+  stroke-width: 3;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route[data-faction="carthaginian"] .cannae-route-highlight {
+  opacity: 0.32;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-route[data-faction="roman"] .cannae-route-line {
+  opacity: 0.22;
+  stroke-dasharray: 3 9;
+}
+
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-formation,
+.cannae-maplibre-tactical-overlay.is-result-state .cannae-tactical-graphic {
+  opacity: 0.34;
 }
 
 .cannae-route-yield .cannae-route-line,
@@ -5192,64 +5409,147 @@ h1 {
 .cannae-route-compression .cannae-route-line,
 .cannae-route-collapse .cannae-route-line {
   stroke-dasharray: 5 7;
-  stroke-width: 4.6;
+  stroke-width: 2.75;
 }
 
 .cannae-route-label {
   fill: #30271b;
-  font-size: 11px;
-  opacity: 0.84;
+  font-size: 9.2px;
+  opacity: 0.44;
+}
+
+.cannae-contact-scrums {
+  pointer-events: none;
+}
+
+.cannae-contact-scrum-shadow,
+.cannae-contact-scrum-line,
+.cannae-contact-scrum-slash {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cannae-contact-scrum-shadow {
+  stroke: rgba(45, 33, 21, 0.08);
+  stroke-width: 3.2;
+  transform: translate(2px, 2px);
+}
+
+.cannae-contact-scrum-line {
+  stroke: rgba(126, 61, 42, 0.46);
+  stroke-dasharray: 5 6;
+  stroke-width: 2.45;
+}
+
+.cannae-contact-scrum-slash {
+  stroke: rgba(72, 39, 25, 0.42);
+  stroke-width: 1.8;
+}
+
+.cannae-contact-scrum-cavalry-clash .cannae-contact-scrum-line {
+  stroke: rgba(51, 101, 124, 0.48);
+  stroke-dasharray: 9 7;
+}
+
+.cannae-contact-scrum-wing-pressure .cannae-contact-scrum-line,
+.cannae-contact-scrum-rear-seal .cannae-contact-scrum-line {
+  stroke: rgba(33, 103, 93, 0.48);
+}
+
+.cannae-contact-scrum-compression .cannae-contact-scrum-line,
+.cannae-contact-scrum-collapse .cannae-contact-scrum-line {
+  stroke: rgba(145, 54, 39, 0.58);
+  stroke-dasharray: 4 4;
+  stroke-width: 2.9;
 }
 
 .cannae-unit {
-  filter: drop-shadow(0 5px 5px rgba(55, 38, 23, 0.3));
+  filter: none;
   pointer-events: none;
   transform-box: fill-box;
   transform-origin: center;
 }
 
-.cannae-unit-ground-shadow {
-  fill: rgba(52, 35, 18, 0.22);
-}
-
 .cannae-unit-holder .cannae-unit {
-  transform: scale(0.62);
+  transform: scale(0.9);
 }
 
 .cannae-unit-image {
   filter:
-    drop-shadow(0 4px 4px rgba(55, 38, 23, 0.3))
-    drop-shadow(0 0 2px rgba(255, 246, 205, 0.22));
+    saturate(0.94)
+    contrast(1.02)
+    brightness(0.96);
+  image-rendering: auto;
+}
+
+.cannae-unit-ground-shadow {
+  display: none;
+}
+
+.cannae-unit-shadow {
+  display: none;
+}
+
+.cannae-unit-stem {
+  display: none;
 }
 
 .cannae-unit-badge {
-  opacity: 0.68;
+  opacity: 0.64;
 }
 
 .cannae-unit-badge circle {
-  fill: rgba(186, 62, 48, 0.9);
-  stroke: rgba(247, 222, 151, 0.82);
-  stroke-width: 1;
+  fill: rgba(48, 41, 28, 0.9);
+  stroke: rgba(247, 222, 151, 0.88);
+  stroke-width: 1.5;
 }
 
-.cannae-unit-badge-carthaginian circle {
-  fill: rgba(20, 126, 130, 0.92);
+.cannae-unit-badge text {
+  fill: #ffe29b;
+  font-family: "Avenir Next Condensed", "DIN Condensed", "Songti SC", serif;
+  font-size: 6.4px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+
+.cannae-unit-badge.is-small-badge {
+  opacity: 0.62;
+}
+
+.cannae-unit-badge.is-small-badge circle {
+  stroke-width: 1.2;
+}
+
+.cannae-unit-badge.is-command-badge {
+  opacity: 0.76;
+}
+
+.cannae-unit-rome .cannae-unit-badge circle,
+.cannae-unit-roman .cannae-unit-badge circle {
+  fill: rgba(105, 37, 30, 0.9);
+}
+
+.cannae-unit-carthage .cannae-unit-badge circle,
+.cannae-unit-carthaginian .cannae-unit-badge circle {
+  fill: rgba(25, 85, 82, 0.92);
 }
 
 .cannae-route-collapse .cannae-unit-holder {
-  opacity: 0.66;
+  opacity: 0.74;
 }
 
 .cannae-point circle {
-  fill: #f7e3a4;
-  stroke: #3c3122;
-  stroke-width: 2;
+  fill: rgba(247, 227, 164, 0.78);
+  stroke: rgba(60, 49, 34, 0.7);
+  stroke-width: 1.5;
 }
 
 .cannae-point-command circle {
-  fill: #c9523f;
-  stroke: #5e1713;
-  stroke-width: 3;
+  fill: rgba(201, 82, 63, 0.76);
+  stroke: rgba(94, 23, 19, 0.7);
+  stroke-width: 2;
 }
 
 .cannae-point-result circle {
@@ -5265,42 +5565,40 @@ h1 {
 
 .cannae-point text {
   fill: #30271b;
-  font-size: 11px;
+  font-size: 9px;
+  opacity: 0.64;
   text-anchor: start;
 }
 
 .cannae-melee-effect circle {
   fill: none;
-  stroke: rgba(130, 62, 42, 0.5);
-  stroke-width: 2;
+  stroke: rgba(130, 62, 42, 0.28);
+  stroke-width: 1.35;
   animation: meleeRing 1.1s ease-out 3 both;
 }
 
 .cannae-melee-effect.is-secondary-contact {
-  opacity: 0.8;
+  opacity: 0.55;
 }
 
 .cannae-melee-effect path {
-  stroke: #7f2f24;
+  stroke: rgba(127, 47, 36, 0.58);
   stroke-linecap: round;
-  stroke-width: 5;
+  stroke-width: 2.6;
   animation: meleeFlash 1.1s ease-out 3 both;
 }
 
 .cannae-melee-effect .cannae-contact-tether {
   fill: none;
-  stroke: rgba(111, 58, 36, 0.42);
+  stroke: rgba(111, 58, 36, 0.26);
   stroke-dasharray: 5 7;
   stroke-linecap: round;
-  stroke-width: 3;
+  stroke-width: 1.8;
   vector-effect: non-scaling-stroke;
 }
 
 .cannae-battle .active-event-label {
-  fill: rgba(49, 37, 24, 0.92);
-  stroke: rgba(239, 226, 190, 0.92);
-  stroke-width: 3px;
-  font-size: 12px;
+  display: none;
 }
 
 .cannae-battle .event-pin > circle:last-child {

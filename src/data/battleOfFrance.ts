@@ -39,6 +39,8 @@ export type FrontLine = {
   /** Extra route points before `from`, used only to keep multi-unit formations continuous through route handoffs. */
   formationPrelude?: Array<[number, number]>;
   waypoints?: Array<[number, number]>;
+  /** Optional dates for each waypoint, used when tactical routes need contact/closure timing instead of uniform path speed. */
+  waypointDates?: string[];
   width?: number;
   intensity?: number;
   formationUnits?: FormationUnit[];
@@ -50,6 +52,7 @@ export type FormationUnit = {
   coordinates?: [number, number];
   faction?: Faction;
   facingX?: -1 | 1;
+  forcedFacingX?: -1 | 1;
   hiddenFrom?: string;
   hiddenUntil?: string;
   icon?: UnitIconKind;

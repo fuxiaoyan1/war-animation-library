@@ -38,8 +38,8 @@ export type CampaignKey =
   | "mongol"
   | "qin"
   | "alexander"
-  | "caesar"
   | "cannae"
+  | "caesar"
   | "britain-air"
   | "atlantic-convoy"
   | "big-week"
@@ -143,8 +143,8 @@ function App() {
       {campaign === "britain-air" && <BattleOfBritainAnimation />}
       {campaign === "big-week" && <BigWeekAirBattleAnimation />}
       {campaign === "bismarck-sea" && <BismarckSeaAirBattleAnimation />}
-      {campaign === "cannae" && <CannaeBattleAnimation />}
       {campaign === "atlantic-convoy" && <AtlanticConvoyBattleAnimation />}
+      {campaign === "cannae" && <CannaeBattleAnimation />}
       {campaign === "caesar" && <CaesarWarsAnimation />}
       {campaign === "crusades" && <CrusadesAnimation />}
       {campaign === "eastern" && <EasternFrontAnimation />}

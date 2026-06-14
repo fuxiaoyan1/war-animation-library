@@ -25,10 +25,10 @@ const wars: WarEntry[] = [
   },
   {
     id: "cannae",
-    title: "坎尼会战",
+    title: "坎尼会战：双重围歼",
     era: "古代战争",
     period: "公元前216",
-    description: "奥凡托河平原、凸阵诱入、两翼内折、骑兵封后与罗马核心压缩。"
+    description: "罗马厚阵压上、迦太基中央后退、两翼内折、骑兵封后与战场终局。"
   },
   {
     id: "qin",

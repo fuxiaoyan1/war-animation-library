@@ -79,12 +79,9 @@ Important limits:
 | [FiftySounds](https://www.fiftysounds.com/) | Attribution-required music source | `docs/sources/audio.md` |
 | [Directory.Audio](https://directory.audio/) | Sound-effect source | `docs/sources/audio.md` |
 | [Chinese Music World](https://chinesemusicworld.com/) | Shi Mian Mai Fu pipa recording source, with unresolved redistribution status noted | `docs/sources/audio.md` |
-| [0 A.D. / Wildfire Games](https://play0ad.com/) | Earlier Cannae portrait-source attempt retained for traceability; no longer the Cannae runtime icon source | `docs/sources/unit-icons.md`, `docs/sources/cannae-battle.md` |
 | [PNGIMG](https://pngimg.com/) | Non-commercial image-derived marker source | `docs/sources/unit-icons.md` |
 | [PNG素材网](https://www.pngsucai.com/) | Local-demo unit-marker source with redistribution caveats | `docs/sources/unit-icons.md` |
 | [PurePNG](https://purepng.com/) | Earlier tank marker candidate retained for traceability | `docs/sources/unit-icons.md` |
-| [Baidu Images](https://image.baidu.com/) | Candidate discovery channel and current local/private Cannae unit-icon reference chain, subject to traceability and license uncertainty notes | `docs/sources/unit-icons.md`, `docs/sources/cannae-battle.md` |
-| [Baidu image host](https://img2.baidu.com/) | Direct image-host traceability entry recorded in Cannae unit-icon notes | `docs/sources/unit-icons.md`, `docs/sources/cannae-battle.md` |
 
 ## Source Files
 

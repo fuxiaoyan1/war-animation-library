@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <defs>
+    <linearGradient id="hullGradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#465457"/>
+      <stop offset="0.72" stop-color="#1a2226"/>
+      <stop offset="1" stop-color="#0d1112"/>
+    </linearGradient>
+    <filter id="softShadow" x="-12%" y="-20%" width="124%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="6" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <path d="M118 190 C242 212 620 211 770 192 L834 158 C650 178 304 176 94 154 Z" fill="url(#hullGradient)" stroke="#101719" stroke-width="6"/>
+    <path d="M170 156 C292 143 604 143 746 156 L770 192 C612 208 284 207 118 190 Z" fill="#7c817b" stroke="#202829" stroke-width="4"/>
+    <path d="M390 112 H560 L596 156 H352 Z" fill="#b7b7aa" stroke="#1d2526" stroke-width="4"/>
+    <path d="M466 76 H514 L536 112 H440 Z" fill="#c0c0b4" stroke="#1d2526" stroke-width="4"/>
+    <rect x="496" y="55" width="14" height="58" fill="#252c2f"/>
+    <path d="M606 136 L724 118" stroke="#1d2526" stroke-width="9" stroke-linecap="round"/>
+    <path d="M250 139 L342 126" stroke="#1d2526" stroke-width="8" stroke-linecap="round"/>
+    <path d="M194 176 C318 190 608 190 786 170" fill="none" stroke="#b8b6a6" stroke-width="5" opacity="0.72" stroke-linecap="round"/>
+    <path d="M228 137 H720" fill="none" stroke="rgba(236,229,196,0.34)" stroke-width="3" stroke-dasharray="16 13"/>
+    <circle cx="302" cy="176" r="8" fill="#121819" opacity="0.72"/>
+    <circle cx="374" cy="179" r="8" fill="#121819" opacity="0.72"/>
+  </g>
+</svg>

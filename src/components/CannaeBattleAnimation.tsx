@@ -19,8 +19,8 @@ import { useMapInteraction, type MapView } from "../lib/useMapInteraction";
 import { WarScore } from "../lib/warScore";
 import { CannaeTerrain3D, type CannaeTerrainEffectPlacement, type CannaeTerrainRouteState } from "./CannaeTerrain3D";
 
-const mapWidth = 1800;
-const mapHeight = 1080;
+const mapWidth = 2700;
+const mapHeight = 1620;
 const cannaeViewportCenterX = mapWidth / 2;
 const cannaeViewportCenterY = mapHeight / 2;
 const cannaeMinMapScale = 0.46;
@@ -31,10 +31,10 @@ const cannaeInteractionBounds = {
   south: 41.262,
   west: 16.06
 };
-const musicSource = publicPath("/audio/wikimedia-the-gladiator-us-marine-band.ogg");
-const cannaeMusicLoopEndSeconds = 164;
+const musicSource = publicPath("/audio/wikimedia-carnyx.ogg");
+const cannaeMusicLoopEndSeconds = 18;
 
-type CannaeCameraStageId = "deployment" | "convex" | "contact" | "cavalry" | "pocket" | "rearSeal" | "compression" | "endgame";
+type CannaeCameraStageId = "deployment" | "convex" | "contact" | "cavalry" | "pocket" | "rearSeal" | "compression" | "endgame" | "result";
 
 type CannaeCameraStage = {
   bearing: number;
@@ -49,40 +49,40 @@ type ContactRouteState = CannaeTerrainRouteState & {
 
 const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
   deployment: {
-    bearing: 12,
-    center: [16.151, 41.286],
+    bearing: 34,
+    center: [16.153, 41.2865],
     focusRoutePoints: [
-      [16.075, 41.306],
-      [16.222, 41.311],
-      [16.222, 41.264],
-      [16.075, 41.264]
+      [16.068, 41.309],
+      [16.226, 41.313],
+      [16.226, 41.262],
+      [16.068, 41.262]
     ],
-    scale: 0.5
+    scale: 0.6
   },
   convex: {
-    bearing: 12,
-    center: [16.151, 41.286],
+    bearing: 34,
+    center: [16.153, 41.2864],
     focusRoutePoints: [
-      [16.082, 41.306],
-      [16.218, 41.31],
-      [16.218, 41.267],
-      [16.082, 41.268]
+      [16.078, 41.307],
+      [16.222, 41.311],
+      [16.222, 41.265],
+      [16.078, 41.266]
     ],
-    scale: 0.52
+    scale: 0.68
   },
   contact: {
-    bearing: 12,
-    center: [16.158, 41.287],
+    bearing: 34,
+    center: [16.158, 41.2864],
     focusRoutePoints: [
       [16.112, 41.302],
       [16.19, 41.302],
-      [16.19, 41.272],
-      [16.112, 41.272]
+      [16.19, 41.267],
+      [16.112, 41.267]
     ],
-    scale: 1.04
+    scale: 1.28
   },
   cavalry: {
-    bearing: -18,
+    bearing: -38,
     center: [16.154, 41.286],
     focusRoutePoints: [
       [16.108, 41.307],
@@ -90,10 +90,10 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.206, 41.266],
       [16.108, 41.266]
     ],
-    scale: 0.84
+    scale: 1.14
   },
   pocket: {
-    bearing: -18,
+    bearing: -38,
     center: [16.163, 41.287],
     focusRoutePoints: [
       [16.118, 41.301],
@@ -101,40 +101,51 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.19, 41.276],
       [16.118, 41.276]
     ],
-    scale: 1.08
+    scale: 1.52
   },
   rearSeal: {
-    bearing: -18,
-    center: [16.166, 41.286],
+    bearing: -38,
+    center: [16.1682, 41.28635],
     focusRoutePoints: [
-      [16.118, 41.301],
-      [16.182, 41.299],
-      [16.182, 41.276],
-      [16.118, 41.276]
+      [16.149, 41.296],
+      [16.184, 41.2958],
+      [16.184, 41.2776],
+      [16.149, 41.2776]
     ],
-    scale: 1.06
+    scale: 2.28
   },
   compression: {
-    bearing: -18,
-    center: [16.1645, 41.286],
+    bearing: -38,
+    center: [16.1681, 41.28635],
     focusRoutePoints: [
-      [16.136, 41.296],
-      [16.181, 41.296],
-      [16.181, 41.278],
-      [16.136, 41.278]
+      [16.149, 41.2954],
+      [16.1845, 41.2952],
+      [16.1845, 41.2781],
+      [16.149, 41.2779]
     ],
-    scale: 1.16
+    scale: 2.34
   },
   endgame: {
-    bearing: -18,
-    center: [16.163, 41.285],
+    bearing: -38,
+    center: [16.1669, 41.286],
     focusRoutePoints: [
-      [16.14, 41.294],
-      [16.18, 41.294],
-      [16.18, 41.279],
-      [16.14, 41.279]
+      [16.1495, 41.295],
+      [16.1835, 41.2948],
+      [16.1835, 41.278],
+      [16.1495, 41.2781]
     ],
-    scale: 1.14
+    scale: 2.2
+  },
+  result: {
+    bearing: -38,
+    center: [16.167, 41.28625],
+    focusRoutePoints: [
+      [16.151, 41.2948],
+      [16.181, 41.2944],
+      [16.181, 41.2784],
+      [16.151, 41.2783]
+    ],
+    scale: 2.22
   }
 };
 
@@ -148,7 +159,7 @@ const eventCameraStage: Record<string, CannaeCameraStageId> = {
   "rear-seal": "rearSeal",
   "encirclement-compression": "compression",
   "paullus-endgame": "endgame",
-  "battle-result": "endgame"
+  "battle-result": "result"
 };
 
 const eventPoints = battleEvents.map((event) => ({
@@ -239,13 +250,63 @@ function trackPoint(track: CannaeUnitTrack, progress: number) {
 }
 
 function routeUnitPointNear(state: CannaeTerrainRouteState, target: [number, number]) {
-  const points = state.route.unitTracks?.map((track) => trackPoint(track, state.routeProgress));
+  const points = routeUnitPoints(state);
   if (!points?.length) {
     return state.markerPoint;
   }
   return points
     .map((point) => ({ distance: distance(point, target), point }))
     .sort((a, b) => a.distance - b.distance)[0].point;
+}
+
+function routeUnitPoints(state: CannaeTerrainRouteState) {
+  return state.route.unitTracks?.map((track) => trackPoint(track, state.routeProgress)) ?? [];
+}
+
+function closestUnitContact(
+  romanRoute: CannaeTerrainRouteState,
+  carthaginianRoute: CannaeTerrainRouteState,
+  contact?: {
+    carthaginianPoint: [number, number];
+    romanPoint: [number, number];
+  }
+) {
+  const romanPoints = routeUnitPoints(romanRoute);
+  const carthaginianPoints = routeUnitPoints(carthaginianRoute);
+  const fallbackRoman = contact ? routeUnitPointNear(romanRoute, contact.romanPoint) : routeContactPointForState(romanRoute);
+  const fallbackCarthaginian = contact ? routeUnitPointNear(carthaginianRoute, contact.carthaginianPoint) : routeContactPointForState(carthaginianRoute);
+
+  if (romanPoints.length === 0 || carthaginianPoints.length === 0) {
+    return {
+      carthaginianPoint: fallbackCarthaginian,
+      distance: distance(fallbackRoman, fallbackCarthaginian),
+      romanPoint: fallbackRoman
+    };
+  }
+
+  const anchorRadius = contact ? 0.012 : Number.POSITIVE_INFINITY;
+  const localRomanPoints = contact ? romanPoints.filter((point) => distance(point, contact.romanPoint) < anchorRadius) : romanPoints;
+  const localCarthaginianPoints = contact
+    ? carthaginianPoints.filter((point) => distance(point, contact.carthaginianPoint) < anchorRadius)
+    : carthaginianPoints;
+  const candidateRomanPoints = localRomanPoints.length ? localRomanPoints : romanPoints;
+  const candidateCarthaginianPoints = localCarthaginianPoints.length ? localCarthaginianPoints : carthaginianPoints;
+  let closest = {
+    carthaginianPoint: candidateCarthaginianPoints[0],
+    distance: Number.POSITIVE_INFINITY,
+    romanPoint: candidateRomanPoints[0]
+  };
+
+  for (const romanPoint of candidateRomanPoints) {
+    for (const carthaginianPoint of candidateCarthaginianPoints) {
+      const routeDistance = distance(romanPoint, carthaginianPoint);
+      if (routeDistance < closest.distance) {
+        closest = { carthaginianPoint, distance: routeDistance, romanPoint };
+      }
+    }
+  }
+
+  return closest;
 }
 
 function linePointsUntil(points: Array<[number, number]>, progress: number) {
@@ -304,12 +365,14 @@ function routeShouldRender(route: CannaeRoute, progress: number, activeRouteIds:
 }
 
 function routeUnitShouldRender(route: CannaeRoute, progress: number, activeEvent: CannaeEvent) {
-  const resultProgress = timeline.dateToProgress(campaignEnd);
-  if (activeEvent.id === "battle-result" || progress >= resultProgress - 0.0015) {
-    return false;
-  }
   const routeStartProgress = route.unitVisibleFrom ? timeline.dateToProgress(route.unitVisibleFrom) : timeline.dateToProgress(route.start);
   const unitVisibleEnd = route.unitVisibleUntil ? timeline.dateToProgress(route.unitVisibleUntil) : route.visibleUntil ? timeline.dateToProgress(route.visibleUntil) : 1;
+  if (activeEvent.id === "battle-result") {
+    return (
+      activeEvent.routeIds.includes(route.id) &&
+      (route.faction === "carthaginian" || route.id === "roman-core-breakup" || route.id === "paullus-command-collapse")
+    );
+  }
   return progress >= routeStartProgress && progress <= unitVisibleEnd;
 }
 
@@ -351,7 +414,8 @@ function contactIsPlausible(contact: {
 
   const romanContactPoint = routeUnitPointNear(romanRoute, contact.romanPoint);
   const carthaginianContactPoint = routeUnitPointNear(carthaginianRoute, contact.carthaginianPoint);
-  const routeDistance = distance(romanContactPoint, carthaginianContactPoint);
+  const closestContact = closestUnitContact(romanRoute, carthaginianRoute, contact);
+  const routeDistance = Math.min(distance(romanContactPoint, carthaginianContactPoint), closestContact.distance);
   const anchorDistance = Math.max(distance(romanContactPoint, contact.romanPoint), distance(carthaginianContactPoint, contact.carthaginianPoint));
   const routeThreshold = contact.distanceThreshold ?? 0.021;
   return routeDistance < routeThreshold && anchorDistance < Math.max(0.052, routeThreshold * 2.1);
@@ -391,15 +455,16 @@ function liveContactForAnchor(contact: {
   if (!romanRoute || !carthaginianRoute) {
     return null;
   }
+  const closestContact = closestUnitContact(romanRoute, carthaginianRoute, contact);
   const isMassedInfantryContact =
     romanRoute.route.unitKind === "roman-legion" &&
     (carthaginianRoute.route.unitKind === "carthaginian-infantry" || carthaginianRoute.route.unitKind === "african-infantry");
-  const point = weightedPoint(romanRoute.contactPoint, carthaginianRoute.contactPoint, isMassedInfantryContact ? 0.42 : 0.5);
+  const point = weightedPoint(closestContact.romanPoint, closestContact.carthaginianPoint, isMassedInfantryContact ? 0.42 : 0.5);
   return {
-    carthaginianPoint: carthaginianRoute.contactPoint,
+    carthaginianPoint: closestContact.carthaginianPoint,
     carthaginianRouteId: carthaginianRoute.route.id,
     point,
-    romanPoint: romanRoute.contactPoint,
+    romanPoint: closestContact.romanPoint,
     romanRouteId: romanRoute.route.id
   };
 }

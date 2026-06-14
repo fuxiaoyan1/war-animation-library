@@ -156,6 +156,7 @@ type CampaignMapAnimationProps = {
   eyebrow: string;
   frontLines: FrontLine[];
   focusSteps: FocusStep[];
+  showAncientMapOrnaments?: boolean;
   smoothSceneContentTransitions?: boolean;
   sceneContentTransitionProgress?: number;
   focusTransitionProgress?: number;
@@ -890,6 +891,7 @@ export function CampaignMapAnimation({
   eyebrow,
   frontLines,
   focusSteps,
+  showAncientMapOrnaments = true,
   smoothSceneContentTransitions = false,
   sceneContentTransitionProgress,
   focusTransitionProgress = 0,
@@ -1476,7 +1478,7 @@ export function CampaignMapAnimation({
               data-testid="camera-layer"
               transform={mapTransform}
             >
-              {historicalRegions.length === 0 && (
+              {showAncientMapOrnaments && historicalRegions.length === 0 && (
                 <image
                   className="ancient-map-ornaments"
                   data-testid="ancient-map-ornaments"
@@ -1648,9 +1650,9 @@ export function CampaignMapAnimation({
                         data-testid={line.testId ?? `fortified-line-${line.id}`}
                         style={opacityStyle(lineVisibility.opacity)}
                       >
-                        <polyline className="fortified-line-shadow" points={loweredPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
-                        <polyline className="fortified-line-body" points={points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
-                        <polyline className="fortified-line-crest" points={raisedPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-shadow" fill="none" points={loweredPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-body" fill="none" points={points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-crest" fill="none" points={raisedPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
                         <text x={x} y={y - 10}>
                           {line.label}
                         </text>

@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web 3D Terrain Capability Prototype</title>
+    <link rel="stylesheet" href="./vendor/maplibre-gl.css" />
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0b1020;
+        color: #f8fafc;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 10%, rgba(238, 211, 148, 0.16), transparent 34%),
+          linear-gradient(135deg, #08101c 0%, #182031 52%, #0b1020 100%);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+        padding: 16px;
+        gap: 12px;
+      }
+
+      .topbar,
+      .controlbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.78);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(10px);
+        padding: 12px 14px;
+      }
+
+      .title { display: grid; gap: 4px; }
+
+      h1 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 13px;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .badge {
+        border-radius: 999px;
+        border: 1px solid rgba(203, 213, 225, 0.28);
+        padding: 5px 9px;
+        color: #e2e8f0;
+        background: rgba(15, 23, 42, 0.72);
+        font-size: 12px;
+      }
+
+      .stage {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        border: 1px solid rgba(226, 232, 240, 0.2);
+        border-radius: 8px;
+        background: #0f172a;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+      }
+
+      #map { position: absolute; inset: 0; }
+
+      .maplibregl-ctrl-bottom-left,
+      .maplibregl-ctrl-bottom-right { display: none; }
+
+      .panel {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        width: min(390px, calc(100% - 32px));
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.76);
+        color: #f8fafc;
+        padding: 12px;
+        pointer-events: none;
+        backdrop-filter: blur(8px);
+      }
+
+      .panel strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #fde68a;
+      }
+
+      .panel p {
+        margin: 0;
+        color: #dbeafe;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .legend {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        display: grid;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.74);
+        padding: 10px;
+        font-size: 12px;
+        pointer-events: none;
+        backdrop-filter: blur(8px);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #e2e8f0;
+      }
+
+      .swatch {
+        width: 22px;
+        height: 8px;
+        border-radius: 999px;
+      }
+
+      .swatch.rome { background: #dc5a4a; }
+      .swatch.carthage { background: #2f9c69; }
+      .swatch.river { background: #38bdf8; }
+      .swatch.model { background: linear-gradient(90deg, #fca5a5, #86efac); }
+
+      .controlbar label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: min(760px, 100%);
+        color: #cbd5e1;
+        font-size: 13px;
+      }
+
+      input[type="range"] { width: 100%; accent-color: #f59e0b; }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        background: #f59e0b;
+        color: #1f1300;
+        padding: 8px 12px;
+        font-weight: 760;
+        cursor: pointer;
+      }
+
+      .status {
+        min-width: 160px;
+        color: #fde68a;
+        text-align: right;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="title">
+          <h1>Web 3D Terrain Capability Prototype</h1>
+          <p class="subtitle">Bare tactical terrain: synthetic DEM relief, hillshade, landform texture, fog, and Three.js units placed on terrain height.</p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">Web 3D path</span>
+          <span class="badge">Bare terrain demo</span>
+          <span class="badge">Three.js custom layer</span>
+          <span class="badge" id="terrainStatus">terrain loading</span>
+        </div>
+      </header>
+      <section class="stage">
+        <div id="map"></div>
+        <aside class="panel">
+          <strong id="phaseTitle">Terrain capability test</strong>
+          <p id="phaseText">This view uses a high-relief terrain source to prove the browser pipeline without a modern street-map layer.</p>
+        </aside>
+        <aside class="legend">
+          <div class="legend-item"><span class="swatch rome"></span>test formation route A</div>
+          <div class="legend-item"><span class="swatch carthage"></span>test formation route B</div>
+          <div class="legend-item"><span class="swatch river"></span>terrain texture / hillshade</div>
+          <div class="legend-item"><span class="swatch model"></span><span id="modelReadout">3D models: --</span></div>
+          <div class="legend-item" id="elevationReadout">terrain elevation: --</div>
+        </aside>
+      </section>
+      <footer class="controlbar">
+        <button id="playButton" type="button">Pause</button>
+        <label><span>time</span><input id="timeSlider" type="range" min="0" max="1000" value="540" /></label>
+        <div class="status" id="status">54%</div>
+      </footer>
+    </main>
+    <script src="./vendor/maplibre-gl.js"></script>
+    <script type="module">
+      import * as THREE from './vendor/three.module.js';
+
+      const bounds = [11.12, 47.07, 11.72, 47.50];
+      const center = [11.397, 47.276];
+      const terrainTileUrl = '/prototypes/web3d-terrain-prototype/tiles/highland-dem/{z}/{x}-{y}.png';
+      const textureTileUrl = '/prototypes/web3d-terrain-prototype/tiles/highland-texture/{z}/{x}-{y}.png';
+      const phaseTitle = document.querySelector('#phaseTitle');
+      const phaseText = document.querySelector('#phaseText');
+      const slider = document.querySelector('#timeSlider');
+      const status = document.querySelector('#status');
+      const playButton = document.querySelector('#playButton');
+      const terrainStatus = document.querySelector('#terrainStatus');
+      const elevationReadout = document.querySelector('#elevationReadout');
+      const modelReadout = document.querySelector('#modelReadout');
+
+      const battlefield = {
+        type: 'FeatureCollection',
+        features: [
+          polygon('valley-floor', [[11.292, 47.236], [11.515, 47.232], [11.535, 47.287], [11.326, 47.306], [11.276, 47.278]], { kind: 'plain' }),
+          polygon('left-slope-zone', [[11.265, 47.305], [11.402, 47.351], [11.535, 47.319], [11.526, 47.292], [11.324, 47.306]], { kind: 'corridor' }),
+          polygon('route-zone-a', [[11.322, 47.259], [11.446, 47.26], [11.482, 47.286], [11.357, 47.294]], { kind: 'roman-zone' }),
+          polygon('route-zone-b', [[11.33, 47.301], [11.505, 47.307], [11.52, 47.278], [11.382, 47.268]], { kind: 'carthage-zone' })
+        ]
+      };
+
+      const river = {
+        type: 'FeatureCollection',
+        features: [line('terrain-spine', [[11.255, 47.374], [11.31, 47.34], [11.36, 47.31], [11.42, 47.286], [11.49, 47.255], [11.565, 47.21]])]
+      };
+
+      const routes = {
+        type: 'FeatureCollection',
+        features: [
+          line('formation-route-a', [[11.292, 47.254], [11.34, 47.263], [11.394, 47.271], [11.451, 47.279], [11.508, 47.292]], { faction: 'rome' }),
+          line('formation-route-b', [[11.306, 47.314], [11.358, 47.302], [11.42, 47.291], [11.479, 47.276], [11.532, 47.26]], { faction: 'carthage' }),
+          line('ridge-crest', [[11.27, 47.356], [11.336, 47.334], [11.398, 47.308], [11.46, 47.283], [11.535, 47.244]], { faction: 'carthage' })
+        ]
+      };
+
+      const map = new maplibregl.Map({
+        container: 'map',
+        center,
+        zoom: 12.28,
+        pitch: 74,
+        bearing: -22,
+        minZoom: 10.8,
+        maxZoom: 13.8,
+        maxBounds: [[11.10, 47.05], [11.74, 47.52]],
+        maxPitch: 85,
+        style: {
+          version: 8,
+          sources: {
+            dem: { type: 'raster-dem', tiles: [terrainTileUrl], bounds, encoding: 'terrarium', tileSize: 256, minzoom: 11, maxzoom: 14, attribution: 'Synthetic high-relief DEM tiles for local Web 3D capability proof' },
+            'hillshade-dem': { type: 'raster-dem', tiles: [terrainTileUrl], bounds, encoding: 'terrarium', tileSize: 256, minzoom: 11, maxzoom: 14 },
+            texture: { type: 'raster', tiles: [textureTileUrl], bounds, tileSize: 256, minzoom: 11, maxzoom: 14, attribution: 'Synthetic terrain texture, paired with local DEM' },
+            battlefield: { type: 'geojson', data: battlefield },
+            river: { type: 'geojson', data: river },
+            routes: { type: 'geojson', data: routes }
+          },
+          layers: [
+            { id: 'background', type: 'background', paint: { 'background-color': '#d2c4a8' } },
+            { id: 'terrain-texture', type: 'raster', source: 'texture', paint: { 'raster-opacity': 1, 'raster-contrast': 0.34, 'raster-saturation': 0.1, 'raster-brightness-min': 0.08, 'raster-brightness-max': 0.98 } },
+            { id: 'hillshade', type: 'hillshade', source: 'hillshade-dem', paint: { 'hillshade-exaggeration': 1, 'hillshade-shadow-color': '#17130e', 'hillshade-highlight-color': '#fff8e6', 'hillshade-accent-color': '#6a634d', 'hillshade-illumination-direction': 320, 'hillshade-illumination-altitude': 22 } },
+            { id: 'plain', type: 'fill', source: 'battlefield', filter: ['==', ['get', 'kind'], 'plain'], paint: { 'fill-color': '#e6cf94', 'fill-opacity': 0.025 } },
+            { id: 'river-corridor', type: 'fill', source: 'battlefield', filter: ['==', ['get', 'kind'], 'corridor'], paint: { 'fill-color': '#8fc38d', 'fill-opacity': 0.022 } },
+            { id: 'carthage-zone', type: 'fill', source: 'battlefield', filter: ['==', ['get', 'kind'], 'carthage-zone'], paint: { 'fill-color': '#25a267', 'fill-opacity': 0.028 } },
+            { id: 'roman-zone', type: 'fill', source: 'battlefield', filter: ['==', ['get', 'kind'], 'roman-zone'], paint: { 'fill-color': '#cf4f49', 'fill-opacity': 0.028 } },
+            { id: 'river-line', type: 'line', source: 'river', paint: { 'line-color': '#d7f0ff', 'line-opacity': 0.48, 'line-width': 2.6, 'line-blur': 1.1 } },
+            { id: 'route-halo', type: 'line', source: 'routes', paint: { 'line-color': '#0b1020', 'line-opacity': 0.28, 'line-width': 5.6 } },
+            { id: 'routes', type: 'line', source: 'routes', paint: { 'line-color': ['case', ['==', ['get', 'faction'], 'rome'], '#e85a4f', '#2bbf78'], 'line-opacity': 0.78, 'line-width': 2.25, 'line-dasharray': [1.4, 1.1] } }
+          ],
+          terrain: { source: 'dem', exaggeration: 1.08 },
+          sky: {
+            'sky-color': '#d9e0e8',
+            'sky-horizon-blend': 0.2,
+            'horizon-color': '#eadcc1',
+            'horizon-fog-blend': 0.36,
+            'fog-color': '#ccb78e',
+            'fog-ground-blend': 0.38,
+            'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 10, 0.34, 14, 0.08]
+          }
+        },
+        attributionControl: false
+      });
+
+      let playing = true;
+      let progress = 0.54;
+      let lastTick = performance.now();
+      let terrainLayer = null;
+
+      function polygon(id, coordinates, properties = {}) {
+        return { type: 'Feature', id, properties: { id, ...properties }, geometry: { type: 'Polygon', coordinates: [[...coordinates, coordinates[0]]] } };
+      }
+
+      function line(id, coordinates, properties = {}) {
+        return { type: 'Feature', id, properties: { id, ...properties }, geometry: { type: 'LineString', coordinates } };
+      }
+
+      function mix(a, b, t) { return a + (b - a) * t; }
+      function clamp(value, min = 0, max = 1) { return Math.max(min, Math.min(max, value)); }
+      function smooth(t) { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); }
+      function degToRad(deg) { return deg * Math.PI / 180; }
+
+      function buildUnitSpecs() {
+        const specs = [];
+        const romanRows = 4;
+        const romanCols = 5;
+        for (let row = 0; row < romanRows; row += 1) {
+          for (let col = 0; col < romanCols; col += 1) {
+            const x = col - (romanCols - 1) / 2;
+            const y = row - (romanRows - 1) / 2;
+            const jitterX = Math.sin((row * 19 + col * 13) * 0.7) * 0.00022;
+            const jitterY = Math.cos((row * 23 + col * 11) * 0.6) * 0.00018;
+            specs.push({ faction: 'rome', kind: 'infantry', index: row * romanCols + col, start: [11.305 + x * 0.0075 + jitterX, 47.255 + y * 0.0048 + jitterY], end: [11.452 + x * 0.0052 + jitterX * 0.6, 47.282 + y * 0.0036 + jitterY * 0.6], offset: [x, y] });
+          }
+        }
+        specs.push({ faction: 'rome', kind: 'command', index: 100, start: [11.295, 47.248], end: [11.43, 47.274], offset: [0, 0] });
+        for (let i = 0; i < 12; i += 1) {
+          const u = i / 11;
+          const arc = -0.8 + u * 1.6;
+          specs.push({ faction: 'carthage', kind: 'infantry', index: i, start: [11.44 + Math.cos(arc) * 0.05, 47.30 + Math.sin(arc) * 0.028], end: [11.47 + Math.cos(arc) * 0.033, 47.286 + Math.sin(arc) * 0.018], offset: [Math.cos(arc), Math.sin(arc)] });
+        }
+        for (let i = 0; i < 10; i += 1) {
+          const side = i < 5 ? -1 : 1;
+          const rank = i % 5;
+          specs.push({ faction: 'carthage', kind: 'wing', index: i, start: [11.33 + rank * 0.026, 47.286 + side * 0.037], end: [11.40 + rank * 0.017, 47.281 + side * 0.014], offset: [rank, side] });
+        }
+        for (let i = 0; i < 8; i += 1) {
+          const side = i < 4 ? -1 : 1;
+          const rank = i % 4;
+          specs.push({ faction: 'carthage', kind: 'cavalry', index: i, start: [11.312 + rank * 0.038, 47.286 + side * 0.055], end: [11.48 - rank * 0.012, 47.282 + side * 0.025], offset: [rank, side] });
+        }
+        specs.push({ faction: 'carthage', kind: 'command', index: 200, start: [11.476, 47.31], end: [11.485, 47.292], offset: [0, 0] });
+        return specs;
+      }
+
+      function unitPosition(unit, t) {
+        const flankDelay = unit.kind === 'wing' ? 0.25 : unit.kind === 'cavalry' ? 0.36 : 0.08;
+        const localT = unit.faction === 'rome' ? smooth(t * 1.25) : smooth((t - flankDelay) / (1 - flankDelay));
+        let x = mix(unit.start[0], unit.end[0], localT);
+        let y = mix(unit.start[1], unit.end[1], localT);
+        if (unit.faction === 'rome') {
+          const pressure = smooth((t - 0.5) / 0.48);
+          x = mix(x, 11.452 + unit.offset[0] * 0.004, pressure);
+          y = mix(y, 47.282 + unit.offset[1] * 0.0025 + Math.sin(unit.index * 1.7) * 0.0016 * pressure, pressure);
+        }
+        if (unit.faction === 'carthage' && unit.kind === 'infantry') {
+          const bend = smooth((t - 0.18) / 0.44);
+          x += Math.cos(unit.index * 0.7) * 0.0012 * bend;
+          y += Math.sin(unit.index * 0.9) * 0.001 * bend;
+        }
+        if (unit.kind === 'cavalry') {
+          const close = smooth((t - 0.58) / 0.32);
+          y = mix(y, 47.282 + Math.sign(unit.offset[1]) * 0.018, close);
+          x = mix(x, 11.48 - (unit.offset[0] - 1.5) * 0.012, close);
+        }
+        return [x, y];
+      }
+
+      function headingDegrees(from, to) {
+        return Math.atan2(to[1] - from[1], to[0] - from[0]) * 180 / Math.PI;
+      }
+
+      function phaseFor(t) {
+        if (t < 0.22) return ['Bare relief terrain', 'Local Terrarium DEM and landform texture build a tactical terrain surface without roads, city labels or modern map tiles.'];
+        if (t < 0.48) return ['Shared terrain camera', 'MapLibre terrain, hillshade, route overlays and Three.js units all use the same pitched WebGL camera.'];
+        if (t < 0.72) return ['Terrain-height units', 'Each unit samples queryTerrainElevation at its current coordinate and keeps its model seated on the terrain.'];
+        return ['Production boundary', 'This is a battle-level capability sample. Real Cannae needs source-backed DEM, river course, ground texture and tactical geometry.'];
+      }
+
+      function modelScaleFor(unit) {
+        if (unit.kind === 'command') return [430, 280, 135];
+        if (unit.kind === 'cavalry') return [460, 190, 110];
+        if (unit.kind === 'wing') return [360, 180, 102];
+        return [335, 180, 108];
+      }
+
+      function createTacticalUnitLayer(unitSpecs) {
+        return {
+          id: 'three-terrain-units',
+          type: 'custom',
+          renderingMode: '3d',
+          progress: 0,
+          latestElevations: [],
+          onAdd(mapInstance, gl) {
+            this.map = mapInstance;
+            this.camera = new THREE.Camera();
+            this.scene = new THREE.Scene();
+            this.scene.matrixAutoUpdate = false;
+            this.scene.rotateX(Math.PI / 2);
+            this.scene.scale.multiply(new THREE.Vector3(1, 1, -1));
+            this.scene.matrixWorldNeedsUpdate = true;
+
+            this.originLngLat = center;
+            this.originElevation = this.map.queryTerrainElevation(this.originLngLat) || 0;
+            this.originMercator = maplibregl.MercatorCoordinate.fromLngLat(this.originLngLat, this.originElevation);
+            this.mercatorPerMeter = this.originMercator.meterInMercatorCoordinateUnits();
+            this.originTransform = {
+              translateX: this.originMercator.x,
+              translateY: this.originMercator.y,
+              translateZ: this.originMercator.z,
+              rotateX: Math.PI / 2,
+              rotateY: 0,
+              rotateZ: 0,
+              scale: this.mercatorPerMeter
+            };
+
+            const romanMaterial = new THREE.MeshStandardMaterial({ color: 0xc94034, roughness: 0.72, metalness: 0.03, emissive: 0x40100c, emissiveIntensity: 0.18 });
+            const carthageMaterial = new THREE.MeshStandardMaterial({ color: 0x1f8f55, roughness: 0.74, metalness: 0.03, emissive: 0x07391f, emissiveIntensity: 0.16 });
+            const commandMaterial = new THREE.MeshStandardMaterial({ color: 0xd8a92e, roughness: 0.58, metalness: 0.08, emissive: 0x4a2e00, emissiveIntensity: 0.22 });
+
+            function makeUnitGeometry(kind) {
+              const group = new THREE.Group();
+              const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.62, 0.26));
+              body.position.z = 0.13;
+              group.add(body);
+              const front = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.58, 4));
+              front.rotation.z = -Math.PI / 2;
+              front.position.x = 0.78;
+              front.position.z = 0.16;
+              group.add(front);
+              const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.12, 0.32));
+              ridge.position.set(-0.05, 0, 0.34);
+              group.add(ridge);
+              if (kind !== 'infantry') {
+                const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.78, 8));
+                mast.position.set(-0.2, 0, 0.58);
+                group.add(mast);
+              }
+              if (kind === 'cavalry') {
+                const rider = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.42));
+                rider.position.set(0.12, 0, 0.46);
+                group.add(rider);
+              }
+              group.updateMatrixWorld(true);
+              const geometries = [];
+              group.traverse((child) => {
+                if (child.isMesh) {
+                  const geometry = child.geometry.index ? child.geometry.toNonIndexed() : child.geometry.clone();
+                  geometry.applyMatrix4(child.matrixWorld);
+                  geometries.push(geometry);
+                }
+              });
+              return mergeBufferGeometries(geometries);
+            }
+
+            function mergeBufferGeometries(geometries) {
+              const positions = [];
+              const normals = [];
+              for (const geometry of geometries) {
+                const position = geometry.getAttribute('position');
+                const normal = geometry.getAttribute('normal');
+                for (let i = 0; i < position.count; i += 1) {
+                  positions.push(position.getX(i), position.getY(i), position.getZ(i));
+                  normals.push(normal.getX(i), normal.getY(i), normal.getZ(i));
+                }
+              }
+              const merged = new THREE.BufferGeometry();
+              merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+              merged.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+              return merged;
+            }
+
+            const infantryGeometry = makeUnitGeometry('infantry');
+            const cavalryGeometry = makeUnitGeometry('cavalry');
+            const commandGeometry = makeUnitGeometry('command');
+            this.meshes = {
+              romanInfantry: new THREE.InstancedMesh(infantryGeometry, romanMaterial, unitSpecs.filter((u) => u.faction === 'rome' && u.kind !== 'command').length),
+              romanCommand: new THREE.InstancedMesh(commandGeometry, commandMaterial, unitSpecs.filter((u) => u.faction === 'rome' && u.kind === 'command').length),
+              carthageInfantry: new THREE.InstancedMesh(infantryGeometry, carthageMaterial, unitSpecs.filter((u) => u.faction === 'carthage' && u.kind !== 'cavalry' && u.kind !== 'command').length),
+              carthageCavalry: new THREE.InstancedMesh(cavalryGeometry, carthageMaterial, unitSpecs.filter((u) => u.faction === 'carthage' && u.kind === 'cavalry').length),
+              carthageCommand: new THREE.InstancedMesh(commandGeometry, commandMaterial, unitSpecs.filter((u) => u.faction === 'carthage' && u.kind === 'command').length)
+            };
+            for (const mesh of Object.values(this.meshes)) {
+              mesh.frustumCulled = false;
+              this.scene.add(mesh);
+            }
+            this.groupIndexes = { romanInfantry: 0, romanCommand: 0, carthageInfantry: 0, carthageCavalry: 0, carthageCommand: 0 };
+            this.unitGroups = unitSpecs.map((unit) => {
+              const group = unit.faction === 'rome'
+                ? (unit.kind === 'command' ? 'romanCommand' : 'romanInfantry')
+                : (unit.kind === 'command' ? 'carthageCommand' : unit.kind === 'cavalry' ? 'carthageCavalry' : 'carthageInfantry');
+              const instanceIndex = this.groupIndexes[group]++;
+              return { ...unit, group, instanceIndex };
+            });
+
+            this.scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+            this.scene.add(new THREE.HemisphereLight(0xfff1ce, 0x24354b, 1.05));
+            const sun = new THREE.DirectionalLight(0xffefb8, 3.8);
+            sun.position.set(50, 70, -30).normalize();
+            this.scene.add(sun);
+            const fill = new THREE.DirectionalLight(0xc7d2fe, 0.46);
+            fill.position.set(-25, 18, 34).normalize();
+            this.scene.add(fill);
+
+            this.renderer = new THREE.WebGLRenderer({ canvas: mapInstance.getCanvas(), context: gl, antialias: true });
+            this.renderer.autoClear = false;
+            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            this.renderer.toneMappingExposure = 1.35;
+            this.tmpMatrix = new THREE.Matrix4();
+            this.tmpPosition = new THREE.Vector3();
+            this.tmpQuaternion = new THREE.Quaternion();
+            this.tmpScale = new THREE.Vector3();
+            this.rotationAdjust = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0));
+            this.updateInstances(this.progress);
+            window.__web3dPrototype = { customLayer: this, unitCount: unitSpecs.length, threeRevision: THREE.REVISION };
+          },
+          relativePosition(lngLat, altitudeMeters) {
+            const mercator = maplibregl.MercatorCoordinate.fromLngLat(lngLat, altitudeMeters);
+            return [
+              (mercator.x - this.originMercator.x) / this.mercatorPerMeter,
+              (mercator.y - this.originMercator.y) / this.mercatorPerMeter,
+              (mercator.z - this.originMercator.z) / this.mercatorPerMeter
+            ];
+          },
+          updateInstances(t) {
+            if (!this.meshes) return;
+            const counts = { romanInfantry: 0, romanCommand: 0, carthageInfantry: 0, carthageCavalry: 0, carthageCommand: 0 };
+            this.latestElevations = [];
+            for (const unit of this.unitGroups) {
+              const current = unitPosition(unit, t);
+              const ahead = unitPosition(unit, clamp(t + 0.012, 0, 1));
+              const elevation = this.map.queryTerrainElevation(current) ?? this.originElevation;
+              const liftedElevation = elevation + (unit.kind === 'command' ? 7 : 5);
+              const [x, y, z] = this.relativePosition(current, liftedElevation);
+              const heading = headingDegrees(current, ahead);
+              const [sx, sy, sz] = modelScaleFor(unit);
+              this.tmpPosition.set(x, y, z);
+              this.tmpQuaternion.setFromEuler(new THREE.Euler(0, 0, degToRad(heading)));
+              this.tmpScale.set(sx, sy, unit.faction === 'rome' ? mix(sz, sz * 0.72, smooth((t - 0.72) / 0.24)) : sz);
+              this.tmpMatrix.compose(this.tmpPosition, this.tmpQuaternion, this.tmpScale);
+              this.meshes[unit.group].setMatrixAt(unit.instanceIndex, this.tmpMatrix);
+              counts[unit.group] += 1;
+              if (this.latestElevations.length < 8) this.latestElevations.push(elevation);
+            }
+            for (const mesh of Object.values(this.meshes)) {
+              mesh.instanceMatrix.needsUpdate = true;
+            }
+            this.latestCounts = counts;
+          },
+          setProgress(t) {
+            this.progress = t;
+            this.updateInstances(t);
+            this.map?.triggerRepaint();
+          },
+          render(gl, args) {
+            this.originElevation = this.map.queryTerrainElevation(this.originLngLat) || this.originElevation || 0;
+            this.originMercator = maplibregl.MercatorCoordinate.fromLngLat(this.originLngLat, this.originElevation);
+            this.originTransform.translateX = this.originMercator.x;
+            this.originTransform.translateY = this.originMercator.y;
+            this.originTransform.translateZ = this.originMercator.z;
+            this.originTransform.scale = this.originMercator.meterInMercatorCoordinateUnits();
+            const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
+            const l = new THREE.Matrix4()
+              .makeTranslation(this.originTransform.translateX, this.originTransform.translateY, this.originTransform.translateZ)
+              .scale(new THREE.Vector3(this.originTransform.scale, -this.originTransform.scale, this.originTransform.scale));
+            this.camera.projectionMatrix = m.multiply(l);
+            this.renderer.resetState();
+            this.renderer.render(this.scene, this.camera);
+            this.map.triggerRepaint();
+          }
+        };
+      }
+
+      function updateCamera(t) {
+        map.easeTo({
+          center: [mix(11.37, 11.435, smooth(t)), mix(47.287, 47.281, smooth(t))],
+          zoom: mix(12.12, 12.72, smooth(Math.sin(t * Math.PI))),
+          pitch: mix(68, 74, smooth(t)),
+          bearing: mix(-31, -18, smooth(t)),
+          duration: 0
+        });
+      }
+
+      function updateNarration(t) {
+        const [title, text] = phaseFor(t);
+        phaseTitle.textContent = title;
+        phaseText.textContent = text;
+      }
+
+      function sampleTerrain(t) {
+        const samplePoint = [mix(11.32, 11.5, smooth(t)), mix(47.25, 47.32, smooth(1 - Math.abs(t - 0.5) * 2))];
+        const elevation = map.queryTerrainElevation(samplePoint);
+        if (Number.isFinite(elevation)) {
+          terrainStatus.textContent = 'terrain + three active';
+          elevationReadout.textContent = `terrain elevation: ${Math.round(elevation)} m`;
+        } else {
+          terrainStatus.textContent = terrainLayer ? 'three active / terrain loading' : 'terrain loading';
+          elevationReadout.textContent = 'terrain elevation: loading';
+        }
+        if (terrainLayer?.latestElevations?.length) {
+          const avg = terrainLayer.latestElevations.reduce((sum, value) => sum + value, 0) / terrainLayer.latestElevations.length;
+          modelReadout.textContent = `3D models: ${terrainLayer.unitGroups.length} / avg z ${Math.round(avg)} m`;
+        }
+      }
+
+      function setProgress(value) {
+        progress = clamp(value, 0, 1);
+        slider.value = Math.round(progress * 1000);
+        status.textContent = `${Math.round(progress * 100)}%`;
+        updateNarration(progress);
+        updateCamera(progress);
+        terrainLayer?.setProgress(progress);
+        sampleTerrain(progress);
+      }
+
+      function tick(now) {
+        const elapsed = now - lastTick;
+        lastTick = now;
+        if (playing) setProgress((progress + elapsed / 28000) % 1);
+        requestAnimationFrame(tick);
+      }
+
+      slider.addEventListener('input', () => {
+        playing = false;
+        playButton.textContent = 'Play';
+        setProgress(Number(slider.value) / 1000);
+      });
+
+      playButton.addEventListener('click', () => {
+        playing = !playing;
+        playButton.textContent = playing ? 'Pause' : 'Play';
+      });
+
+      map.on('load', () => {
+        const unitSpecs = buildUnitSpecs();
+        terrainLayer = createTacticalUnitLayer(unitSpecs);
+        map.addLayer(terrainLayer);
+        setProgress(progress);
+        requestAnimationFrame((now) => { lastTick = now; requestAnimationFrame(tick); });
+      });
+    </script>
+  </body>
+</html>

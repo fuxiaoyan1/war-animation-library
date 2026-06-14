@@ -72,6 +72,18 @@ async function ensureDistReady() {
   await access(indexPath);
 }
 
+function cacheControlFor(filePath) {
+  if (filePath === indexPath) {
+    return "no-cache";
+  }
+
+  if (normalize(filePath).includes(`${sep}assets${sep}unit-icons${sep}`)) {
+    return "no-cache";
+  }
+
+  return "public, max-age=31536000, immutable";
+}
+
 await ensureDistReady();
 
 const server = createServer(async (request, response) => {
@@ -87,7 +99,7 @@ const server = createServer(async (request, response) => {
   try {
     const fileStat = statSync(filePath);
     response.writeHead(200, {
-      "Cache-Control": filePath === indexPath ? "no-cache" : "public, max-age=31536000, immutable",
+      "Cache-Control": cacheControlFor(filePath),
       "Content-Length": fileStat.size,
       "Content-Type": contentType
     });
