@@ -123,6 +123,7 @@ function decodeScreenshotPng(buffer) {
 function collectRenderedStageColorGrade(buffer) {
   const png = decodeScreenshotPng(buffer);
   let bluePixels = 0;
+  let cyanGreenSeaPixels = 0;
   let darkPixels = 0;
   let greenPixels = 0;
   let luminanceSquareSum = 0;
@@ -153,13 +154,16 @@ function collectRenderedStageColorGrade(buffer) {
       samples += 1;
       if (luminance < 34) darkPixels += 1;
       if (green > blue + 10 && green > red + 4) greenPixels += 1;
+      if (blue > 70 && green > 68 && green / Math.max(1, blue) > 0.9 && green > red + 18) cyanGreenSeaPixels += 1;
       if (blue > green + 8 && blue > red + 12 && saturation > 24) bluePixels += 1;
     }
   }
 
   const luminanceMean = samples > 0 ? luminanceSum / samples : 0;
   return {
+    brightnessScore100: (luminanceMean / 255) * 100,
     blueRatio: samples > 0 ? bluePixels / samples : 0,
+    cyanGreenSeaRatio: samples > 0 ? cyanGreenSeaPixels / samples : 0,
     darkRatio: samples > 0 ? darkPixels / samples : 0,
     greenRatio: samples > 0 ? greenPixels / samples : 0,
     luminanceMean,
@@ -170,11 +174,12 @@ function collectRenderedStageColorGrade(buffer) {
 
 function evaluateDaylightMapColorGate(colorGrade) {
   return {
+    brightnessScore: colorGrade.brightnessScore100 > 48 && colorGrade.brightnessScore100 < 61,
     contrast: colorGrade.luminanceStdDev > 20,
     darkRatio: colorGrade.darkRatio < 0.045,
-    daylightLuminance: colorGrade.luminanceMean > 118 && colorGrade.luminanceMean < 176,
-    greenWash: colorGrade.greenRatio < 0.34,
-    saturation: colorGrade.saturationMean > 40,
+    cyanGreenSea: colorGrade.cyanGreenSeaRatio < 0.2,
+    greenWash: colorGrade.greenRatio < 0.24,
+    saturation: colorGrade.saturationMean > 42,
     steelBlue: colorGrade.blueRatio > 0.14
   };
 }
@@ -414,6 +419,8 @@ async function collectPageMetrics(page) {
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
         terrainTexture,
         renderedColorGrade,
+        topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
+        topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
         tacticalAfterTerrain: firstTactical
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -702,6 +709,100 @@ async function collectTerrainTileHeads(page) {
   return heads;
 }
 
+async function collectDenseStageJitter(page) {
+  const stages = [
+    { id: "morning-dogfight", titleIncludes: "伦敦南侧空域混战" },
+    { id: "afternoon-peak", titleIncludes: "下午高峰" }
+  ];
+  const output = {};
+
+  for (const stage of stages) {
+    await clickEvent(page, stage.titleIncludes);
+    await page.waitForTimeout(900);
+    const samples = await page.locator(".battle-of-britain").evaluate(async (shell) => {
+      const rectFor = (element) => {
+        const box = element?.getBoundingClientRect();
+        return box
+          ? {
+              height: box.height,
+              left: box.left,
+              top: box.top,
+              width: box.width
+            }
+          : null;
+      };
+      const measure = () => {
+        const cameraLayer = shell.querySelector(".camera-layer");
+        const terrainLayer = shell.querySelector('[data-testid="battle-of-britain-terrain-3d"]');
+        const canvas = shell.querySelector('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+        const stageNode = shell.querySelector('[data-testid="map-stage"]');
+        const dogfight = shell.querySelector('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"]');
+        const activeRoute = shell.querySelector(".front-line.is-active .front-route, .front-line .front-route");
+        return {
+          activeRouteRect: rectFor(activeRoute),
+          cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
+          cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
+          canvasRect: rectFor(canvas),
+          dogfightRect: rectFor(dogfight),
+          mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
+          mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
+          registrationMaxError: Number(terrainLayer?.getAttribute("data-registration-max-error") ?? "999"),
+          stageRect: rectFor(stageNode)
+        };
+      };
+
+      return new Promise((resolve) => {
+        const records = [];
+        const tick = () => {
+          records.push(measure());
+          if (records.length >= 120) {
+            resolve(records);
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    });
+
+    const uniqueCameraTransforms = new Set(samples.map((sample) => sample.cameraTransform)).size;
+    const uniqueMapCenters = new Set(samples.map((sample) => sample.mapCenter)).size;
+    const uniqueMapZooms = new Set(samples.map((sample) => sample.mapZoom)).size;
+    const rectMaxDelta = (key) => {
+      const values = samples.map((sample) => sample[key]).filter(Boolean);
+      if (values.length === 0) return 999;
+      const deltaFor = (field) => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+      return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+    };
+    const maxCenterJump = (key) => {
+      const centers = samples
+        .map((sample) => sample[key])
+        .filter(Boolean)
+        .map((rect) => ({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }));
+      let maxJump = 0;
+      for (let index = 1; index < centers.length; index += 1) {
+        maxJump = Math.max(maxJump, Math.hypot(centers[index].x - centers[index - 1].x, centers[index].y - centers[index - 1].y));
+      }
+      return maxJump;
+    };
+
+    output[stage.id] = {
+      cameraFocuses: [...new Set(samples.map((sample) => sample.cameraFocus))],
+      dogfightCenterMaxJump: maxCenterJump("dogfightRect"),
+      maxRegistrationError: Math.max(...samples.map((sample) => sample.registrationMaxError)),
+      routeCenterMaxJump: maxCenterJump("activeRouteRect"),
+      sampleCount: samples.length,
+      stageRectMaxDelta: rectMaxDelta("stageRect"),
+      terrainCanvasRectMaxDelta: rectMaxDelta("canvasRect"),
+      uniqueCameraTransforms,
+      uniqueMapCenters,
+      uniqueMapZooms
+    };
+  }
+
+  return output;
+}
+
 async function waitForTerrainReady(page) {
   await page.waitForFunction(
     () => document.querySelector('[data-testid="battle-of-britain-terrain-3d"]')?.getAttribute("data-terrain-loaded") === "true",
@@ -773,6 +874,7 @@ async function main() {
     assetHeads: await collectAssetHeads(page),
     aircraftPngMetrics: await collectAssetMetrics(page),
     terrainTileHeads: await collectTerrainTileHeads(page),
+    denseStageJitter: await collectDenseStageJitter(page),
     weatherPngMetrics: await collectWeatherAssetMetrics(page)
   };
   await fs.writeFile(path.join(outDir, "metrics.browser.json"), `${JSON.stringify(metrics, null, 2)}\n`);

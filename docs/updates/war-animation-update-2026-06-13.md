@@ -165,6 +165,9 @@
 - 配乐从 `wikimedia-rule-britannia.ogg` 改为 `wikimedia-holst-mercury.ogg`（Holst《The Planets》中的 `Mercury, the Winged Messenger`，United States Air Force Heritage of America Band），伦敦空战重新纳入背景配乐唯一性门禁。
 - 伦敦专项 smoke 新增最终渲染截图色彩门禁：地图不能发白，不能变黑块，不能读成绿海，也不能像黑天作战；白昼亮度均值必须处在日间区间，且保留足够饱和度、对比和钢蓝海面比例。同时检查飞机仍有 drop-shadow 分离、航线宽度保持在可读但不过粗的区间。`scripts/probe-london-air-visual-evidence.mjs` 同步记录最终 `map-stage` 截图色彩指标与 `daylightColorGate`，而不是只看 MapLibre 原始 canvas。
 - 新浏览器证据保存到 `artifacts/london-air-daylight-map-fix-20260614-v4/`：运行 bundle `/assets/index-CWM1ttfA.js`、CSS `/assets/index-Baiqg-Y-.css`，六个关键帧 `genericAircraftMarkers=0`、`darkBlocks=0`、可见云层 `2-3` 个、`daylightColorGate` 全项通过；最终截图亮度均值约 `151-161`，暗像素比例约 `1.0%-1.8%`，钢蓝比例约 `0.20-0.25`，绿色主导比例约 `0.02-0.08`。截图只保存在 artifacts，不在会话中展示。
+- 用户继续指出“中段仍有抖动、海太绿、地名不可读、地图太浅”，本轮把调色从临时亮暗调整改成可移交的通用工艺：新增 `docs/tools/map-color-grading-workflow.md`，要求地图层先定义地形基础色、整体配色关系和前景分离策略，再用 `brightnessScore100 = luminanceMean / 255 * 100` 输出 0-100 明暗度评分，供后续按目标分值调参。伦敦最终目标带收敛为白昼钢蓝/暖陆地，明暗度评分约 `50.78-52.06`，饱和度约 `47.40-49.35`。
+- 实现层把 Esri topo raster 降为纹理参考而不是标注主层：`data-topo-raster-opacity="0.24"`、`data-topo-labels-suppressed="true"`，减少英文底图标注、黑碎线和青绿海面干扰；MapLibre raster 参数保持合法范围，hillshade 提高到 `0.82`，相机更新阈值提高到 `0.025-zoom`。伦敦专项 Playwright 新增上午/下午密集段连续帧门禁，检查 `camera-layer`、MapLibre center/zoom、地图舞台、terrain canvas 和活动路线稳定。
+- 新浏览器证据保存到 `artifacts/london-air-palette-jitter-fix-20260614-v4/`：运行 bundle `/assets/index-CxdD5iBE.js`、CSS `/assets/index-CrUb0PkW.css`，六个关键帧 `daylightColorGate` 全项通过，`consoleErrors=[]`、`pageErrors=[]`、可见云层 `2-3` 个；上午/下午连续帧 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`stageRectMaxDelta=0`、`terrainCanvasRectMaxDelta=0`。截图只保存在 artifacts，不在会话中展示。
 
 真实故障根因同步记录：
 

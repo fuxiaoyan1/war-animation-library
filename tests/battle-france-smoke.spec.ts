@@ -1966,6 +1966,7 @@ async function expectBattleOfBritainFortifiedLinesDoNotFill(page: Page) {
 async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   const stage = page.locator(".battle-of-britain [data-testid='map-stage']");
   const png = decodeScreenshotPng(await stage.screenshot());
+  let cyanGreenSeaPixels = 0;
   let darkPixels = 0;
   let greenDominantPixels = 0;
   let metalBlueDominantPixels = 0;
@@ -2002,6 +2003,9 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
       if (green > blue + 10 && green > red + 4) {
         greenDominantPixels += 1;
       }
+      if (blue > 70 && green > 68 && green / Math.max(1, blue) > 0.9 && green > red + 18) {
+        cyanGreenSeaPixels += 1;
+      }
       if (blue > green + 8 && blue > red + 12 && saturation > 24) {
         metalBlueDominantPixels += 1;
       }
@@ -2011,17 +2015,103 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   const luminanceMean = luminanceSum / samples;
   const luminanceStdDev = Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean));
   const saturationMean = saturationSum / samples;
+  const brightnessScore100 = (luminanceMean / 255) * 100;
+  const cyanGreenSeaRatio = cyanGreenSeaPixels / samples;
   const darkRatio = darkPixels / samples;
   const greenDominantRatio = greenDominantPixels / samples;
   const metalBlueRatio = metalBlueDominantPixels / samples;
 
-  expect(luminanceMean, "Battle of Britain is a daylight air battle; rendered map must not look like a night operation").toBeGreaterThan(118);
-  expect(luminanceMean, "Battle of Britain rendered map should remain richer than the washed-out version").toBeLessThan(176);
+  expect(brightnessScore100, "Battle of Britain rendered map should expose a stable 0-100 brightness score and stay in the planned daylight palette band").toBeGreaterThan(48);
+  expect(brightnessScore100, "Battle of Britain rendered map is too pale when its 0-100 brightness score climbs above the palette target band").toBeLessThan(61);
   expect(luminanceStdDev, "Battle of Britain rendered map needs enough contrast for 3D terrain texture").toBeGreaterThan(20);
-  expect(saturationMean, "Battle of Britain rendered map should keep richer color after CSS compositing").toBeGreaterThan(40);
+  expect(saturationMean, "Battle of Britain rendered map should keep richer color after CSS compositing").toBeGreaterThan(42);
   expect(metalBlueRatio, "Battle of Britain sea should read as daylight steel-blue, not pale green or flat gray").toBeGreaterThan(0.14);
-  expect(greenDominantRatio, "Battle of Britain sea should not read as a green wash").toBeLessThan(0.34);
+  expect(greenDominantRatio, "Battle of Britain sea should not read as a green wash").toBeLessThan(0.24);
+  expect(cyanGreenSeaRatio, "Battle of Britain sea should not drift into cyan/green map software coloring").toBeLessThan(0.2);
   expect(darkRatio, "Battle of Britain daylight map should not introduce black/night-looking regions").toBeLessThan(0.045);
+}
+
+async function expectBattleOfBritainDenseStageNoMapJitter(page: Page, label: string) {
+  await page.waitForTimeout(900);
+  const samples = await page.locator(".battle-of-britain").evaluate(async (shell) => {
+    const measure = () => {
+      const rectFor = (element: Element | null) => {
+        const box = element?.getBoundingClientRect();
+        return box
+          ? {
+              height: box.height,
+              left: box.left,
+              top: box.top,
+              width: box.width
+            }
+          : null;
+      };
+      const cameraLayer = shell.querySelector<SVGGElement>(".camera-layer");
+      const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
+      const canvas = shell.querySelector<HTMLCanvasElement>('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+      const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+      const dogfight = shell.querySelector<SVGGraphicsElement>('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"]');
+      const route = shell.querySelector<SVGGraphicsElement>(".front-line.is-active .front-route, .front-line .front-route");
+      return {
+        cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
+        cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
+        canvasRect: rectFor(canvas),
+        dogfightRect: rectFor(dogfight),
+        mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
+        mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
+        registrationMaxError: Number(terrainLayer?.getAttribute("data-registration-max-error") ?? "999"),
+        routeRect: rectFor(route),
+        stageRect: rectFor(stage)
+      };
+    };
+
+    return new Promise<ReturnType<typeof measure>[]>((resolve) => {
+      const output: ReturnType<typeof measure>[] = [];
+      const tick = () => {
+        output.push(measure());
+        if (output.length >= 90) {
+          resolve(output);
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  const uniqueCameraTransforms = new Set(samples.map((sample) => sample.cameraTransform));
+  const uniqueMapCenters = new Set(samples.map((sample) => sample.mapCenter));
+  const uniqueMapZooms = new Set(samples.map((sample) => sample.mapZoom));
+  const rectMaxDelta = (key: "canvasRect" | "stageRect") => {
+    const values = samples
+      .map((sample) => sample[key])
+      .filter((rect): rect is NonNullable<typeof rect> => rect !== null);
+    const deltaFor = (field: "height" | "left" | "top" | "width") => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+    return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+  };
+  const routeCenterJump = (() => {
+    const centers = samples
+      .map((sample) => sample.routeRect)
+      .filter((rect): rect is NonNullable<typeof rect> => rect !== null)
+      .map((rect) => ({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }));
+    let maxJump = 0;
+    for (let index = 1; index < centers.length; index += 1) {
+      maxJump = Math.max(maxJump, Math.hypot(centers[index].x - centers[index - 1].x, centers[index].y - centers[index - 1].y));
+    }
+    return maxJump;
+  })();
+
+  expect(first.cameraFocus, `${label} dense stage should keep the tactical air-combat camera focus`).toBe("britainAirCombat");
+  expect(last.cameraFocus, `${label} dense stage should not drift out of the tactical air-combat camera focus`).toBe("britainAirCombat");
+  expect(uniqueCameraTransforms.size, `${label} camera-layer transform should be stable after event jump settles`).toBe(1);
+  expect(uniqueMapCenters.size, `${label} MapLibre terrain should not resync/jump center every frame`).toBeLessThanOrEqual(1);
+  expect(uniqueMapZooms.size, `${label} MapLibre terrain should not resync/jump zoom every frame`).toBeLessThanOrEqual(1);
+  expect(rectMaxDelta("stageRect"), `${label} map-stage layout should not jitter`).toBeLessThan(0.5);
+  expect(rectMaxDelta("canvasRect"), `${label} terrain canvas should not jitter against tactical routes`).toBeLessThan(0.5);
+  expect(Math.max(...samples.map((sample) => sample.registrationMaxError)), `${label} terrain registration should stay locked to the battle layer`).toBeLessThan(24);
+  expect(routeCenterJump, `${label} active tactical route geometry should not visibly jump after the camera settles`).toBeLessThan(1.2);
 }
 
 async function expectBattleOfBritainForegroundReadable(page: Page) {
@@ -2058,13 +2148,15 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-terrain-source", "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png");
   await expect(terrain).toHaveAttribute("data-topo-source", "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg");
   await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
-  await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.5");
+  await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.82");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
   await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-canvas-primary-country-boundaries-only");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "phase-linked-drifting-overlay");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
-  await expect(terrain).toHaveAttribute("data-camera-update-threshold", "0.012-zoom");
+  await expect(terrain).toHaveAttribute("data-camera-update-threshold", "0.025-zoom");
+  await expect(terrain).toHaveAttribute("data-topo-labels-suppressed", "true");
+  await expect(terrain).toHaveAttribute("data-topo-raster-opacity", "0.24");
   await expect(page.getByTestId("battle-of-britain-weather-overlay-morning")).toBeVisible();
   await expect(page.getByTestId("battle-of-britain-terrain-3d-canvas")).toBeVisible();
   await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
@@ -7427,6 +7519,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   expect(angularDistanceDegrees(scrambleRotation, morningDogfightRotation), "RAF aircraft heading should change between scramble and dogfight route segments").toBeGreaterThan(20);
   await expectBattleOfBritainAircraftRotatesWithRoutes(page);
   await expectBattleOfBritainForegroundReadable(page);
+  await expectBattleOfBritainDenseStageNoMapJitter(page, "morning London dogfight");
   await expect(page.getByTestId("dogfight-clash")).toBeVisible();
 
   await page.waitForTimeout(900);
@@ -7473,6 +7566,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await battleOfBritainRouteRotation(page, "afternoon-raf-dogfight-weave");
   await expectBattleOfBritainAircraftRotatesWithRoutes(page);
   await expectBattleOfBritainForegroundReadable(page);
+  await expectBattleOfBritainDenseStageNoMapJitter(page, "afternoon London dogfight");
   await expect(page.getByTestId("britain-twelve-group-big-wing-approach")).toBeVisible();
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");

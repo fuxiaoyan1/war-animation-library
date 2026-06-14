@@ -39,15 +39,16 @@ const minCachedTileZoom = 6;
 const cachedTerrainTileZoom = 11;
 const cachedTopoTileZoom = 11;
 const terrainExaggeration = 1.35;
-const hillshadeExaggeration = 0.5;
+const hillshadeExaggeration = 0.82;
+const topoRasterOpacity = 0.24;
 const registeredCameraPitch = 0;
 const registeredCameraBearing = 0;
 const registrationSampleLimit = 10;
 const cameraMoveThreshold = {
-  bearing: 0.01,
-  center: 0.00008,
-  pitch: 0.01,
-  zoom: 0.012
+  bearing: 0.02,
+  center: 0.00016,
+  pitch: 0.02,
+  zoom: 0.025
 };
 
 const historicalBaseData = {
@@ -214,7 +215,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#0f6389"
+        "background-color": "#153d5a"
       }
     },
     {
@@ -222,11 +223,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.5,
-        "raster-brightness-min": 0.02,
-        "raster-contrast": 0.95,
-        "raster-opacity": 0.98,
-        "raster-saturation": 0.78
+        "raster-brightness-max": 0.43,
+        "raster-brightness-min": 0.03,
+        "raster-contrast": 1,
+        "raster-opacity": topoRasterOpacity,
+        "raster-saturation": 0.42
       }
     },
     {
@@ -234,10 +235,10 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#6f7f6c",
+        "hillshade-accent-color": "#8a8050",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#caa85c",
-        "hillshade-shadow-color": "#174f68"
+        "hillshade-highlight-color": "#d6ad62",
+        "hillshade-shadow-color": "#0f3956"
       }
     }
   ],
@@ -419,7 +420,7 @@ export function BattleOfBritainTerrain3D({
       maxPitch: 0,
       maxZoom: 11.6,
       minZoom: 6.8,
-      pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+      pixelRatio: Math.min(2, Math.max(1.5, window.devicePixelRatio || 1)),
       pitch: initialCamera.pitch,
       refreshExpiredTiles: false,
       scrollZoom: false,
@@ -462,7 +463,6 @@ export function BattleOfBritainTerrain3D({
       syncMetadata();
     });
     map.on("idle", syncMetadata);
-    map.on("move", syncMetadata);
 
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
@@ -519,6 +519,8 @@ export function BattleOfBritainTerrain3D({
       data-cloud-renderer="svg-camera-layer-comfy-weather-png"
       data-maplibre-fill-veil="removed"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
+      data-topo-labels-suppressed="true"
+      data-topo-raster-opacity={topoRasterOpacity.toFixed(2)}
       data-modern-imagery-visible="true"
       data-map-registration="svg-projection"
       data-projection="registered-web-mercator-hillshade"
