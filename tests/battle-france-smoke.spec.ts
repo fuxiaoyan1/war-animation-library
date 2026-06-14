@@ -1970,9 +1970,16 @@ async function expectAircraftMarkersHaveNoPhotoCardBackground(
       const image = marker.querySelector<SVGImageElement>(".unit-icon-image");
       const imageBox = image?.getBoundingClientRect();
       const markerBox = marker.getBoundingClientRect();
+      const markerTransform = getComputedStyle(marker).transform;
+      const scaleMatch = markerTransform.match(/^matrix\(([^,]+),[^,]+,[^,]+,([^,]+),/);
+      const markerScaleX = scaleMatch ? Math.abs(Number(scaleMatch[1])) : 1;
+      const markerScaleY = scaleMatch ? Math.abs(Number(scaleMatch[2])) : markerScaleX;
+      const usesRouteRotation = marker.getAttribute("data-uses-route-rotation") === "true";
+      const intrinsicImageWidth = Number(image?.getAttribute("width") ?? 0);
+      const intrinsicImageHeight = Number(image?.getAttribute("height") ?? 0);
       return {
-        imageHeight: imageBox?.height ?? 0,
-        imageWidth: imageBox?.width ?? 0,
+        imageHeight: usesRouteRotation ? intrinsicImageHeight * markerScaleY : imageBox?.height ?? 0,
+        imageWidth: usesRouteRotation ? intrinsicImageWidth * markerScaleX : imageBox?.width ?? 0,
         markerHeight: markerBox.height,
         markerWidth: markerBox.width
       };
@@ -2843,6 +2850,72 @@ async function expectUnitIconFacesRoute(
   await expect(marker).toHaveAttribute("data-mirror-x", expectedMirrorX);
 }
 
+function angularDistanceDegrees(a: number, b: number) {
+  return Math.abs((((a - b + 180) % 360) + 360) % 360 - 180);
+}
+
+async function battleOfBritainRouteRotation(page: Page, routeId: string) {
+  const marker = page
+    .locator(`.battle-of-britain .front-line[data-route-id="${routeId}"][data-unit-visible="true"] .unit-icon-orientation .unit-marker[data-uses-route-rotation="true"]`)
+    .first();
+  await expect(marker).toBeVisible();
+
+  const sample = await marker.evaluate((unitMarker) => {
+    const orientation = unitMarker.closest(".unit-icon-orientation");
+    const facingGroup = unitMarker.querySelector(".unit-icon-facing");
+    return {
+      markerRotation: Number(unitMarker.getAttribute("data-rotation-deg")),
+      mirrorX: unitMarker.getAttribute("data-mirror-x") ?? "",
+      orientationRotation: Number(orientation?.getAttribute("data-route-rotation-deg")),
+      transform: facingGroup?.getAttribute("transform") ?? ""
+    };
+  });
+
+  expect(Number.isFinite(sample.markerRotation), `${routeId} should expose a finite aircraft route rotation`).toBe(true);
+  expect(angularDistanceDegrees(sample.markerRotation, sample.orientationRotation), `${routeId} marker rotation should match route direction`).toBeLessThan(0.5);
+  expect(sample.mirrorX, `${routeId} top-down aircraft should not use left/right mirror as its main heading logic`).toBe("1");
+  expect(sample.transform, `${routeId} top-down aircraft image should rotate with its current route segment`).toMatch(/^rotate\(-?\d+(?:\.\d+)?\)$/);
+  return sample.markerRotation;
+}
+
+async function expectBattleOfBritainAircraftRotatesWithRoutes(page: Page) {
+  const samples = await page.evaluate(() => {
+    const signedDegrees = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180;
+
+    return [...document.querySelectorAll('.battle-of-britain .front-line[data-unit-visible="true"] .unit-icon-orientation')]
+      .map((orientation) => {
+        const unitMarker = orientation.querySelector('.unit-marker[data-uses-route-rotation="true"]');
+        const facingGroup = unitMarker?.querySelector(".unit-icon-facing");
+        const route = orientation.closest(".front-line");
+        const markerRotation = Number(unitMarker?.getAttribute("data-rotation-deg"));
+        const routeRotation = Number(orientation.getAttribute("data-route-rotation-deg"));
+        return {
+          assetKind: unitMarker?.querySelector(".unit-icon-image")?.getAttribute("data-asset-kind") ?? "",
+          markerRotation,
+          mirrorX: unitMarker?.getAttribute("data-mirror-x") ?? "",
+          routeId: route?.getAttribute("data-route-id") ?? "",
+          routeRotation,
+          signedRotation: signedDegrees(markerRotation),
+          transform: facingGroup?.getAttribute("transform") ?? "",
+          usesRouteRotation: unitMarker?.getAttribute("data-uses-route-rotation") ?? ""
+        };
+      })
+      .filter((sample) => sample.usesRouteRotation === "true" && Number.isFinite(sample.markerRotation) && Number.isFinite(sample.routeRotation));
+  });
+
+  expect(samples.length, "Battle of Britain should expose route-rotating top-down aircraft markers during combat").toBeGreaterThan(8);
+  for (const sample of samples) {
+    expect(sample.assetKind, `Unexpected non-London aircraft marker in route-rotation set: ${JSON.stringify(sample)}`).toMatch(/^(britain|luftwaffe)/);
+    expect(sample.mirrorX, `Top-down aircraft should rotate, not flip, for route ${sample.routeId}`).toBe("1");
+    expect(sample.transform, `Aircraft image should use SVG rotation for route ${sample.routeId}`).toMatch(/^rotate\(-?\d+(?:\.\d+)?\)$/);
+    expect(angularDistanceDegrees(sample.markerRotation, sample.routeRotation), `Aircraft marker rotation should match route ${sample.routeId}: ${JSON.stringify(sample)}`).toBeLessThan(0.5);
+  }
+
+  const roundedHeadings = new Set(samples.map((sample) => Math.round(sample.signedRotation / 10) * 10));
+  expect(roundedHeadings.size, `Battle of Britain aircraft should not all fly at one fixed heading: ${JSON.stringify(samples)}`).toBeGreaterThanOrEqual(4);
+  expect(samples.filter((sample) => Math.abs(sample.signedRotation) > 8).length, `Battle of Britain should include non-horizontal aircraft headings: ${JSON.stringify(samples)}`).toBeGreaterThan(4);
+}
+
 async function expectCompactAircraftMarkers(
   page: Page,
   markerTestId:
@@ -2858,12 +2931,32 @@ async function expectCompactAircraftMarkers(
 ) {
   const boxes = await page
     .getByTestId(markerTestId)
-    .evaluateAll((markers) => markers.map((marker) => marker.getBoundingClientRect()).map((box) => ({ height: box.height, width: box.width })));
+    .evaluateAll((markers) =>
+      markers.map((marker) => {
+        const box = marker.getBoundingClientRect();
+        const image = marker.querySelector(".unit-icon-image");
+        const usesRouteRotation = marker.getAttribute("data-uses-route-rotation") === "true";
+        return {
+          height: box.height,
+          imageHeight: Number(image?.getAttribute("height")),
+          imageWidth: Number(image?.getAttribute("width")),
+          usesRouteRotation,
+          width: box.width
+        };
+      })
+    );
 
   expect(boxes.length).toBeGreaterThan(0);
   for (const box of boxes) {
-    expect(box.width).toBeLessThan(126);
-    expect(box.height).toBeLessThan(74);
+    if (box.usesRouteRotation) {
+      expect(box.imageWidth).toBeLessThan(82);
+      expect(box.imageHeight).toBeLessThan(70);
+      expect(box.width).toBeLessThan(104);
+      expect(box.height).toBeLessThan(104);
+    } else {
+      expect(box.width).toBeLessThan(126);
+      expect(box.height).toBeLessThan(74);
+    }
   }
 }
 
@@ -2880,8 +2973,8 @@ async function expectBattleOfBritainAircraftProportions(page: Page) {
     return Object.fromEntries(
       markerIds.map((markerId) => {
         const marker = document.querySelector(`[data-testid="${markerId}"]`);
-        const box = marker?.getBoundingClientRect();
-        return [markerId, { height: box?.height ?? 0, width: box?.width ?? 0 }];
+        const image = marker?.querySelector(".unit-icon-image");
+        return [markerId, { height: Number(image?.getAttribute("height") ?? 0), width: Number(image?.getAttribute("width") ?? 0) }];
       })
     );
   });
@@ -6693,6 +6786,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveAttribute("data-route-to", "biggin-hill");
+  const scrambleRotation = await battleOfBritainRouteRotation(page, "eleven-group-morning-scramble");
   await expectRealisticUnitIcon(page, "luftwaffe-do17-marker", "luftwaffeDo17", "luftwaffe-do17", "png");
   await expectRealisticUnitIcon(page, "luftwaffe-he111-marker", "luftwaffeHe111", "luftwaffe-he111", "png");
   await expectRealisticUnitIcon(page, "luftwaffe-bf109-marker", "luftwaffeBf109", "luftwaffe-bf109", "png");
@@ -6734,6 +6828,9 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.front-line[data-route-id="twelve-group-morning-wing"]')).toHaveAttribute("data-route-to", "duxford");
   await expect(page.locator('.front-line[data-route-id="morning-raf-dogfight-weave"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="morning-luftwaffe-cover-break"]')).toHaveClass(/route-air/);
+  const morningDogfightRotation = await battleOfBritainRouteRotation(page, "morning-raf-dogfight-weave");
+  expect(angularDistanceDegrees(scrambleRotation, morningDogfightRotation), "RAF aircraft heading should change between scramble and dogfight route segments").toBeGreaterThan(20);
+  await expectBattleOfBritainAircraftRotatesWithRoutes(page);
   await expect(page.getByTestId("dogfight-clash")).toBeVisible();
 
   await page.waitForTimeout(900);
@@ -6775,6 +6872,9 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator('.front-line[data-route-id="afternoon-raid-follow-wave"]')).toHaveAttribute("data-route-to", "cap-gris-nez");
   await expect(page.locator('.front-line[data-route-id="eleven-group-afternoon-all-in"]')).toHaveAttribute("data-route-to", "kenley");
   await expect(page.locator('.front-line[data-route-id="big-wing-afternoon-commitment"]')).toHaveAttribute("data-route-to", "duxford");
+  await battleOfBritainRouteRotation(page, "afternoon-raid-main-wave");
+  await battleOfBritainRouteRotation(page, "afternoon-raf-dogfight-weave");
+  await expectBattleOfBritainAircraftRotatesWithRoutes(page);
   await expect(page.getByTestId("britain-twelve-group-big-wing-approach")).toBeVisible();
   await expectRouteBadgeLabels(page, "eleven-group-afternoon-all-in", ["英", "英", "英", "英", "英"]);
   await page.getByTestId("timeline").fill("1000");
