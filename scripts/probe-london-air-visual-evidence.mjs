@@ -5,7 +5,7 @@ import path from "node:path";
 const baseUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:5177";
 const outDir = path.resolve(process.argv[2] ?? "artifacts/london-air-visual-evidence");
 const aircraftAssetVersion = "20260614-he111-standard-v1";
-const weatherAssetVersion = "20260614-comfy-weather-v1";
+const weatherAssetVersion = "20260614-comfy-weather-v4";
 
 const he111QualityBand = {
   luminanceMean: { min: 80, max: 150 },
@@ -65,7 +65,7 @@ async function collectPageMetrics(page) {
     const dogfight = battle?.querySelector('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"], [data-testid="dogfight-clash"]');
     const terrainLayer = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d"]');
     const terrainCanvas = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d-canvas"]');
-    const cloudLayer = battle?.querySelector('[data-testid="battle-of-britain-cloud-layer"]');
+    const weatherOverlays = Array.from(battle?.querySelectorAll(".battle-of-britain-weather-overlay") ?? []);
     const firstTactical = battle?.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
     const firstAircraft = battle?.querySelector(".ww2-aircraft-marker");
     const countryLayer = battle?.querySelector(".country-layer");
@@ -130,12 +130,12 @@ async function collectPageMetrics(page) {
       assetNames.map((asset) => [asset, markers.filter((marker) => marker.href?.includes(`/assets/unit-icons/${asset}.png`)).length])
     );
     const terrainTexture = (() => {
-      if (!terrainCanvas) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+      if (!terrainCanvas) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
       const sample = document.createElement("canvas");
       sample.width = 220;
       sample.height = 140;
       const context = sample.getContext("2d", { willReadFrequently: true });
-      if (!context) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+      if (!context) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
       context.drawImage(terrainCanvas, 0, 0, sample.width, sample.height);
       const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
       const luminance = new Float32Array(sample.width * sample.height);
@@ -143,6 +143,7 @@ async function collectPageMetrics(page) {
       let edgeCount = 0;
       let luminanceSum = 0;
       let luminanceSquareSum = 0;
+      let saturationSum = 0;
       for (let y = 0; y < sample.height; y += 1) {
         for (let x = 0; x < sample.width; x += 1) {
           const offset = (y * sample.width + x) * 4;
@@ -150,6 +151,7 @@ async function collectPageMetrics(page) {
           luminance[y * sample.width + x] = value;
           luminanceSum += value;
           luminanceSquareSum += value * value;
+          saturationSum += Math.max(pixels[offset], pixels[offset + 1], pixels[offset + 2]) - Math.min(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
         }
       }
       for (let y = 1; y < sample.height; y += 1) {
@@ -165,7 +167,8 @@ async function collectPageMetrics(page) {
       return {
         edgeMean: edgeSum / edgeCount,
         luminanceMean,
-        luminanceStdDev: Math.sqrt(Math.max(0, variance))
+        luminanceStdDev: Math.sqrt(Math.max(0, variance)),
+        saturationMean: saturationSum / count
       };
     })();
 
@@ -183,25 +186,18 @@ async function collectPageMetrics(page) {
         aircraftAfterTerrain: firstAircraft
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
           : true,
+        cameraMode: terrainLayer?.getAttribute("data-camera-mode") ?? "",
         canvasRect: rectFor(terrainCanvas),
-        cloudAfterTerrain: Boolean(terrainLayer && cloudLayer && terrainLayer.compareDocumentPosition(cloudLayer) & Node.DOCUMENT_POSITION_FOLLOWING),
-        cloudBeforeAircraft: firstAircraft
-          ? Boolean(cloudLayer && cloudLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
-          : true,
-        cloudOpacity: cloudLayer ? Number.parseFloat(getComputedStyle(cloudLayer).opacity || "0") : 0,
-        cloudPointerEvents: cloudLayer ? getComputedStyle(cloudLayer).pointerEvents : "",
-        cloudAssets: Array.from(cloudLayer?.querySelectorAll("img") ?? []).map((image) => ({
-          className: image.getAttribute("class") ?? "",
-          src: image.getAttribute("src") ?? "",
-          testId: image.getAttribute("data-testid") ?? ""
-        })),
-        cloudSpanCount: cloudLayer?.querySelectorAll(".battle-of-britain-cloud").length ?? 0,
         countryFills: countries.map((country) => getComputedStyle(country).fill),
         countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
         mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
         mapFocus: terrainLayer?.getAttribute("data-map-focus") ?? "",
+        mapRegistration: terrainLayer?.getAttribute("data-map-registration") ?? "",
         mapPixelRatio: terrainLayer?.getAttribute("data-map-pixel-ratio") ?? "",
         mapZoom: Number(terrainLayer?.getAttribute("data-map-zoom") ?? 0),
+        registrationMaxError: Number(terrainLayer?.getAttribute("data-registration-max-error") ?? 999),
+        registrationMeanError: Number(terrainLayer?.getAttribute("data-registration-mean-error") ?? 999),
+        registrationSampleCount: Number(terrainLayer?.getAttribute("data-registration-sample-count") ?? 0),
         renderer: terrainLayer?.getAttribute("data-renderer") ?? "",
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
@@ -213,6 +209,20 @@ async function collectPageMetrics(page) {
         visualSurfaceContract: terrainLayer?.getAttribute("data-visual-surface-contract") ?? "",
         weatherPhase: terrainLayer?.getAttribute("data-weather-phase") ?? ""
       },
+      weatherOverlays: weatherOverlays.map((overlay) => {
+        const image = overlay.querySelector("image");
+        const box = overlay.getBoundingClientRect();
+        return {
+          beforeAircraft: firstAircraft ? Boolean(overlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+          beforeRoute: firstTactical ? Boolean(overlay.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+          href: image?.getAttribute("href") ?? "",
+          id: overlay.getAttribute("data-testid") ?? "",
+          opacity: Number.parseFloat(getComputedStyle(overlay).opacity || "1"),
+          phase: overlay.getAttribute("data-scene-transition-phase") ?? "",
+          rect: rectFor(overlay),
+          visible: box.width > 1 && box.height > 1 && Number.parseFloat(getComputedStyle(overlay).opacity || "1") > 0.04
+        };
+      }),
       markerSample: markers.slice(0, 24),
       radarRouteBox: rectFor(radarRoute),
       title: document.querySelector('[data-testid="map-title-card"] h1, [data-testid="map-title-card"] h2')?.textContent
@@ -476,7 +486,7 @@ async function waitForTerrainReady(page) {
   await page.waitForFunction(
     () => document.querySelector('[data-testid="battle-of-britain-terrain-3d"]')?.getAttribute("data-terrain-loaded") === "true",
     undefined,
-    { timeout: 12_000 }
+    { timeout: 30_000 }
   );
 }
 

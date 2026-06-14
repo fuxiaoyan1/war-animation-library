@@ -80,6 +80,20 @@ export type MapOverlayElement =
     }
   | {
       className?: string;
+      height: number;
+      href: string;
+      id: string;
+      label?: string;
+      opacity?: number;
+      revealAt?: string;
+      testId?: string;
+      type: "image";
+      visibleUntil?: string;
+      width: number;
+      coordinates: [number, number];
+    }
+  | {
+      className?: string;
       id: string;
       label: string;
       revealAt?: string;
@@ -183,8 +197,19 @@ type CampaignMapAnimationProps = {
     focusState: FocusTransitionState;
     mapBaseView: MapView;
     mapFocus: string;
+    mapHeight: number;
     mapView: MapView;
+    mapWidth: number;
     progress: number;
+    registrationSamples: Array<{
+      coordinates: [number, number];
+      id: string;
+      projected: [number, number];
+    }>;
+    terrainView: {
+      center: [number, number];
+      projectionScale: number;
+    };
   }) => ReactNode;
   maxGapDays?: number;
   musicSource?: string;
@@ -1113,6 +1138,26 @@ export function CampaignMapAnimation({
     () => new Map(mapPoints.map((point) => [point.id, projectPoint(projection, point.coordinates)] as const)),
     [mapPoints, projection]
   );
+  const terrainView = useMemo(() => {
+    const visibleCenter: [number, number] = [
+      (mapWidth / 2 - mapView.x) / Math.max(mapView.scale, 0.001),
+      (mapHeight / 2 - mapView.y) / Math.max(mapView.scale, 0.001)
+    ];
+    const inverted = projection.invert?.(visibleCenter) as [number, number] | undefined;
+    return {
+      center: inverted ?? activeEvent.coordinates,
+      projectionScale: projection.scale()
+    };
+  }, [activeEvent.coordinates, mapHeight, mapView.scale, mapView.x, mapView.y, mapWidth, projection]);
+  const terrainRegistrationSamples = useMemo(
+    () =>
+      mapPoints.map((point) => ({
+        coordinates: point.coordinates,
+        id: point.id,
+        projected: projectPoint(projection, point.coordinates)
+      })),
+    [mapPoints, projection]
+  );
   const activeRouteAnchorIds = useMemo(() => {
     const activeAnchors = new Set<string>();
     frontLines.forEach((line) => {
@@ -1409,8 +1454,12 @@ export function CampaignMapAnimation({
             focusState,
             mapBaseView,
             mapFocus,
+            mapHeight,
             mapView,
-            progress
+            mapWidth,
+            progress,
+            registrationSamples: terrainRegistrationSamples,
+            terrainView
           })}
           <div className="map-topbar map-overlay">
             <div className="map-title-card" data-testid="map-title-card">
@@ -1728,7 +1777,7 @@ export function CampaignMapAnimation({
                     const overlayVisibility = sceneElementVisibility(
                       progress,
                       overlay.revealAt ? timeline.dateToProgress(overlay.revealAt) : 0,
-                      Number.POSITIVE_INFINITY,
+                      overlay.visibleUntil ? timeline.dateToProgress(overlay.visibleUntil) : Number.POSITIVE_INFINITY,
                       contentTransitionProgress
                     );
                     if (!overlayVisibility.isDrawn) {
@@ -1750,6 +1799,31 @@ export function CampaignMapAnimation({
                           <text x={(x1 + x2) / 2 + 12} y={(y1 + y2) / 2 - 10}>
                             {overlay.label}
                           </text>
+                        </g>
+                      );
+                    }
+
+                    if (overlay.type === "image") {
+                      const [x, y] = projectPoint(projection, overlay.coordinates);
+                      return (
+                        <g
+                          key={overlay.id}
+                          className={`image-overlay ${overlay.className ?? ""}`}
+                          data-scene-transition-phase={overlayVisibility.phase}
+                          data-testid={overlay.testId ?? `image-overlay-${overlay.id}`}
+                          style={opacityStyle(overlayVisibility.opacity * (overlay.opacity ?? 1))}
+                          transform={`translate(${x} ${y})`}
+                        >
+                          <image
+                            className="map-overlay-image"
+                            data-overlay-label={overlay.label ?? overlay.id}
+                            href={publicPath(overlay.href)}
+                            x={-overlay.width / 2}
+                            y={-overlay.height / 2}
+                            width={overlay.width}
+                            height={overlay.height}
+                            preserveAspectRatio="xMidYMid meet"
+                          />
                         </g>
                       );
                     }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { BattleEvent } from "../data/battleOfFrance";
-import { publicPath } from "../lib/publicPath";
 import type { FocusTransitionState } from "./CampaignMapAnimation";
 import type { MapView } from "../lib/useMapInteraction";
 
@@ -13,8 +12,19 @@ type BattleOfBritainTerrain3DProps = {
   focusState: FocusTransitionState;
   mapBaseView: MapView;
   mapFocus: string;
+  mapHeight: number;
   mapView: MapView;
+  mapWidth: number;
   progress: number;
+  registrationSamples: Array<{
+    coordinates: [number, number];
+    id: string;
+    projected: [number, number];
+  }>;
+  terrainView: {
+    center: [number, number];
+    projectionScale: number;
+  };
 };
 
 const terrainCanvasTestId = "battle-of-britain-terrain-3d-canvas";
@@ -29,32 +39,10 @@ const minCachedTileZoom = 6;
 const cachedTerrainTileZoom = 11;
 const cachedTopoTileZoom = 11;
 const terrainExaggeration = 1.35;
-const hillshadeExaggeration = 0.36;
-const cameraTransitionDurationMs = 1050;
-const weatherAssetVersion = "20260614-comfy-weather-v1";
-const morningCloudAsset = `${publicPath("/assets/weather/battle-of-britain/morning-cloud-bank.png")}?v=${weatherAssetVersion}`;
-const afternoonCloudAsset = `${publicPath("/assets/weather/battle-of-britain/afternoon-cloud-breaks.png")}?v=${weatherAssetVersion}`;
-
-const cameraStages: Record<string, { bearing: number; center: TacticalPoint; pitch: number; zoom: number }> = {
-  britainAirRadar: {
-    bearing: -21,
-    center: [0.58, 51.13],
-    pitch: 55,
-    zoom: 8.94
-  },
-  britainAirCombat: {
-    bearing: -24,
-    center: [0.18, 51.36],
-    pitch: 57,
-    zoom: 9.78
-  },
-  britainAirReturn: {
-    bearing: -18,
-    center: [0.82, 51.02],
-    pitch: 56,
-    zoom: 9.66
-  }
-};
+const hillshadeExaggeration = 0.5;
+const registeredCameraPitch = 0;
+const registeredCameraBearing = 0;
+const registrationSampleLimit = 10;
 
 const historicalBaseData = {
   type: "FeatureCollection",
@@ -220,7 +208,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#527b84"
+        "background-color": "#102f39"
       }
     },
     {
@@ -228,11 +216,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.8,
-        "raster-brightness-min": 0.02,
-        "raster-contrast": 0.46,
-        "raster-opacity": 0.92,
-        "raster-saturation": 0.12
+        "raster-brightness-max": 0.46,
+        "raster-brightness-min": 0,
+        "raster-contrast": 0.98,
+        "raster-opacity": 0.94,
+        "raster-saturation": 0.78
       }
     },
     {
@@ -241,8 +229,8 @@ const terrainStyle: StyleSpecification = {
       source: "battle-of-britain-tactical-ground",
       filter: ["==", ["get", "kind"], "channel"],
       paint: {
-        "fill-color": "#315f75",
-        "fill-opacity": 0.1
+        "fill-color": "#0a465b",
+        "fill-opacity": 0.28
       }
     },
     {
@@ -251,8 +239,8 @@ const terrainStyle: StyleSpecification = {
       source: "battle-of-britain-tactical-ground",
       filter: ["in", ["get", "kind"], ["literal", ["south-england", "french-coast"]]],
       paint: {
-        "fill-color": ["match", ["get", "kind"], "south-england", "#9aa876", "#b4a46f"],
-        "fill-opacity": 0.06
+        "fill-color": ["match", ["get", "kind"], "south-england", "#496426", "#5e531f"],
+        "fill-opacity": 0.24
       }
     },
     {
@@ -260,10 +248,20 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#668470",
+        "hillshade-accent-color": "#3f694a",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#f7e9b0",
-        "hillshade-shadow-color": "#2d4950"
+        "hillshade-highlight-color": "#b49b4d",
+        "hillshade-shadow-color": "#0f2932"
+      }
+    },
+    {
+      id: "battle-of-britain-operational-contrast-veil",
+      type: "fill",
+      source: "battle-of-britain-tactical-ground",
+      filter: ["==", ["get", "kind"], "aoi"],
+      paint: {
+        "fill-color": "#0b252c",
+        "fill-opacity": 0.28
       }
     },
     {
@@ -272,8 +270,8 @@ const terrainStyle: StyleSpecification = {
       source: "battle-of-britain-weather",
       filter: ["==", ["get", "kind"], "morning"],
       paint: {
-        "fill-color": "#d7ddd3",
-        "fill-opacity": 0.08
+        "fill-color": "#d9dfd4",
+        "fill-opacity": 0.025
       }
     },
     {
@@ -282,8 +280,8 @@ const terrainStyle: StyleSpecification = {
       source: "battle-of-britain-weather",
       filter: ["==", ["get", "kind"], "afternoon"],
       paint: {
-        "fill-color": "#edf1df",
-        "fill-opacity": 0.05
+        "fill-color": "#eef0df",
+        "fill-opacity": 0.02
       }
     }
   ],
@@ -301,31 +299,72 @@ function lerp(a: number, b: number, ratio: number) {
   return a + (b - a) * ratio;
 }
 
-function stageForFocus(focus: string) {
-  return cameraStages[focus] ?? cameraStages.britainAirCombat;
+function viewScaleForContainer(container: HTMLDivElement | null, mapWidth: number, mapHeight: number) {
+  if (!container || container.clientWidth <= 0 || container.clientHeight <= 0) {
+    return 1;
+  }
+
+  return Math.min(container.clientWidth / mapWidth, container.clientHeight / mapHeight);
 }
 
-function cameraForState(focusState: FocusTransitionState, mapBaseView: MapView, mapView: MapView) {
-  const fromStage = stageForFocus(focusState.fromFocus);
-  const toStage = stageForFocus(focusState.focus);
-  const ratio = focusState.isTransitioning ? focusState.ratio : 1;
-  const userPanX = mapView.x - mapBaseView.x;
-  const userPanY = mapView.y - mapBaseView.y;
-  const userZoomDelta = mapView.scale - mapBaseView.scale;
-  const center = [
-    lerp(fromStage.center[0], toStage.center[0], ratio) - userPanX / 8400 / Math.max(mapView.scale, 0.1),
-    lerp(fromStage.center[1], toStage.center[1], ratio) + userPanY / 10800 / Math.max(mapView.scale, 0.1)
-  ] as TacticalPoint;
+function mercatorScaleToMapLibreZoom(projectionScale: number, viewScale: number, mapViewScale: number) {
+  const cssProjectionScale = Math.max(1, projectionScale * viewScale * Math.max(mapViewScale, 0.001));
+  return Math.log2((cssProjectionScale * 2 * Math.PI) / 512);
+}
+
+function cameraForState(
+  terrainView: BattleOfBritainTerrain3DProps["terrainView"],
+  mapView: MapView,
+  container: HTMLDivElement | null,
+  mapWidth: number,
+  mapHeight: number
+) {
+  const viewScale = viewScaleForContainer(container, mapWidth, mapHeight);
 
   return {
-    bearing: lerp(fromStage.bearing, toStage.bearing, ratio),
+    bearing: registeredCameraBearing,
     center: [
-      clamp(center[0], terrainSourceBounds[0] + 0.18, terrainSourceBounds[2] - 0.18),
-      clamp(center[1], terrainSourceBounds[1] + 0.14, terrainSourceBounds[3] - 0.14)
+      clamp(terrainView.center[0], terrainSourceBounds[0] - 0.35, terrainSourceBounds[2] + 0.35),
+      clamp(terrainView.center[1], terrainSourceBounds[1] - 0.22, terrainSourceBounds[3] + 0.22)
     ] as TacticalPoint,
-    pitch: lerp(fromStage.pitch, toStage.pitch, ratio),
-    zoom: clamp(lerp(fromStage.zoom, toStage.zoom, ratio) + userZoomDelta * 1.05, 7.25, 11.45)
+    pitch: registeredCameraPitch,
+    zoom: clamp(mercatorScaleToMapLibreZoom(terrainView.projectionScale, viewScale, mapView.scale), 6.8, 11.6)
   };
+}
+
+function registrationErrorForState(
+  map: maplibregl.Map,
+  container: HTMLDivElement,
+  state: {
+    mapHeight: number;
+    mapView: MapView;
+    mapWidth: number;
+    registrationSamples: BattleOfBritainTerrain3DProps["registrationSamples"];
+  }
+) {
+  const viewScale = viewScaleForContainer(container, state.mapWidth, state.mapHeight);
+  const renderedWidth = state.mapWidth * viewScale;
+  const renderedHeight = state.mapHeight * viewScale;
+  const offsetX = (container.clientWidth - renderedWidth) / 2;
+  const offsetY = (container.clientHeight - renderedHeight) / 2;
+  const samples = state.registrationSamples.slice(0, registrationSampleLimit).map((sample) => {
+    const projected = map.project(sample.coordinates);
+    const svgX = offsetX + (sample.projected[0] * state.mapView.scale + state.mapView.x) * viewScale;
+    const svgY = offsetY + (sample.projected[1] * state.mapView.scale + state.mapView.y) * viewScale;
+    const error = Math.hypot(projected.x - svgX, projected.y - svgY);
+    return {
+      error,
+      id: sample.id,
+      mapX: projected.x,
+      mapY: projected.y,
+      svgX,
+      svgY
+    };
+  });
+  const max = samples.reduce((highest, sample) => Math.max(highest, sample.error), 0);
+  const mean = samples.length > 0 ? samples.reduce((sum, sample) => sum + sample.error, 0) / samples.length : 0;
+
+  return { max, mean, samples };
 }
 
 function markMapCanvas(container: HTMLDivElement, map?: maplibregl.Map | null) {
@@ -353,14 +392,40 @@ export function BattleOfBritainTerrain3D({
   focusState,
   mapBaseView,
   mapFocus,
+  mapHeight,
   mapView,
-  progress
+  mapWidth,
+  progress,
+  registrationSamples,
+  terrainView
 }: BattleOfBritainTerrain3DProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const latestStateRef = useRef({ focusState, mapBaseView, mapFocus, mapView, progress });
-  latestStateRef.current = { focusState, mapBaseView, mapFocus, mapView, progress };
+  const latestStateRef = useRef({
+    activeEvent,
+    focusState,
+    mapBaseView,
+    mapFocus,
+    mapHeight,
+    mapView,
+    mapWidth,
+    progress,
+    registrationSamples,
+    terrainView
+  });
+  latestStateRef.current = {
+    activeEvent,
+    focusState,
+    mapBaseView,
+    mapFocus,
+    mapHeight,
+    mapView,
+    mapWidth,
+    progress,
+    registrationSamples,
+    terrainView
+  };
   const cloudPhase = useMemo(() => weatherPhase(progress), [progress]);
 
   useEffect(() => {
@@ -368,7 +433,7 @@ export function BattleOfBritainTerrain3D({
     if (!container) {
       return;
     }
-    const initialCamera = cameraForState(focusState, mapBaseView, mapView);
+    const initialCamera = cameraForState(terrainView, mapView, container, mapWidth, mapHeight);
     const map = new maplibregl.Map({
       attributionControl: false,
       bearing: initialCamera.bearing,
@@ -384,9 +449,8 @@ export function BattleOfBritainTerrain3D({
       dragRotate: false,
       interactive: false,
       keyboard: false,
-      maxBounds: terrainBounds,
-      maxPitch: 62,
-      maxZoom: 11.55,
+      maxPitch: 0,
+      maxZoom: 11.6,
       minZoom: 6.8,
       pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
       pitch: initialCamera.pitch,
@@ -403,11 +467,15 @@ export function BattleOfBritainTerrain3D({
       markMapCanvas(container, map);
       const canvas = map.getCanvas();
       const center = map.getCenter();
-      container.dataset.currentEvent = activeEvent.id;
+      const registration = registrationErrorForState(map, container, latestStateRef.current);
+      container.dataset.currentEvent = latestStateRef.current.activeEvent.id;
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
       container.dataset.mapFocus = latestStateRef.current.mapFocus;
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       container.dataset.mapZoom = map.getZoom().toFixed(2);
+      container.dataset.registrationMaxError = registration.max.toFixed(2);
+      container.dataset.registrationMeanError = registration.mean.toFixed(2);
+      container.dataset.registrationSampleCount = `${registration.samples.length}`;
       container.dataset.terrainLoaded = map.loaded() && map.areTilesLoaded() ? "true" : "false";
       container.dataset.weatherPhase = weatherPhase(latestStateRef.current.progress);
     };
@@ -415,7 +483,15 @@ export function BattleOfBritainTerrain3D({
 
     map.once("load", () => {
       map.setTerrain({ source: "battle-of-britain-real-dem", exaggeration: terrainExaggeration });
-      map.jumpTo(cameraForState(latestStateRef.current.focusState, latestStateRef.current.mapBaseView, latestStateRef.current.mapView));
+      map.jumpTo(
+        cameraForState(
+          latestStateRef.current.terrainView,
+          latestStateRef.current.mapView,
+          container,
+          latestStateRef.current.mapWidth,
+          latestStateRef.current.mapHeight
+        )
+      );
       syncMetadata();
     });
     map.on("idle", syncMetadata);
@@ -423,6 +499,15 @@ export function BattleOfBritainTerrain3D({
 
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
+      map.jumpTo(
+        cameraForState(
+          latestStateRef.current.terrainView,
+          latestStateRef.current.mapView,
+          container,
+          latestStateRef.current.mapWidth,
+          latestStateRef.current.mapHeight
+        )
+      );
       syncMetadata();
     });
     resizeObserver.observe(container);
@@ -442,32 +527,30 @@ export function BattleOfBritainTerrain3D({
     if (!map || !container) {
       return;
     }
-    const camera = cameraForState(focusState, mapBaseView, mapView);
-    if (focusState.isTransitioning) {
-      map.easeTo({
-        ...camera,
-        duration: cameraTransitionDurationMs,
-        easing: (time) => time * time * (3 - 2 * time)
-      });
-    } else {
-      map.jumpTo(camera);
-    }
+    const camera = cameraForState(terrainView, mapView, container, mapWidth, mapHeight);
+    map.jumpTo(camera);
     container.dataset.currentEvent = activeEvent.id;
     container.dataset.mapFocus = mapFocus;
     container.dataset.weatherPhase = cloudPhase;
-  }, [activeEvent.id, cloudPhase, focusState, mapBaseView, mapFocus, mapView]);
+    const registration = registrationErrorForState(map, container, { mapHeight, mapView, mapWidth, registrationSamples });
+    container.dataset.registrationMaxError = registration.max.toFixed(2);
+    container.dataset.registrationMeanError = registration.mean.toFixed(2);
+    container.dataset.registrationSampleCount = `${registration.samples.length}`;
+  }, [activeEvent.id, cloudPhase, focusState, mapBaseView, mapFocus, mapHeight, mapView, mapWidth, registrationSamples, terrainView]);
 
   return (
     <div
       ref={containerRef}
       className="battle-of-britain-terrain-3d"
-      data-camera-mode="cross-channel-oblique-stages"
-      data-camera-pitch={`${cameraForState(focusState, mapBaseView, mapView).pitch.toFixed(1)}`}
-      data-camera-transition-ms={`${cameraTransitionDurationMs}`}
+      data-camera-mode="svg-projection-registered-terrain"
+      data-camera-pitch={`${registeredCameraPitch.toFixed(1)}`}
+      data-camera-transition-ms="0"
       data-cloud-animation="phase-linked-drifting-overlay"
+      data-cloud-renderer="svg-camera-layer-comfy-weather-png"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-modern-imagery-visible="true"
-      data-projection="webgl-gis-terrain"
+      data-map-registration="svg-projection"
+      data-projection="registered-web-mercator-hillshade"
       data-renderer="maplibre-real-terrain"
       data-tactical-renderer="maplibre-underlay-svg-tactical-overlay"
       data-terrain-exaggeration={`${terrainExaggeration}`}
@@ -481,35 +564,6 @@ export function BattleOfBritainTerrain3D({
       data-visual-surface-contract="maplibre-canvas-primary-country-boundaries-only"
       data-weather-phase={cloudPhase}
     >
-      <div
-        className="battle-of-britain-cloud-layer"
-        data-asset-source="comfyui-weather-png"
-        data-testid="battle-of-britain-cloud-layer"
-        data-weather-phase={cloudPhase}
-        aria-hidden="true"
-      >
-        <img
-          className="battle-of-britain-cloud cloud-a"
-          data-testid="battle-of-britain-morning-cloud-asset"
-          src={morningCloudAsset}
-          alt=""
-          draggable={false}
-        />
-        <img
-          className="battle-of-britain-cloud cloud-b"
-          data-testid="battle-of-britain-afternoon-cloud-asset"
-          src={afternoonCloudAsset}
-          alt=""
-          draggable={false}
-        />
-        <img
-          className="battle-of-britain-cloud cloud-c"
-          data-testid="battle-of-britain-evening-cloud-asset"
-          src={afternoonCloudAsset}
-          alt=""
-          draggable={false}
-        />
-      </div>
     </div>
   );
 }

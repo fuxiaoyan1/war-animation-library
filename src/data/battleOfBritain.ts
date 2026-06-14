@@ -182,6 +182,34 @@ export const fortifiedLines: GeoLine[] = [
 
 export const mapOverlays: MapOverlayElement[] = [
   {
+    id: "morning-comfy-cloud-bank",
+    className: "battle-of-britain-weather-overlay morning-weather-overlay",
+    coordinates: [0.64, 51.28],
+    height: 168,
+    href: "/assets/weather/battle-of-britain/morning-cloud-bank.png?v=20260614-comfy-weather-v4",
+    label: "上午破碎云层",
+    opacity: 0.42,
+    revealAt: "1940-09-15T10:30",
+    testId: "battle-of-britain-weather-overlay-morning",
+    type: "image",
+    visibleUntil: "1940-09-15T13:30",
+    width: 535
+  },
+  {
+    id: "afternoon-comfy-cloud-breaks",
+    className: "battle-of-britain-weather-overlay afternoon-weather-overlay",
+    coordinates: [0.52, 51.22],
+    height: 160,
+    href: "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png?v=20260614-comfy-weather-v4",
+    label: "午后云隙",
+    opacity: 0.4,
+    revealAt: "1940-09-15T13:20",
+    testId: "battle-of-britain-weather-overlay-afternoon",
+    type: "image",
+    visibleUntil: "1940-09-15T18:00",
+    width: 505
+  },
+  {
     id: "chain-home-vector",
     from: [1.34, 51.06],
     label: "雷达点迹 -> 乌克斯布里奇",
