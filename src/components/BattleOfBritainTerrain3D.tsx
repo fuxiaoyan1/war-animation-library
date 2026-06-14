@@ -39,7 +39,7 @@ const minCachedTileZoom = 6;
 const cachedTerrainTileZoom = 11;
 const cachedTopoTileZoom = 11;
 const terrainExaggeration = 1.35;
-const hillshadeExaggeration = 0.82;
+const hillshadeExaggeration = 0.72;
 const topoRasterOpacity = 0.24;
 const registeredCameraPitch = 0;
 const registeredCameraBearing = 0;
@@ -215,7 +215,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#153d5a"
+        "background-color": "#356987"
       }
     },
     {
@@ -223,11 +223,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.43,
-        "raster-brightness-min": 0.03,
-        "raster-contrast": 1,
+        "raster-brightness-max": 0.52,
+        "raster-brightness-min": 0.05,
+        "raster-contrast": 0.98,
         "raster-opacity": topoRasterOpacity,
-        "raster-saturation": 0.42
+        "raster-saturation": 0.2
       }
     },
     {
@@ -235,10 +235,10 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#8a8050",
+        "hillshade-accent-color": "#9e8b58",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#d6ad62",
-        "hillshade-shadow-color": "#0f3956"
+        "hillshade-highlight-color": "#f0c171",
+        "hillshade-shadow-color": "#3f6978"
       }
     }
   ],

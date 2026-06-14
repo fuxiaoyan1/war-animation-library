@@ -126,8 +126,11 @@ function collectRenderedStageColorGrade(buffer) {
   let cyanGreenSeaPixels = 0;
   let darkPixels = 0;
   let greenPixels = 0;
+  let lowDaylightPixels = 0;
   let luminanceSquareSum = 0;
   let luminanceSum = 0;
+  const luminanceValues = [];
+  let nightBluePixels = 0;
   let saturationSum = 0;
   let samples = 0;
 
@@ -150,35 +153,49 @@ function collectRenderedStageColorGrade(buffer) {
       const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
       luminanceSum += luminance;
       luminanceSquareSum += luminance * luminance;
+      luminanceValues.push(luminance);
       saturationSum += saturation;
       samples += 1;
       if (luminance < 34) darkPixels += 1;
+      if (luminance < 95) lowDaylightPixels += 1;
       if (green > blue + 10 && green > red + 4) greenPixels += 1;
-      if (blue > 70 && green > 68 && green / Math.max(1, blue) > 0.9 && green > red + 18) cyanGreenSeaPixels += 1;
+      if (blue > 70 && green > 68 && green >= blue - 2 && green > red + 18) cyanGreenSeaPixels += 1;
       if (blue > green + 8 && blue > red + 12 && saturation > 24) bluePixels += 1;
+      if (blue > green + 10 && blue > red + 16 && saturation > 28 && luminance < 112) nightBluePixels += 1;
     }
   }
 
   const luminanceMean = samples > 0 ? luminanceSum / samples : 0;
+  luminanceValues.sort((a, b) => a - b);
+  const percentile = (ratio) =>
+    luminanceValues.length > 0 ? luminanceValues[Math.min(luminanceValues.length - 1, Math.max(0, Math.floor(luminanceValues.length * ratio)))] : 0;
   return {
     brightnessScore100: (luminanceMean / 255) * 100,
     blueRatio: samples > 0 ? bluePixels / samples : 0,
     cyanGreenSeaRatio: samples > 0 ? cyanGreenSeaPixels / samples : 0,
     darkRatio: samples > 0 ? darkPixels / samples : 0,
     greenRatio: samples > 0 ? greenPixels / samples : 0,
+    lowDaylightRatio: samples > 0 ? lowDaylightPixels / samples : 0,
     luminanceMean,
+    luminanceP10: percentile(0.1),
+    luminanceP25: percentile(0.25),
     luminanceStdDev: samples > 0 ? Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean)) : 0,
+    nightBlueRatio: samples > 0 ? nightBluePixels / samples : 0,
     saturationMean: samples > 0 ? saturationSum / samples : 0
   };
 }
 
 function evaluateDaylightMapColorGate(colorGrade) {
   return {
-    brightnessScore: colorGrade.brightnessScore100 > 48 && colorGrade.brightnessScore100 < 61,
+    brightnessScore: colorGrade.brightnessScore100 > 56 && colorGrade.brightnessScore100 < 70,
     contrast: colorGrade.luminanceStdDev > 20,
     darkRatio: colorGrade.darkRatio < 0.045,
     cyanGreenSea: colorGrade.cyanGreenSeaRatio < 0.2,
     greenWash: colorGrade.greenRatio < 0.24,
+    lowDaylightRatio: colorGrade.lowDaylightRatio < 0.18,
+    luminanceP10: colorGrade.luminanceP10 > 82,
+    luminanceP25: colorGrade.luminanceP25 > 105,
+    nightBlueRatio: colorGrade.nightBlueRatio < 0.16,
     saturation: colorGrade.saturationMean > 42,
     steelBlue: colorGrade.blueRatio > 0.14
   };
@@ -337,18 +354,18 @@ async function collectPageMetrics(page) {
       context.drawImage(sourceCanvas, 0, 0, sample.width, sample.height);
       context.globalCompositeOperation = "multiply";
       const gradient = context.createLinearGradient(0, 0, sample.width, sample.height);
-      gradient.addColorStop(0, "rgba(9,31,54,0.48)");
-      gradient.addColorStop(0.42, "rgba(12,47,76,0.42)");
-      gradient.addColorStop(0.68, "rgba(49,55,31,0.36)");
-      gradient.addColorStop(1, "rgba(93,70,29,0.34)");
+      gradient.addColorStop(0, "rgba(65,122,154,0.5)");
+      gradient.addColorStop(0.43, "rgba(58,121,157,0.46)");
+      gradient.addColorStop(0.68, "rgba(158,126,75,0.36)");
+      gradient.addColorStop(1, "rgba(172,116,54,0.3)");
       context.fillStyle = gradient;
       context.fillRect(0, 0, sample.width, sample.height);
-      context.globalCompositeOperation = "screen";
+      context.globalCompositeOperation = "soft-light";
       const sheen = context.createLinearGradient(0, 0, sample.width, sample.height);
-      sheen.addColorStop(0, "rgba(255,232,155,0.07)");
-      sheen.addColorStop(0.38, "rgba(255,255,255,0)");
-      sheen.addColorStop(0.76, "rgba(91,168,218,0.08)");
-      sheen.addColorStop(1, "rgba(255,255,255,0)");
+      sheen.addColorStop(0, "rgba(47,120,158,0.24)");
+      sheen.addColorStop(0.42, "rgba(61,136,164,0.22)");
+      sheen.addColorStop(0.68, "rgba(177,139,73,0.2)");
+      sheen.addColorStop(1, "rgba(194,125,54,0.16)");
       context.fillStyle = sheen;
       context.fillRect(0, 0, sample.width, sample.height);
       context.globalCompositeOperation = "source-over";
@@ -431,9 +448,11 @@ async function collectPageMetrics(page) {
       weatherOverlays: weatherOverlays.map((overlay) => {
         const image = overlay.querySelector("image");
         const box = overlay.getBoundingClientRect();
+        const coverage = (box.width * box.height) / Math.max(1, mapBox.width * mapBox.height);
         return {
           beforeAircraft: firstAircraft ? Boolean(overlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
           beforeRoute: firstTactical ? Boolean(overlay.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+          coverage,
           href: image?.getAttribute("href") ?? "",
           id: overlay.getAttribute("data-testid") ?? "",
           opacity: Number.parseFloat(getComputedStyle(overlay).opacity || "1"),

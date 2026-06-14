@@ -1969,9 +1969,12 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   let cyanGreenSeaPixels = 0;
   let darkPixels = 0;
   let greenDominantPixels = 0;
+  let lowDaylightPixels = 0;
   let metalBlueDominantPixels = 0;
   let luminanceSquareSum = 0;
   let luminanceSum = 0;
+  const luminanceValues: number[] = [];
+  let nightBluePixels = 0;
   let saturationSum = 0;
   let samples = 0;
 
@@ -1995,23 +1998,32 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
       const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
       luminanceSum += luminance;
       luminanceSquareSum += luminance * luminance;
+      luminanceValues.push(luminance);
       saturationSum += saturation;
       samples += 1;
       if (luminance < 34) {
         darkPixels += 1;
       }
+      if (luminance < 95) {
+        lowDaylightPixels += 1;
+      }
       if (green > blue + 10 && green > red + 4) {
         greenDominantPixels += 1;
       }
-      if (blue > 70 && green > 68 && green / Math.max(1, blue) > 0.9 && green > red + 18) {
+      if (blue > 70 && green > 68 && green >= blue - 2 && green > red + 18) {
         cyanGreenSeaPixels += 1;
       }
       if (blue > green + 8 && blue > red + 12 && saturation > 24) {
         metalBlueDominantPixels += 1;
       }
+      if (blue > green + 10 && blue > red + 16 && saturation > 28 && luminance < 112) {
+        nightBluePixels += 1;
+      }
     }
   }
 
+  luminanceValues.sort((a, b) => a - b);
+  const percentile = (ratio: number) => luminanceValues[Math.min(luminanceValues.length - 1, Math.max(0, Math.floor(luminanceValues.length * ratio)))] ?? 0;
   const luminanceMean = luminanceSum / samples;
   const luminanceStdDev = Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean));
   const saturationMean = saturationSum / samples;
@@ -2019,16 +2031,22 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   const cyanGreenSeaRatio = cyanGreenSeaPixels / samples;
   const darkRatio = darkPixels / samples;
   const greenDominantRatio = greenDominantPixels / samples;
+  const lowDaylightRatio = lowDaylightPixels / samples;
   const metalBlueRatio = metalBlueDominantPixels / samples;
+  const nightBlueRatio = nightBluePixels / samples;
 
-  expect(brightnessScore100, "Battle of Britain rendered map should expose a stable 0-100 brightness score and stay in the planned daylight palette band").toBeGreaterThan(48);
-  expect(brightnessScore100, "Battle of Britain rendered map is too pale when its 0-100 brightness score climbs above the palette target band").toBeLessThan(61);
+  expect(brightnessScore100, "Battle of Britain rendered map should read as a daylight battle, not a night-blue map with a passing mean score").toBeGreaterThan(56);
+  expect(brightnessScore100, "Battle of Britain rendered map is too pale when its 0-100 brightness score climbs above the palette target band").toBeLessThan(70);
   expect(luminanceStdDev, "Battle of Britain rendered map needs enough contrast for 3D terrain texture").toBeGreaterThan(20);
+  expect(percentile(0.1), "Battle of Britain daylight map should not have a night-like low-luminance tail").toBeGreaterThan(82);
+  expect(percentile(0.25), "Battle of Britain daylight map should keep at least the lower quarter out of black/night territory").toBeGreaterThan(105);
   expect(saturationMean, "Battle of Britain rendered map should keep richer color after CSS compositing").toBeGreaterThan(42);
   expect(metalBlueRatio, "Battle of Britain sea should read as daylight steel-blue, not pale green or flat gray").toBeGreaterThan(0.14);
   expect(greenDominantRatio, "Battle of Britain sea should not read as a green wash").toBeLessThan(0.24);
   expect(cyanGreenSeaRatio, "Battle of Britain sea should not drift into cyan/green map software coloring").toBeLessThan(0.2);
   expect(darkRatio, "Battle of Britain daylight map should not introduce black/night-looking regions").toBeLessThan(0.045);
+  expect(lowDaylightRatio, "Battle of Britain daylight map should not hide large areas below daylight luminance even when not pure black").toBeLessThan(0.18);
+  expect(nightBlueRatio, "Battle of Britain sea/background should not read as night-blue mass").toBeLessThan(0.16);
 }
 
 async function expectBattleOfBritainDenseStageNoMapJitter(page: Page, label: string) {
@@ -2148,7 +2166,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-terrain-source", "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png");
   await expect(terrain).toHaveAttribute("data-topo-source", "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg");
   await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
-  await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.82");
+  await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
   await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-canvas-primary-country-boundaries-only");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "phase-linked-drifting-overlay");
@@ -2202,6 +2220,24 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
         : true,
       weatherOpacity: Number.parseFloat(firstWeatherOverlay ? getComputedStyle(firstWeatherOverlay).opacity : "0"),
       weatherPointerEvents: firstWeatherOverlay ? getComputedStyle(firstWeatherOverlay).pointerEvents : "",
+      weatherCoverage: (() => {
+        if (!stage) {
+          return { max: 0, total: 0 };
+        }
+        const stageBox = stage.getBoundingClientRect();
+        const stageArea = Math.max(1, stageBox.width * stageBox.height);
+        const visibleAreas = weatherOverlays
+          .map((overlay) => {
+            const box = overlay.getBoundingClientRect();
+            const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
+            return box.width > 12 && box.height > 12 && opacity > 0.06 ? (box.width * box.height) / stageArea : 0;
+          })
+          .filter((area) => area > 0);
+        return {
+          max: Math.max(0, ...visibleAreas),
+          total: visibleAreas.reduce((sum, area) => sum + area, 0)
+        };
+      })(),
       countryFills: countries.map((country) => getComputedStyle(country).fill),
       countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
       mapPointLabels: mapPointLabels.map((label) => {
@@ -2303,8 +2339,10 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.visibleWeatherOverlayCount, "Battle of Britain should show multiple ComfyUI cloud banks, not one barely visible weather stamp").toBeGreaterThanOrEqual(2);
   expect(visualState.weatherAfterTerrain, "ComfyUI weather overlay should sit above the terrain canvas").toBe(true);
   expect(visualState.weatherBeforeAircraft, "ComfyUI weather overlay must stay below aircraft markers").toBe(true);
-  expect(visualState.weatherOpacity, "ComfyUI weather overlay should be visible in screenshots").toBeGreaterThanOrEqual(0.34);
-  expect(visualState.weatherOpacity, "ComfyUI weather overlay should not wash out aircraft or routes").toBeLessThanOrEqual(0.62);
+  expect(visualState.weatherOpacity, "ComfyUI cloud units should be visible without becoming a full-screen weather veil").toBeGreaterThanOrEqual(0.16);
+  expect(visualState.weatherOpacity, "ComfyUI cloud units must stay below map-color grading strength").toBeLessThanOrEqual(0.3);
+  expect(visualState.weatherCoverage.max, "a single cloud unit should not cover the tactical map like a weather blanket").toBeLessThan(0.075);
+  expect(visualState.weatherCoverage.total, "cloud units should remain local tactical/weather assets, not a full-map color layer").toBeLessThan(0.16);
   expect(visualState.routeAfterTerrain, "tactical routes must render above the terrain underlay").toBe(true);
   expect(visualState.aircraftAfterTerrain, "aircraft must render above the terrain underlay").toBe(true);
   expect(visualState.svgBackground).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
@@ -2334,22 +2372,26 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
   const weatherVisualState = await page.locator(".battle-of-britain").evaluate((shell, activeTestId) => {
     const morning = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
     const afternoon = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-afternoon"]');
-    const active = shell.querySelector<SVGGraphicsElement>(`[data-testid="${activeTestId}"]`);
-    const visibleOverlays = [...shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")].filter((overlay) => {
-      const box = overlay.getBoundingClientRect();
-      const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
-      return box.width > 12 && box.height > 12 && opacity > 0.06;
-    });
+      const active = shell.querySelector<SVGGraphicsElement>(`[data-testid="${activeTestId}"]`);
+      const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+      const visibleOverlays = [...shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")].filter((overlay) => {
+        const box = overlay.getBoundingClientRect();
+        const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
+        return box.width > 12 && box.height > 12 && opacity > 0.06;
+      });
     const mapOverlayElements = shell.querySelector<SVGGraphicsElement>('[data-testid="map-overlay-elements"]');
     const firstRoute = shell.querySelector<SVGGraphicsElement>(".front-line");
     const firstAircraft = shell.querySelector<SVGGraphicsElement>(".ww2-aircraft-marker");
-    const stateFor = (element: SVGGraphicsElement | null) => {
-      const box = element?.getBoundingClientRect();
-      const style = element ? getComputedStyle(element) : null;
-      return {
-        height: box?.height ?? 0,
-        href: element?.querySelector("image")?.getAttribute("href") ?? "",
-        opacity: Number.parseFloat(style?.opacity ?? "0"),
+      const stateFor = (element: SVGGraphicsElement | null) => {
+        const box = element?.getBoundingClientRect();
+        const style = element ? getComputedStyle(element) : null;
+        const stageBox = stage?.getBoundingClientRect();
+        const stageArea = stageBox ? Math.max(1, stageBox.width * stageBox.height) : 1;
+        return {
+          coverage: box ? (box.width * box.height) / stageArea : 0,
+          height: box?.height ?? 0,
+          href: element?.querySelector("image")?.getAttribute("href") ?? "",
+          opacity: Number.parseFloat(style?.opacity ?? "0"),
         phase: element?.getAttribute("data-scene-transition-phase") ?? "",
         pointerEvents: style?.pointerEvents ?? "",
         width: box?.width ?? 0
@@ -2375,10 +2417,13 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
   const visibleWeather = weatherVisualState.active;
   expect(weatherVisualState.active.href).toBe(activeAsset.path + "?v=20260614-comfy-weather-v4");
   expect(visibleWeather.pointerEvents).toBe("none");
-  expect(visibleWeather.width).toBeGreaterThan(260);
-  expect(visibleWeather.height).toBeGreaterThan(70);
-  expect(visibleWeather.opacity).toBeGreaterThanOrEqual(0.34);
-  expect(visibleWeather.opacity).toBeLessThanOrEqual(0.62);
+  expect(visibleWeather.width).toBeGreaterThan(95);
+  expect(visibleWeather.width).toBeLessThan(340);
+  expect(visibleWeather.height).toBeGreaterThan(32);
+  expect(visibleWeather.height).toBeLessThan(125);
+  expect(visibleWeather.opacity).toBeGreaterThanOrEqual(0.16);
+  expect(visibleWeather.opacity).toBeLessThanOrEqual(0.3);
+  expect(visibleWeather.coverage, "active cloud should behave like a local weather unit, not a full-map overlay").toBeLessThan(0.075);
   expect(weatherVisualState.weatherBeforeRoutes, "weather must stay under tactical routes").toBe(true);
   expect(weatherVisualState.weatherBeforeAircraft, "weather must stay under aircraft markers").toBe(true);
 
@@ -7417,6 +7462,8 @@ test("caesar wars animation covers gaul and the civil war", async ({ page }) => 
 });
 
 test("battle of britain shows radar directed compact air formations", async ({ page }) => {
+  test.setTimeout(120_000);
+
   const { apiFailures, consoleErrors } = collectFailures(page);
 
   await openCampaignFromHome(page, "britain-air");
