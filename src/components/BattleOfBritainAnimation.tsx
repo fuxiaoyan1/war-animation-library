@@ -7,7 +7,6 @@ import {
   dogfightEffects,
   fortifiedLines,
   frontLines,
-  mapSurfaceFeatures,
   mapOverlays,
   mapPoints,
   rivers,
@@ -17,6 +16,7 @@ import { battleOfBritainCampaignCountries, battleOfBritainCountryClassName } fro
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { withUnitBadgeLabels } from "../lib/unitBadges";
 import { publicPath } from "../lib/publicPath";
+import { BattleOfBritainTerrain3D } from "./BattleOfBritainTerrain3D";
 import { CampaignMapAnimation, type NarrationCue } from "./CampaignMapAnimation";
 
 const activeSpans = frontLines.map(({ end, start }) => ({ end, start }));
@@ -103,9 +103,9 @@ export function BattleOfBritainAnimation() {
       legendAxis="雷达预警 / 航迹保留"
       legendPrimary="德军轰炸机流与护航"
       legendSecondary="RAF 多批拦截"
-      mapSurfaceFeatures={mapSurfaceFeatures}
       mapOverlays={mapOverlays}
       mapPoints={mapPoints}
+      mapTerrainLayer={(state) => <BattleOfBritainTerrain3D {...state} />}
       maxGapDays={3}
       musicSource={publicPath("/audio/wikimedia-rule-britannia.ogg")}
       narrationCues={narrationCues}

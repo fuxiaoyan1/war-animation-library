@@ -5,6 +5,7 @@ import path from "node:path";
 const baseUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:5177";
 const outDir = path.resolve(process.argv[2] ?? "artifacts/london-air-visual-evidence");
 const aircraftAssetVersion = "20260614-he111-standard-v1";
+const weatherAssetVersion = "20260614-comfy-weather-v1";
 
 const he111QualityBand = {
   luminanceMean: { min: 80, max: 150 },
@@ -62,8 +63,9 @@ async function collectPageMetrics(page) {
     const radarRoute = battle?.querySelector('.front-line[data-route-id="morning-radar-plots"] .front-route');
     const chainHomeVector = battle?.querySelector('[data-testid="britain-chain-home-vector"]');
     const dogfight = battle?.querySelector('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"], [data-testid="dogfight-clash"]');
-    const surfaceLayer = battle?.querySelector(".map-surface-layer");
-    const firstSurface = battle?.querySelector(".map-surface-layer .map-surface-feature");
+    const terrainLayer = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d"]');
+    const terrainCanvas = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+    const cloudLayer = battle?.querySelector('[data-testid="battle-of-britain-cloud-layer"]');
     const firstTactical = battle?.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
     const firstAircraft = battle?.querySelector(".ww2-aircraft-marker");
     const rectFor = (element) => {
@@ -93,42 +95,6 @@ async function collectPageMetrics(page) {
         testId: marker.getAttribute("data-testid")
       };
     });
-    const surfaceFeatures = Array.from(battle?.querySelectorAll(".map-surface-feature") ?? []).map((feature) => {
-      const box = feature.getBoundingClientRect();
-      return {
-        box: {
-          height: Math.round(box.height),
-          width: Math.round(box.width)
-        },
-        id: feature.getAttribute("data-surface-id"),
-        kind: feature.getAttribute("data-surface-kind"),
-        testId: feature.getAttribute("data-testid"),
-        type: feature.getAttribute("data-surface-type")
-      };
-    });
-    const visibleSurfaceLabels = Array.from(battle?.querySelectorAll(".map-surface-label") ?? []).filter((label) => getComputedStyle(label).display !== "none").length;
-    const surfacePathStyles = Array.from(battle?.querySelectorAll(".map-surface-feature path") ?? []).map((path) => {
-      const style = getComputedStyle(path);
-      const box = path.getBoundingClientRect();
-      return {
-        area: Math.round(box.width * box.height),
-        className: path.getAttribute("class"),
-        fill: style.fill,
-        filter: style.filter,
-        opacity: Number.parseFloat(style.opacity || "1"),
-        stroke: style.stroke,
-        strokeWidth: Number.parseFloat(style.strokeWidth || "0")
-      };
-    });
-    const darkSurfaceBlocks = surfacePathStyles.filter((item) => {
-      const match = item.fill.match(/rgba?\(([^)]+)\)/);
-      if (!match || item.fill === "none") return false;
-      const parts = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
-      const alpha = parts[3] ?? 1;
-      const luminance = parts[0] * 0.2126 + parts[1] * 0.7152 + parts[2] * 0.0722;
-      return item.area > 16000 && item.opacity * alpha > 0.14 && luminance < 54;
-    });
-
     const svg = battle?.querySelector("svg.battle-map");
     const darkBlocks = [];
     if (svg) {
@@ -170,17 +136,37 @@ async function collectPageMetrics(page) {
       chainHomeVectorBox: rectFor(chainHomeVector),
       currentEventBox: rectFor(currentEvent),
       darkBlocks,
-      darkSurfaceBlocks,
       dogfightBox: rectFor(dogfight),
       genericAircraftMarkers: battle?.querySelectorAll('[data-testid="ww2-fighter-marker"], [data-testid="ww2-bomber-marker"]').length ?? 0,
-      mapSurface: {
-        aircraftAfterSurface: Boolean(surfaceLayer && firstAircraft && surfaceLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING),
-        featureCount: surfaceFeatures.length,
-        features: surfaceFeatures,
-        filters: [...new Set(surfacePathStyles.map((item) => item.filter))],
-        maxStrokeWidth: Math.max(...surfacePathStyles.map((item) => item.strokeWidth), 0),
-        surfaceBeforeTactical: Boolean(firstSurface && firstTactical && firstSurface.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING),
-        visibleLabels: visibleSurfaceLabels
+      terrain3D: {
+        aircraftAfterTerrain: firstAircraft
+          ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
+          : true,
+        canvasRect: rectFor(terrainCanvas),
+        cloudAfterTerrain: Boolean(terrainLayer && cloudLayer && terrainLayer.compareDocumentPosition(cloudLayer) & Node.DOCUMENT_POSITION_FOLLOWING),
+        cloudBeforeAircraft: firstAircraft
+          ? Boolean(cloudLayer && cloudLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
+          : true,
+        cloudOpacity: cloudLayer ? Number.parseFloat(getComputedStyle(cloudLayer).opacity || "0") : 0,
+        cloudPointerEvents: cloudLayer ? getComputedStyle(cloudLayer).pointerEvents : "",
+        cloudAssets: Array.from(cloudLayer?.querySelectorAll("img") ?? []).map((image) => ({
+          className: image.getAttribute("class") ?? "",
+          src: image.getAttribute("src") ?? "",
+          testId: image.getAttribute("data-testid") ?? ""
+        })),
+        cloudSpanCount: cloudLayer?.querySelectorAll(".battle-of-britain-cloud").length ?? 0,
+        mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
+        mapFocus: terrainLayer?.getAttribute("data-map-focus") ?? "",
+        mapPixelRatio: terrainLayer?.getAttribute("data-map-pixel-ratio") ?? "",
+        mapZoom: Number(terrainLayer?.getAttribute("data-map-zoom") ?? 0),
+        renderer: terrainLayer?.getAttribute("data-renderer") ?? "",
+        terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
+        terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
+        topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
+        tacticalAfterTerrain: firstTactical
+          ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
+          : true,
+        weatherPhase: terrainLayer?.getAttribute("data-weather-phase") ?? ""
       },
       markerSample: markers.slice(0, 24),
       radarRouteBox: rectFor(radarRoute),
@@ -343,6 +329,79 @@ async function collectAssetHeads(page) {
   return heads;
 }
 
+async function collectWeatherAssetMetrics(page) {
+  const records = await page.evaluate(async ({ version }) => {
+    const assetPaths = [
+      "/assets/weather/battle-of-britain/morning-cloud-bank.png",
+      "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png"
+    ];
+    const output = {};
+    for (const assetPath of assetPaths) {
+      const image = new Image();
+      image.src = `${assetPath}?v=${version}`;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) throw new Error("2d canvas unavailable");
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let alphaSum = 0;
+      let edgePixels = 0;
+      let edgeVisiblePixels = 0;
+      let opaquePixels = 0;
+      const cornerAlphaValues = [
+        pixels[3],
+        pixels[(canvas.width - 1) * 4 + 3],
+        pixels[(canvas.height - 1) * canvas.width * 4 + 3],
+        pixels[(canvas.height * canvas.width - 1) * 4 + 3]
+      ];
+      for (let y = 0; y < canvas.height; y += 1) {
+        for (let x = 0; x < canvas.width; x += 1) {
+          const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+          alphaSum += alpha;
+          if (alpha > 8) opaquePixels += 1;
+          if (x === 0 || y === 0 || x === canvas.width - 1 || y === canvas.height - 1) {
+            edgePixels += 1;
+            if (alpha > 8) edgeVisiblePixels += 1;
+          }
+        }
+      }
+      output[assetPath] = {
+        alphaRatio: alphaSum / (255 * canvas.width * canvas.height),
+        cornerAlphaMax: Math.max(...cornerAlphaValues),
+        edgeVisibleRatio: edgeVisiblePixels / edgePixels,
+        height: canvas.height,
+        opaqueRatio: opaquePixels / (canvas.width * canvas.height),
+        width: canvas.width
+      };
+    }
+    return output;
+  }, { version: weatherAssetVersion });
+
+  const heads = {};
+  for (const assetPath of Object.keys(records)) {
+    const response = await page.request.head(`${baseUrl}${assetPath}?v=${weatherAssetVersion}`);
+    heads[assetPath] = {
+      cacheControl: response.headers()["cache-control"],
+      contentLength: Number(response.headers()["content-length"]),
+      contentType: response.headers()["content-type"],
+      ok: response.ok(),
+      status: response.status()
+    };
+  }
+  return { heads, records };
+}
+
+async function waitForTerrainReady(page) {
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="battle-of-britain-terrain-3d"]')?.getAttribute("data-terrain-loaded") === "true",
+    undefined,
+    { timeout: 12_000 }
+  );
+}
+
 async function clickEvent(page, titleIncludes) {
   if (!titleIncludes) return;
   const clicked = await page.getByTestId("event-list").evaluate((eventList, needle) => {
@@ -354,6 +413,7 @@ async function clickEvent(page, titleIncludes) {
   }, titleIncludes);
   if (!clicked) throw new Error(`Event button not found: ${titleIncludes}`);
   await page.waitForTimeout(650);
+  await waitForTerrainReady(page);
 }
 
 async function main() {
@@ -371,6 +431,7 @@ async function main() {
   await page.getByTestId("open-britain-air").click();
   await page.getByTestId("battle-of-britain-app").waitFor({ state: "visible" });
   await page.waitForTimeout(900);
+  await waitForTerrainReady(page);
 
   const screenshots = [];
   const stageMetrics = {};
@@ -384,6 +445,7 @@ async function main() {
 
   const metrics = {
     aircraftAssetVersion,
+    weatherAssetVersion,
     baseUrl,
     checkedAt: new Date().toISOString(),
     consoleErrors,
@@ -392,7 +454,8 @@ async function main() {
     screenshots,
     stageMetrics,
     assetHeads: await collectAssetHeads(page),
-    aircraftPngMetrics: await collectAssetMetrics(page)
+    aircraftPngMetrics: await collectAssetMetrics(page),
+    weatherPngMetrics: await collectWeatherAssetMetrics(page)
   };
   await fs.writeFile(path.join(outDir, "metrics.browser.json"), `${JSON.stringify(metrics, null, 2)}\n`);
   await browser.close();

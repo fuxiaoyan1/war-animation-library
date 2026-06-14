@@ -147,11 +147,13 @@
 
 用户继续要求“跨海峡、跨国家空战地图主要看 3D 质感，不要精细画山脉、高楼、海浪、云朵”后的地图底板迭代：
 
-- `CampaignMapAnimation` 新增可复用 `mapSurfaceFeatures` 表层纹理能力，图层顺序固定为国家底图之上、战术网格/战术空域/航线/飞机之下，避免抢主战区和作战单位。
-- `battleOfBritain` 新增 7 个低细节质感层：`channel-sea-surface`、`channel-depth-sheen`、`cross-channel-coast-sheen`、`south-england-landform-wash`、`london-visibility-wash`、`morning-weather-veil`、`afternoon-weather-sheen`。命名和样式使用 `wash/sheen/veil`，明确这是跨海峡战区底板质感，不是具体山、浪、楼、云的逐项示意。
-- `.battle-of-britain` 样式为这些表层使用低饱和填充、弱高光和轻微错层线，禁止 blur/filter 和文字标签；海峡、海岸、英格兰南部、伦敦能见度、上午/下午天气只提供战区层次和光感，不干扰飞机图标金属质感和航迹识别。
-- 伦敦专项 smoke 新增 `expectBattleOfBritainMapSurfaceTexture`：检查表层存在、标签不可见、无大面积暗色表层块、最大线宽不超过战术层、filter 为 `none`、表层在战术几何和飞机之前渲染。`campaign data quality gates` 新增 `expectBattleOfBritainMapSurfaceData`，防止后续把底板改成精细标注图或重新加抢戏文字。
-- `scripts/probe-london-air-visual-evidence.mjs` 同步记录 `mapSurface` 指标、`darkSurfaceBlocks`、表层 filters、最大线宽、表层/战术/飞机 DOM 顺序和关键帧截图，作为人工视觉检查证据。
+- 用户截图复核后，上一版 `mapSurfaceFeatures` / SVG wash-sheen 方案被判定不达标，本轮废弃该路径，改成真实 MapLibre 地形底图：`scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11` 下载跨海峡范围 Esri World Topographic Map raster cache 和 AWS Terrain Tiles Terrarium DEM cache，运行目录为 `public/assets/maps/battle-of-britain-3d/`，`manifest.json` 记录 `downloaded=1034`、`failed=0`，体量约 53M。
+- `CampaignMapAnimation` 新增 `mapTerrainLayer` 扩展点；`BattleOfBritainAnimation` 通过 `BattleOfBritainTerrain3D` 接入 MapLibre topo raster、real DEM terrain、hillshade、低透明度海峡/陆地 tone 和斜视阶段镜头。SVG 层改为透明 tactical overlay，飞机、航线、雷达链和狗斗效果保持在地形与天气层之上。
+- 云层和天气变化不再用 CSS/SVG 形状表达，而是作为 ComfyUI 位图天气资产生产：`scripts/run-comfyui-britain-weather-assets.py` 复用 `/Users/asukarei/Documents/我心飞翔/tools/ComfyUI` 既有 SD1.5 服务生成云体 RGB，项目脚本做受控 alpha/distribution mask，正式资产为 `public/assets/weather/battle-of-britain/morning-cloud-bank.png` 与 `afternoon-cloud-breaks.png`，版本参数 `?v=20260614-comfy-weather-v1`。
+- 天气资产证据保存在 `artifacts/london-air-comfy-weather-20260614-v5/`：`manifest.json` 记录 `failures={}`；上午云层 `alphaRatio≈0.081`、`opaqueRatio≈0.365`，下午云层 `alphaRatio≈0.041`、`opaqueRatio≈0.274`，两者 `edgeVisibleRatio=0`。这组指标用于防止云层退化成矩形雾毯或把航迹、飞机盖住。
+- 伦敦专项 smoke 改为 `expectBattleOfBritainTerrain3DMap` 与 `expectBattleOfBritainWeatherAssets`：检查 `data-renderer="maplibre-real-terrain"`、DEM/topo source、MapLibre canvas 覆盖、terrain loaded、云层在地形之上但在飞机之下、天气 PNG 的版本化 src、HTTP `image/png` 响应、alpha/opaque/边缘透明范围和无通用飞机 fallback。
+- 地图六层合同新增 `tools/tactical-terrain-studio/specs/battle-of-britain-terrain-studio.json`，并已运行 `npm run terrain:pipeline -- --spec tools/tactical-terrain-studio/specs/battle-of-britain-terrain-studio.json --out artifacts/tactical-terrain-studio/battle-of-britain`。当前报告状态是 `needs-review`，无 blockers；它明确后续公开级地图仍需补 QGIS/GDAL DEM 派生层、历史战术底图层、来源/许可信息和密集单位 LOD 复审，不把本轮运行级地图升级伪装成完整专业 GIS 终版。
+- `scripts/probe-london-air-visual-evidence.mjs` 同步从 `mapSurface` 指标改为 `terrain3D` / `weatherPngMetrics` 指标，记录 MapLibre renderer、terrain loaded、terrain/cloud/aircraft DOM 顺序、云层 href、天气 PNG HEAD 响应和 alpha 统计，并继续保存六个关键帧截图到 `artifacts/`，不在会话中展示图片。
 
 真实故障根因同步记录：
 

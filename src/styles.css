@@ -3046,7 +3046,112 @@ h1 {
 }
 
 .battle-of-britain.cinematic-mode .battle-map {
-  filter: saturate(0.82) contrast(0.98) brightness(0.92);
+  filter: none;
+}
+
+.battle-of-britain .battle-of-britain-terrain-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #547f87 0%, #405e64 48%, #5f765f 100%);
+  pointer-events: none;
+}
+
+.battle-of-britain .battle-of-britain-terrain-3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.battle-of-britain .battle-of-britain-cloud-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.battle-of-britain .battle-of-britain-cloud {
+  position: absolute;
+  display: block;
+  width: 42%;
+  min-width: 340px;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  filter: saturate(0.86) contrast(1.06);
+  transform: translate3d(0, 0, 0);
+  animation: battleBritainCloudDrift 48s linear infinite;
+}
+
+.battle-of-britain .battle-of-britain-cloud.cloud-a {
+  top: 9%;
+  left: 42%;
+  width: 48%;
+  opacity: 0.46;
+}
+
+.battle-of-britain .battle-of-britain-cloud.cloud-b {
+  top: 30%;
+  left: 6%;
+  width: 38%;
+  opacity: 0.28;
+  animation-duration: 62s;
+}
+
+.battle-of-britain .battle-of-britain-cloud.cloud-c {
+  top: 56%;
+  left: 55%;
+  width: 35%;
+  opacity: 0.22;
+  animation-duration: 56s;
+  animation-direction: reverse;
+}
+
+.battle-of-britain [data-weather-phase="afternoon-clearing-cloud"] .cloud-a {
+  opacity: 0.18;
+}
+
+.battle-of-britain [data-weather-phase="afternoon-clearing-cloud"] .cloud-b,
+.battle-of-britain [data-weather-phase="evening-thinning-cloud"] .cloud-b {
+  opacity: 0.32;
+}
+
+.battle-of-britain [data-weather-phase="evening-thinning-cloud"] .cloud-a,
+.battle-of-britain [data-weather-phase="evening-thinning-cloud"] .cloud-c {
+  opacity: 0.18;
+}
+
+@keyframes battleBritainCloudDrift {
+  from {
+    transform: translate3d(-5%, -2%, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(8%, 3%, 0) scale(1.04);
+  }
+}
+
+.battle-of-britain .battle-map.has-terrain-underlay {
+  position: relative;
+  z-index: 3;
+  background: transparent;
+}
+
+.battle-of-britain .battle-map.has-terrain-underlay .map-base,
+.battle-of-britain .battle-map.has-terrain-underlay .map-texture {
+  opacity: 0;
+}
+
+.battle-of-britain .battle-map.has-terrain-underlay .country-layer {
+  opacity: 0.2;
 }
 
 .battle-of-britain .cinematic-vignette {
@@ -3103,98 +3208,6 @@ h1 {
   stroke-dasharray: 7 18;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
-}
-
-.battle-of-britain .map-surface-layer {
-  pointer-events: none;
-}
-
-.battle-of-britain .map-surface-feature path {
-  filter: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.battle-of-britain .map-surface-feature text {
-  display: none;
-}
-
-.battle-of-britain .map-surface-body {
-  fill: none;
-  opacity: 0.56;
-  stroke: rgba(207, 222, 183, 0.28);
-  stroke-width: 2.2;
-}
-
-.battle-of-britain .map-surface-ridge {
-  fill: none;
-  opacity: 0.5;
-  stroke: rgba(255, 248, 203, 0.32);
-  stroke-width: 1.4;
-  transform: translate(-2px, -3px);
-}
-
-.battle-of-britain .map-surface-sea .map-surface-body {
-  fill: rgba(47, 112, 130, 0.24);
-  stroke: rgba(128, 202, 214, 0.22);
-}
-
-.battle-of-britain .map-surface-sea .map-surface-ridge {
-  stroke: rgba(174, 230, 226, 0.28);
-}
-
-.battle-of-britain .map-surface-channel-depth-sheen .map-surface-body {
-  fill: none;
-  stroke: rgba(120, 200, 211, 0.32);
-  stroke-dasharray: 18 18;
-  stroke-width: 2.4;
-}
-
-.battle-of-britain .map-surface-channel-depth-sheen .map-surface-ridge {
-  stroke: rgba(229, 248, 236, 0.24);
-  stroke-dasharray: 28 22;
-  stroke-width: 1.4;
-}
-
-.battle-of-britain .map-surface-coast .map-surface-body {
-  fill: none;
-  stroke: rgba(236, 221, 163, 0.34);
-  stroke-width: 3.4;
-}
-
-.battle-of-britain .map-surface-coast .map-surface-ridge {
-  stroke: rgba(255, 242, 179, 0.34);
-  stroke-width: 1.6;
-}
-
-.battle-of-britain .map-surface-relief .map-surface-body {
-  fill: rgba(101, 132, 86, 0.2);
-  stroke: rgba(208, 221, 152, 0.18);
-}
-
-.battle-of-britain .map-surface-relief .map-surface-ridge {
-  stroke: rgba(236, 235, 181, 0.26);
-}
-
-.battle-of-britain .map-surface-urban .map-surface-body {
-  fill: rgba(185, 175, 148, 0.16);
-  stroke: rgba(214, 204, 168, 0.2);
-}
-
-.battle-of-britain .map-surface-urban .map-surface-ridge {
-  stroke: rgba(241, 229, 186, 0.24);
-}
-
-.battle-of-britain .map-surface-weather .map-surface-body {
-  fill: rgba(206, 218, 210, 0.13);
-  stroke: rgba(229, 236, 224, 0.26);
-  stroke-dasharray: 16 15;
-}
-
-.battle-of-britain .map-surface-weather .map-surface-ridge {
-  stroke: rgba(255, 249, 216, 0.22);
-  stroke-dasharray: 24 18;
 }
 
 .battle-of-britain .tactical-terrain-layer,

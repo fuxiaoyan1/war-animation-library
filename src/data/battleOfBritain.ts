@@ -1,5 +1,5 @@
 import type { BattleEvent, FormationUnit, FrontLine, MapPoint } from "./battleOfFrance";
-import type { GeoLine, MapOverlayElement, MapSurfaceFeature, TacticalTerrainFeature } from "../components/CampaignMapAnimation";
+import type { GeoLine, MapOverlayElement, TacticalTerrainFeature } from "../components/CampaignMapAnimation";
 
 export const campaignStart = "1940-09-15T10:30";
 export const campaignEnd = "1940-09-15T18:00";
@@ -68,117 +68,6 @@ export const rivers: GeoLine[] = [
       [0.38, 51.52],
       [0.72, 51.54]
     ]
-  }
-];
-
-export const mapSurfaceFeatures: MapSurfaceFeature[] = [
-  {
-    id: "channel-sea-surface",
-    kind: "sea",
-    points: [
-      [-0.08, 50.72],
-      [0.32, 50.78],
-      [0.82, 50.88],
-      [1.34, 50.94],
-      [1.7, 50.86],
-      [1.48, 50.66],
-      [0.92, 50.58],
-      [0.26, 50.56]
-    ],
-    testId: "britain-channel-sea-surface",
-    type: "area"
-  },
-  {
-    id: "channel-depth-sheen",
-    kind: "sea",
-    points: [
-      [0.08, 50.74],
-      [0.38, 50.82],
-      [0.78, 50.88],
-      [1.2, 50.9],
-      [1.55, 50.84]
-    ],
-    testId: "britain-channel-depth-sheen",
-    type: "line"
-  },
-  {
-    id: "cross-channel-coast-sheen",
-    kind: "coast",
-    points: [
-      [1.38, 51.13],
-      [1.22, 51.08],
-      [1.08, 51.0],
-      [0.96, 50.92],
-      [0.82, 50.89]
-    ],
-    testId: "britain-cross-channel-coast-sheen",
-    type: "line"
-  },
-  {
-    id: "south-england-landform-wash",
-    kind: "relief",
-    points: [
-      [-0.34, 51.22],
-      [-0.06, 51.18],
-      [0.28, 51.1],
-      [0.66, 51.0],
-      [1.02, 50.92],
-      [0.86, 50.82],
-      [0.32, 50.9],
-      [-0.22, 51.05]
-    ],
-    testId: "britain-south-england-landform-wash",
-    type: "area"
-  },
-  {
-    id: "london-visibility-wash",
-    kind: "urban",
-    points: [
-      [-0.46, 51.42],
-      [-0.28, 51.58],
-      [0.08, 51.63],
-      [0.42, 51.56],
-      [0.52, 51.42],
-      [0.14, 51.34],
-      [-0.26, 51.34]
-    ],
-    testId: "britain-london-visibility-wash",
-    type: "area"
-  },
-  {
-    id: "morning-weather-veil",
-    kind: "weather",
-    points: [
-      [1.18, 50.95],
-      [0.9, 50.98],
-      [0.52, 51.12],
-      [0.12, 51.28],
-      [-0.06, 51.44],
-      [0.16, 51.52],
-      [0.56, 51.34],
-      [0.98, 51.12],
-      [1.3, 51.02]
-    ],
-    testId: "britain-morning-weather-veil",
-    type: "area",
-    visibleUntil: "1940-09-15T13:00"
-  },
-  {
-    id: "afternoon-weather-sheen",
-    kind: "weather",
-    points: [
-      [0.96, 51.02],
-      [0.72, 51.12],
-      [0.48, 51.26],
-      [0.2, 51.38],
-      [-0.02, 51.48],
-      [0.22, 51.54],
-      [0.58, 51.4],
-      [0.86, 51.2]
-    ],
-    revealAt: "1940-09-15T13:30",
-    testId: "britain-afternoon-weather-sheen",
-    type: "line"
   }
 ];
 

@@ -136,16 +136,6 @@ type CampaignDataModule = {
     id: string;
     revealAt?: string;
   }>;
-  mapSurfaceFeatures?: Array<{
-    id: string;
-    kind: string;
-    label?: string;
-    points: Array<[number, number]>;
-    revealAt?: string;
-    testId?: string;
-    type: "area" | "line";
-    visibleUntil?: string;
-  }>;
 };
 
 const genericCampaignData: Array<[string, CampaignDataModule]> = [
@@ -1888,72 +1878,159 @@ async function expectBattleOfBritainFortifiedLinesDoNotFill(page: Page) {
   expect(filledLines).toEqual([]);
 }
 
-async function expectBattleOfBritainMapSurfaceTexture(page: Page) {
-  await expect(page.getByTestId("map-surface-layer")).toBeVisible();
-  const requiredSurfaceIds = [
-    "britain-channel-sea-surface",
-    "britain-channel-depth-sheen",
-    "britain-cross-channel-coast-sheen",
-    "britain-south-england-landform-wash",
-    "britain-london-visibility-wash",
-    "britain-morning-weather-veil"
-  ];
-  for (const testId of requiredSurfaceIds) {
-    await expect(page.getByTestId(testId)).toBeVisible();
-  }
+async function expectBattleOfBritainTerrain3DMap(page: Page) {
+  const terrain = page.getByTestId("battle-of-britain-terrain-3d");
+  await expect(terrain).toBeVisible();
+  await expect(terrain).toHaveAttribute("data-renderer", "maplibre-real-terrain");
+  await expect(terrain).toHaveAttribute("data-terrain-model", "real-dem-raster-terrain");
+  await expect(terrain).toHaveAttribute("data-tactical-renderer", "maplibre-underlay-svg-tactical-overlay");
+  await expect(terrain).toHaveAttribute("data-projection", "webgl-gis-terrain");
+  await expect(terrain).toHaveAttribute("data-terrain-source", "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png");
+  await expect(terrain).toHaveAttribute("data-topo-source", "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg");
+  await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1");
+  await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
+  await expect(terrain).toHaveAttribute("data-cloud-animation", "phase-linked-drifting-overlay");
+  await expect(page.getByTestId("battle-of-britain-cloud-layer")).toBeVisible();
+  await expect(page.getByTestId("battle-of-britain-terrain-3d-canvas")).toBeVisible();
+  await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
+  await expect.poll(async () => await terrain.getAttribute("data-map-center")).not.toBe("");
+  await expect.poll(async () => await terrain.getAttribute("data-terrain-loaded"), { timeout: 30_000 }).toBe("true");
 
-  const surfaceState = await page.locator(".battle-of-britain").evaluate((shell) => {
-    const layer = shell.querySelector(".map-surface-layer");
-    const firstSurface = shell.querySelector(".map-surface-layer .map-surface-feature");
-    const firstTactical = shell.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
-    const firstAircraft = shell.querySelector(".ww2-aircraft-marker");
-    const visibleLabels = [...shell.querySelectorAll(".map-surface-label")].filter((label) => getComputedStyle(label).display !== "none");
-    const darkSurfaceBlocks = [...shell.querySelectorAll<SVGGraphicsElement>(".map-surface-feature path")]
-      .map((path) => {
-        const style = getComputedStyle(path);
-        const box = path.getBoundingClientRect();
-        const fill = style.fill.match(/rgba?\(([^)]+)\)/)?.[1].split(",").map((part) => Number.parseFloat(part.trim()));
-        const alpha = fill?.[3] ?? 1;
-        const luminance = fill ? fill[0] * 0.2126 + fill[1] * 0.7152 + fill[2] * 0.0722 : 255;
-        return {
-          area: box.width * box.height,
-          fill: style.fill,
-          luminance,
-          opacity: Number(style.opacity || "1") * alpha
-        };
-      })
-      .filter((item) => item.area > 16_000 && item.opacity > 0.14 && item.fill !== "none" && item.luminance < 54);
-    const surfaceStyles = [...shell.querySelectorAll<SVGGraphicsElement>(".map-surface-feature path")].map((path) => {
-      const style = getComputedStyle(path);
-      return {
-        className: path.getAttribute("class") ?? "",
-        filter: style.filter,
-        strokeWidth: Number.parseFloat(style.strokeWidth || "0")
-      };
-    });
-
+  const visualState = await page.locator(".battle-of-britain").evaluate((shell) => {
+    const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
+    const cloudLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-cloud-layer"]');
+    const svg = shell.querySelector<SVGSVGElement>("svg.battle-map");
+    const firstAircraft = shell.querySelector<SVGGraphicsElement>(".ww2-aircraft-marker");
+    const firstRoute = shell.querySelector<SVGGraphicsElement>(".front-line");
+    const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+    const canvas = shell.querySelector<HTMLCanvasElement>('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+    const stageStyle = stage ? getComputedStyle(stage) : null;
+    const terrainStyle = terrainLayer ? getComputedStyle(terrainLayer) : null;
+    const cloudStyle = cloudLayer ? getComputedStyle(cloudLayer) : null;
+    const svgStyle = svg ? getComputedStyle(svg) : null;
+    const canvasBox = canvas?.getBoundingClientRect();
+    const stageBox = stage?.getBoundingClientRect();
     return {
-      darkSurfaceBlocks,
-      aircraftPresent: Boolean(firstAircraft),
-      firstAircraftAfterSurface: firstAircraft
-        ? Boolean(layer && layer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
+      aircraftAfterTerrain: firstAircraft
+        ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
         : true,
-      firstSurfaceBeforeTactical: Boolean(firstSurface && firstTactical && firstSurface.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING),
-      maxStrokeWidth: Math.max(...surfaceStyles.map((item) => item.strokeWidth), 0),
-      surfaceCount: shell.querySelectorAll(".map-surface-feature").length,
-      surfaceFilters: [...new Set(surfaceStyles.map((item) => item.filter))],
-      visibleLabels: visibleLabels.length
+      canvasCoverage: canvasBox && stageBox ? (canvasBox.width * canvasBox.height) / (stageBox.width * stageBox.height) : 0,
+      cloudAfterTerrain: Boolean(terrainLayer && cloudLayer && terrainLayer.compareDocumentPosition(cloudLayer) & Node.DOCUMENT_POSITION_FOLLOWING),
+      cloudBeforeAircraft: firstAircraft
+        ? Boolean(cloudLayer && cloudLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
+        : true,
+      cloudOpacity: Number.parseFloat(cloudStyle?.opacity ?? "0"),
+      cloudPointerEvents: cloudStyle?.pointerEvents ?? "",
+      routeAfterTerrain: firstRoute
+        ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstRoute) & Node.DOCUMENT_POSITION_FOLLOWING)
+        : true,
+      stageOverflow: stageStyle?.overflow ?? "",
+      svgBackground: svgStyle?.backgroundColor ?? "",
+      svgZIndex: Number(svgStyle?.zIndex ?? 0),
+      terrainPointerEvents: terrainStyle?.pointerEvents ?? "",
+      terrainZIndex: Number(terrainStyle?.zIndex ?? 0)
     };
   });
 
-  expect(surfaceState.surfaceCount, "Battle of Britain should render a restrained cross-Channel surface texture set").toBeGreaterThanOrEqual(6);
-  expect(surfaceState.visibleLabels, "Battle of Britain map surface should not add in-map explanatory texture labels").toBe(0);
-  expect(surfaceState.darkSurfaceBlocks, "Battle of Britain map surface must not reintroduce large dark blocks").toEqual([]);
-  expect(surfaceState.maxStrokeWidth, "Battle of Britain map surface texture should stay below tactical route weight").toBeLessThanOrEqual(4);
-  expect(surfaceState.surfaceFilters, "Battle of Britain surface texture should avoid blur/filter jitter").toEqual(["none"]);
-  expect(surfaceState.firstSurfaceBeforeTactical, "Battle of Britain surface texture should sit below tactical geometry").toBe(true);
-  if (surfaceState.aircraftPresent) {
-    expect(surfaceState.firstAircraftAfterSurface, "Battle of Britain aircraft must render above the surface texture").toBe(true);
+  expect(visualState.canvasCoverage, "Battle of Britain MapLibre terrain canvas should fill the map stage").toBeGreaterThan(0.92);
+  expect(visualState.terrainPointerEvents).toBe("none");
+  expect(visualState.cloudPointerEvents).toBe("none");
+  expect(visualState.stageOverflow).toBe("hidden");
+  expect(visualState.cloudAfterTerrain, "weather/cloud layer should sit above the terrain canvas").toBe(true);
+  expect(visualState.cloudBeforeAircraft, "weather/cloud layer must stay below aircraft markers").toBe(true);
+  expect(visualState.cloudOpacity, "cloud layer should be atmospheric, not a fog blanket over aircraft").toBeGreaterThanOrEqual(0.16);
+  expect(visualState.cloudOpacity, "cloud layer should not wash out aircraft or routes").toBeLessThanOrEqual(0.5);
+  expect(visualState.routeAfterTerrain, "tactical routes must render above the terrain underlay").toBe(true);
+  expect(visualState.aircraftAfterTerrain, "aircraft must render above the terrain underlay").toBe(true);
+  expect(visualState.svgBackground).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+  expect(visualState.terrainZIndex).toBeLessThan(visualState.svgZIndex);
+}
+
+async function expectBattleOfBritainWeatherAssets(page: Page) {
+  const cloudLayer = page.getByTestId("battle-of-britain-cloud-layer");
+  await expect(cloudLayer).toBeVisible();
+  await expect(cloudLayer).toHaveAttribute("data-asset-source", "comfyui-weather-png");
+
+  const expectedAssets = [
+    { path: "/assets/weather/battle-of-britain/morning-cloud-bank.png", testId: "battle-of-britain-morning-cloud-asset" },
+    { path: "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png", testId: "battle-of-britain-afternoon-cloud-asset" },
+    { path: "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png", testId: "battle-of-britain-evening-cloud-asset" }
+  ];
+
+  for (const asset of expectedAssets) {
+    const image = page.getByTestId(asset.testId);
+    await expect(image).toHaveAttribute("src", `${asset.path}?v=20260614-comfy-weather-v1`);
+    const response = await page.request.head(asset.path);
+    expect(response.ok(), `${asset.path} should be served as a runtime weather asset`).toBe(true);
+    expect(response.headers()["content-type"], `${asset.path} should be a PNG image`).toContain("image/png");
+    expect(response.headers()["cache-control"], `${asset.path} should not hide regenerated weather assets behind immutable local cache`).toBe("no-cache");
+    expect(Number(response.headers()["content-length"]), `${asset.path} should be a finished bitmap asset, not a tiny CSS/geometry placeholder`).toBeGreaterThan(240_000);
+  }
+
+  const stats = await page.evaluate(async () => {
+    const paths = ["/assets/weather/battle-of-britain/morning-cloud-bank.png", "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png"];
+    const output: Record<string, { alphaRatio: number; cornerAlphaMax: number; edgeVisibleRatio: number; height: number; opaqueRatio: number; width: number }> = {};
+    for (const path of paths) {
+      const image = new Image();
+      image.src = path;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        throw new Error("2d canvas unavailable");
+      }
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let alphaSum = 0;
+      let edgePixels = 0;
+      let edgeVisiblePixels = 0;
+      let opaquePixels = 0;
+      const cornerAlphaValues = [
+        pixels[3],
+        pixels[(canvas.width - 1) * 4 + 3],
+        pixels[((canvas.height - 1) * canvas.width) * 4 + 3],
+        pixels[(canvas.height * canvas.width - 1) * 4 + 3]
+      ];
+      for (let y = 0; y < canvas.height; y += 1) {
+        for (let x = 0; x < canvas.width; x += 1) {
+          const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+          alphaSum += alpha;
+          if (alpha > 8) {
+            opaquePixels += 1;
+          }
+          if (x === 0 || y === 0 || x === canvas.width - 1 || y === canvas.height - 1) {
+            edgePixels += 1;
+            if (alpha > 8) {
+              edgeVisiblePixels += 1;
+            }
+          }
+        }
+      }
+      output[path] = {
+        alphaRatio: alphaSum / (255 * canvas.width * canvas.height),
+        cornerAlphaMax: Math.max(...cornerAlphaValues),
+        edgeVisibleRatio: edgeVisiblePixels / edgePixels,
+        height: canvas.height,
+        opaqueRatio: opaquePixels / (canvas.width * canvas.height),
+        width: canvas.width
+      };
+    }
+    return output;
+  });
+
+  expect(stats["/assets/weather/battle-of-britain/morning-cloud-bank.png"].width).toBe(1216);
+  expect(stats["/assets/weather/battle-of-britain/morning-cloud-bank.png"].height).toBe(512);
+  expect(stats["/assets/weather/battle-of-britain/morning-cloud-bank.png"].alphaRatio).toBeGreaterThan(0.055);
+  expect(stats["/assets/weather/battle-of-britain/morning-cloud-bank.png"].alphaRatio).toBeLessThan(0.18);
+  expect(stats["/assets/weather/battle-of-britain/afternoon-cloud-breaks.png"].alphaRatio).toBeGreaterThan(0.035);
+  expect(stats["/assets/weather/battle-of-britain/afternoon-cloud-breaks.png"].alphaRatio).toBeLessThan(0.12);
+  for (const [path, item] of Object.entries(stats)) {
+    expect(item.opaqueRatio, `${path} should have visible cloud material`).toBeGreaterThan(0.08);
+    expect(item.opaqueRatio, `${path} should leave tactical gaps and not become a full fog blanket`).toBeLessThan(0.72);
+    expect(item.edgeVisibleRatio, `${path} should not have a rectangular image edge`).toBeLessThan(0.02);
+    expect(item.cornerAlphaMax, `${path} should keep transparent corners`).toBeLessThanOrEqual(8);
   }
 }
 
@@ -2263,37 +2340,6 @@ function expectBattleOfBritainUsesRealAircraftAndAnchoredAirspace(data: Campaign
 
   for (const icon of requiredAircraftIcons) {
     expect(usedAircraftIcons.has(icon), `battleOfBritain should display ${icon} as a real aircraft asset`).toBe(true);
-  }
-}
-
-function expectBattleOfBritainMapSurfaceData(data: CampaignDataModule) {
-  const surfaces = data.mapSurfaceFeatures ?? [];
-  expect(surfaces.map((feature) => feature.id)).toEqual([
-    "channel-sea-surface",
-    "channel-depth-sheen",
-    "cross-channel-coast-sheen",
-    "south-england-landform-wash",
-    "london-visibility-wash",
-    "morning-weather-veil",
-    "afternoon-weather-sheen"
-  ]);
-  expect(new Set(surfaces.map((feature) => feature.kind))).toEqual(new Set(["coast", "relief", "sea", "urban", "weather"]));
-  expect(surfaces.filter((feature) => feature.type === "area").length).toBeGreaterThanOrEqual(4);
-  expect(
-    surfaces.every((feature) => !feature.label),
-    "Battle of Britain surface layer should read as a 3D theatre texture, not as detailed mountain/cloud/wave annotations"
-  ).toBe(true);
-  for (const feature of surfaces) {
-    expect(feature.testId, `Battle of Britain map surface ${feature.id} should expose a stable browser gate`).toBeTruthy();
-    expect(feature.points.length, `Battle of Britain map surface ${feature.id} should have enough geometry to read as a texture layer`).toBeGreaterThanOrEqual(
-      feature.type === "area" ? 6 : 5
-    );
-    if (feature.revealAt) {
-      expectDateWithinRange(`Battle of Britain map surface ${feature.id} revealAt`, feature.revealAt, data.campaignStart, data.campaignEnd);
-    }
-    if (feature.visibleUntil) {
-      expectDateWithinRange(`Battle of Britain map surface ${feature.id} visibleUntil`, feature.visibleUntil, data.campaignStart, data.campaignEnd);
-    }
   }
 }
 
@@ -4932,7 +4978,6 @@ test("campaign data quality gates keep timelines routes and cues coherent", asyn
 
   expectAirRouteUnitsMoveUntilExit("battleOfBritain", battleOfBritainData as CampaignDataModule);
   expectBattleOfBritainUsesRealAircraftAndAnchoredAirspace(battleOfBritainData as CampaignDataModule);
-  expectBattleOfBritainMapSurfaceData(battleOfBritainData as CampaignDataModule);
 
   expectEventHasActiveRoute("battleOfBritain", battleOfBritainData as CampaignDataModule, "afternoon-warning", [
     "midday-raf-refuel-patrol",
@@ -6979,7 +7024,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expect(page.locator(".battle-of-britain .camera-layer")).toHaveAttribute("data-map-focus", "britainAirRadar");
   await expectNoDarkTacticalTerrainBlocks(page, ".battle-of-britain");
   await expectBattleOfBritainFortifiedLinesDoNotFill(page);
-  await expectBattleOfBritainMapSurfaceTexture(page);
+  await expectBattleOfBritainTerrain3DMap(page);
+  await expectBattleOfBritainWeatherAssets(page);
   await expectNoLargeDarkRenderedBlocks(page, ".battle-of-britain");
   await expectBattleOfBritainNoDecorativeCinematicJitter(page);
   await expect(page.locator(".battle-of-britain").getByTestId("ancient-map-ornaments")).toHaveCount(0);
@@ -7007,7 +7053,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectRouteHasPolylineComplexity(page, ".battle-of-britain", "morning-raid-first-wave", 5);
   await page.getByTestId("event-list").getByRole("button", { name: /11群连续下令升空/ }).click();
   await expect(page.getByTestId("active-event-card")).toContainText("11群连续下令升空");
-  await expectBattleOfBritainMapSurfaceTexture(page);
+  await expectBattleOfBritainTerrain3DMap(page);
+  await expectBattleOfBritainWeatherAssets(page);
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveClass(/route-air/);
   await expect(page.locator('.front-line[data-route-id="eleven-group-morning-scramble"]')).toHaveAttribute("data-route-to", "biggin-hill");
   const scrambleRotation = await battleOfBritainRouteRotation(page, "eleven-group-morning-scramble");

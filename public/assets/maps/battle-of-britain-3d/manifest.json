@@ -1,0 +1,75 @@
+{
+  "attribution": {
+    "dem": "AWS Terrain Tiles Terrarium, SRTM/GMTED",
+    "topo": "Esri World Topographic Map tile cache for local production review"
+  },
+  "bounds": [
+    -1.75,
+    50.52,
+    2.12,
+    52.22
+  ],
+  "coverage": [
+    {
+      "count": 2,
+      "xMax": 32,
+      "xMin": 31,
+      "yMax": 21,
+      "yMin": 21,
+      "z": 6
+    },
+    {
+      "count": 4,
+      "xMax": 64,
+      "xMin": 63,
+      "yMax": 43,
+      "yMin": 42,
+      "z": 7
+    },
+    {
+      "count": 12,
+      "xMax": 129,
+      "xMin": 126,
+      "yMax": 86,
+      "yMin": 84,
+      "z": 8
+    },
+    {
+      "count": 35,
+      "xMax": 259,
+      "xMin": 253,
+      "yMax": 172,
+      "yMin": 168,
+      "z": 9
+    },
+    {
+      "count": 96,
+      "xMax": 518,
+      "xMin": 507,
+      "yMax": 344,
+      "yMin": 337,
+      "z": 10
+    },
+    {
+      "count": 368,
+      "xMax": 1036,
+      "xMin": 1014,
+      "yMax": 689,
+      "yMin": 674,
+      "z": 11
+    }
+  ],
+  "generatedAt": "2026-06-14T06:32:38.225Z",
+  "layers": {
+    "terrainTemplate": "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png",
+    "topoTemplate": "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg"
+  },
+  "maxZoom": 11,
+  "minZoom": 6,
+  "results": {
+    "downloaded": 1034,
+    "failed": 0,
+    "skipped": 0,
+    "total": 1034
+  }
+}

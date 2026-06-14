@@ -81,6 +81,10 @@ function cacheControlFor(filePath) {
     return "no-cache";
   }
 
+  if (normalize(filePath).includes(`${sep}assets${sep}weather${sep}`)) {
+    return "no-cache";
+  }
+
   return "public, max-age=31536000, immutable";
 }
 

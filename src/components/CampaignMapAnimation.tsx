@@ -1,6 +1,6 @@
 import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { BattleEvent, FrontLine, MapPoint } from "../data/battleOfFrance";
 import { UnitIcon, type HorizontalFacing } from "./UnitIcon";
 import type { UnitIconKind } from "../types/units";
@@ -14,7 +14,7 @@ import {
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { publicPath } from "../lib/publicPath";
 import { formatChineseDate, interpolatePoint } from "../lib/timeline";
-import { useMapInteraction } from "../lib/useMapInteraction";
+import { useMapInteraction, type MapView } from "../lib/useMapInteraction";
 import { WarScore, type BattleCueKind } from "../lib/warScore";
 
 type FocusStep = {
@@ -22,7 +22,7 @@ type FocusStep = {
   focus: string;
 };
 
-type FocusTransitionState = {
+export type FocusTransitionState = {
   fromFocus: string;
   focus: string;
   isTransitioning: boolean;
@@ -57,19 +57,6 @@ export type TacticalTerrainFeature = {
   height?: number;
   id: string;
   kind: "contour" | "ditch" | "lowland" | "relief" | "village";
-  label?: string;
-  labelCoordinates?: [number, number];
-  points: Array<[number, number]>;
-  revealAt?: string;
-  testId?: string;
-  type: "area" | "line";
-  visibleUntil?: string;
-};
-
-export type MapSurfaceFeature = {
-  className?: string;
-  id: string;
-  kind: "coast" | "relief" | "sea" | "urban" | "weather";
   label?: string;
   labelCoordinates?: [number, number];
   points: Array<[number, number]>;
@@ -189,9 +176,16 @@ type CampaignMapAnimationProps = {
     height: number;
     width: number;
   };
-  mapSurfaceFeatures?: MapSurfaceFeature[];
   mapPoints: MapPoint[];
   mapOverlays?: MapOverlayElement[];
+  mapTerrainLayer?: (state: {
+    activeEvent: BattleEvent;
+    focusState: FocusTransitionState;
+    mapBaseView: MapView;
+    mapFocus: string;
+    mapView: MapView;
+    progress: number;
+  }) => ReactNode;
   maxGapDays?: number;
   musicSource?: string;
   cinematicMode?: boolean;
@@ -923,9 +917,9 @@ export function CampaignMapAnimation({
   legendPrimary = "主攻推进",
   legendSecondary = "反击/联军行动",
   mapDimensions,
-  mapSurfaceFeatures = [],
   mapPoints,
   mapOverlays = [],
+  mapTerrainLayer,
   maxGapDays,
   musicSource,
   narrationCues = [],
@@ -1016,12 +1010,14 @@ export function CampaignMapAnimation({
     isMapDragging,
     mapInteractionProps,
     mapTransform,
+    mapView,
     resetMapView,
     stageRef,
     svgRef,
     zoomIn,
     zoomOut
   } = useMapInteraction(mapWidth, mapHeight, mapFocus);
+  const mapBaseView = useMemo(() => ({ scale: 1, x: 0, y: 0 }), []);
   const projection = useMemo(
     () => createFocusProjection(mapWidth, mapHeight, focusState),
     [focusState.focus, focusState.fromFocus, focusState.ratio, mapHeight, mapWidth]
@@ -1408,6 +1404,14 @@ export function CampaignMapAnimation({
 
       <section className="cinema-grid">
         <article ref={stageRef} className="map-stage" data-testid="map-stage">
+          {mapTerrainLayer?.({
+            activeEvent,
+            focusState,
+            mapBaseView,
+            mapFocus,
+            mapView,
+            progress
+          })}
           <div className="map-topbar map-overlay">
             <div className="map-title-card" data-testid="map-title-card">
               <p className="map-eyebrow">{eyebrow}</p>
@@ -1420,7 +1424,7 @@ export function CampaignMapAnimation({
 
           <svg
             ref={svgRef}
-            className={`battle-map is-interactive-map ${isMapDragging ? "is-dragging" : ""}`}
+            className={`battle-map is-interactive-map ${mapTerrainLayer ? "has-terrain-underlay" : ""} ${isMapDragging ? "is-dragging" : ""}`}
             viewBox={`0 0 ${mapWidth} ${mapHeight}`}
             preserveAspectRatio="xMidYMid meet"
             role="img"
@@ -1530,48 +1534,6 @@ export function CampaignMapAnimation({
                   />
                 ))}
               </g>
-              {mapSurfaceFeatures.length > 0 && (
-                <g className="map-surface-layer" data-testid="map-surface-layer" aria-hidden="true">
-                  {mapSurfaceFeatures.map((feature) => {
-                    const featureVisibility = sceneElementVisibility(
-                      progress,
-                      feature.revealAt ? timeline.dateToProgress(feature.revealAt) : 0,
-                      feature.visibleUntil ? timeline.dateToProgress(feature.visibleUntil) : Number.POSITIVE_INFINITY,
-                      contentTransitionProgress
-                    );
-                    if (!featureVisibility.isDrawn) {
-                      return null;
-                    }
-
-                    const featurePoints = feature.points.map((coordinates) => projectPoint(projection, coordinates));
-                    const featurePath = buildTerrainFeaturePath(featurePoints, feature.type === "area");
-                    const labelPoint = feature.labelCoordinates
-                      ? projectPoint(projection, feature.labelCoordinates)
-                      : featurePoints[Math.max(0, Math.floor(featurePoints.length / 2))] ?? [0, 0];
-
-                    return (
-                      <g
-                        key={feature.id}
-                        className={`map-surface-feature map-surface-${feature.kind} map-surface-${feature.id} ${feature.className ?? ""}`}
-                        data-scene-transition-phase={featureVisibility.phase}
-                        data-surface-id={feature.id}
-                        data-surface-kind={feature.kind}
-                        data-surface-type={feature.type}
-                        data-testid={feature.testId ?? `map-surface-${feature.id}`}
-                        style={opacityStyle(featureVisibility.opacity)}
-                      >
-                        <path className="map-surface-body" d={featurePath} />
-                        <path className="map-surface-ridge" d={featurePath} />
-                        {feature.label && (
-                          <text className="map-surface-label" x={labelPoint[0]} y={labelPoint[1]}>
-                            {feature.label}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-                </g>
-              )}
               {historicalRegions.length > 0 && (
                 <g className="historical-map-layer" data-testid="historical-map-layer">
                   <rect className="historical-paper-field" x={26} y={24} width={mapWidth - 52} height={mapHeight - 48} rx={28} />
