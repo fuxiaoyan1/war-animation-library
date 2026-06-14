@@ -70,6 +70,16 @@ v7 运行时复审结果：
 - 坎尼关键帧单位数：部署 `84`，正面压入 `82`，骑兵清场 `76`，凹袋形成 `79`，两翼内折 `93`，后口封闭 `93`，压缩围歼 `108`，终局/结果 `87`。
 - 结果帧保留迦太基胜利方 `68` 个可视单位、罗马残部 `19` 个可视单位，避免“胜利方消失”和“罗马整齐列队”两类失败。
 
+2026-06-14 后续按用户要求继续以成片质量为目标推进，而不是只停在门禁通过。`artifacts/cannae-visual-pass-20260614-camera-units-v4/` 记录本轮截图和 DOM 指标，`artifacts/animation-assistant-workflow/cannae-20260614-camera-units-v4-review/` 记录 workflow 回流复审；复审状态再次为 `runtime-visual-review-ready`。
+
+本轮修正重点：
+
+- 后封、压缩、终局和结果镜头继续放大，保留罗马后端 30-40 度斜视战术视角，避免后半段核心战场只占画面中央小块。运行指标中结果帧单位包络从旧证据约 `xFill=0.48/yFill=0.50` 提升到 `xFill=0.61/yFill=0.64`，压缩帧提升到 `xFill=0.65/yFill=0.66`。
+- 单位图标没有继续单纯放大。一次试验触发 `RUNTIME_AVERAGE_UNIT_BOX_TOO_LARGE` 后，最终把运行时缩放回调到成熟阈值内：关键帧平均单位框短边约 `44.1-47.0px`，压缩帧 marker load `0.212`，无密度警告。
+- 部署段 route visual LOD 收紧，减少开场大纵队铺满画面的队列表演感；后半段仍保留独立 route、heading、显隐窗口和接触绑定。
+- 阵型、路线和阴影层降噪，避免淡线、阴影和图标叠成雾状；接触线略增强，用于强调双方挤压碰撞而不是单纯队列行进。
+- 终局帧继续保留迦太基胜利方 `68` 个可视单位和罗马破碎残部 `19` 个可视单位，后封/双翼/压缩路线仍在场，避免胜利方凭空消失。
+
 这次还修正了一个证据流程问题：5177 常驻服务读取的是 `~/Library/Application Support/war-animation-lab-oss/dist`，不是仓库 `dist`。源码改完后必须 `npm run build` 并用 `npm run preview:local -- --port 5177 --skip-build` 发布，否则 Playwright/截图会继续抓旧 JS，导致视觉检查和用户所见不一致。
 
 ## 音频

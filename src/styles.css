@@ -5230,9 +5230,9 @@ h1 {
 
 .cannae-formation-shadow {
   fill: none;
-  stroke: rgba(41, 31, 21, 0.12);
-  stroke-width: 5;
-  transform: translate(5px, 6px);
+  stroke: rgba(41, 31, 21, 0.055);
+  stroke-width: 3;
+  transform: translate(3px, 4px);
 }
 
 .cannae-formation-deep-infantry-block .cannae-formation-shadow,
@@ -5243,15 +5243,15 @@ h1 {
 }
 
 .cannae-formation-body {
-  fill: rgba(34, 111, 122, 0.045);
-  stroke: rgba(31, 104, 112, 0.32);
+  fill: rgba(34, 111, 122, 0.022);
+  stroke: rgba(31, 104, 112, 0.2);
   stroke-dasharray: 6 4;
-  stroke-width: 2.8;
+  stroke-width: 2.1;
 }
 
 .cannae-formation-roman .cannae-formation-body {
-  fill: rgba(180, 58, 45, 0.05);
-  stroke: rgba(173, 53, 42, 0.36);
+  fill: rgba(180, 58, 45, 0.026);
+  stroke: rgba(173, 53, 42, 0.22);
 }
 
 .cannae-formation-convex-center .cannae-formation-body,
@@ -5280,13 +5280,13 @@ h1 {
 }
 
 .cannae-formation-rank-guide {
-  stroke: rgba(28, 88, 92, 0.14);
+  stroke: rgba(28, 88, 92, 0.08);
   stroke-dasharray: 5 8;
   stroke-width: 1.2;
 }
 
 .cannae-formation-roman .cannae-formation-rank-guide {
-  stroke: rgba(133, 42, 34, 0.14);
+  stroke: rgba(133, 42, 34, 0.08);
 }
 
 .cannae-formation-ranks {
@@ -5295,14 +5295,14 @@ h1 {
 
 .cannae-formation-rank-mark {
   fill: none;
-  stroke: rgba(31, 121, 123, 0.58);
+  stroke: rgba(31, 121, 123, 0.34);
   stroke-linecap: round;
-  stroke-width: 2.2;
+  stroke-width: 1.7;
   vector-effect: non-scaling-stroke;
 }
 
 .cannae-formation-roman .cannae-formation-rank-mark {
-  stroke: rgba(192, 63, 51, 0.62);
+  stroke: rgba(192, 63, 51, 0.38);
 }
 
 .cannae-formation-rank-mark-cavalry-wing,
@@ -5332,20 +5332,20 @@ h1 {
 }
 
 .cannae-route-shadow {
-  stroke: rgba(43, 34, 23, 0.05);
-  stroke-width: 3.2;
-  transform: translate(2px, 3px);
+  stroke: rgba(43, 34, 23, 0.035);
+  stroke-width: 2.2;
+  transform: translate(1px, 2px);
 }
 
 .cannae-route-line {
-  stroke-width: 2.25;
+  stroke-width: 1.95;
   filter: none;
 }
 
 .cannae-route-highlight {
-  stroke: rgba(255, 248, 213, 0.26);
+  stroke: rgba(255, 248, 213, 0.18);
   stroke-dasharray: 3 11;
-  stroke-width: 1.1;
+  stroke-width: 0.9;
 }
 
 .cannae-route-roman .cannae-route-line {
@@ -5432,20 +5432,20 @@ h1 {
 }
 
 .cannae-contact-scrum-shadow {
-  stroke: rgba(45, 33, 21, 0.08);
-  stroke-width: 3.2;
-  transform: translate(2px, 2px);
+  stroke: rgba(45, 33, 21, 0.05);
+  stroke-width: 2.2;
+  transform: translate(1px, 1px);
 }
 
 .cannae-contact-scrum-line {
-  stroke: rgba(126, 61, 42, 0.46);
+  stroke: rgba(126, 61, 42, 0.62);
   stroke-dasharray: 5 6;
-  stroke-width: 2.45;
+  stroke-width: 2.65;
 }
 
 .cannae-contact-scrum-slash {
-  stroke: rgba(72, 39, 25, 0.42);
-  stroke-width: 1.8;
+  stroke: rgba(72, 39, 25, 0.56);
+  stroke-width: 2;
 }
 
 .cannae-contact-scrum-cavalry-clash .cannae-contact-scrum-line {
@@ -5473,14 +5473,14 @@ h1 {
 }
 
 .cannae-unit-holder .cannae-unit {
-  transform: scale(0.9);
+  transform: scale(0.88);
 }
 
 .cannae-unit-image {
   filter:
-    saturate(0.94)
-    contrast(1.02)
-    brightness(0.96);
+    saturate(0.98)
+    contrast(1.06)
+    brightness(1.02);
   image-rendering: auto;
 }
 

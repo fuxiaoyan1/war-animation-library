@@ -802,7 +802,7 @@ function routeSpreadForKind(route: CannaeRoute) {
     return 0.5;
   }
   if (route.routeKind === "deploy") {
-    return 0.64;
+    return 0.42;
   }
   return 0.54;
 }
@@ -819,6 +819,9 @@ function routeOffsetScaleForKind(route: CannaeRoute) {
   }
   if (route.routeKind === "wing-turn") {
     return 0.72;
+  }
+  if (route.routeKind === "deploy") {
+    return 0.58;
   }
   return 0.76;
 }
@@ -1008,7 +1011,8 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
     focusCoordinates[1] * (1 - fittedWeight) + envelopeCenter[1] * fittedWeight + userPanY / 12800 / Math.max(mapView.scale, 0.1)
   ];
   const fittedZoom = span < 0.02 ? 13.56 : span < 0.028 ? 13.48 : span < 0.038 ? 13.3 : span < 0.052 ? 13.08 : 12.86;
-  const stageZoom = fittedZoom + stageScaleBoost;
+  const lateTacticalBoost = cameraScale >= 2.6 ? 0.16 : cameraScale >= 2.2 ? 0.1 : 0;
+  const stageZoom = fittedZoom + stageScaleBoost + lateTacticalBoost;
 
   const minZoom = cameraScale < 0.82 ? 11.72 : 12.15;
 
@@ -1016,7 +1020,7 @@ function cameraForMapView(mapView: MapView, mapBaseView: MapView, focusCoordinat
     bearing: cameraBearing,
     center: [Math.max(16.075, Math.min(16.222, center[0])), Math.max(41.268, Math.min(41.304, center[1]))] as [number, number],
     pitch: tacticalCameraPitch,
-    zoom: Math.max(minZoom, Math.min(14.62, stageZoom + userZoomDelta * 1.1))
+    zoom: Math.max(minZoom, Math.min(14.86, stageZoom + userZoomDelta * 1.1))
   };
 }
 
@@ -1035,14 +1039,14 @@ function CannaeUnitIcon({ facingX, kind, unitIndex }: { facingX: 1 | -1; kind: C
   const assetVersion = "20260614-runtime-lod-v1";
   const cannaeUnitAsset = (assetPath: string) => `${publicPath(assetPath)}?v=${assetVersion}`;
   const imageConfig: Record<CannaeUnitKind, { height: number; href: string; width: number }> = {
-    "african-infantry": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-african-infantry.webp"), width: 41 },
-    "carthaginian-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-cavalry.webp"), width: 81 },
-    "carthaginian-infantry": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-iberian-gaul-infantry.webp"), width: 40 },
-    "hannibal-command": { height: 58, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-command.webp"), width: 46 },
-    "numidian-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-numidian-cavalry.webp"), width: 81 },
-    "paullus-command": { height: 58, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-command.webp"), width: 46 },
-    "roman-cavalry": { height: 48, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-cavalry.webp"), width: 81 },
-    "roman-legion": { height: 54, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-legion.webp"), width: 39 }
+    "african-infantry": { height: 55, href: cannaeUnitAsset("/assets/unit-icons/cannae-african-infantry.webp"), width: 42 },
+    "carthaginian-cavalry": { height: 49, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-cavalry.webp"), width: 83 },
+    "carthaginian-infantry": { height: 55, href: cannaeUnitAsset("/assets/unit-icons/cannae-iberian-gaul-infantry.webp"), width: 41 },
+    "hannibal-command": { height: 59, href: cannaeUnitAsset("/assets/unit-icons/cannae-carthaginian-command.webp"), width: 47 },
+    "numidian-cavalry": { height: 49, href: cannaeUnitAsset("/assets/unit-icons/cannae-numidian-cavalry.webp"), width: 83 },
+    "paullus-command": { height: 59, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-command.webp"), width: 47 },
+    "roman-cavalry": { height: 49, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-cavalry.webp"), width: 83 },
+    "roman-legion": { height: 55, href: cannaeUnitAsset("/assets/unit-icons/cannae-roman-legion.webp"), width: 40 }
   };
   const config = imageConfig[kind];
   const x = -config.width / 2;

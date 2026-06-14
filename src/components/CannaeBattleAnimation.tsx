@@ -112,7 +112,7 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.184, 41.2776],
       [16.149, 41.2776]
     ],
-    scale: 2.28
+    scale: 2.72
   },
   compression: {
     bearing: -38,
@@ -123,7 +123,7 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.1845, 41.2781],
       [16.149, 41.2779]
     ],
-    scale: 2.34
+    scale: 2.78
   },
   endgame: {
     bearing: -38,
@@ -134,7 +134,7 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.1835, 41.278],
       [16.1495, 41.2781]
     ],
-    scale: 2.2
+    scale: 2.62
   },
   result: {
     bearing: -38,
@@ -145,7 +145,7 @@ const cannaeCameraStages: Record<CannaeCameraStageId, CannaeCameraStage> = {
       [16.181, 41.2784],
       [16.151, 41.2783]
     ],
-    scale: 2.22
+    scale: 2.64
   }
 };
 
