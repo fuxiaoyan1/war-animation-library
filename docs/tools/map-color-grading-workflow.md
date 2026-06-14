@@ -42,13 +42,17 @@
 ## 伦敦空战本轮参考值
 
 - 目标：白昼钢蓝、浓郁高对比、有 3D 地形质感，但不影响飞机图标和航线识别。
-- topo raster：仅作纹理参考，`data-topo-raster-opacity="0.24"`，`data-topo-labels-suppressed="true"`。
+- topo raster：仅作纹理参考，当前为 `data-topo-raster-opacity="0.20"`，`data-topo-labels-suppressed="true"`。
+- 分区配色：当前运行合同为 `typed-regional-palette-v2`，使用海峡深水、海峡航路带、英格兰丘陵、泰晤士低地、法国白垩海岸、法国内陆集结区六个低透明度地形角色层；禁止退回全图雾罩、伪阴影块或三块高透明度大色面。
 - 最终浏览器证据：`artifacts/london-air-daylight-palette-fix-20260614-v10/metrics.browser.json`。
+- 2026-06-15 地形分区和闪烁修正证据：`artifacts/london-air-typed-palette-label-flicker-fix-20260615-final-v4/metrics.browser.json`。
 - 六个关键帧明暗度评分约 `62.36-63.97`，用于白昼但不发白的钢蓝底图。
 - 饱和度均值约 `43.83-45.47`。
 - 钢蓝比例约 `0.411-0.502`，绿色主导比例约 `0.0069-0.0212`。
 - 低亮区占比约 `0.028-0.045`，夜景蓝比例约 `0.0033-0.0037`。
 - 云层作为天气作战单位渲染：可见云团 `2-3` 个，总覆盖率约 `0.032-0.043`，单体最大覆盖率约 `0.025`，opacity `0.18-0.24`。
+- 云层运动应优先由播放进度驱动，不使用无限 CSS drift。密集战斗段如果出现闪屏，先检查 CSS animation、MapLibre camera 重同步、路线/效果层是否每帧无意义变化。
+- 对跨海峡空战这类多视角动画，颜色门禁要按镜头类型解释：雷达/返航/海峡视角检查钢蓝水面；陆地主战区不应强行要求高海面占比，应改看暖土/地形分区饱和度、低绿雾比例和前景单位可读性。
 - 上午、下午密集段连续帧：`uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`stageRectMaxDelta=0`、`terrainCanvasRectMaxDelta=0`。
 
 ## 生产线整合建议

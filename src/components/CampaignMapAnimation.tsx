@@ -86,6 +86,12 @@ export type MapOverlayElement =
       label?: string;
       opacity?: number;
       revealAt?: string;
+      drift?: {
+        dx: number;
+        dy: number;
+        phaseOffset?: number;
+        scale?: number;
+      };
       testId?: string;
       type: "image";
       visibleUntil?: string;
@@ -1805,6 +1811,10 @@ export function CampaignMapAnimation({
 
                     if (overlay.type === "image") {
                       const [x, y] = projectPoint(projection, overlay.coordinates);
+                      const driftPhase = Math.sin(progress * Math.PI * 2 + (overlay.drift?.phaseOffset ?? 0));
+                      const driftX = overlay.drift ? overlay.drift.dx * driftPhase : 0;
+                      const driftY = overlay.drift ? overlay.drift.dy * driftPhase : 0;
+                      const driftScale = overlay.drift?.scale ? 1 + overlay.drift.scale * driftPhase : 1;
                       return (
                         <g
                           key={overlay.id}
@@ -1812,7 +1822,7 @@ export function CampaignMapAnimation({
                           data-scene-transition-phase={overlayVisibility.phase}
                           data-testid={overlay.testId ?? `image-overlay-${overlay.id}`}
                           style={opacityStyle(overlayVisibility.opacity * (overlay.opacity ?? 1))}
-                          transform={`translate(${x} ${y})`}
+                          transform={`translate(${x + driftX} ${y + driftY}) scale(${driftScale})`}
                         >
                           <image
                             className="map-overlay-image"
@@ -2122,6 +2132,7 @@ export function CampaignMapAnimation({
 
                 const [x, y] = projectedPoints.get(point.id) ?? projectPoint(projection, point.coordinates);
                 const isFocused = activeEvent.mapFocus.includes(point.id);
+                const labelPlateWidth = point.label.length * 15 + 16;
                 return (
                   <g
                     key={point.id}
@@ -2131,6 +2142,7 @@ export function CampaignMapAnimation({
                     style={opacityStyle(pointVisibility.opacity)}
                   >
                     <circle cx={x} cy={y} r={isFocused ? 5.2 : 3.2} />
+                    <rect className="map-point-label-plate" x={x + 4} y={y - 16} width={labelPlateWidth} height={24} rx={4} />
                     <text x={x + 8} y={y + 4}>
                       {point.label}
                     </text>

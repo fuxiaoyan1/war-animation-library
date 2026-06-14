@@ -141,7 +141,19 @@
 - OGG：<https://upload.wikimedia.org/wikipedia/commons/8/89/Holst_The_Planets_Mercury.ogg>
 - 版权状态：Wikimedia Commons 文件页标注为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
 - 本地校验：文件大小约 `10.45 MB`，Ogg Vorbis，Stereo，44100Hz，`file` 识别约 `499821 bps`；SHA256 `d5b154e804f01599ab41db862f72527814b37292ef3635c9b86d52a32acb9c8d`。
-- 使用位置：`伦敦上空的鹰`。该曲替换 `Rule, Britannia!`，用于提高空战动画的机动、紧张和航空主题听感，并让伦敦空战重新纳入系列配乐唯一性门禁。
+- 历史使用：`伦敦上空的鹰` 曾使用该曲替换 `Rule, Britannia!`，用于提高空战动画的机动、紧张和航空主题听感；2026-06-15 已继续替换为 `Ride of the Valkyries`，避免当前伦敦版本继续使用用户反馈不合适的配乐。
+
+### Ride of the Valkyries
+
+- 文件：`public/audio/wikimedia-wagner-ride-valkyries.ogg`
+- 曲目：`Ride of the Valkyries`，选自 Richard Wagner 歌剧 `Die Walkuere` 第三幕前奏。
+- 作曲：Richard Wagner。
+- 演奏/来源标注：Wikimedia Commons 音频文件；音频元数据记录 `Ulm Philharmonic, Conductor: James Allen Gähres`，上传用户为 `Sphinxdutroene`。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Richard_Wagner_-_The_Valkyrie_-_Ride_of_the_Valkyries.ogg>
+- OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/Richard_Wagner_-_The_Valkyrie_-_Ride_of_the_Valkyries.ogg>
+- 许可状态：Wikimedia Commons 文件页标注为 `EFF: Open Audio License version 1`。该许可允许复制、再发布、演奏或修改该音乐，但不得修改原作者署名或许可条款。当前项目保留音频文件元数据和本来源记录。
+- 本地校验：文件大小 `9,862,857 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长 `338.886531s`，约 `231kbps`；SHA256 `f20cf2597e5eea8209ca5a17c270dd5a3411bf9b864743953c047db1fb9cb7ac`。
+- 使用位置：`伦敦上空的鹰`。该曲替换 `Mercury, the Winged Messenger`，作为更强烈、推进感更明确的二战空战背景配乐；伦敦专项 Playwright 检查 `score-toggle` 的 `data-music-source` 指向本文件。
 
 ### Rule, Britannia!
 

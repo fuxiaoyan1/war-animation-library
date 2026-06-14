@@ -178,3 +178,10 @@
 - 运镜不能只断言焦点名称，必须检查当前事件、雷达指挥线、狗斗圈和飞机编队相对地图核心的位置，防止画面停在大片空地上。
 - 播放画面抖动不能只看静态截图。先采样连续帧，分别检查 `map-stage` 外框、`camera-layer` transform、投影切换窗口、单位位置/旋转和 CSS 动画层；伦敦这次的抖感来自非战术 cinematic 漂浮/blur 层和底图重算压力，而不是自动镜头复位。
 - 地图色彩门禁不能只设“不要发白”和“不要黑块”。伦敦这次曾被压到亮度均值约 `97`，用户截图确认已经像黑天作战；之后又被提到约 `190`，门禁拦住了发白。白昼空战应同时有亮度下限、亮度上限、暗像素比例、钢蓝比例、绿海比例、饱和度和前景可读性门禁。
+
+2026-06-15 继续按用户截图反馈修正伦敦地图和配乐：
+
+- 配乐从 `wikimedia-holst-mercury.ogg` 改为 `wikimedia-wagner-ride-valkyries.ogg`。来源、本地校验和许可记录已补入 `docs/sources/audio.md`；伦敦专项 Playwright 与 `scripts/probe-london-air-visual-evidence.mjs` 同步检查新音频路径。
+- 地图不再靠三块高透明度大面色层调色，改为六个低透明度地形角色分区：海峡深水、海峡航路带、英格兰丘陵、泰晤士低地、法国白垩海岸、法国内陆集结区。`data-terrain-color-model="typed-regional-palette-v2"` 和六层 `data-terrain-color-layer-ids` 进入专项门禁，防止回到“一团雾”的全图覆盖方案。
+- 地名标识不再寄希望于第三方 topo raster 黑字，改由本项目 SVG 地名标签和 `.map-point-label-plate` 半透明底板保证可读；专项门禁要求至少 8 个地名底板在伦敦页可见。
+- 全图 multiply/soft-light 伪层继续禁止；云层仍使用 ComfyUI PNG，但作为局部天气作战单位放在同一个 `camera-layer` 中。云层运动改为播放进度驱动的轻微位移，不使用无限 CSS drift；狗斗闪点、接触圈和云图无限 CSS 动画停用，避免密集航线阶段出现屏幕闪烁。

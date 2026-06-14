@@ -7,7 +7,7 @@ const baseUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:5177";
 const outDir = path.resolve(process.argv[2] ?? "artifacts/london-air-visual-evidence");
 const aircraftAssetVersion = "20260614-he111-standard-v1";
 const weatherAssetVersion = "20260614-comfy-weather-v4";
-const musicAssetPath = "/audio/wikimedia-holst-mercury.ogg";
+const musicAssetPath = "/audio/wikimedia-wagner-ride-valkyries.ogg";
 
 const he111QualityBand = {
   luminanceMean: { min: 80, max: 150 },
@@ -185,19 +185,21 @@ function collectRenderedStageColorGrade(buffer) {
   };
 }
 
-function evaluateDaylightMapColorGate(colorGrade) {
+function evaluateDaylightMapColorGate(colorGrade, cameraFocus = "") {
+  const isLandCombatFocus = cameraFocus === "britainAirCombat";
   return {
     brightnessScore: colorGrade.brightnessScore100 > 56 && colorGrade.brightnessScore100 < 70,
     contrast: colorGrade.luminanceStdDev > 20,
     darkRatio: colorGrade.darkRatio < 0.045,
     cyanGreenSea: colorGrade.cyanGreenSeaRatio < 0.2,
     greenWash: colorGrade.greenRatio < 0.24,
+    landCombatPalette: isLandCombatFocus ? colorGrade.saturationMean > 50 && colorGrade.greenRatio < 0.12 : true,
     lowDaylightRatio: colorGrade.lowDaylightRatio < 0.18,
     luminanceP10: colorGrade.luminanceP10 > 82,
     luminanceP25: colorGrade.luminanceP25 > 105,
     nightBlueRatio: colorGrade.nightBlueRatio < 0.16,
     saturation: colorGrade.saturationMean > 42,
-    steelBlue: colorGrade.blueRatio > 0.14
+    steelBlue: isLandCombatFocus ? true : colorGrade.blueRatio > 0.14
   };
 }
 
@@ -338,71 +340,17 @@ async function collectPageMetrics(page) {
         saturationMean: saturationSum / count
       };
     })();
-    const renderedColorGrade = (() => {
-      if (!mapStage) {
-        return { blueRatio: 0, darkRatio: 0, greenRatio: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
-      }
-      const stageBox = mapStage.getBoundingClientRect();
-      const sample = document.createElement("canvas");
-      sample.width = Math.max(1, Math.round(stageBox.width));
-      sample.height = Math.max(1, Math.round(stageBox.height));
-      const context = sample.getContext("2d", { willReadFrequently: true });
-      const sourceCanvas = terrainCanvas;
-      if (!context || !sourceCanvas) {
-        return { blueRatio: 0, darkRatio: 0, greenRatio: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
-      }
-      context.drawImage(sourceCanvas, 0, 0, sample.width, sample.height);
-      context.globalCompositeOperation = "multiply";
-      const gradient = context.createLinearGradient(0, 0, sample.width, sample.height);
-      gradient.addColorStop(0, "rgba(65,122,154,0.5)");
-      gradient.addColorStop(0.43, "rgba(58,121,157,0.46)");
-      gradient.addColorStop(0.68, "rgba(158,126,75,0.36)");
-      gradient.addColorStop(1, "rgba(172,116,54,0.3)");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, sample.width, sample.height);
-      context.globalCompositeOperation = "soft-light";
-      const sheen = context.createLinearGradient(0, 0, sample.width, sample.height);
-      sheen.addColorStop(0, "rgba(47,120,158,0.24)");
-      sheen.addColorStop(0.42, "rgba(61,136,164,0.22)");
-      sheen.addColorStop(0.68, "rgba(177,139,73,0.2)");
-      sheen.addColorStop(1, "rgba(194,125,54,0.16)");
-      context.fillStyle = sheen;
-      context.fillRect(0, 0, sample.width, sample.height);
-      context.globalCompositeOperation = "source-over";
-      const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
-      let bluePixels = 0;
-      let darkPixels = 0;
-      let greenPixels = 0;
-      let luminanceSquareSum = 0;
-      let luminanceSum = 0;
-      let saturationSum = 0;
-      let samples = 0;
-      for (let y = Math.floor(sample.height * 0.16); y < Math.floor(sample.height * 0.88); y += 3) {
-        for (let x = Math.floor(sample.width * 0.06); x < Math.floor(sample.width * 0.94); x += 3) {
-          const offset = (y * sample.width + x) * 4;
-          const red = pixels[offset];
-          const green = pixels[offset + 1];
-          const blue = pixels[offset + 2];
-          const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
-          const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
-          luminanceSum += luminance;
-          luminanceSquareSum += luminance * luminance;
-          saturationSum += saturation;
-          samples += 1;
-          if (luminance < 34) darkPixels += 1;
-          if (green > blue + 10 && green > red + 4) greenPixels += 1;
-          if (blue > green + 8 && blue > red + 12 && saturation > 24) bluePixels += 1;
-        }
-      }
-      const luminanceMean = samples > 0 ? luminanceSum / samples : 0;
-      return {
-        blueRatio: samples > 0 ? bluePixels / samples : 0,
-        darkRatio: samples > 0 ? darkPixels / samples : 0,
-        greenRatio: samples > 0 ? greenPixels / samples : 0,
-        luminanceMean,
-        luminanceStdDev: samples > 0 ? Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean)) : 0,
-        saturationMean: samples > 0 ? saturationSum / samples : 0
-      };
+    const colorZones = (() => {
+      const declaredLayerIds = terrainLayer?.getAttribute("data-terrain-color-layer-ids") ?? "";
+      const layerIds = [
+        "battle-of-britain-channel-color",
+        "battle-of-britain-channel-lane-color",
+        "battle-of-britain-england-downs-color",
+        "battle-of-britain-thames-lowland-color",
+        "battle-of-britain-france-chalk-color",
+        "battle-of-britain-france-inland-color"
+      ];
+      return layerIds.map((id) => ({ id, present: declaredLayerIds.split(",").includes(id) }));
     })();
 
     return {
@@ -435,13 +383,16 @@ async function collectPageMetrics(page) {
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
         terrainTexture,
-        renderedColorGrade,
+        colorZones,
         topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
         topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
         tacticalAfterTerrain: firstTactical
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
           : true,
+        terrainColorLayerIds: terrainLayer?.getAttribute("data-terrain-color-layer-ids") ?? "",
+        terrainColorModel: terrainLayer?.getAttribute("data-terrain-color-model") ?? "",
+        terrainColorZones: terrainLayer?.getAttribute("data-terrain-color-zones") ?? "",
         visualSurfaceContract: terrainLayer?.getAttribute("data-visual-surface-contract") ?? "",
         weatherPhase: terrainLayer?.getAttribute("data-weather-phase") ?? ""
       },
@@ -868,12 +819,11 @@ async function main() {
     const filePath = path.join(outDir, event.file);
     await page.screenshot({ path: filePath, fullPage: false });
     screenshots.push(filePath);
-    const renderedStageColorGrade = collectRenderedStageColorGrade(
-      await page.locator(".battle-of-britain [data-testid='map-stage']").screenshot()
-    );
+    const renderedStageColorGrade = collectRenderedStageColorGrade(await page.locator(".battle-of-britain [data-testid='map-stage']").screenshot());
+    const pageMetrics = await collectPageMetrics(page);
     stageMetrics[event.id] = {
-      ...(await collectPageMetrics(page)),
-      daylightColorGate: evaluateDaylightMapColorGate(renderedStageColorGrade),
+      ...pageMetrics,
+      daylightColorGate: evaluateDaylightMapColorGate(renderedStageColorGrade, pageMetrics.cameraFocus),
       renderedStageColorGrade
     };
   }

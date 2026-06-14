@@ -1862,9 +1862,22 @@ async function expectBattleOfBritainNoDecorativeCinematicJitter(page: Page) {
     );
     const focusGlow = shell.querySelector(".cinematic-focus-glow");
     const frontHaze = shell.querySelector(".cinematic-front-haze");
+    const dogfightAnimatedElements = [...shell.querySelectorAll(".battle-dogfight-effect *, .dogfight-clash *")].filter(
+      (element) => getComputedStyle(element).animationName !== "none"
+    );
+    const weatherAnimatedElements = [...shell.querySelectorAll(".battle-of-britain-weather-overlay .map-overlay-image")].filter(
+      (element) => getComputedStyle(element).animationName !== "none"
+    );
+    const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
+    const terrainAfterStyle = terrainLayer ? getComputedStyle(terrainLayer, "::after") : null;
+    const terrainBeforeStyle = terrainLayer ? getComputedStyle(terrainLayer, "::before") : null;
     return {
+      dogfightAnimatedElementCount: dogfightAnimatedElements.length,
       focusGlowFilter: focusGlow ? getComputedStyle(focusGlow).filter : "missing",
       frontHazeFilter: frontHaze ? getComputedStyle(frontHaze).filter : "missing",
+      terrainAfterContent: terrainAfterStyle?.content ?? "",
+      terrainBeforeContent: terrainBeforeStyle?.content ?? "",
+      weatherAnimatedElementCount: weatherAnimatedElements.length,
       visibleDecorativeSpecks: visibleDecorativeSpecks.length
     };
   });
@@ -1872,6 +1885,10 @@ async function expectBattleOfBritainNoDecorativeCinematicJitter(page: Page) {
   expect(metrics.visibleDecorativeSpecks, "Battle of Britain should not render decorative drifting specks over the tactical map").toBe(0);
   expect(metrics.focusGlowFilter, "Battle of Britain cinematic focus glow should not use heavy blur during playback").toBe("none");
   expect(metrics.frontHazeFilter, "Battle of Britain front haze should not use heavy blur during playback").toBe("none");
+  expect(metrics.terrainAfterContent, "Battle of Britain terrain layer must not reintroduce a full-map multiply/soft-light veil").toBe("none");
+  expect(metrics.terrainBeforeContent, "Battle of Britain terrain layer must not reintroduce a full-map fog/color wash").toBe("none");
+  expect(metrics.weatherAnimatedElementCount, "clouds are local weather units; CSS drift should not create screen shimmer during dense combat review").toBe(0);
+  expect(metrics.dogfightAnimatedElementCount, "dogfight effects should be data-timed, not infinite CSS flicker that reads as screen flashing").toBe(0);
 }
 
 async function expectBattleOfBritainTacticalCoreVisible(page: Page, options: { bottomMax?: number; leftMin?: number; rightMax?: number; topMax?: number; topMin?: number } = {}) {
@@ -2168,13 +2185,19 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
   await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
-  await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-canvas-primary-country-boundaries-only");
-  await expect(terrain).toHaveAttribute("data-cloud-animation", "phase-linked-drifting-overlay");
+  await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-typed-terrain-palette-country-boundaries-only");
+  await expect(terrain).toHaveAttribute("data-terrain-color-model", "typed-regional-palette-v2");
+  await expect(terrain).toHaveAttribute("data-terrain-color-zones", "channel,channel-lane,england-downs,thames-lowland,france-chalk,france-inland");
+  await expect(terrain).toHaveAttribute(
+    "data-terrain-color-layer-ids",
+    "battle-of-britain-channel-color,battle-of-britain-channel-lane-color,battle-of-britain-england-downs-color,battle-of-britain-thames-lowland-color,battle-of-britain-france-chalk-color,battle-of-britain-france-inland-color"
+  );
+  await expect(terrain).toHaveAttribute("data-cloud-animation", "progress-linked-local-weather-units");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
   await expect(terrain).toHaveAttribute("data-camera-update-threshold", "0.025-zoom");
   await expect(terrain).toHaveAttribute("data-topo-labels-suppressed", "true");
-  await expect(terrain).toHaveAttribute("data-topo-raster-opacity", "0.24");
+  await expect(terrain).toHaveAttribute("data-topo-raster-opacity", "0.20");
   await expect(page.getByTestId("battle-of-britain-weather-overlay-morning")).toBeVisible();
   await expect(page.getByTestId("battle-of-britain-terrain-3d-canvas")).toBeVisible();
   await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
@@ -2201,6 +2224,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     const firstWeatherOverlay = shell.querySelector<SVGGraphicsElement>(".battle-of-britain-weather-overlay");
     const weatherOverlays = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay"));
     const mapPointLabels = Array.from(shell.querySelectorAll<SVGTextElement>(".map-point text"));
+    const mapPointLabelPlates = Array.from(shell.querySelectorAll<SVGRectElement>(".map-point-label-plate"));
     const windPath = shell.querySelector<SVGPathElement>('[data-testid="britain-chain-home-vector"] path');
     const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
     const canvas = shell.querySelector<HTMLCanvasElement>('[data-testid="battle-of-britain-terrain-3d-canvas"]');
@@ -2247,6 +2271,18 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
           fontSize: Number.parseFloat(style.fontSize),
           stroke: style.stroke,
           strokeWidth: Number.parseFloat(style.strokeWidth)
+        };
+      }),
+      mapPointLabelPlates: mapPointLabelPlates.map((plate) => {
+        const box = plate.getBoundingClientRect();
+        const style = getComputedStyle(plate);
+        return {
+          display: style.display,
+          fill: style.fill,
+          height: box.height,
+          opacity: Number.parseFloat(style.opacity || "1"),
+          stroke: style.stroke,
+          width: box.width
         };
       }),
       terrainTexture: (() => {
@@ -2325,6 +2361,10 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.stageOverflow).toBe("hidden");
   expect(visualState.countryLayerOpacity).toBe("1");
   expect(visualState.countryFills.every((fill) => fill === "none" || fill === "rgba(0, 0, 0, 0)"), "SVG countries must be boundary-only so the 3D basemap remains visible").toBe(true);
+  expect(
+    visualState.mapPointLabelPlates.filter((plate) => plate.display !== "none" && plate.width > 24 && plate.height > 12 && plate.opacity > 0.2).length,
+    "Battle of Britain place labels need actual label plates, not black text lost on a complex basemap"
+  ).toBeGreaterThanOrEqual(8);
   expect(visualState.registrationMaxError, "MapLibre terrain must follow the SVG battle projection instead of behaving like an independent background").toBeLessThan(24);
   expect(visualState.registrationMeanError, "MapLibre terrain average registration error should stay tight enough for tactical geography").toBeLessThan(12);
   expect(visualState.terrainTexture.luminanceStdDev, "3D basemap must not collapse into a single flat color field").toBeGreaterThan(9);
@@ -7473,7 +7513,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectOnlyWarNameInMapTitle(page, "伦敦上空的鹰");
   await expect(page.locator(".battle-of-britain .day-counter")).toContainText("小时");
   await expect(page.locator(".battle-of-britain .day-counter")).not.toContainText("周");
-  await expectScoreUsesMusic(page, "/audio/wikimedia-holst-mercury.ogg");
+  await expectScoreUsesMusic(page, "/audio/wikimedia-wagner-ride-valkyries.ogg");
   await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 雷达报来袭");
   await expectMapFirstLayout(page);
   await expectLowImpactTicker(page);

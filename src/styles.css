@@ -3031,16 +3031,12 @@ h1 {
 
 .battle-of-britain .map-stage {
   background:
-    radial-gradient(circle at 57% 35%, rgba(209, 148, 65, 0.18), transparent 20rem),
-    radial-gradient(circle at 48% 66%, rgba(38, 105, 145, 0.34), transparent 25rem),
-    linear-gradient(180deg, #356a88 0%, #4d7f8c 50%, #92764f 100%);
+    linear-gradient(180deg, #477d9e 0%, #376b8d 48%, #8d6f4e 100%);
 }
 
 .battle-of-britain.cinematic-mode .map-stage {
   background:
-    radial-gradient(circle at 58% 38%, rgba(216, 154, 70, 0.18), transparent 23rem),
-    radial-gradient(circle at 45% 64%, rgba(38, 108, 148, 0.34), transparent 27rem),
-    linear-gradient(180deg, #376d8b 0%, #50838e 52%, #95784f 100%);
+    linear-gradient(180deg, #4d83a2 0%, #3c718f 52%, #95754f 100%);
   box-shadow:
     inset 0 0 0 1px rgba(241, 238, 206, 0.22),
     inset 0 0 34px rgba(12, 35, 48, 0.08),
@@ -3059,38 +3055,22 @@ h1 {
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 44% 41%, rgba(214, 150, 66, 0.16), transparent 22rem),
-    linear-gradient(180deg, #285f82 0%, #3c7484 45%, #846b4a 100%);
-  filter: saturate(1.65) contrast(1.25) brightness(0.82);
+    linear-gradient(180deg, #497f9f 0%, #336b8f 48%, #8e704f 100%);
+  filter: saturate(1.72) contrast(1.24) brightness(0.8);
   isolation: isolate;
   pointer-events: none;
 }
 
+.battle-of-britain .battle-of-britain-terrain-3d[data-map-focus="britainAirReturn"] {
+  filter: saturate(1.68) contrast(1.18) brightness(0.99);
+}
+
 .battle-of-britain .battle-of-britain-terrain-3d::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background:
-    linear-gradient(148deg, rgba(35, 87, 128, 0.7) 0%, rgba(32, 92, 132, 0.66) 43%, rgba(129, 103, 64, 0.5) 68%, rgba(143, 94, 48, 0.42) 100%),
-    radial-gradient(circle at 34% 58%, rgba(28, 90, 136, 0.56), transparent 24rem),
-    radial-gradient(circle at 72% 72%, rgba(160, 103, 48, 0.32), transparent 20rem);
-  mix-blend-mode: multiply;
-  opacity: 0.58;
-  z-index: 2;
-  pointer-events: none;
+  content: none;
 }
 
 .battle-of-britain .battle-of-britain-terrain-3d::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background:
-    linear-gradient(132deg, rgba(30, 104, 146, 0.28) 0%, rgba(42, 121, 154, 0.24) 42%, rgba(160, 124, 70, 0.2) 68%, rgba(176, 112, 54, 0.16) 100%),
-    radial-gradient(circle at 46% 39%, rgba(218, 155, 72, 0.12), transparent 22rem);
-  mix-blend-mode: soft-light;
-  opacity: 0.42;
-  z-index: 3;
-  pointer-events: none;
+  content: none;
 }
 
 .battle-of-britain .battle-of-britain-terrain-3d canvas {
@@ -3153,61 +3133,27 @@ h1 {
 }
 
 .battle-of-britain .battle-of-britain-weather-overlay .map-overlay-image {
-  filter: saturate(1.08) contrast(1.2) brightness(0.72);
+  filter: saturate(1.02) contrast(1.12) brightness(0.72);
   transform-box: fill-box;
   transform-origin: center;
-  animation: battleBritainWeatherOverlayDrift 34s ease-in-out infinite alternate;
 }
 
 .battle-of-britain .weather-overlay-secondary .map-overlay-image {
-  filter: saturate(1.04) contrast(1.18) brightness(0.7);
-  animation-duration: 48s;
+  filter: saturate(1) contrast(1.1) brightness(0.7);
 }
 
 .battle-of-britain .weather-overlay-channel .map-overlay-image,
 .battle-of-britain .weather-overlay-kent .map-overlay-image {
-  animation-name: battleBritainWeatherOverlayDriftReverse;
+  filter: saturate(1) contrast(1.1) brightness(0.7);
 }
 
 .battle-of-britain .weather-overlay-thames .map-overlay-image,
 .battle-of-britain .weather-overlay-estuary .map-overlay-image {
-  animation-name: battleBritainWeatherOverlayDriftSoft;
-  animation-duration: 56s;
+  filter: saturate(1) contrast(1.1) brightness(0.72);
 }
 
 .battle-of-britain .afternoon-weather-overlay .map-overlay-image {
-  animation-duration: 42s;
-  animation-direction: alternate-reverse;
-}
-
-@keyframes battleBritainWeatherOverlayDrift {
-  from {
-    transform: translate(-10px, -5px) scale(1);
-  }
-
-  to {
-    transform: translate(14px, 7px) scale(1.025);
-  }
-}
-
-@keyframes battleBritainWeatherOverlayDriftReverse {
-  from {
-    transform: translate(12px, 4px) scale(0.96, 1.04);
-  }
-
-  to {
-    transform: translate(-15px, -6px) scale(1.02, 0.98);
-  }
-}
-
-@keyframes battleBritainWeatherOverlayDriftSoft {
-  from {
-    transform: translate(-7px, 5px) scale(1.02, 0.96);
-  }
-
-  to {
-    transform: translate(9px, -8px) scale(0.98, 1.03);
-  }
+  filter: saturate(1.02) contrast(1.1) brightness(0.74);
 }
 
 .battle-of-britain .cinematic-vignette {
@@ -3226,6 +3172,12 @@ h1 {
 .battle-of-britain .cinematic-front-haze {
   opacity: 0.28;
   filter: none;
+}
+
+.battle-of-britain .battle-dogfight-effect *,
+.battle-of-britain .dogfight-clash *,
+.battle-of-britain .aircraft-contact-pulse * {
+  animation: none;
 }
 
 .battle-of-britain .country {
@@ -3325,13 +3277,13 @@ h1 {
 
 .battle-of-britain .tactical-terrain-label,
 .battle-of-britain .fortified-line text {
-  fill: rgba(255, 241, 189, 0.96);
-  font-size: 19px;
+  fill: rgba(255, 248, 219, 0.99);
+  font-size: 20px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
-  stroke: rgba(2, 8, 12, 0.97);
-  stroke-width: 6px;
+  stroke: rgba(1, 7, 10, 0.98);
+  stroke-width: 7px;
 }
 
 .battle-of-britain .fortified-line polyline {
@@ -3396,10 +3348,10 @@ h1 {
 
 .battle-of-britain .line-label,
 .battle-of-britain .active-event-label {
-  fill: rgba(255, 241, 193, 0.98);
-  font-size: 12px;
-  stroke: rgba(2, 8, 12, 0.96);
-  stroke-width: 4.8px;
+  fill: rgba(255, 248, 219, 0.99);
+  font-size: 13px;
+  stroke: rgba(1, 7, 10, 0.98);
+  stroke-width: 5.4px;
 }
 
 .battle-of-britain .front-line .front-route {
@@ -3417,14 +3369,22 @@ h1 {
   stroke-width: 2.1;
 }
 
+.battle-of-britain .map-point-label-plate {
+  display: block;
+  fill: rgba(8, 19, 22, 0.48);
+  stroke: rgba(255, 242, 194, 0.22);
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
 .battle-of-britain .map-point text {
-  fill: rgba(255, 242, 198, 0.99);
-  font-size: 15px;
+  fill: rgba(255, 249, 224, 1);
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
-  stroke: rgba(2, 8, 12, 0.98);
-  stroke-width: 5.8px;
+  stroke: rgba(1, 6, 9, 0.99);
+  stroke-width: 6.8px;
 }
 
 .battle-of-britain .region-labels text {
@@ -3545,6 +3505,11 @@ h1 {
   fill: #162622;
   stroke: rgba(247, 237, 213, 0.75);
   stroke-width: 1.5;
+}
+
+.map-point-label-plate {
+  display: none;
+  pointer-events: none;
 }
 
 .map-point text {
