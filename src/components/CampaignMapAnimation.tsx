@@ -486,6 +486,10 @@ function routeDirectionVector(from: [number, number], to: [number, number], fall
   return { x: 1, y: 0 };
 }
 
+function routeDirectionDegrees(direction: { x: number; y: number }) {
+  return Number((Math.atan2(direction.y, direction.x) * 180 / Math.PI).toFixed(2));
+}
+
 function routeLocalOffset(
   point: [number, number],
   direction: { x: number; y: number },
@@ -524,6 +528,7 @@ function formationUnitPlacement(
     direction,
     facingX: routeFacingX(directionAnchor, pointOnRoute, fallbackPoint),
     point: markerPoint,
+    rotationDegrees: routeDirectionDegrees(direction),
     routeProgress: unitProgress
   };
 }
@@ -1820,6 +1825,7 @@ export function CampaignMapAnimation({
                 const fallbackDirectionPoint = interpolateRoute(projectedRoutePoints, Math.min(1, segmentProgress + 0.018));
                 const facingX = routeFacingX(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
                 const routeDirection = routeDirectionVector(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
+                const routeRotationDegrees = routeDirectionDegrees(routeDirection);
                 const formationUnits =
                   line.formationUnits && line.formationUnits.length > 0
                     ? line.formationUnits
@@ -1889,6 +1895,7 @@ export function CampaignMapAnimation({
                                   routeDirection,
                                   [0, (formationUnit.offset?.[1] ?? 0) * formationOffsetScale]
                                 ),
+                                rotationDegrees: routeRotationDegrees,
                                 routeProgress: segmentProgress
                               }
                             : formationUnitPlacement(
@@ -1906,6 +1913,7 @@ export function CampaignMapAnimation({
                               key={formationUnit.id}
                               className={`unit-icon-orientation formation-unit ${raisedUnitMarkers ? "has-force-echelon" : ""} ${formationUnit.className ?? ""}`}
                               data-facing-x={placement.facingX}
+                              data-route-rotation-deg={placement.rotationDegrees.toFixed(2)}
                               data-ship-label={formationUnit.label}
                               data-route-progress={segmentProgress.toFixed(4)}
                               data-unit-route-progress={placement.routeProgress.toFixed(4)}
@@ -1926,6 +1934,7 @@ export function CampaignMapAnimation({
                                 isActive={isActive}
                                 facingX={placement.facingX}
                                 faction={markerFaction}
+                                rotationDegrees={placement.rotationDegrees}
                               />
                               {formationUnit.label && (
                                 <text className="formation-unit-label" x={0} y={-38}>

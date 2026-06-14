@@ -7,6 +7,7 @@ type UnitIconProps = {
   faction?: string;
   icon: UnitIconKind;
   isActive: boolean;
+  rotationDegrees?: number;
 };
 
 export type HorizontalFacing = -1 | 1;
@@ -355,6 +356,15 @@ function getMirrorScaleX(icon: UnitIconKind, facingX: HorizontalFacing) {
   return iconConfig[icon].defaultFacingX === facingX ? 1 : -1;
 }
 
+function normalizedRotationDegrees(rotationDegrees?: number) {
+  if (!Number.isFinite(rotationDegrees)) {
+    return 0;
+  }
+
+  const normalized = ((rotationDegrees ?? 0) % 360 + 360) % 360;
+  return Number(normalized.toFixed(2));
+}
+
 function factionBadgeLabel(faction: string) {
   const labels: Record<string, string> = {
     allies: "盟",
@@ -372,10 +382,13 @@ function factionBadgeLabel(faction: string) {
   return labels[faction] ?? faction.slice(0, 2).toUpperCase();
 }
 
-export function UnitIcon({ badgeLabel, facingX, faction, icon, isActive }: UnitIconProps) {
+export function UnitIcon({ badgeLabel, facingX, faction, icon, isActive, rotationDegrees }: UnitIconProps) {
   const config = iconConfig[icon];
+  const usesRouteRotation = britainAirIcons.has(icon);
   const desiredFacingX = facingX ?? config.defaultFacingX;
-  const mirrorScaleX = getMirrorScaleX(icon, desiredFacingX);
+  const mirrorScaleX = usesRouteRotation ? 1 : getMirrorScaleX(icon, desiredFacingX);
+  const routeRotationDegrees = usesRouteRotation ? normalizedRotationDegrees(rotationDegrees) : 0;
+  const orientationTransform = usesRouteRotation ? `rotate(${routeRotationDegrees})` : `scale(${mirrorScaleX} 1)`;
   const x = -config.width / 2;
   const y = -config.height / 2;
   const badgeClass = faction ? `unit-faction-badge faction-badge-${faction}` : "unit-faction-badge";
@@ -387,7 +400,9 @@ export function UnitIcon({ badgeLabel, facingX, faction, icon, isActive }: UnitI
       data-facing-x={desiredFacingX}
       data-faction={faction}
       data-mirror-x={mirrorScaleX}
+      data-rotation-deg={routeRotationDegrees}
       data-testid={config.testId}
+      data-uses-route-rotation={usesRouteRotation}
     >
       <ellipse className="unit-icon-shadow" cx="0" cy={config.height * 0.34} rx={config.width * 0.36} ry="6" />
       {faction && (
@@ -402,7 +417,12 @@ export function UnitIcon({ badgeLabel, facingX, faction, icon, isActive }: UnitI
           )}
         </g>
       )}
-      <g className="unit-icon-facing" transform={`scale(${mirrorScaleX} 1)`}>
+      <g
+        className="unit-icon-facing"
+        data-rotation-deg={routeRotationDegrees}
+        data-uses-route-rotation={usesRouteRotation}
+        transform={orientationTransform}
+      >
         <image
           className="unit-icon-image"
           data-asset-kind={icon}
