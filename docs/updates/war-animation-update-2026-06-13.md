@@ -157,14 +157,14 @@
 - 用户随后截图显示“没看出来”后，复核确认不是资料层缺失，而是当前 5177 发布目录仍在跑旧 bundle，且新地形 underlay 里 SVG 国家填色仍可能以半透明平面色压住 MapLibre 纹理。修复为重新发布当前 worktree 构建、静态服务补 `.jpg` 为 `image/jpeg`、伦敦地形 underlay 下国家层改为边界-only，并提高 topo/DEM/hillshade 的可见质感。伦敦专项 smoke 与视觉证据脚本新增运行 bundle 指纹、地形瓦片 HEAD、国家填充透明和 canvas 纹理指标，避免“DOM 有地形但肉眼仍是平面图”误过。
 - 用户继续反馈“地图太亮、地图层和战斗层分裂、云层没看到”后，地形层改为 `svg-projection-registered-terrain`：MapLibre center/zoom 由 SVG `terrainView`、容器缩放和 `mapView` 计算，`pitch=0`、`bearing=0`，并输出注册误差指标；天气 PNG 改为同 `camera-layer` 的 SVG image overlay，跟随战斗层移动缩放，位于地形之上、航线/飞机之下。视觉证据保存到 `artifacts/london-air-map-registered-weather-v4-20260614/`，记录运行 bundle `/assets/index-CU8WXWoz.js`、天气版本 `20260614-comfy-weather-v4`、`consoleErrors=[]`、`pageErrors=[]`、关键帧 `darkBlocks=[]`、`genericAircraftMarkers=0`，地形亮度均值约 `149-169`，饱和度约 `21.8-97.3`，注册最大误差约 `0.2-2.86px`。
 - 用户继续反馈“地图层太亮、海太绿、阴影/海岸黑线难看、地名看不清、云层太少、配乐太差”后，删除 MapLibre 大面积 `fill` veil/tone/weather polygon 图层，只保留 topo raster、真实 DEM terrain 和 hillshade；海色改为深钢蓝，raster 亮度压低并保留对比/饱和度，不再用不规则阴影块模拟气象或地形质感。
-- 地图视觉目标从“亮底图”改为“暗调高饱和、有地形/金属质感但不压前景”：CSS 对地形 underlay 加 multiply 暗调、弱 screen sheen 和冷暖分区；同时增强航线、飞机、地名和战术标签的分离度，避免浓郁底图吃掉作战单位。
+- 地图视觉目标修正为“白昼钢蓝、浓郁高对比、有地形/金属质感但不压前景”：CSS 对地形 underlay 加克制的 steel-blue/warm-land 分区、弱 screen sheen 和轻量 vignette；不能再用过重 multiply/brightness 把 1940-09-15 白昼空战压成黑天夜航。同时增强航线、飞机、地名和战术标签的分离度，避免浓郁底图吃掉作战单位。
 - 海岸线/国界黑色重线改为浅色细线；雷达至乌克斯布里奇矢量改为弱化的“雷达指挥”虚线，不再像黑色连接线或海岸割线。
 - 地名与战术标签加粗、提高字号并加深色描边；伦敦专项门禁检查至少 8 个关键地名标签具备可读 halo，避免大图和缩放视角下地名都看不清。
 - 云层从单一弱贴图扩展为上午主云、海峡低云、泰晤士云带、下午主云、肯特云隙、伦敦东侧云隙等多实例 ComfyUI PNG，并用不同漂移动画分层。门禁要求当前阶段不止一个可见云层，且云层仍在地形之上、航线/飞机之下。
 - 镜头/地图抖动继续压制：MapLibre `jumpTo` 增加微小阈值，`data-camera-update-threshold="0.012-zoom"`，避免同一镜头下每帧细小 camera 更新触发底图重绘。
 - 配乐从 `wikimedia-rule-britannia.ogg` 改为 `wikimedia-holst-mercury.ogg`（Holst《The Planets》中的 `Mercury, the Winged Messenger`，United States Air Force Heritage of America Band），伦敦空战重新纳入背景配乐唯一性门禁。
-- 伦敦专项 smoke 新增最终渲染截图色彩门禁：地图不能发白，不能变黑块，不能读成绿海，必须保留足够饱和度、对比和钢蓝海面比例；同时检查飞机仍有 drop-shadow 分离、航线宽度保持在可读但不过粗的区间。`scripts/probe-london-air-visual-evidence.mjs` 同步记录最终 `map-stage` 截图色彩指标，而不是只看 MapLibre 原始 canvas。
-- 新浏览器证据保存到 `artifacts/london-air-map-weather-music-fix-20260614-v2/`：运行 bundle `/assets/index-CCS2y35A.js`、CSS `/assets/index-CfoRcWNh.css`，六个关键帧 `genericAircraftMarkers=0`、地形注册正常、国家层透明、配乐 HEAD 为 `200 audio/ogg` 且内容长度约 `10.96MB`。截图只保存在 artifacts，不在会话中展示。
+- 伦敦专项 smoke 新增最终渲染截图色彩门禁：地图不能发白，不能变黑块，不能读成绿海，也不能像黑天作战；白昼亮度均值必须处在日间区间，且保留足够饱和度、对比和钢蓝海面比例。同时检查飞机仍有 drop-shadow 分离、航线宽度保持在可读但不过粗的区间。`scripts/probe-london-air-visual-evidence.mjs` 同步记录最终 `map-stage` 截图色彩指标与 `daylightColorGate`，而不是只看 MapLibre 原始 canvas。
+- 新浏览器证据保存到 `artifacts/london-air-daylight-map-fix-20260614-v4/`：运行 bundle `/assets/index-CWM1ttfA.js`、CSS `/assets/index-Baiqg-Y-.css`，六个关键帧 `genericAircraftMarkers=0`、`darkBlocks=0`、可见云层 `2-3` 个、`daylightColorGate` 全项通过；最终截图亮度均值约 `151-161`，暗像素比例约 `1.0%-1.8%`，钢蓝比例约 `0.20-0.25`，绿色主导比例约 `0.02-0.08`。截图只保存在 artifacts，不在会话中展示。
 
 真实故障根因同步记录：
 
@@ -173,3 +173,4 @@
 - 若用户截图仍显示旧照片条，优先查“页面实际 href / HTTP 缓存 / 发布目录指纹 / 浏览器请求”，不要先归咎于门禁阈值。
 - 运镜不能只断言焦点名称，必须检查当前事件、雷达指挥线、狗斗圈和飞机编队相对地图核心的位置，防止画面停在大片空地上。
 - 播放画面抖动不能只看静态截图。先采样连续帧，分别检查 `map-stage` 外框、`camera-layer` transform、投影切换窗口、单位位置/旋转和 CSS 动画层；伦敦这次的抖感来自非战术 cinematic 漂浮/blur 层和底图重算压力，而不是自动镜头复位。
+- 地图色彩门禁不能只设“不要发白”和“不要黑块”。伦敦这次曾被压到亮度均值约 `97`，用户截图确认已经像黑天作战；之后又被提到约 `190`，门禁拦住了发白。白昼空战应同时有亮度下限、亮度上限、暗像素比例、钢蓝比例、绿海比例、饱和度和前景可读性门禁。

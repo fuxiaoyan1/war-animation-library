@@ -2015,13 +2015,13 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   const greenDominantRatio = greenDominantPixels / samples;
   const metalBlueRatio = metalBlueDominantPixels / samples;
 
-  expect(luminanceMean, "Battle of Britain rendered map should be darker than the washed-out version").toBeLessThan(142);
-  expect(luminanceMean, "Battle of Britain rendered map should not turn into black blocks").toBeGreaterThan(70);
+  expect(luminanceMean, "Battle of Britain is a daylight air battle; rendered map must not look like a night operation").toBeGreaterThan(118);
+  expect(luminanceMean, "Battle of Britain rendered map should remain richer than the washed-out version").toBeLessThan(176);
   expect(luminanceStdDev, "Battle of Britain rendered map needs enough contrast for 3D terrain texture").toBeGreaterThan(20);
   expect(saturationMean, "Battle of Britain rendered map should keep richer color after CSS compositing").toBeGreaterThan(40);
-  expect(metalBlueRatio, "Battle of Britain sea should read as deep steel-blue, not pale green or flat gray").toBeGreaterThan(0.18);
+  expect(metalBlueRatio, "Battle of Britain sea should read as daylight steel-blue, not pale green or flat gray").toBeGreaterThan(0.14);
   expect(greenDominantRatio, "Battle of Britain sea should not read as a green wash").toBeLessThan(0.34);
-  expect(darkRatio, "Battle of Britain should not introduce large black/near-black map regions").toBeLessThan(0.12);
+  expect(darkRatio, "Battle of Britain daylight map should not introduce black/night-looking regions").toBeLessThan(0.045);
 }
 
 async function expectBattleOfBritainForegroundReadable(page: Page) {

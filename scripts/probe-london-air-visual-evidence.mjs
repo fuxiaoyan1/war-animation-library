@@ -168,6 +168,17 @@ function collectRenderedStageColorGrade(buffer) {
   };
 }
 
+function evaluateDaylightMapColorGate(colorGrade) {
+  return {
+    contrast: colorGrade.luminanceStdDev > 20,
+    darkRatio: colorGrade.darkRatio < 0.045,
+    daylightLuminance: colorGrade.luminanceMean > 118 && colorGrade.luminanceMean < 176,
+    greenWash: colorGrade.greenRatio < 0.34,
+    saturation: colorGrade.saturationMean > 40,
+    steelBlue: colorGrade.blueRatio > 0.14
+  };
+}
+
 async function ensureDir() {
   await fs.mkdir(outDir, { recursive: true });
 }
@@ -742,6 +753,7 @@ async function main() {
     );
     stageMetrics[event.id] = {
       ...(await collectPageMetrics(page)),
+      daylightColorGate: evaluateDaylightMapColorGate(renderedStageColorGrade),
       renderedStageColorGrade
     };
   }

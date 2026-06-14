@@ -214,7 +214,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#06182c"
+        "background-color": "#0f6389"
       }
     },
     {
@@ -222,11 +222,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.34,
-        "raster-brightness-min": 0,
-        "raster-contrast": 1,
-        "raster-opacity": 0.96,
-        "raster-saturation": 0.92
+        "raster-brightness-max": 0.5,
+        "raster-brightness-min": 0.02,
+        "raster-contrast": 0.95,
+        "raster-opacity": 0.98,
+        "raster-saturation": 0.78
       }
     },
     {
@@ -234,10 +234,10 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#526f52",
+        "hillshade-accent-color": "#6f7f6c",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#c59b4a",
-        "hillshade-shadow-color": "#071927"
+        "hillshade-highlight-color": "#caa85c",
+        "hillshade-shadow-color": "#174f68"
       }
     }
   ],

@@ -3031,19 +3031,19 @@ h1 {
 
 .battle-of-britain .map-stage {
   background:
-    radial-gradient(circle at 58% 36%, rgba(168, 145, 84, 0.14), transparent 20rem),
-    radial-gradient(circle at 48% 66%, rgba(37, 87, 121, 0.2), transparent 24rem),
-    linear-gradient(180deg, #071a2a 0%, #0b2437 50%, #172c2d 100%);
+    radial-gradient(circle at 58% 36%, rgba(210, 170, 86, 0.18), transparent 20rem),
+    radial-gradient(circle at 48% 66%, rgba(8, 128, 190, 0.38), transparent 24rem),
+    linear-gradient(180deg, #0f587e 0%, #1f6780 50%, #6a6446 100%);
 }
 
 .battle-of-britain.cinematic-mode .map-stage {
   background:
-    radial-gradient(circle at 58% 38%, rgba(173, 148, 76, 0.16), transparent 23rem),
-    radial-gradient(circle at 45% 64%, rgba(33, 86, 128, 0.24), transparent 26rem),
-    linear-gradient(180deg, #071928 0%, #0a2437 52%, #142c2d 100%);
+    radial-gradient(circle at 58% 38%, rgba(215, 174, 85, 0.18), transparent 23rem),
+    radial-gradient(circle at 45% 64%, rgba(8, 129, 194, 0.4), transparent 26rem),
+    linear-gradient(180deg, #0f587e 0%, #1f6a84 52%, #6b6548 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(209, 231, 207, 0.14),
-    inset 0 0 58px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(224, 238, 217, 0.16),
+    inset 0 0 46px rgba(0, 0, 0, 0.18),
     0 24px 74px rgba(0, 0, 0, 0.36);
 }
 
@@ -3059,9 +3059,9 @@ h1 {
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 43% 42%, rgba(182, 142, 74, 0.12), transparent 22rem),
-    linear-gradient(180deg, #071d31 0%, #0d2d45 44%, #243527 100%);
-  filter: saturate(1.85) contrast(1.48) brightness(0.58);
+    radial-gradient(circle at 43% 42%, rgba(206, 151, 72, 0.14), transparent 22rem),
+    linear-gradient(180deg, #0d628b 0%, #23768c 44%, #706a49 100%);
+  filter: saturate(1.46) contrast(1.3) brightness(0.74);
   pointer-events: none;
 }
 
@@ -3070,9 +3070,9 @@ h1 {
   inset: 0;
   content: "";
   background:
-    linear-gradient(148deg, rgba(9, 31, 54, 0.48) 0%, rgba(12, 47, 76, 0.42) 42%, rgba(49, 55, 31, 0.36) 68%, rgba(93, 70, 29, 0.34) 100%),
-    radial-gradient(circle at 34% 58%, rgba(5, 57, 98, 0.42), transparent 24rem),
-    radial-gradient(circle at 72% 72%, rgba(126, 79, 27, 0.18), transparent 20rem);
+    linear-gradient(148deg, rgba(0, 86, 126, 0.24) 0%, rgba(0, 116, 156, 0.22) 42%, rgba(116, 89, 45, 0.18) 68%, rgba(132, 82, 32, 0.16) 100%),
+    radial-gradient(circle at 34% 58%, rgba(0, 105, 158, 0.36), transparent 24rem),
+    radial-gradient(circle at 72% 72%, rgba(152, 88, 29, 0.16), transparent 20rem);
   mix-blend-mode: multiply;
   pointer-events: none;
 }
@@ -3082,9 +3082,9 @@ h1 {
   inset: 0;
   content: "";
   background:
-    linear-gradient(120deg, rgba(255, 232, 155, 0.07), transparent 38%, rgba(91, 168, 218, 0.08) 76%, transparent);
+    linear-gradient(120deg, rgba(255, 228, 139, 0.1), transparent 38%, rgba(41, 188, 245, 0.18) 76%, transparent);
   mix-blend-mode: screen;
-  opacity: 0.72;
+  opacity: 0.82;
   pointer-events: none;
 }
 
@@ -3146,14 +3146,14 @@ h1 {
 }
 
 .battle-of-britain .battle-of-britain-weather-overlay .map-overlay-image {
-  filter: saturate(0.94) contrast(1.36) brightness(0.78);
+  filter: saturate(0.94) contrast(1.22) brightness(0.96);
   transform-box: fill-box;
   transform-origin: center;
   animation: battleBritainWeatherOverlayDrift 34s ease-in-out infinite alternate;
 }
 
 .battle-of-britain .weather-overlay-secondary .map-overlay-image {
-  filter: saturate(0.9) contrast(1.32) brightness(0.76);
+  filter: saturate(0.92) contrast(1.18) brightness(0.94);
   animation-duration: 48s;
 }
 
@@ -3205,10 +3205,10 @@ h1 {
 
 .battle-of-britain .cinematic-vignette {
   background:
-    linear-gradient(180deg, rgba(2, 8, 13, 0.24), transparent 20%, transparent 78%, rgba(2, 8, 13, 0.34)),
-    radial-gradient(circle at 50% 48%, transparent 54%, rgba(0, 0, 0, 0.28) 100%),
-    linear-gradient(120deg, rgba(255, 229, 151, 0.06), transparent 44%, rgba(121, 183, 218, 0.05));
-  box-shadow: inset 0 0 72px rgba(0, 0, 0, 0.28);
+    linear-gradient(180deg, rgba(17, 38, 55, 0.14), transparent 20%, transparent 78%, rgba(17, 39, 51, 0.18)),
+    radial-gradient(circle at 50% 48%, transparent 58%, rgba(0, 0, 0, 0.16) 100%),
+    linear-gradient(120deg, rgba(255, 229, 151, 0.08), transparent 44%, rgba(121, 183, 218, 0.08));
+  box-shadow: inset 0 0 54px rgba(0, 0, 0, 0.16);
 }
 
 .battle-of-britain .cinematic-map-effects circle:not(.cinematic-focus-glow) {
@@ -3217,7 +3217,7 @@ h1 {
 
 .battle-of-britain .cinematic-focus-glow,
 .battle-of-britain .cinematic-front-haze {
-  opacity: 0.42;
+  opacity: 0.28;
   filter: none;
 }
 
