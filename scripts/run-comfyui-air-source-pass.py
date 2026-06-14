@@ -36,8 +36,15 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "britain-spitfire.png",
         "size": (720, 240),
         "fitPadding": (92, 55),
+        "topDownReference": "top-down-reference/britain-spitfire-il2-spitfire-mkxiv-top.png",
+        "topDownReferenceRotate": -90,
         "topDownSize": (640, 560),
         "topDownFitPadding": (92, 70),
+        "topDownBrightness": 1.18,
+        "topDownColor": 1.35,
+        "topDownContrast": 1.34,
+        "topDownSharpness": 1.62,
+        "topDownMinLuminance": 88,
         "lengthMeters": 9.1,
         "spanMeters": 11.2,
         "planform": "spitfire",
@@ -51,8 +58,15 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "britain-hurricane.png",
         "size": (720, 240),
         "fitPadding": (92, 55),
+        "topDownReference": "top-down-reference/britain-hurricane-il2-hurricane-mkii-top.png",
+        "topDownReferenceRotate": -90,
         "topDownSize": (640, 560),
         "topDownFitPadding": (92, 68),
+        "topDownBrightness": 1.18,
+        "topDownColor": 1.36,
+        "topDownContrast": 1.34,
+        "topDownSharpness": 1.62,
+        "topDownMinLuminance": 88,
         "lengthMeters": 9.8,
         "spanMeters": 12.2,
         "planform": "hurricane",
@@ -67,9 +81,15 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "luftwaffe-bf109.png",
         "size": (720, 240),
         "fitPadding": (92, 55),
+        "topDownReference": "top-down-reference/luftwaffe-bf109-il2-bf109-e7-top.png",
+        "topDownReferenceRotate": -90,
         "topDownSize": (620, 540),
         "topDownFitPadding": (98, 76),
-        "topDownBrightness": 1.04,
+        "topDownBrightness": 1.2,
+        "topDownColor": 1.3,
+        "topDownContrast": 1.36,
+        "topDownSharpness": 1.66,
+        "topDownMinLuminance": 84,
         "lengthMeters": 8.7,
         "spanMeters": 9.9,
         "planform": "bf109",
@@ -84,8 +104,15 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "luftwaffe-bf110.png",
         "size": (760, 240),
         "fitPadding": (80, 55),
+        "topDownReference": "top-down-reference/luftwaffe-bf110-il2-bf110-e2-top.png",
+        "topDownReferenceRotate": -90,
         "topDownSize": (720, 600),
         "topDownFitPadding": (78, 74),
+        "topDownBrightness": 1.18,
+        "topDownColor": 1.28,
+        "topDownContrast": 1.34,
+        "topDownSharpness": 1.62,
+        "topDownMinLuminance": 82,
         "topDownMaxBBoxFillRatio": 0.66,
         "lengthMeters": 12.3,
         "spanMeters": 16.3,
@@ -102,8 +129,16 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "luftwaffe-do17.png",
         "size": (780, 250),
         "fitPadding": (102, 58),
+        "topDownReference": "top-down-reference/luftwaffe-do17-hyperscale-airfix-plan-view.jpg",
+        "topDownReferenceRotate": -90,
+        "topDownReferenceMaskMode": "white-background-plan",
         "topDownSize": (760, 620),
         "topDownFitPadding": (92, 76),
+        "topDownBrightness": 1.16,
+        "topDownColor": 1.26,
+        "topDownContrast": 1.32,
+        "topDownSharpness": 1.58,
+        "topDownMinLuminance": 90,
         "topDownMaxBBoxFillRatio": 0.62,
         "lengthMeters": 15.8,
         "spanMeters": 18.0,
@@ -120,8 +155,15 @@ ASSETS: dict[str, dict[str, Any]] = {
         "runtime": "luftwaffe-he111.png",
         "size": (780, 250),
         "fitPadding": (102, 58),
+        "topDownReference": "top-down-reference/luftwaffe-he111-il2-he111-h6-top.png",
+        "topDownReferenceRotate": -90,
         "topDownSize": (780, 660),
         "topDownFitPadding": (90, 78),
+        "topDownBrightness": 1.24,
+        "topDownColor": 1.32,
+        "topDownContrast": 1.34,
+        "topDownSharpness": 1.62,
+        "topDownMinLuminance": 88,
         "topDownMaxBBoxFillRatio": 0.66,
         "lengthMeters": 16.4,
         "spanMeters": 22.6,
@@ -141,24 +183,28 @@ NEGATIVE_PROMPT = (
 )
 
 TOP_DOWN_STYLE_PROMPT = (
-    "Create a finished game-style tactical unit icon, orthographic dorsal top-down aircraft view, complete unbroken aircraft, "
-    "full wings, tail, fuselage, canopy, engine nacelles, and nose visible. Use the source photo only as an aircraft identity and era reference; "
-    "do not copy the source crop boundary, missing parts, dirt, museum lighting, or poor cutout. Use the aircraft data for proportions and let the model "
-    "reconstruct the complete aircraft shape from aviation knowledge, not from a source-image edge map. Create a polished RTS/war-game unit icon finish: "
-    "rich but historically plausible camouflage, controlled faction markings, strong readable silhouette, "
-    "dark midtones with clean metal/fabric highlights, panel seams, rivets, canopy glazing, engine detail, subtle worn paint, and crisp bevel-like edge lighting. "
-    "The icon should feel like a high-quality WWII aircraft game asset on a clean light gray studio background, not like a processed photo."
+    "Create a finished high-end strategy game aircraft unit icon, orthographic dorsal top-down view, clean level flight pose, "
+    "complete unbroken aircraft with full wings, tail, fuselage, canopy, engine nacelles, nose, propeller disks, and faction markings visible. "
+    "Use the reference image as aircraft identity, planform, camouflage family, and era direction only; do not copy its flat lighting, crop boundary, "
+    "missing parts, dirt, museum lighting, kit-painting sheet look, or poor cutout. Use the aircraft data for proportions and reconstruct the complete aircraft "
+    "from aviation knowledge instead of tracing the source-image edge map. Render it like a polished RTS / tactical wargame unit sprite: "
+    "strong three-dimensional volume, thick wing and fuselage mass, metallic and doped-fabric surface response, baked ambient occlusion, "
+    "small bright bevel-like rim highlights on leading edges, canopy glass glints, panel seams, rivets, engine details, propeller disks, subtle worn paint, "
+    "and crisp map-scale readability. Make the colors brighter, richer, and more saturated than a raw archive photo while staying historically plausible: "
+    "RAF green/brown camouflage and roundels, Luftwaffe green-gray camouflage with restrained yellow theater accents and black crosses when appropriate. "
+    "The aircraft must read as a compact, premium WWII game asset on a clean light gray studio background, not as a low-level processed cutout."
 )
 
 TOP_DOWN_NEGATIVE_PROMPT = (
     "side profile, side elevation, pure side view, belly view, front view, rear view, three-quarter side view, "
-    "technical blueprint, line drawing, flat plan drawing, plastic kit instruction sheet, top-view diagram, "
+    "technical blueprint, line drawing, flat plan drawing, plastic kit instruction sheet, top-view diagram, flat source tracing, "
     "transparent background, alpha checkerboard, text, watermark, label, logo, frame, rectangular photo card, museum floor, "
     "hangar, indoor museum, runway, grass field, people, display stand, landing gear, wheels, wheel struts, open landing gear, "
     "modern jet, toy, cartoon, low quality, flat silhouette, flat vector art, overpainted fantasy aircraft, extra aircraft, second aircraft, "
     "formation, blurry, deformed aircraft, incomplete aircraft, cropped aircraft, broken wing, missing wing, missing tail, missing nose, missing fuselage, "
     "wrong aircraft type, wrong number of engines, wrong wing count, extra propellers, extra tail, missing propeller, "
-    "low quality cutout, dirty alpha, source photo boundary, washed out pale colors, black blob, featureless dark shape, detached black circles, detached gray blobs"
+    "paper model, box-art crop, landing gear shadow, low quality cutout, dirty alpha, source photo boundary, washed out pale colors, "
+    "black blob, featureless dark shape, dull gray sticker, thin flat aircraft, detached black circles, detached gray blobs"
 )
 
 REPAIR_PROMPT = (
@@ -219,6 +265,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--width", type=int, default=960)
     parser.add_argument("--run-id", default=time.strftime("%Y%m%d%H%M%S"))
     parser.add_argument("--no-source-crop", action="store_true", help="Ignore configured sourceCrop when testing alternate explicit source images.")
+    parser.add_argument(
+        "--top-down-input",
+        choices=["reference", "procedural"],
+        default="reference",
+        help="For --view top-down, use high-quality top-view references when available, or generate a procedural aircraft-data guide.",
+    )
     return parser.parse_args()
 
 
@@ -387,6 +439,137 @@ def prepare_source_input(source_path: Path, size: tuple[int, int], config: dict[
     canvas = ImageOps.autocontrast(canvas, cutoff=0.5)
     canvas = ImageEnhance.Sharpness(canvas).enhance(1.08)
     return canvas
+
+
+def crop_alpha_subject(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    hard_alpha = alpha.point(lambda value: 255 if value > 12 else 0)
+    bbox = hard_alpha.getbbox()
+    if not bbox:
+        raise RuntimeError("reference image has empty alpha")
+    left, top, right, bottom = bbox
+    margin_x = max(4, round((right - left) * 0.018))
+    margin_y = max(4, round((bottom - top) * 0.018))
+    return rgba.crop(
+        (
+            max(0, left - margin_x),
+            max(0, top - margin_y),
+            min(rgba.width, right + margin_x),
+            min(rgba.height, bottom + margin_y),
+        )
+    )
+
+
+def remove_small_components(mask: Image.Image, min_area: int) -> Image.Image:
+    mask = mask.convert("L")
+    width, height = mask.size
+    pixels = mask.load()
+    seen: set[tuple[int, int]] = set()
+    clean = Image.new("L", mask.size, 0)
+    clean_pixels = clean.load()
+    for start_y in range(height):
+        for start_x in range(width):
+            if pixels[start_x, start_y] == 0 or (start_x, start_y) in seen:
+                continue
+            stack = [(start_x, start_y)]
+            seen.add((start_x, start_y))
+            points: list[tuple[int, int]] = []
+            while stack:
+                x, y = stack.pop()
+                points.append((x, y))
+                for nx in (x - 1, x, x + 1):
+                    for ny in (y - 1, y, y + 1):
+                        if nx < 0 or ny < 0 or nx >= width or ny >= height or (nx, ny) in seen:
+                            continue
+                        if pixels[nx, ny] == 0:
+                            continue
+                        seen.add((nx, ny))
+                        stack.append((nx, ny))
+            if len(points) >= min_area:
+                for x, y in points:
+                    clean_pixels[x, y] = 255
+    return clean
+
+
+def make_white_background_plan_subject(image: Image.Image) -> Image.Image:
+    rgb = image.convert("RGB")
+    width, height = rgb.size
+    mask = Image.new("L", rgb.size, 0)
+    mask_pixels = mask.load()
+    pixels = rgb.load()
+    for y in range(height):
+        for x in range(width):
+            red, green, blue = pixels[x, y]
+            mean = (red + green + blue) / 3
+            chroma = max(red, green, blue) - min(red, green, blue)
+            is_red_annotation = red > 150 and red - max(green, blue) > 55
+            is_bottom_right_legend = x > width * 0.52 and y > height * 0.58
+            if is_red_annotation or is_bottom_right_legend:
+                continue
+            if mean < 218 or chroma > 36:
+                mask_pixels[x, y] = 255
+    mask = mask.filter(ImageFilter.MedianFilter(3))
+    mask = remove_small_components(mask, min_area=900)
+    mask = mask.filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(0.55))
+    mask = mask.point(lambda value: 0 if value < 18 else min(255, round(value * 1.08)))
+    rgba = rgb.convert("RGBA")
+    rgba.putalpha(mask)
+    return crop_alpha_subject(rgba)
+
+
+def make_top_down_cutout_subject(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    width, height = rgba.size
+    alpha = rgba.getchannel("A")
+    mask = Image.new("L", rgba.size, 0)
+    mask_pixels = mask.load()
+    pixels = rgba.load()
+    alpha_pixels = alpha.load()
+    for y in range(height):
+        for x in range(width):
+            if alpha_pixels[x, y] <= 12:
+                continue
+            red, green, blue, _ = pixels[x, y]
+            mean = (red + green + blue) / 3
+            chroma = max(red, green, blue) - min(red, green, blue)
+            # Several top-view references carry a white backing card inside a non-empty alpha channel.
+            # Strip that card here so the final runtime PNG cannot regress into a rectangular photo plate.
+            if mean > 236 and chroma < 22:
+                continue
+            mask_pixels[x, y] = 255
+    mask = mask.filter(ImageFilter.MedianFilter(3))
+    mask = remove_small_components(mask, min_area=1800)
+    mask = mask.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(0.45))
+    mask = mask.point(lambda value: 0 if value < 18 else min(255, round(value * 1.08)))
+    subject = rgba.copy()
+    subject.putalpha(mask)
+    return crop_alpha_subject(subject)
+
+
+def load_top_down_reference_input(asset_id: str, config: dict[str, Any]) -> Image.Image | None:
+    relative = config.get("topDownReference")
+    if not relative:
+        return None
+    reference_path = SOURCE_DIR / str(relative)
+    if not reference_path.exists():
+        return None
+    opened = ImageOps.exif_transpose(Image.open(reference_path))
+    rotate = config.get("topDownReferenceRotate")
+    if rotate:
+        opened = opened.rotate(float(rotate), expand=True, resample=Image.Resampling.BICUBIC)
+    if config.get("topDownReferenceMaskMode") == "white-background-plan":
+        subject = make_white_background_plan_subject(opened)
+    else:
+        subject = make_top_down_cutout_subject(opened)
+    fitted = centered_fit(subject, tuple(config["size"]), tuple(config["fitPadding"]))
+    neutral = Image.new("RGB", fitted.size, (214, 218, 211))
+    neutral.paste(fitted.convert("RGB"), mask=fitted.getchannel("A"))
+    neutral = ImageOps.autocontrast(neutral, cutoff=0.35)
+    neutral = ImageEnhance.Color(neutral).enhance(float(config.get("topDownReferenceColor", 1.12)))
+    neutral = ImageEnhance.Contrast(neutral).enhance(float(config.get("topDownReferenceContrast", 1.12)))
+    neutral = ImageEnhance.Sharpness(neutral).enhance(1.22)
+    return neutral
 
 
 def sample_source_palette(source_path: Path) -> list[tuple[int, int, int]]:
@@ -779,6 +962,47 @@ def normalize_comfy_rgba(comfy_rgba_path: Path, config: dict[str, Any]) -> Image
     return styled
 
 
+def add_game_icon_lighting(rgb: Image.Image, alpha: Image.Image, config: dict[str, Any]) -> Image.Image:
+    result = rgb.convert("RGB").copy()
+    alpha = alpha.convert("L")
+    width, height = result.size
+    min_luminance = float(config.get("topDownMinLuminance", 82))
+    pixels = result.load()
+    alpha_pixels = alpha.load()
+    edge = alpha.filter(ImageFilter.FIND_EDGES).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(0.55))
+    edge_pixels = edge.load()
+    for y in range(height):
+        y_factor = y / max(1, height - 1)
+        for x in range(width):
+            a = alpha_pixels[x, y]
+            if a <= 16:
+                continue
+            red, green, blue = pixels[x, y]
+            luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722
+            if luminance < min_luminance:
+                lift = (min_luminance - luminance) * 0.72
+                red = min(255, round(red + lift))
+                green = min(255, round(green + lift))
+                blue = min(255, round(blue + lift))
+            # Baked upper-left key light plus lower-right occlusion gives the tiny marker more game-asset volume.
+            x_factor = x / max(1, width - 1)
+            light = 1.0 + 0.16 * max(0.0, 0.82 - x_factor) + 0.08 * max(0.0, 0.55 - y_factor)
+            shade = 1.0 - 0.12 * max(0.0, y_factor - 0.48) - 0.06 * max(0.0, x_factor - 0.55)
+            factor = max(0.78, min(1.24, light * shade))
+            red = max(0, min(255, round(red * factor)))
+            green = max(0, min(255, round(green * factor)))
+            blue = max(0, min(255, round(blue * factor)))
+            edge_strength = edge_pixels[x, y] / 255
+            if edge_strength > 0:
+                rim = edge_strength * 42
+                red = min(255, round(red + rim * 1.0))
+                green = min(255, round(green + rim * 0.96))
+                blue = min(255, round(blue + rim * 0.76))
+            pixels[x, y] = (red, green, blue)
+    result = result.filter(ImageFilter.UnsharpMask(radius=0.8, percent=145, threshold=2))
+    return result
+
+
 def alpha_from_reference_shape(reference: Image.Image) -> Image.Image:
     background = (214, 218, 211)
     rgb = reference.convert("RGB")
@@ -823,25 +1047,43 @@ def normalize_top_down_comfy_rgb(comfy_rgb_path: Path, reference: Image.Image, c
     return styled
 
 
-def normalize_top_down_comfy_rgba(comfy_rgba_path: Path, config: dict[str, Any], asset_id: str) -> Image.Image:
+def normalize_top_down_comfy_rgba(
+    comfy_rgba_path: Path,
+    config: dict[str, Any],
+    asset_id: str,
+    reference: Image.Image | None = None,
+) -> Image.Image:
     rgba = Image.open(comfy_rgba_path).convert("RGBA")
-    alpha = rgba.getchannel("A")
-    alpha = alpha.filter(ImageFilter.MedianFilter(3))
-    alpha = alpha.point(lambda value: 0 if value <= 10 else min(255, round(value * 1.06)))
-    rgba.putalpha(alpha)
-    fitted = centered_fit(rgba, tuple(config["size"]), tuple(config["fitPadding"]))
-    fitted_alpha = fitted.getchannel("A").point(lambda value: 0 if value <= 10 else value)
-    neutral = Image.new("RGB", fitted.size, (214, 218, 211))
-    rgb = neutral.copy()
-    rgb.paste(fitted.convert("RGB"), mask=fitted_alpha)
-    rgb = ImageOps.autocontrast(rgb, cutoff=0.45)
-    rgb = ImageEnhance.Color(rgb).enhance(float(config.get("topDownColor", 1.1)))
-    rgb = ImageEnhance.Contrast(rgb).enhance(float(config.get("topDownContrast", 1.2)))
-    rgb = ImageEnhance.Brightness(rgb).enhance(float(config.get("topDownBrightness", 0.96)))
-    rgb = ImageEnhance.Sharpness(rgb).enhance(float(config.get("topDownSharpness", 1.42)))
+    size = tuple(config["size"])
+    if reference is not None:
+        guide = reference.convert("RGB")
+        if guide.size != size:
+            guide = guide.resize(size, Image.Resampling.LANCZOS)
+        rgb = rgba.convert("RGB")
+        if rgb.size != size:
+            rgb = rgb.resize(size, Image.Resampling.LANCZOS)
+        fitted_alpha = alpha_from_reference_shape(guide)
+        rgb = Image.blend(guide, rgb, 0.72)
+    else:
+        alpha = rgba.getchannel("A")
+        alpha = alpha.filter(ImageFilter.MedianFilter(3))
+        alpha = alpha.point(lambda value: 0 if value <= 10 else min(255, round(value * 1.06)))
+        rgba.putalpha(alpha)
+        fitted = centered_fit(rgba, size, tuple(config["fitPadding"]))
+        fitted_alpha = fitted.getchannel("A").point(lambda value: 0 if value <= 10 else value)
+        neutral = Image.new("RGB", fitted.size, (214, 218, 211))
+        rgb = neutral.copy()
+        rgb.paste(fitted.convert("RGB"), mask=fitted_alpha)
+    neutral = Image.new("RGB", size, (214, 218, 211))
+    rgb = Image.composite(rgb.convert("RGB"), neutral, fitted_alpha)
+    rgb = ImageOps.autocontrast(rgb, cutoff=0.28)
+    rgb = ImageEnhance.Color(rgb).enhance(float(config.get("topDownColor", 1.22)))
+    rgb = ImageEnhance.Contrast(rgb).enhance(float(config.get("topDownContrast", 1.26)))
+    rgb = ImageEnhance.Brightness(rgb).enhance(float(config.get("topDownBrightness", 1.08)))
+    rgb = ImageEnhance.Sharpness(rgb).enhance(float(config.get("topDownSharpness", 1.52)))
+    rgb = add_game_icon_lighting(rgb, fitted_alpha, config)
     styled = rgb.convert("RGBA")
     styled.putalpha(fitted_alpha)
-    styled = styled.filter(ImageFilter.UnsharpMask(radius=0.8, percent=120, threshold=2))
     return styled
 
 
@@ -948,9 +1190,9 @@ def effective_generation_settings(args: argparse.Namespace) -> dict[str, float]:
         }
     if args.view == "top-down":
         return {
-            "control_end_percent": min(args.control_end_percent, 0.52),
-            "control_strength": min(args.control_strength, 0.38),
-            "denoise": max(args.denoise, 0.72),
+            "control_end_percent": min(args.control_end_percent, 0.34),
+            "control_strength": min(args.control_strength, 0.22),
+            "denoise": max(args.denoise, 0.82),
         }
     if not args.flight_state:
         return {
@@ -979,8 +1221,8 @@ def pipeline_description(args: argparse.Namespace) -> str:
         )
     if args.view == "top-down":
         return (
-            "source photo -> optional subject crop -> aircraft-data top-down icon generation with low-strength Canny identity guidance"
-            " -> ComfyUI BiRefNet mask -> RGBA top-down candidate -> project sizing and visual gates"
+            "source photo and top-view reference -> aircraft-data top-down game-icon generation with weak Canny structure guidance"
+            " -> ComfyUI material/volume pass -> reference-constrained alpha -> project sizing and visual gates"
         )
     if args.flight_state:
         return (
@@ -1215,8 +1457,11 @@ def main() -> None:
         base_config = ASSETS[asset_id]
         config = effective_asset_config(base_config, args)
         source_path = choose_source(asset_id, explicit_sources)
+        top_down_reference: Image.Image | None = None
         if args.view == "top-down":
-            source_input = make_top_down_reference(asset_id, source_path, config)
+            if args.top_down_input == "reference":
+                top_down_reference = load_top_down_reference_input(asset_id, config)
+            source_input = top_down_reference or make_top_down_reference(asset_id, source_path, config)
         else:
             source_input = prepare_source_input(source_path, (args.width, args.height), config, use_source_crop=not args.no_source_crop)
         input_name = f"war_london_air_source_{args.run_id}_{asset_id}_input.png"
@@ -1283,7 +1528,7 @@ def main() -> None:
         shutil.copy2(mask_path, mask_artifact_path)
         shutil.copy2(rgba_path, rgba_artifact_path)
         if args.view == "top-down":
-            candidate = normalize_top_down_comfy_rgba(rgba_path, config, asset_id)
+            candidate = normalize_top_down_comfy_rgba(rgba_path, config, asset_id, reference=top_down_reference)
         else:
             candidate = normalize_comfy_rgba(rgba_path, config)
         candidate_path = candidate_dir / config["runtime"]
@@ -1322,8 +1567,10 @@ def main() -> None:
         "rawComfyOutput": project_path(raw_artifact_path),
         "rawStats": image_stats(raw_artifact_path),
         "runtimeAsset": project_path(runtime_path),
-            "source": project_path(source_path),
+        "source": project_path(source_path),
         "sourceCrop": base_config.get("sourceCrop") if not args.no_source_crop and args.view != "top-down" else None,
+        "topDownInput": args.top_down_input if args.view == "top-down" else None,
+        "topDownReference": base_config.get("topDownReference") if args.view == "top-down" else None,
         "view": args.view,
         "stats": stats,
         "thresholds": {"maxBBoxFillRatio": config.get("maxBBoxFillRatio", 0.48)},
