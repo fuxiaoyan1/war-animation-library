@@ -66,6 +66,19 @@ export type TacticalTerrainFeature = {
   visibleUntil?: string;
 };
 
+export type MapSurfaceFeature = {
+  className?: string;
+  id: string;
+  kind: "coast" | "relief" | "sea" | "urban" | "weather";
+  label?: string;
+  labelCoordinates?: [number, number];
+  points: Array<[number, number]>;
+  revealAt?: string;
+  testId?: string;
+  type: "area" | "line";
+  visibleUntil?: string;
+};
+
 export type MapOverlayElement =
   | {
       className?: string;
@@ -176,6 +189,7 @@ type CampaignMapAnimationProps = {
     height: number;
     width: number;
   };
+  mapSurfaceFeatures?: MapSurfaceFeature[];
   mapPoints: MapPoint[];
   mapOverlays?: MapOverlayElement[];
   maxGapDays?: number;
@@ -909,6 +923,7 @@ export function CampaignMapAnimation({
   legendPrimary = "主攻推进",
   legendSecondary = "反击/联军行动",
   mapDimensions,
+  mapSurfaceFeatures = [],
   mapPoints,
   mapOverlays = [],
   maxGapDays,
@@ -1515,6 +1530,48 @@ export function CampaignMapAnimation({
                   />
                 ))}
               </g>
+              {mapSurfaceFeatures.length > 0 && (
+                <g className="map-surface-layer" data-testid="map-surface-layer" aria-hidden="true">
+                  {mapSurfaceFeatures.map((feature) => {
+                    const featureVisibility = sceneElementVisibility(
+                      progress,
+                      feature.revealAt ? timeline.dateToProgress(feature.revealAt) : 0,
+                      feature.visibleUntil ? timeline.dateToProgress(feature.visibleUntil) : Number.POSITIVE_INFINITY,
+                      contentTransitionProgress
+                    );
+                    if (!featureVisibility.isDrawn) {
+                      return null;
+                    }
+
+                    const featurePoints = feature.points.map((coordinates) => projectPoint(projection, coordinates));
+                    const featurePath = buildTerrainFeaturePath(featurePoints, feature.type === "area");
+                    const labelPoint = feature.labelCoordinates
+                      ? projectPoint(projection, feature.labelCoordinates)
+                      : featurePoints[Math.max(0, Math.floor(featurePoints.length / 2))] ?? [0, 0];
+
+                    return (
+                      <g
+                        key={feature.id}
+                        className={`map-surface-feature map-surface-${feature.kind} map-surface-${feature.id} ${feature.className ?? ""}`}
+                        data-scene-transition-phase={featureVisibility.phase}
+                        data-surface-id={feature.id}
+                        data-surface-kind={feature.kind}
+                        data-surface-type={feature.type}
+                        data-testid={feature.testId ?? `map-surface-${feature.id}`}
+                        style={opacityStyle(featureVisibility.opacity)}
+                      >
+                        <path className="map-surface-body" d={featurePath} />
+                        <path className="map-surface-ridge" d={featurePath} />
+                        {feature.label && (
+                          <text className="map-surface-label" x={labelPoint[0]} y={labelPoint[1]}>
+                            {feature.label}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+              )}
               {historicalRegions.length > 0 && (
                 <g className="historical-map-layer" data-testid="historical-map-layer">
                   <rect className="historical-paper-field" x={26} y={24} width={mapWidth - 52} height={mapHeight - 48} rx={28} />

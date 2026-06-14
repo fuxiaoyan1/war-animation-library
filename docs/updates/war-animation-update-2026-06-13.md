@@ -145,6 +145,14 @@
 - 伦敦顶部时间标志从默认“第 N 周”改为“第 N 小时”，符合 1940-09-15 单日小时级空战口径；专项 smoke 增加 `.day-counter` 包含“小时”且不包含“周”的断言，避免短时战术动画继续套长战役周粒度。
 - 修复后证据保存在 `artifacts/london-air-jitter-fix-20260614/`：`jitter-fix-samples.json` 记录 `consoleErrors=[]`、`pageErrors=[]`、`sampleCount=260`、`uniqueCameraTransforms=1`、`stageX/Y/W/H delta=0`、`routeJump.max≈5.01px/50ms` 且无大跳、`eventJump.max=0`；截图只保存在 artifacts，不在会话中展示。
 
+用户继续要求“跨海峡、跨国家空战地图主要看 3D 质感，不要精细画山脉、高楼、海浪、云朵”后的地图底板迭代：
+
+- `CampaignMapAnimation` 新增可复用 `mapSurfaceFeatures` 表层纹理能力，图层顺序固定为国家底图之上、战术网格/战术空域/航线/飞机之下，避免抢主战区和作战单位。
+- `battleOfBritain` 新增 7 个低细节质感层：`channel-sea-surface`、`channel-depth-sheen`、`cross-channel-coast-sheen`、`south-england-landform-wash`、`london-visibility-wash`、`morning-weather-veil`、`afternoon-weather-sheen`。命名和样式使用 `wash/sheen/veil`，明确这是跨海峡战区底板质感，不是具体山、浪、楼、云的逐项示意。
+- `.battle-of-britain` 样式为这些表层使用低饱和填充、弱高光和轻微错层线，禁止 blur/filter 和文字标签；海峡、海岸、英格兰南部、伦敦能见度、上午/下午天气只提供战区层次和光感，不干扰飞机图标金属质感和航迹识别。
+- 伦敦专项 smoke 新增 `expectBattleOfBritainMapSurfaceTexture`：检查表层存在、标签不可见、无大面积暗色表层块、最大线宽不超过战术层、filter 为 `none`、表层在战术几何和飞机之前渲染。`campaign data quality gates` 新增 `expectBattleOfBritainMapSurfaceData`，防止后续把底板改成精细标注图或重新加抢戏文字。
+- `scripts/probe-london-air-visual-evidence.mjs` 同步记录 `mapSurface` 指标、`darkSurfaceBlocks`、表层 filters、最大线宽、表层/战术/飞机 DOM 顺序和关键帧截图，作为人工视觉检查证据。
+
 真实故障根因同步记录：
 
 - 黑块不是单纯“底图太暗”，而是伦敦作用域样式缺失叠加 `fortified-line-layer` 的 SVG `polyline` 默认黑色填充；修复必须同时有 `.battle-of-britain` scoped CSS、`polyline fill="none"` 和截图像素连通域复核。

@@ -3105,6 +3105,98 @@ h1 {
   vector-effect: non-scaling-stroke;
 }
 
+.battle-of-britain .map-surface-layer {
+  pointer-events: none;
+}
+
+.battle-of-britain .map-surface-feature path {
+  filter: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.battle-of-britain .map-surface-feature text {
+  display: none;
+}
+
+.battle-of-britain .map-surface-body {
+  fill: none;
+  opacity: 0.56;
+  stroke: rgba(207, 222, 183, 0.28);
+  stroke-width: 2.2;
+}
+
+.battle-of-britain .map-surface-ridge {
+  fill: none;
+  opacity: 0.5;
+  stroke: rgba(255, 248, 203, 0.32);
+  stroke-width: 1.4;
+  transform: translate(-2px, -3px);
+}
+
+.battle-of-britain .map-surface-sea .map-surface-body {
+  fill: rgba(47, 112, 130, 0.24);
+  stroke: rgba(128, 202, 214, 0.22);
+}
+
+.battle-of-britain .map-surface-sea .map-surface-ridge {
+  stroke: rgba(174, 230, 226, 0.28);
+}
+
+.battle-of-britain .map-surface-channel-depth-sheen .map-surface-body {
+  fill: none;
+  stroke: rgba(120, 200, 211, 0.32);
+  stroke-dasharray: 18 18;
+  stroke-width: 2.4;
+}
+
+.battle-of-britain .map-surface-channel-depth-sheen .map-surface-ridge {
+  stroke: rgba(229, 248, 236, 0.24);
+  stroke-dasharray: 28 22;
+  stroke-width: 1.4;
+}
+
+.battle-of-britain .map-surface-coast .map-surface-body {
+  fill: none;
+  stroke: rgba(236, 221, 163, 0.34);
+  stroke-width: 3.4;
+}
+
+.battle-of-britain .map-surface-coast .map-surface-ridge {
+  stroke: rgba(255, 242, 179, 0.34);
+  stroke-width: 1.6;
+}
+
+.battle-of-britain .map-surface-relief .map-surface-body {
+  fill: rgba(101, 132, 86, 0.2);
+  stroke: rgba(208, 221, 152, 0.18);
+}
+
+.battle-of-britain .map-surface-relief .map-surface-ridge {
+  stroke: rgba(236, 235, 181, 0.26);
+}
+
+.battle-of-britain .map-surface-urban .map-surface-body {
+  fill: rgba(185, 175, 148, 0.16);
+  stroke: rgba(214, 204, 168, 0.2);
+}
+
+.battle-of-britain .map-surface-urban .map-surface-ridge {
+  stroke: rgba(241, 229, 186, 0.24);
+}
+
+.battle-of-britain .map-surface-weather .map-surface-body {
+  fill: rgba(206, 218, 210, 0.13);
+  stroke: rgba(229, 236, 224, 0.26);
+  stroke-dasharray: 16 15;
+}
+
+.battle-of-britain .map-surface-weather .map-surface-ridge {
+  stroke: rgba(255, 249, 216, 0.22);
+  stroke-dasharray: 24 18;
+}
+
 .battle-of-britain .tactical-terrain-layer,
 .battle-of-britain .fortified-line-layer {
   pointer-events: none;

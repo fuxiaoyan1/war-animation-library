@@ -62,6 +62,10 @@ async function collectPageMetrics(page) {
     const radarRoute = battle?.querySelector('.front-line[data-route-id="morning-radar-plots"] .front-route');
     const chainHomeVector = battle?.querySelector('[data-testid="britain-chain-home-vector"]');
     const dogfight = battle?.querySelector('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"], [data-testid="dogfight-clash"]');
+    const surfaceLayer = battle?.querySelector(".map-surface-layer");
+    const firstSurface = battle?.querySelector(".map-surface-layer .map-surface-feature");
+    const firstTactical = battle?.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
+    const firstAircraft = battle?.querySelector(".ww2-aircraft-marker");
     const rectFor = (element) => {
       if (!element) return null;
       const rect = element.getBoundingClientRect();
@@ -88,6 +92,41 @@ async function collectPageMetrics(page) {
         markerBox: { height: markerBox.height, width: markerBox.width },
         testId: marker.getAttribute("data-testid")
       };
+    });
+    const surfaceFeatures = Array.from(battle?.querySelectorAll(".map-surface-feature") ?? []).map((feature) => {
+      const box = feature.getBoundingClientRect();
+      return {
+        box: {
+          height: Math.round(box.height),
+          width: Math.round(box.width)
+        },
+        id: feature.getAttribute("data-surface-id"),
+        kind: feature.getAttribute("data-surface-kind"),
+        testId: feature.getAttribute("data-testid"),
+        type: feature.getAttribute("data-surface-type")
+      };
+    });
+    const visibleSurfaceLabels = Array.from(battle?.querySelectorAll(".map-surface-label") ?? []).filter((label) => getComputedStyle(label).display !== "none").length;
+    const surfacePathStyles = Array.from(battle?.querySelectorAll(".map-surface-feature path") ?? []).map((path) => {
+      const style = getComputedStyle(path);
+      const box = path.getBoundingClientRect();
+      return {
+        area: Math.round(box.width * box.height),
+        className: path.getAttribute("class"),
+        fill: style.fill,
+        filter: style.filter,
+        opacity: Number.parseFloat(style.opacity || "1"),
+        stroke: style.stroke,
+        strokeWidth: Number.parseFloat(style.strokeWidth || "0")
+      };
+    });
+    const darkSurfaceBlocks = surfacePathStyles.filter((item) => {
+      const match = item.fill.match(/rgba?\(([^)]+)\)/);
+      if (!match || item.fill === "none") return false;
+      const parts = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
+      const alpha = parts[3] ?? 1;
+      const luminance = parts[0] * 0.2126 + parts[1] * 0.7152 + parts[2] * 0.0722;
+      return item.area > 16000 && item.opacity * alpha > 0.14 && luminance < 54;
     });
 
     const svg = battle?.querySelector("svg.battle-map");
@@ -131,8 +170,18 @@ async function collectPageMetrics(page) {
       chainHomeVectorBox: rectFor(chainHomeVector),
       currentEventBox: rectFor(currentEvent),
       darkBlocks,
+      darkSurfaceBlocks,
       dogfightBox: rectFor(dogfight),
       genericAircraftMarkers: battle?.querySelectorAll('[data-testid="ww2-fighter-marker"], [data-testid="ww2-bomber-marker"]').length ?? 0,
+      mapSurface: {
+        aircraftAfterSurface: Boolean(surfaceLayer && firstAircraft && surfaceLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING),
+        featureCount: surfaceFeatures.length,
+        features: surfaceFeatures,
+        filters: [...new Set(surfacePathStyles.map((item) => item.filter))],
+        maxStrokeWidth: Math.max(...surfacePathStyles.map((item) => item.strokeWidth), 0),
+        surfaceBeforeTactical: Boolean(firstSurface && firstTactical && firstSurface.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING),
+        visibleLabels: visibleSurfaceLabels
+      },
       markerSample: markers.slice(0, 24),
       radarRouteBox: rectFor(radarRoute),
       title: document.querySelector('[data-testid="map-title-card"] h1, [data-testid="map-title-card"] h2')?.textContent

@@ -7,6 +7,7 @@ import {
   dogfightEffects,
   fortifiedLines,
   frontLines,
+  mapSurfaceFeatures,
   mapOverlays,
   mapPoints,
   rivers,
@@ -102,6 +103,7 @@ export function BattleOfBritainAnimation() {
       legendAxis="雷达预警 / 航迹保留"
       legendPrimary="德军轰炸机流与护航"
       legendSecondary="RAF 多批拦截"
+      mapSurfaceFeatures={mapSurfaceFeatures}
       mapOverlays={mapOverlays}
       mapPoints={mapPoints}
       maxGapDays={3}

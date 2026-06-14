@@ -73,9 +73,11 @@
 - 2026-06-14 根据用户要求“Spitfire、Hurricane、Bf109、Bf110 参考 He111 优化，尤其尾翼和机身统一性”，将 He 111 成品转化为伦敦飞机单位质量带并纳入 `tests/battle-france-smoke.spec.ts` 和 `scripts/probe-london-air-visual-evidence.mjs`：亮度均值 `80-150`、亮度标准差 `46-88`、饱和度均值 `45-95`、上下翼平衡 `>0.82`、尾翼连接占比 `0.028-0.1`、尾翼根部到后机身 RGB 距离 `<32`。Bf 109 另在生成脚本中设置更严的 `<22` 目标，并做尾翼局部色彩融合，避免尾翼像独立色块贴在机身后部。新运行版本为 `?v=20260614-he111-standard-v1`；浏览器证据保存在 `artifacts/london-air-he111-standard-browser-20260614/`，记录 `consoleErrors=[]`、`pageErrors=[]`、六类飞机 HTTP `Cache-Control=no-cache`、`genericAircraftMarkers=0`、各阶段 `darkBlocks=[]`。当前六类运行 PNG 指纹前缀为 Hurricane `1c6151863cde`、Spitfire `8c9ddfd8f59f`、Bf 109 `b97be414206c`、Bf 110 `7340f19b99a9`、Do 17 `b31d0fc93a51`、He 111 `778853b2ce26`；Bf 109 的 `tailRootRearFuselageRgbDistance` 为约 `13.4`。
 - 2026-06-14 修复用户反馈的播放画面抖动：连续帧探针显示伦敦开场和 11:05 镜头切换期间 `map-stage` 外框、`camera-layer` 手动 transform 均稳定，主要抖感来自非战术 cinematic 装饰层的漂浮 specks、重 blur 光晕/雾层，以及播放期大 SVG 底图每帧重算的额外压力。修复为：`CampaignMapAnimation` 缓存稳定投影下的国家路径，伦敦专属样式隐藏装饰性漂浮 specks，并让 `.cinematic-focus-glow` / `.cinematic-front-haze` 不使用 blur filter。回归门禁新增 `expectBattleOfBritainNoDecorativeCinematicJitter`，要求伦敦页 `visibleDecorativeSpecks=0`、`focusGlowFilter=none`、`frontHazeFilter=none`。证据保存到 `artifacts/london-air-jitter-fix-20260614/`，其中 `jitter-fix-samples.json` 记录 `consoleErrors=[]`、`pageErrors=[]`、过渡窗口 `sampleCount=260`、`stageX/Y/W/H delta=0`、`uniqueCameraTransforms=1`、`routeJump.max≈5.01px/50ms` 且无大跳、`eventJump.max=0`。截图只保存在 artifacts，不在会话中展示。
 - 2026-06-14 修复截图中顶部标志仍显示“第 1 周”的口径错误：伦敦空战是 1940-09-15 单日小时级战斗，`BattleOfBritainAnimation` 必须显式传 `timeCounterLabel="小时"`，不能沿用 `CampaignMapAnimation` 的长战役默认“周”。伦敦专项 smoke 断言 `.day-counter` 包含“小时”且不包含“周”。
+- 2026-06-14 地图底板升级为跨海峡战区的 3D 质感层，而不是精细山脉、高楼、海浪或云朵图示。`mapSurfaceFeatures` 只表达英格兰南部、英吉利海峡、法国北岸和 9 月 15 日天气能见度的低细节 wash/sheen/veil：`channel-sea-surface`、`channel-depth-sheen`、`cross-channel-coast-sheen`、`south-england-landform-wash`、`london-visibility-wash`、`morning-weather-veil`、`afternoon-weather-sheen`。这些层位于国家底图之上、战术地形/航线/飞机之下，不显示文字标签，不使用 blur/filter，不允许形成大面积暗块，目标是增强跨域空战地图质感，同时保持飞机和航迹优先可读。
 
 ## 不确定性和简化
 
 - 具体每个中队起飞、接敌、脱离的分钟级时间有资料差异。动画按 RAF Museum 叙述中的主要时间段和规模关系做可视化压缩。
 - 飞机数量不逐架复原，使用编队图标表达比例和角色：德军轰炸机多、护航战斗机伴随，RAF 以多批中队从不同机场加入。
 - 伦敦上空的单机事件只作为局部节点，主叙事仍是大规模体系空战。
+- 地形、海况和天气资料用于画面质感与战术能见度提示，不逐项复原云朵、浪形、楼群或山脊细节；跨海峡空战的可读飞机编队、雷达链和航迹仍是第一视觉层。
