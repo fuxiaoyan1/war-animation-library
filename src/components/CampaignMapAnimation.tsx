@@ -1007,8 +1007,11 @@ export function CampaignMapAnimation({
     zoomIn,
     zoomOut
   } = useMapInteraction(mapWidth, mapHeight, mapFocus);
-  const projection = useMemo(() => createFocusProjection(mapWidth, mapHeight, focusState), [focusState]);
-  const targetFocusProjection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus]);
+  const projection = useMemo(
+    () => createFocusProjection(mapWidth, mapHeight, focusState),
+    [focusState.focus, focusState.fromFocus, focusState.ratio, mapHeight, mapWidth]
+  );
+  const targetFocusProjection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus, mapHeight, mapWidth]);
   const formationOffsetScale = useMemo(() => {
     const targetScale = targetFocusProjection.scale();
     const currentScale = projection.scale();
@@ -1019,6 +1022,15 @@ export function CampaignMapAnimation({
     return Math.min(1.35, Math.max(0.35, currentScale / targetScale));
   }, [projection, targetFocusProjection]);
   const countryPath = useMemo(() => countryPathFactory(projection), [projection]);
+  const projectedCountries = useMemo(
+    () =>
+      countries.map((country, index) => ({
+        className: countryClassName(country),
+        d: countryPath(country) ?? undefined,
+        key: country.properties?.name ?? `country-${index}`
+      })),
+    [countries, countryClassName, countryPath]
+  );
 
   useEffect(() => {
     scoreRef.current = new WarScore(musicSource);
@@ -1495,11 +1507,11 @@ export function CampaignMapAnimation({
                 />
               )}
               <g className="country-layer">
-                {countries.map((country) => (
+                {projectedCountries.map((country) => (
                   <path
-                    key={country.properties?.name}
-                    d={countryPath(country) ?? undefined}
-                    className={countryClassName(country)}
+                    key={country.key}
+                    d={country.d}
+                    className={country.className}
                   />
                 ))}
               </g>

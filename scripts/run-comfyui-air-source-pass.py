@@ -45,6 +45,7 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownContrast": 1.34,
         "topDownSharpness": 1.62,
         "topDownMinLuminance": 88,
+        "topDownComfyBlend": 0.62,
         "lengthMeters": 9.1,
         "spanMeters": 11.2,
         "planform": "spitfire",
@@ -67,6 +68,7 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownContrast": 1.34,
         "topDownSharpness": 1.62,
         "topDownMinLuminance": 88,
+        "topDownComfyBlend": 0.62,
         "lengthMeters": 9.8,
         "spanMeters": 12.2,
         "planform": "hurricane",
@@ -90,13 +92,16 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownContrast": 1.36,
         "topDownSharpness": 1.66,
         "topDownMinLuminance": 84,
+        "topDownComfyBlend": 0.62,
+        "topDownTailColorHarmonize": {"strength": 0.78, "extent": 0.34},
+        "topDownMaxTailRootRearFuselageRgbDistance": 22,
         "lengthMeters": 8.7,
         "spanMeters": 9.9,
         "planform": "bf109",
         "repairSubjectBox": (0.12, 0.18, 0.81, 0.77),
         "repairZones": [(0.09, 0.58, 0.32, 0.93), (0.48, 0.60, 0.73, 0.88)],
         "prompt": "Messerschmitt Bf 109E-3 / Bf 109E-4 Emil in clean flying configuration, landing gear fully retracted, no wheels visible, one Daimler-Benz inverted V engine, one propeller, angular tapered wings, compact fuselage, narrow canopy, tailwheel fighter, wingspan about 9.9 m and length about 8.7 m, Luftwaffe Battle of Britain camouflage with restrained yellow theater markings, preserve the source photo silhouette and aircraft identity, subtle three-dimensional relighting, realistic metal skin, panel seams, canopy frame, exhaust and worn paint, isolated single aircraft on clean light gray studio background, no ground, no shadow, high fidelity aviation reference",
-        "topDownPrompt": "Messerschmitt Bf 109E-3 / Bf 109E-4 Emil viewed from directly above in a clean level flying pose, nose pointing right, complete aircraft reconstructed from aviation knowledge and aircraft data, compact single-engine fuselage, narrow canopy, angular tapered wings, one nose-mounted propeller disk only, no wing engines, no wingtip propellers, small tailplane, Luftwaffe Battle of Britain camouflage with restrained yellow theater markings, wingspan about 9.9 m and length about 8.7 m, accurate Bf 109 Emil planform",
+        "topDownPrompt": "Messerschmitt Bf 109E-3 / Bf 109E-4 Emil viewed from directly above in a clean level flying pose, nose pointing right, complete aircraft reconstructed from aviation knowledge and aircraft data, compact single-engine fuselage, narrow canopy, angular tapered wings, one nose-mounted propeller disk only, no wing engines, no wingtip propellers, small tailplane, tailplane and vertical fin color physically continuous with the rear fuselage camouflage rather than a separate patch, Luftwaffe Battle of Britain camouflage with restrained yellow theater markings, wingspan about 9.9 m and length about 8.7 m, accurate Bf 109 Emil planform",
     },
     "luftwaffe-bf110": {
         "fallback": "messerschmitt-bf110b-1940-side.jpg",
@@ -113,6 +118,7 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownContrast": 1.34,
         "topDownSharpness": 1.62,
         "topDownMinLuminance": 82,
+        "topDownComfyBlend": 0.58,
         "topDownMaxBBoxFillRatio": 0.66,
         "lengthMeters": 12.3,
         "spanMeters": 16.3,
@@ -132,13 +138,27 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownReference": "top-down-reference/luftwaffe-do17-hyperscale-airfix-plan-view.jpg",
         "topDownReferenceRotate": -90,
         "topDownReferenceMaskMode": "white-background-plan",
+        "topDownReferenceBrightness": 1.34,
+        "topDownReferenceColor": 1.62,
+        "topDownReferenceContrast": 1.08,
+        "topDownReferenceMinLuminance": 112,
+        "topDownMinTopBottomBalanceRatio": 0.82,
+        "topDownMinTailJoinRatio": 0.035,
         "topDownSize": (760, 620),
-        "topDownFitPadding": (92, 76),
-        "topDownBrightness": 1.16,
-        "topDownColor": 1.26,
-        "topDownContrast": 1.32,
+        "topDownFitPadding": (128, 98),
+        "topDownBrightness": 1.34,
+        "topDownColor": 1.58,
+        "topDownContrast": 1.24,
         "topDownSharpness": 1.58,
-        "topDownMinLuminance": 90,
+        "topDownMinLuminance": 116,
+        "topDownComfyBlend": 0.58,
+        "topDownTargetLuminanceMean": 104,
+        "topDownTargetLuminanceStdDev": 54,
+        "topDownTargetSaturationMean": 52,
+        "topDownMinLuminanceMeanQuality": 80,
+        "topDownMaxLuminanceMeanQuality": 135,
+        "topDownMinLuminanceStdDevQuality": 46,
+        "topDownMinSaturationMeanQuality": 45,
         "topDownMaxBBoxFillRatio": 0.62,
         "lengthMeters": 15.8,
         "spanMeters": 18.0,
@@ -164,6 +184,7 @@ ASSETS: dict[str, dict[str, Any]] = {
         "topDownContrast": 1.34,
         "topDownSharpness": 1.62,
         "topDownMinLuminance": 88,
+        "topDownComfyBlend": 0.58,
         "topDownMaxBBoxFillRatio": 0.66,
         "lengthMeters": 16.4,
         "spanMeters": 22.6,
@@ -188,6 +209,9 @@ TOP_DOWN_STYLE_PROMPT = (
     "Use the reference image as aircraft identity, planform, camouflage family, and era direction only; do not copy its flat lighting, crop boundary, "
     "missing parts, dirt, museum lighting, kit-painting sheet look, or poor cutout. Use the aircraft data for proportions and reconstruct the complete aircraft "
     "from aviation knowledge instead of tracing the source-image edge map. Render it like a polished RTS / tactical wargame unit sprite: "
+    "repair and complete the airframe by type: straight centered fuselage, a tail assembly physically attached to and aligned with the rear fuselage, "
+    "undistorted tail, symmetric horizontal stabilizers, correct vertical fin or twin fins, continuous camouflage and panel lines from fuselage into tail root, "
+    "unbroken wing tips, correct engine count, correct propeller disks, intact nose, and no bent or cropped tail surfaces. "
     "strong three-dimensional volume, thick wing and fuselage mass, metallic and doped-fabric surface response, baked ambient occlusion, "
     "small bright bevel-like rim highlights on leading edges, canopy glass glints, panel seams, rivets, engine details, propeller disks, subtle worn paint, "
     "and crisp map-scale readability. Make the colors brighter, richer, and more saturated than a raw archive photo while staying historically plausible: "
@@ -343,6 +367,14 @@ def effective_asset_config(config: dict[str, Any], args: argparse.Namespace) -> 
     result["maxBBoxRatio"] = result.get("topDownMaxBBoxRatio", 0.58)
     result["maxColumnCoverage"] = result.get("topDownMaxColumnCoverage", 0.88)
     result["maxRowCoverage"] = result.get("topDownMaxRowCoverage", 0.72)
+    result["minLuminanceMean"] = result.get("topDownMinLuminanceMeanQuality", 80)
+    result["maxLuminanceMean"] = result.get("topDownMaxLuminanceMeanQuality", 150)
+    result["minLuminanceStdDev"] = result.get("topDownMinLuminanceStdDevQuality", 46)
+    result["maxLuminanceStdDev"] = result.get("topDownMaxLuminanceStdDevQuality", 88)
+    result["minSaturationMean"] = result.get("topDownMinSaturationMeanQuality", 45)
+    result["maxSaturationMean"] = result.get("topDownMaxSaturationMeanQuality", 95)
+    result["minTopBottomBalanceRatio"] = result.get("topDownMinTopBottomBalanceRatio", 0.78)
+    result["minTailJoinRatio"] = result.get("topDownMinTailJoinRatio", 0.028)
     result["minOpaqueRatio"] = result.get("topDownMinOpaqueRatio", 0.065)
     return result
 
@@ -492,6 +524,39 @@ def remove_small_components(mask: Image.Image, min_area: int) -> Image.Image:
     return clean
 
 
+def keep_largest_component(mask: Image.Image) -> Image.Image:
+    mask = mask.convert("L")
+    width, height = mask.size
+    pixels = mask.load()
+    seen: set[tuple[int, int]] = set()
+    largest: list[tuple[int, int]] = []
+    for start_y in range(height):
+        for start_x in range(width):
+            if pixels[start_x, start_y] == 0 or (start_x, start_y) in seen:
+                continue
+            stack = [(start_x, start_y)]
+            seen.add((start_x, start_y))
+            points: list[tuple[int, int]] = []
+            while stack:
+                x, y = stack.pop()
+                points.append((x, y))
+                for nx in (x - 1, x, x + 1):
+                    for ny in (y - 1, y, y + 1):
+                        if nx < 0 or ny < 0 or nx >= width or ny >= height or (nx, ny) in seen:
+                            continue
+                        if pixels[nx, ny] == 0:
+                            continue
+                        seen.add((nx, ny))
+                        stack.append((nx, ny))
+            if len(points) > len(largest):
+                largest = points
+    clean = Image.new("L", mask.size, 0)
+    clean_pixels = clean.load()
+    for x, y in largest:
+        clean_pixels[x, y] = 255
+    return clean
+
+
 def make_white_background_plan_subject(image: Image.Image) -> Image.Image:
     rgb = image.convert("RGB")
     width, height = rgb.size
@@ -504,13 +569,13 @@ def make_white_background_plan_subject(image: Image.Image) -> Image.Image:
             mean = (red + green + blue) / 3
             chroma = max(red, green, blue) - min(red, green, blue)
             is_red_annotation = red > 150 and red - max(green, blue) > 55
-            is_bottom_right_legend = x > width * 0.52 and y > height * 0.58
-            if is_red_annotation or is_bottom_right_legend:
+            if is_red_annotation:
                 continue
             if mean < 218 or chroma > 36:
                 mask_pixels[x, y] = 255
     mask = mask.filter(ImageFilter.MedianFilter(3))
     mask = remove_small_components(mask, min_area=900)
+    mask = keep_largest_component(mask)
     mask = mask.filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(0.55))
     mask = mask.point(lambda value: 0 if value < 18 else min(255, round(value * 1.08)))
     rgba = rgb.convert("RGBA")
@@ -535,7 +600,7 @@ def make_top_down_cutout_subject(image: Image.Image) -> Image.Image:
             chroma = max(red, green, blue) - min(red, green, blue)
             # Several top-view references carry a white backing card inside a non-empty alpha channel.
             # Strip that card here so the final runtime PNG cannot regress into a rectangular photo plate.
-            if mean > 236 and chroma < 22:
+            if mean > 204 and chroma < 34:
                 continue
             mask_pixels[x, y] = 255
     mask = mask.filter(ImageFilter.MedianFilter(3))
@@ -566,9 +631,29 @@ def load_top_down_reference_input(asset_id: str, config: dict[str, Any]) -> Imag
     neutral = Image.new("RGB", fitted.size, (214, 218, 211))
     neutral.paste(fitted.convert("RGB"), mask=fitted.getchannel("A"))
     neutral = ImageOps.autocontrast(neutral, cutoff=0.35)
+    neutral = ImageEnhance.Brightness(neutral).enhance(float(config.get("topDownReferenceBrightness", 1.0)))
     neutral = ImageEnhance.Color(neutral).enhance(float(config.get("topDownReferenceColor", 1.12)))
     neutral = ImageEnhance.Contrast(neutral).enhance(float(config.get("topDownReferenceContrast", 1.12)))
     neutral = ImageEnhance.Sharpness(neutral).enhance(1.22)
+    min_luminance = config.get("topDownReferenceMinLuminance")
+    if min_luminance is not None:
+        min_value = float(min_luminance)
+        mask = fitted.getchannel("A")
+        pixels = neutral.load()
+        mask_pixels = mask.load()
+        for y in range(neutral.height):
+            for x in range(neutral.width):
+                if mask_pixels[x, y] <= 16:
+                    continue
+                red, green, blue = pixels[x, y]
+                luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722
+                if luminance < min_value:
+                    lift = (min_value - luminance) * 0.86
+                    pixels[x, y] = (
+                        min(255, round(red + lift)),
+                        min(255, round(green + lift)),
+                        min(255, round(blue + lift * 0.82)),
+                    )
     return neutral
 
 
@@ -1003,6 +1088,154 @@ def add_game_icon_lighting(rgb: Image.Image, alpha: Image.Image, config: dict[st
     return result
 
 
+def visible_texture_stats(rgb: Image.Image, alpha: Image.Image) -> dict[str, float]:
+    image = rgb.convert("RGB")
+    mask = alpha.convert("L")
+    pixels = image.load()
+    mask_pixels = mask.load()
+    luminance_values: list[float] = []
+    saturation_values: list[float] = []
+    for y in range(image.height):
+        for x in range(image.width):
+            if mask_pixels[x, y] <= 16:
+                continue
+            red, green, blue = pixels[x, y]
+            luminance_values.append(red * 0.2126 + green * 0.7152 + blue * 0.0722)
+            saturation_values.append(float(max(red, green, blue) - min(red, green, blue)))
+    if not luminance_values:
+        return {"luminanceMean": 0.0, "luminanceStdDev": 0.0, "saturationMean": 0.0}
+    luminance_mean = sum(luminance_values) / len(luminance_values)
+    luminance_std = (sum((value - luminance_mean) ** 2 for value in luminance_values) / len(luminance_values)) ** 0.5
+    saturation_mean = sum(saturation_values) / len(saturation_values)
+    return {
+        "luminanceMean": luminance_mean,
+        "luminanceStdDev": luminance_std,
+        "saturationMean": saturation_mean,
+    }
+
+
+def match_reference_game_texture(rgb: Image.Image, alpha: Image.Image, config: dict[str, Any]) -> Image.Image:
+    result = rgb.convert("RGB")
+    target_saturation = config.get("topDownTargetSaturationMean")
+    if target_saturation is not None:
+        stats = visible_texture_stats(result, alpha)
+        if stats["saturationMean"] < float(target_saturation):
+            boost = 1 + (float(target_saturation) - stats["saturationMean"]) / max(stats["saturationMean"], 1) * 0.82
+            result = ImageEnhance.Color(result).enhance(min(2.25, max(1.0, boost)))
+    target_luminance_std = config.get("topDownTargetLuminanceStdDev")
+    if target_luminance_std is not None:
+        stats = visible_texture_stats(result, alpha)
+        if stats["luminanceStdDev"] < float(target_luminance_std):
+            boost = 1 + (float(target_luminance_std) - stats["luminanceStdDev"]) / max(float(target_luminance_std), 1) * 0.92
+            result = ImageEnhance.Contrast(result).enhance(min(1.55, max(1.0, boost)))
+    target_luminance_mean = config.get("topDownTargetLuminanceMean")
+    if target_luminance_mean is not None:
+        stats = visible_texture_stats(result, alpha)
+        if stats["luminanceMean"] < float(target_luminance_mean):
+            boost = float(target_luminance_mean) / max(stats["luminanceMean"], 1)
+            result = ImageEnhance.Brightness(result).enhance(min(1.28, max(1.0, boost)))
+    return result
+
+
+def region_rgb_mean(
+    rgb: Image.Image,
+    alpha: Image.Image,
+    bbox: list[int],
+    x1f: float,
+    x2f: float,
+    y1f: float,
+    y2f: float,
+) -> list[float] | None:
+    left, top, bbox_width, bbox_height = bbox
+    if bbox_width <= 0 or bbox_height <= 0:
+        return None
+    image = rgb.convert("RGB")
+    mask = alpha.convert("L")
+    pixels = image.load()
+    mask_pixels = mask.load()
+    x1 = max(0, left + round(bbox_width * x1f))
+    x2 = min(image.width, left + round(bbox_width * x2f))
+    y1 = max(0, top + round(bbox_height * y1f))
+    y2 = min(image.height, top + round(bbox_height * y2f))
+    values: list[tuple[int, int, int]] = []
+    for y in range(y1, y2):
+        for x in range(x1, x2):
+            if mask_pixels[x, y] > 32:
+                values.append(pixels[x, y])
+    if not values:
+        return None
+    return [sum(value[channel] for value in values) / len(values) for channel in range(3)]
+
+
+def rgb_distance(a: list[float] | None, b: list[float] | None) -> float:
+    if a is None or b is None:
+        return 999.0
+    return sum((a[index] - b[index]) ** 2 for index in range(3)) ** 0.5
+
+
+def harmonize_tail_color(rgb: Image.Image, alpha: Image.Image, config: dict[str, Any]) -> Image.Image:
+    settings = config.get("topDownTailColorHarmonize")
+    if not settings:
+        return rgb.convert("RGB")
+    stats = alpha_stats(Image.merge("RGBA", (*rgb.convert("RGB").split(), alpha.convert("L"))))
+    bbox = stats["bbox"]
+    tail_mean = region_rgb_mean(rgb, alpha, bbox, 0.0, 0.30, 0.0, 1.0)
+    rear_mean = region_rgb_mean(rgb, alpha, bbox, 0.30, 0.48, 0.35, 0.65)
+    if tail_mean is None or rear_mean is None:
+        return rgb.convert("RGB")
+    result = rgb.convert("RGB").copy()
+    mask = alpha.convert("L")
+    pixels = result.load()
+    mask_pixels = mask.load()
+    left, top, bbox_width, bbox_height = bbox
+    extent = float(settings.get("extent", 0.34))
+    strength = float(settings.get("strength", 0.62))
+    for y in range(result.height):
+        for x in range(result.width):
+            if mask_pixels[x, y] <= 16:
+                continue
+            x_norm = (x - left) / max(1, bbox_width)
+            if x_norm > extent:
+                continue
+            taper = max(0.0, min(1.0, (extent - x_norm) / max(extent, 0.01)))
+            local_strength = strength * (0.55 + 0.45 * taper)
+            red, green, blue = pixels[x, y]
+            source = (red, green, blue)
+            harmonized = [rear_mean[index] + (source[index] - tail_mean[index]) * 0.82 for index in range(3)]
+            pixels[x, y] = tuple(
+                max(0, min(255, round(source[index] * (1 - local_strength) + harmonized[index] * local_strength)))
+                for index in range(3)
+            )
+    return result
+
+
+def fill_missing_airframe_from_reference(comfy_rgb: Image.Image, reference: Image.Image, alpha: Image.Image) -> Image.Image:
+    result = comfy_rgb.convert("RGB").copy()
+    guide = reference.convert("RGB")
+    alpha = alpha.convert("L")
+    background = (214, 218, 211)
+    pixels = result.load()
+    guide_pixels = guide.load()
+    alpha_pixels = alpha.load()
+    for y in range(result.height):
+        for x in range(result.width):
+            if alpha_pixels[x, y] <= 16:
+                continue
+            red, green, blue = pixels[x, y]
+            mean = (red + green + blue) / 3
+            chroma = max(red, green, blue) - min(red, green, blue)
+            distance = abs(red - background[0]) + abs(green - background[1]) + abs(blue - background[2])
+            looks_like_missing_airframe = distance < 38 or (mean > 218 and chroma < 30)
+            if looks_like_missing_airframe:
+                gr, gg, gb = guide_pixels[x, y]
+                pixels[x, y] = (
+                    max(0, min(255, round(gr * 1.08 + 6))),
+                    max(0, min(255, round(gg * 1.08 + 6))),
+                    max(0, min(255, round(gb * 1.08 + 4))),
+                )
+    return result
+
+
 def alpha_from_reference_shape(reference: Image.Image) -> Image.Image:
     background = (214, 218, 211)
     rgb = reference.convert("RGB")
@@ -1012,7 +1245,11 @@ def alpha_from_reference_shape(reference: Image.Image) -> Image.Image:
     for y in range(rgb.height):
         for x in range(rgb.width):
             red, green, blue = pixels[x, y]
+            mean = (red + green + blue) / 3
+            chroma = max(red, green, blue) - min(red, green, blue)
             distance = abs(red - background[0]) + abs(green - background[1]) + abs(blue - background[2])
+            if mean > 204 and chroma < 34:
+                continue
             if distance > 28:
                 alpha_pixels[x, y] = 255
             elif distance > 12:
@@ -1063,7 +1300,8 @@ def normalize_top_down_comfy_rgba(
         if rgb.size != size:
             rgb = rgb.resize(size, Image.Resampling.LANCZOS)
         fitted_alpha = alpha_from_reference_shape(guide)
-        rgb = Image.blend(guide, rgb, 0.72)
+        rgb = fill_missing_airframe_from_reference(rgb, guide, fitted_alpha)
+        rgb = Image.blend(guide, rgb, float(config.get("topDownComfyBlend", 0.62)))
     else:
         alpha = rgba.getchannel("A")
         alpha = alpha.filter(ImageFilter.MedianFilter(3))
@@ -1082,6 +1320,8 @@ def normalize_top_down_comfy_rgba(
     rgb = ImageEnhance.Brightness(rgb).enhance(float(config.get("topDownBrightness", 1.08)))
     rgb = ImageEnhance.Sharpness(rgb).enhance(float(config.get("topDownSharpness", 1.52)))
     rgb = add_game_icon_lighting(rgb, fitted_alpha, config)
+    rgb = match_reference_game_texture(rgb, fitted_alpha, config)
+    rgb = harmonize_tail_color(rgb, fitted_alpha, config)
     styled = rgb.convert("RGBA")
     styled.putalpha(fitted_alpha)
     return styled
@@ -1099,6 +1339,7 @@ def alpha_stats(image: Image.Image) -> dict[str, Any]:
     edge_values = []
     luminance_sum = 0.0
     luminance_square_sum = 0.0
+    saturation_sum = 0.0
     visible_count = 0
     for y in range(height):
         for x in range(width):
@@ -1113,6 +1354,7 @@ def alpha_stats(image: Image.Image) -> dict[str, Any]:
                 luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722
                 luminance_sum += luminance
                 luminance_square_sum += luminance * luminance
+                saturation_sum += max(red, green, blue) - min(red, green, blue)
                 visible_count += 1
             if x == 0 or y == 0 or x == width - 1 or y == height - 1:
                 edge_values.append(value)
@@ -1122,12 +1364,38 @@ def alpha_stats(image: Image.Image) -> dict[str, Any]:
         bbox = [min(xs), min(ys), max(xs) - min(xs) + 1, max(ys) - min(ys) + 1]
         bbox_ratio = bbox[2] * bbox[3] / (width * height)
         bbox_fill_ratio = opaque_pixels / (bbox[2] * bbox[3])
+        left, top, bbox_width, bbox_height = bbox
+        horizontal_midline = top + bbox_height // 2
+        upper_half = 0
+        lower_half = 0
+        tail_join_pixels = 0
+        tail_join_left = left + round(bbox_width * 0.18)
+        tail_join_right = left + round(bbox_width * 0.42)
+        for _, y in visible_points:
+            if y < horizontal_midline:
+                upper_half += 1
+            else:
+                lower_half += 1
+        for x, _ in visible_points:
+            if tail_join_left <= x < tail_join_right:
+                tail_join_pixels += 1
+        top_bottom_balance_ratio = min(upper_half, lower_half) / max(upper_half, lower_half, 1)
+        tail_join_ratio = tail_join_pixels / max(len(visible_points), 1)
+        tail_root_mean = region_rgb_mean(rgba.convert("RGB"), alpha, bbox, 0.12, 0.30, 0.35, 0.65)
+        rear_fuselage_mean = region_rgb_mean(rgba.convert("RGB"), alpha, bbox, 0.30, 0.48, 0.35, 0.65)
+        tail_root_rear_fuselage_rgb_distance = rgb_distance(tail_root_mean, rear_fuselage_mean)
     else:
         bbox = [0, 0, 0, 0]
         bbox_ratio = 0
         bbox_fill_ratio = 0
+        top_bottom_balance_ratio = 0
+        tail_join_ratio = 0
+        tail_root_mean = None
+        rear_fuselage_mean = None
+        tail_root_rear_fuselage_rgb_distance = 999.0
     luminance_mean = luminance_sum / visible_count if visible_count else 0
     luminance_variance = max(0, luminance_square_sum / visible_count - luminance_mean * luminance_mean) if visible_count else 0
+    saturation_mean = saturation_sum / visible_count if visible_count else 0
     corners = [
         alpha.getpixel((0, 0)),
         alpha.getpixel((width - 1, 0)),
@@ -1146,7 +1414,13 @@ def alpha_stats(image: Image.Image) -> dict[str, Any]:
         "maxColumnCoverage": max(column_counts) / height,
         "maxRowCoverage": max(row_counts) / width,
         "opaqueRatio": opaque_pixels / (width * height),
+        "saturationMean": saturation_mean,
         "size": [width, height],
+        "tailJoinRatio": tail_join_ratio,
+        "tailRootMeanRgb": tail_root_mean,
+        "rearFuselageMeanRgb": rear_fuselage_mean,
+        "tailRootRearFuselageRgbDistance": tail_root_rear_fuselage_rgb_distance,
+        "topBottomBalanceRatio": top_bottom_balance_ratio,
         "visiblePixels": visible_count,
     }
 
@@ -1163,8 +1437,16 @@ def validate_candidate(asset_id: str, stats: dict[str, Any], config_override: di
         "maxColumnCoverage": stats["maxColumnCoverage"] < float(config.get("maxColumnCoverage", 0.66)),
         "edgeVisibleRatio": stats["edgeVisibleRatio"] < 0.02,
         "cornerAlphaMax": stats["cornerAlphaMax"] <= 8,
-        "luminanceMean": 45 < stats["luminanceMean"] < 205,
-        "luminanceStdDev": stats["luminanceStdDev"] > 20,
+        "luminanceMeanMin": stats["luminanceMean"] > float(config.get("minLuminanceMean", 45)),
+        "luminanceMeanMax": stats["luminanceMean"] < float(config.get("maxLuminanceMean", 205)),
+        "luminanceStdDevMin": stats["luminanceStdDev"] > float(config.get("minLuminanceStdDev", 20)),
+        "luminanceStdDevMax": stats["luminanceStdDev"] < float(config.get("maxLuminanceStdDev", 120)),
+        "saturationMeanMin": stats.get("saturationMean", 0) >= float(config.get("minSaturationMean", 0)),
+        "saturationMeanMax": stats.get("saturationMean", 0) <= float(config.get("maxSaturationMean", 255)),
+        "tailJoinRatio": stats.get("tailJoinRatio", 1) >= float(config.get("minTailJoinRatio", 0)),
+        "tailRootRearFuselageRgbDistance": stats.get("tailRootRearFuselageRgbDistance", 0)
+        <= float(config.get("maxTailRootRearFuselageRgbDistance", 80)),
+        "topBottomBalanceRatio": stats.get("topBottomBalanceRatio", 1) >= float(config.get("minTopBottomBalanceRatio", 0)),
     }
     return [name for name, ok in checks.items() if not ok]
 

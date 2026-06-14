@@ -129,9 +129,26 @@
 - 伦敦专项测试同步从侧视“横向长度层级”改为俯视“高度/面积层级”，并放宽俯视翼面合理的 `bboxFillRatio` / column coverage，同时继续限制黑块、洗白、照片卡、透明边缘和旧缓存。
 - 2026-06-14 复建生产预览后重新跑浏览器视觉取证，证据目录为 `artifacts/london-air-topdown-browser-20260614/`：六张关键节点截图覆盖开场雷达、雷达接触、上午混战、下午预警、下午高峰和海峡追击；`metrics.browser.json` 记录 `consoleErrors=[]`、`pageErrors=[]`、六类飞机 HTTP `Cache-Control=no-cache`、`genericAircraftMarkers=0`、各阶段 `darkBlocks=[]`。后续参考图修订把运行版本提升到 `?v=20260614-reference-v1`，避免浏览器继续读取旧 PNG。
 
+用户继续要求“Spitfire、Hurricane、Bf109、Bf110 参考 He111 优化”后的 He 111 标准化迭代：
+
+- `scripts/run-comfyui-air-source-pass.py` 增加 He 111-derived 质量带和 Bf 109 尾翼色彩融合：亮度均值 `80-150`、亮度标准差 `46-88`、饱和度均值 `45-95`、上下翼平衡 `>0.82`、尾翼连接占比 `0.028-0.1`，并新增 `tailRootRearFuselageRgbDistance`，避免尾翼和后机身颜色断裂但仍通过简单 alpha/连接门禁。
+- Bf 109 的尾翼根部到后机身 RGB 距离从约 `36.1` 降到约 `13.4`，运行 PNG 指纹更新为 `b97be414206c`；其他五型同步保持在 He 111 质量带内，当前指纹为 Hurricane `1c6151863cde`、Spitfire `8c9ddfd8f59f`、Bf 110 `7340f19b99a9`、Do 17 `b31d0fc93a51`、He 111 `778853b2ce26`。
+- `UnitIcon` 运行版本参数提升到 `?v=20260614-he111-standard-v1`；伦敦专项 Playwright 和浏览器证据脚本都检查六类飞机的新版本、`Cache-Control=no-cache`、无通用飞机 fallback、无大黑块，以及 He 111 质量带全项通过。
+- 新浏览器视觉证据保存到 `artifacts/london-air-he111-standard-browser-20260614/`：六个关键帧截图覆盖开场雷达、雷达接触、上午混战、下午预警、下午高峰和海峡追击；`metrics.browser.json` 记录 `consoleErrors=[]`、`pageErrors=[]`、`genericAircraftMarkers=0`、各阶段 `darkBlocks=[]`，六类 PNG HTTP 响应均为 `200 image/png` 且 `Cache-Control=no-cache`。
+
+用户反馈“画面经常抖动”后的播放稳定性修复：
+
+- 先用 Playwright 连续帧探针复核，证据目录为 `artifacts/london-air-jitter-probe-20260614/`、`artifacts/london-air-jitter-probe-20260614-playback/` 和 `artifacts/london-air-jitter-probe-20260614-transition/`。静止事件帧和开场播放段显示 `camera-layer` transform 稳定，`map-stage` 外框没有布局位移；11:05 镜头切换窗口暴露出非战术 cinematic 装饰层和活动事件视觉层会放大抖感。
+- 修复一：`CampaignMapAnimation` 对稳定投影下的国家路径做 `useMemo` 缓存，减少播放期间大 SVG 底图每帧重算，降低卡顿型抖感。
+- 修复二：伦敦专属样式隐藏 `.cinematic-map-effects circle:not(.cinematic-focus-glow)` 的装饰性漂浮 specks，并让 `.cinematic-focus-glow` / `.cinematic-front-haze` 不再使用 heavy blur filter；保留真实战术运动层、飞机航迹和狗斗效果。
+- 伦敦专项 smoke 新增 `expectBattleOfBritainNoDecorativeCinematicJitter`，检查 `visibleDecorativeSpecks=0`、`focusGlowFilter=none`、`frontHazeFilter=none`，防止后续把非战术漂浮层重新叠回地图。
+- 伦敦顶部时间标志从默认“第 N 周”改为“第 N 小时”，符合 1940-09-15 单日小时级空战口径；专项 smoke 增加 `.day-counter` 包含“小时”且不包含“周”的断言，避免短时战术动画继续套长战役周粒度。
+- 修复后证据保存在 `artifacts/london-air-jitter-fix-20260614/`：`jitter-fix-samples.json` 记录 `consoleErrors=[]`、`pageErrors=[]`、`sampleCount=260`、`uniqueCameraTransforms=1`、`stageX/Y/W/H delta=0`、`routeJump.max≈5.01px/50ms` 且无大跳、`eventJump.max=0`；截图只保存在 artifacts，不在会话中展示。
+
 真实故障根因同步记录：
 
 - 黑块不是单纯“底图太暗”，而是伦敦作用域样式缺失叠加 `fortified-line-layer` 的 SVG `polyline` 默认黑色填充；修复必须同时有 `.battle-of-britain` scoped CSS、`polyline fill="none"` 和截图像素连通域复核。
 - 飞机资产不能用几何示意或整张照片卡。当前运行 PNG 的颜色来自真实照片，透明轮廓由 ISNet 分割与机型包络相交控制，并由版本化 DOM href、HTTP no-cache、Playwright 和浏览器截图共同复核。
 - 若用户截图仍显示旧照片条，优先查“页面实际 href / HTTP 缓存 / 发布目录指纹 / 浏览器请求”，不要先归咎于门禁阈值。
 - 运镜不能只断言焦点名称，必须检查当前事件、雷达指挥线、狗斗圈和飞机编队相对地图核心的位置，防止画面停在大片空地上。
+- 播放画面抖动不能只看静态截图。先采样连续帧，分别检查 `map-stage` 外框、`camera-layer` transform、投影切换窗口、单位位置/旋转和 CSS 动画层；伦敦这次的抖感来自非战术 cinematic 漂浮/blur 层和底图重算压力，而不是自动镜头复位。

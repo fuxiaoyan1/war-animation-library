@@ -48,7 +48,7 @@ The script expects the ComfyUI service to be reachable at `http://127.0.0.1:8188
 - `models/controlnet/control_v11p_sd15_canny_fp16.safetensors`
 - `models/background_removal/birefnet.safetensors`
 
-The runtime icons are served through stable filenames, so every production apply must also verify the browser-facing path and cache behavior. For the current 2026-06-14 reference pass, the `UnitIcon` hrefs include `?v=20260614-reference-v1`, and the local static server returns `Cache-Control: no-cache` for `assets/unit-icons/`.
+The runtime icons are served through stable filenames, so every production apply must also verify the browser-facing path and cache behavior. For the current 2026-06-14 He 111-standard pass, the `UnitIcon` hrefs include `?v=20260614-he111-standard-v1`, and the local static server returns `Cache-Control: no-cache` for `assets/unit-icons/`.
 
 ## Output Contract
 
@@ -81,6 +81,7 @@ Runtime aircraft icons must keep:
 - visible metal/fabric skin texture and panel detail, not a black silhouette or flat gray plate;
 - Battle-of-Britain-relative scale hierarchy: Bf 109 smallest, RAF single-engine fighters slightly larger, Bf 110 larger, Do 17 and He 111 largest but still compact enough for map clusters.
 - for `--view top-down`, an orthographic or near-orthographic dorsal aircraft planform: wings, engines, tail, canopy, and camouflage should read at marker size. Do not accept side-profile photo strips merely because their alpha is clean.
+- He 111 is the current in-animation quality reference for color balance, material contrast, and tail integration. Runtime PNG metrics should stay in the He 111-derived band: visible luminance mean `80-150`, luminance stddev `46-88`, saturation mean `45-95`, top/bottom planform balance `> 0.82`, tail-join ratio `0.028-0.1`, and tail-root to rear-fuselage RGB distance `< 32`. Bf 109 has a stricter generator target of `< 22` for tail-root to rear-fuselage distance because its previous tail read as a separate color patch.
 
 Do not block the asset workflow on perfect pre-ComfyUI cutouts. A clear source photo plus aircraft data can be passed through `--flight-state` so ComfyUI generates or refines the in-flight pose before BiRefNet cutout. The gate target is the final runtime animation: no photo-card backgrounds, no black silhouettes, no wrong engine/airframe proportions, no overlarge marker, and no stale camera/map failure.
 
@@ -101,7 +102,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 Then regenerate browser evidence:
 
 ```bash
-FRONTEND_URL=http://127.0.0.1:5177 node artifacts/london-air-topdown-browser-20260614/probe-london-air-topdown.mjs
+FRONTEND_URL=http://127.0.0.1:5177 node scripts/probe-london-air-visual-evidence.mjs artifacts/london-air-he111-standard-browser-20260614
 ```
 
-The evidence script writes six keyframe screenshots and `metrics.browser.json` under `artifacts/london-air-topdown-browser-20260614/`. Acceptance requires empty console/page errors, `genericAircraftMarkers=0`, no large dark blocks, `Cache-Control: no-cache` for all six aircraft PNGs, and DOM hrefs containing the current aircraft asset version such as `?v=20260614-reference-v1`.
+The evidence script writes six keyframe screenshots and `metrics.browser.json` under `artifacts/london-air-he111-standard-browser-20260614/`. Acceptance requires empty console/page errors, `genericAircraftMarkers=0`, no large dark blocks, `Cache-Control: no-cache` for all six aircraft PNGs, and DOM hrefs containing the current aircraft asset version such as `?v=20260614-he111-standard-v1`. The metrics must also show every aircraft passing the He 111-derived quality band, including `tailRootRearFuselageRgbDistance`.

@@ -129,6 +129,7 @@ export function BattleOfBritainAnimation() {
       tacticalTerrainFeatures={tacticalTerrainFeatures}
       terrainZones={[]}
       testId="battle-of-britain-app"
+      timeCounterLabel="小时"
       timeStepDays={1 / 24}
       timingMode="compressed"
       timelineTitle="1940年9月15日伦敦空战"

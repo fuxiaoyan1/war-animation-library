@@ -3056,6 +3056,16 @@ h1 {
   box-shadow: inset 0 0 64px rgba(0, 0, 0, 0.22);
 }
 
+.battle-of-britain .cinematic-map-effects circle:not(.cinematic-focus-glow) {
+  display: none;
+}
+
+.battle-of-britain .cinematic-focus-glow,
+.battle-of-britain .cinematic-front-haze {
+  opacity: 0.42;
+  filter: none;
+}
+
 .battle-of-britain .country {
   stroke: rgba(43, 66, 63, 0.58);
   stroke-width: 1;

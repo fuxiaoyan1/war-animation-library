@@ -338,7 +338,7 @@ const iconConfig: Record<
   }
 };
 
-const britainAirAssetVersion = "20260614-reference-v1";
+const britainAirAssetVersion = "20260614-he111-standard-v1";
 const britainAirIcons = new Set<UnitIconKind>([
   "britainHurricane",
   "britainSpitfire",

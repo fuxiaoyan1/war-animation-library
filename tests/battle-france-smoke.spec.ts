@@ -32,7 +32,14 @@ import * as qinData from "../src/data/qinUnification";
 import * as trafalgarData from "../src/data/trafalgarBattle";
 import * as tsushimaData from "../src/data/tsushimaBattle";
 
-const battleOfBritainAircraftAssetVersion = "20260614-reference-v1";
+const battleOfBritainAircraftAssetVersion = "20260614-he111-standard-v1";
+const battleOfBritainAircraftGameIconQualityBand = {
+  luminanceMean: { max: 150, min: 80 },
+  luminanceStdDev: { max: 88, min: 46 },
+  saturationMean: { max: 95, min: 45 },
+  tailRootRearFuselageRgbDistance: { max: 32 },
+  topBottomBalanceRatio: { min: 0.82 }
+};
 
 const jutlandTimeline = createCampaignTimeline({
   activeSpans: jutlandFrontLines.map(({ end, start }) => ({ end, start })),
@@ -1763,6 +1770,25 @@ async function expectNoLargeDarkRenderedBlocks(page: Page, shellSelector: string
   expect(darkBlocks).toEqual([]);
 }
 
+async function expectBattleOfBritainNoDecorativeCinematicJitter(page: Page) {
+  const metrics = await page.locator(".battle-of-britain").evaluate((shell) => {
+    const visibleDecorativeSpecks = [...shell.querySelectorAll(".cinematic-map-effects circle:not(.cinematic-focus-glow)")].filter(
+      (element) => getComputedStyle(element).display !== "none"
+    );
+    const focusGlow = shell.querySelector(".cinematic-focus-glow");
+    const frontHaze = shell.querySelector(".cinematic-front-haze");
+    return {
+      focusGlowFilter: focusGlow ? getComputedStyle(focusGlow).filter : "missing",
+      frontHazeFilter: frontHaze ? getComputedStyle(frontHaze).filter : "missing",
+      visibleDecorativeSpecks: visibleDecorativeSpecks.length
+    };
+  });
+
+  expect(metrics.visibleDecorativeSpecks, "Battle of Britain should not render decorative drifting specks over the tactical map").toBe(0);
+  expect(metrics.focusGlowFilter, "Battle of Britain cinematic focus glow should not use heavy blur during playback").toBe("none");
+  expect(metrics.frontHazeFilter, "Battle of Britain front haze should not use heavy blur during playback").toBe("none");
+}
+
 async function expectBattleOfBritainTacticalCoreVisible(page: Page, options: { bottomMax?: number; leftMin?: number; rightMax?: number; topMax?: number; topMin?: number } = {}) {
   const ratios = await page.locator(".battle-of-britain .tactical-terrain-layer, .battle-of-britain .front-line, .battle-of-britain .map-overlay-elements").evaluateAll((elements) => {
     const map = document.querySelector<HTMLElement>('[data-testid="map-stage"]');
@@ -1857,7 +1883,17 @@ type TransparentAircraftPngOptions = {
   maxAlphaRatio?: number;
   maxBBoxFillRatio?: number;
   maxColumnCoverage?: number;
+  maxTailJoinRatio?: number;
+  maxLuminanceMean?: number;
+  maxLuminanceStdDev?: number;
   maxRowCoverage?: number;
+  maxSaturationMean?: number;
+  maxTailRootRearFuselageRgbDistance?: number;
+  minLuminanceMean?: number;
+  minLuminanceStdDev?: number;
+  minSaturationMean?: number;
+  minTailJoinRatio?: number;
+  minTopBottomBalanceRatio?: number;
 };
 
 async function expectTransparentAircraftPng(page: Page, assetPath: string, options: TransparentAircraftPngOptions = {}) {
@@ -1866,6 +1902,17 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
   const maxBBoxFillRatio = options.maxBBoxFillRatio ?? 0.48;
   const maxRowCoverage = options.maxRowCoverage ?? 0.78;
   const maxColumnCoverage = options.maxColumnCoverage ?? 0.88;
+  const minLuminanceMean = options.minLuminanceMean ?? battleOfBritainAircraftGameIconQualityBand.luminanceMean.min;
+  const maxLuminanceMean = options.maxLuminanceMean ?? battleOfBritainAircraftGameIconQualityBand.luminanceMean.max;
+  const minLuminanceStdDev = options.minLuminanceStdDev ?? battleOfBritainAircraftGameIconQualityBand.luminanceStdDev.min;
+  const maxLuminanceStdDev = options.maxLuminanceStdDev ?? battleOfBritainAircraftGameIconQualityBand.luminanceStdDev.max;
+  const minSaturationMean = options.minSaturationMean ?? battleOfBritainAircraftGameIconQualityBand.saturationMean.min;
+  const maxSaturationMean = options.maxSaturationMean ?? battleOfBritainAircraftGameIconQualityBand.saturationMean.max;
+  const minTailJoinRatio = options.minTailJoinRatio ?? 0.028;
+  const maxTailJoinRatio = options.maxTailJoinRatio ?? 0.1;
+  const maxTailRootRearFuselageRgbDistance =
+    options.maxTailRootRearFuselageRgbDistance ?? battleOfBritainAircraftGameIconQualityBand.tailRootRearFuselageRgbDistance.max;
+  const minTopBottomBalanceRatio = options.minTopBottomBalanceRatio ?? battleOfBritainAircraftGameIconQualityBand.topBottomBalanceRatio.min;
   const stats = await page.evaluate(async (path) => {
     const image = new Image();
     image.src = path;
@@ -1885,6 +1932,7 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
     let opaquePixels = 0;
     let luminanceSum = 0;
     let luminanceSquareSum = 0;
+    let saturationSum = 0;
     let visiblePixels = 0;
     let minX = canvas.width;
     let minY = canvas.height;
@@ -1910,6 +1958,7 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
           const luminance = pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722;
           luminanceSum += luminance;
           luminanceSquareSum += luminance * luminance;
+          saturationSum += Math.max(pixels[offset], pixels[offset + 1], pixels[offset + 2]) - Math.min(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
           visiblePixels += 1;
           minX = Math.min(minX, x);
           minY = Math.min(minY, y);
@@ -1928,6 +1977,49 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
     }
 
     const bboxArea = maxX >= minX && maxY >= minY ? (maxX - minX + 1) * (maxY - minY + 1) : 0;
+    const midY = maxY >= minY ? minY + Math.floor((maxY - minY + 1) / 2) : 0;
+    const upperHalfPixels = rowCounts.slice(minY, midY).reduce((sum, count) => sum + count, 0);
+    const lowerHalfPixels = rowCounts.slice(midY, maxY + 1).reduce((sum, count) => sum + count, 0);
+    const regionRgbMean = (x1f: number, x2f: number, y1f: number, y2f: number) => {
+      if (maxX < minX || maxY < minY) return null;
+      const bboxWidth = maxX - minX + 1;
+      const bboxHeight = maxY - minY + 1;
+      const x1 = minX + Math.round(bboxWidth * x1f);
+      const x2 = minX + Math.round(bboxWidth * x2f);
+      const y1 = minY + Math.round(bboxHeight * y1f);
+      const y2 = minY + Math.round(bboxHeight * y2f);
+      let count = 0;
+      const sum = [0, 0, 0];
+      for (let y = y1; y < y2; y += 1) {
+        for (let x = x1; x < x2; x += 1) {
+          const offset = (y * canvas.width + x) * 4;
+          if (pixels[offset + 3] <= 32) continue;
+          sum[0] += pixels[offset];
+          sum[1] += pixels[offset + 1];
+          sum[2] += pixels[offset + 2];
+          count += 1;
+        }
+      }
+      return count > 0 ? sum.map((value) => value / count) : null;
+    };
+    const rgbDistance = (a: number[] | null, b: number[] | null) => {
+      if (!a || !b) return 999;
+      return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+    };
+    const tailRootMeanRgb = regionRgbMean(0.12, 0.3, 0.35, 0.65);
+    const rearFuselageMeanRgb = regionRgbMean(0.3, 0.48, 0.35, 0.65);
+    const tailJoinLeft = maxX >= minX ? minX + Math.round((maxX - minX + 1) * 0.18) : 0;
+    const tailJoinRight = maxX >= minX ? minX + Math.round((maxX - minX + 1) * 0.42) : 0;
+    let tailJoinPixels = 0;
+    if (visiblePixels > 0) {
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = tailJoinLeft; x < tailJoinRight; x += 1) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 16) {
+            tailJoinPixels += 1;
+          }
+        }
+      }
+    }
     const luminanceMean = visiblePixels > 0 ? luminanceSum / visiblePixels : 0;
     const luminanceVariance = visiblePixels > 0 ? luminanceSquareSum / visiblePixels - luminanceMean * luminanceMean : 0;
 
@@ -1941,7 +2033,13 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
       luminanceStdDev: Math.sqrt(Math.max(0, luminanceVariance)),
       maxColumnCoverage: Math.max(...columnCounts) / canvas.height,
       maxRowCoverage: Math.max(...rowCounts) / canvas.width,
-      opaqueRatio: opaquePixels / (canvas.width * canvas.height)
+      opaqueRatio: opaquePixels / (canvas.width * canvas.height),
+      saturationMean: visiblePixels > 0 ? saturationSum / visiblePixels : 0,
+      tailJoinRatio: visiblePixels > 0 ? tailJoinPixels / visiblePixels : 0,
+      tailRootMeanRgb,
+      rearFuselageMeanRgb,
+      tailRootRearFuselageRgbDistance: rgbDistance(tailRootMeanRgb, rearFuselageMeanRgb),
+      topBottomBalanceRatio: Math.min(upperHalfPixels, lowerHalfPixels) / Math.max(upperHalfPixels, lowerHalfPixels, 1)
     };
   }, assetPath);
 
@@ -1953,9 +2051,19 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
   expect(stats.maxColumnCoverage, `${assetPath} should not contain a full-height rectangular alpha column`).toBeLessThan(maxColumnCoverage);
   expect(stats.edgeVisibleRatio, `${assetPath} should not keep a visible rectangular photo edge`).toBeLessThan(0.02);
   expect(stats.cornerAlphaMax, `${assetPath} should have transparent corners`).toBeLessThanOrEqual(8);
-  expect(stats.luminanceMean, `${assetPath} should not become a black silhouette`).toBeGreaterThan(44);
-  expect(stats.luminanceMean, `${assetPath} should not become a washed-out flat plate`).toBeLessThan(180);
-  expect(stats.luminanceStdDev, `${assetPath} should retain aircraft skin/material detail instead of a flat fill`).toBeGreaterThan(36);
+  expect(stats.luminanceMean, `${assetPath} should stay inside the He 111-derived game icon brightness band: ${JSON.stringify(stats)}`).toBeGreaterThan(minLuminanceMean);
+  expect(stats.luminanceMean, `${assetPath} should not become a washed-out flat plate: ${JSON.stringify(stats)}`).toBeLessThan(maxLuminanceMean);
+  expect(stats.luminanceStdDev, `${assetPath} should retain He 111-level aircraft skin/material detail instead of a flat fill: ${JSON.stringify(stats)}`).toBeGreaterThan(minLuminanceStdDev);
+  expect(stats.luminanceStdDev, `${assetPath} should not become over-contrasted noise: ${JSON.stringify(stats)}`).toBeLessThan(maxLuminanceStdDev);
+  expect(stats.saturationMean, `${assetPath} should keep the richer game-unit color band established by He 111: ${JSON.stringify(stats)}`).toBeGreaterThan(minSaturationMean);
+  expect(stats.saturationMean, `${assetPath} should not become over-saturated arcade noise: ${JSON.stringify(stats)}`).toBeLessThan(maxSaturationMean);
+  expect(stats.tailJoinRatio, `${assetPath} should keep the tail physically integrated with the rear fuselage: ${JSON.stringify(stats)}`).toBeGreaterThan(minTailJoinRatio);
+  expect(stats.tailJoinRatio, `${assetPath} should not turn the tail into an oversized detached blob: ${JSON.stringify(stats)}`).toBeLessThan(maxTailJoinRatio);
+  expect(
+    stats.tailRootRearFuselageRgbDistance,
+    `${assetPath} tail color should stay unified with the rear fuselage, not read as a separate patch: ${JSON.stringify(stats)}`
+  ).toBeLessThan(maxTailRootRearFuselageRgbDistance);
+  expect(stats.topBottomBalanceRatio, `${assetPath} should keep a complete top-down aircraft planform, not a missing upper/lower wing: ${JSON.stringify(stats)}`).toBeGreaterThan(minTopBottomBalanceRatio);
 }
 
 async function expectAircraftMarkersHaveNoPhotoCardBackground(
@@ -6745,6 +6853,8 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await installAudioSpy(page);
   await expect(page.getByTestId("map-title-card").getByRole("heading", { name: "伦敦上空的鹰" })).toBeVisible();
   await expectOnlyWarNameInMapTitle(page, "伦敦上空的鹰");
+  await expect(page.locator(".battle-of-britain .day-counter")).toContainText("小时");
+  await expect(page.locator(".battle-of-britain .day-counter")).not.toContainText("周");
   await expectScoreUsesMusic(page, "/audio/wikimedia-rule-britannia.ogg");
   await expect(page.getByTestId("narration-subtitle")).toContainText("第一幕 / 雷达报来袭");
   await expectMapFirstLayout(page);
@@ -6759,6 +6869,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectNoDarkTacticalTerrainBlocks(page, ".battle-of-britain");
   await expectBattleOfBritainFortifiedLinesDoNotFill(page);
   await expectNoLargeDarkRenderedBlocks(page, ".battle-of-britain");
+  await expectBattleOfBritainNoDecorativeCinematicJitter(page);
   await expect(page.locator(".battle-of-britain").getByTestId("ancient-map-ornaments")).toHaveCount(0);
   await expectCurrentEventInBattleOfBritainCore(page, { maxY: 0.32 });
   await expectBattleOfBritainTacticalCoreVisible(page, { bottomMax: 0.86, leftMin: 0.04, rightMax: 1.12, topMax: 0.12 });
