@@ -68,6 +68,8 @@ async function collectPageMetrics(page) {
     const cloudLayer = battle?.querySelector('[data-testid="battle-of-britain-cloud-layer"]');
     const firstTactical = battle?.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
     const firstAircraft = battle?.querySelector(".ww2-aircraft-marker");
+    const countryLayer = battle?.querySelector(".country-layer");
+    const countries = Array.from(battle?.querySelectorAll(".country") ?? []);
     const rectFor = (element) => {
       if (!element) return null;
       const rect = element.getBoundingClientRect();
@@ -127,6 +129,45 @@ async function collectPageMetrics(page) {
     const assetMarkers = Object.fromEntries(
       assetNames.map((asset) => [asset, markers.filter((marker) => marker.href?.includes(`/assets/unit-icons/${asset}.png`)).length])
     );
+    const terrainTexture = (() => {
+      if (!terrainCanvas) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+      const sample = document.createElement("canvas");
+      sample.width = 220;
+      sample.height = 140;
+      const context = sample.getContext("2d", { willReadFrequently: true });
+      if (!context) return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+      context.drawImage(terrainCanvas, 0, 0, sample.width, sample.height);
+      const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+      const luminance = new Float32Array(sample.width * sample.height);
+      let edgeSum = 0;
+      let edgeCount = 0;
+      let luminanceSum = 0;
+      let luminanceSquareSum = 0;
+      for (let y = 0; y < sample.height; y += 1) {
+        for (let x = 0; x < sample.width; x += 1) {
+          const offset = (y * sample.width + x) * 4;
+          const value = pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722;
+          luminance[y * sample.width + x] = value;
+          luminanceSum += value;
+          luminanceSquareSum += value * value;
+        }
+      }
+      for (let y = 1; y < sample.height; y += 1) {
+        for (let x = 1; x < sample.width; x += 1) {
+          const value = luminance[y * sample.width + x];
+          edgeSum += Math.abs(value - luminance[y * sample.width + x - 1]) + Math.abs(value - luminance[(y - 1) * sample.width + x]);
+          edgeCount += 1;
+        }
+      }
+      const count = sample.width * sample.height;
+      const luminanceMean = luminanceSum / count;
+      const variance = luminanceSquareSum / count - luminanceMean * luminanceMean;
+      return {
+        edgeMean: edgeSum / edgeCount,
+        luminanceMean,
+        luminanceStdDev: Math.sqrt(Math.max(0, variance))
+      };
+    })();
 
     return {
       activeEvent: document.querySelector('[data-testid="active-event-card"]')?.textContent?.replace(/\s+/g, " ").trim(),
@@ -155,6 +196,8 @@ async function collectPageMetrics(page) {
           testId: image.getAttribute("data-testid") ?? ""
         })),
         cloudSpanCount: cloudLayer?.querySelectorAll(".battle-of-britain-cloud").length ?? 0,
+        countryFills: countries.map((country) => getComputedStyle(country).fill),
+        countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
         mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
         mapFocus: terrainLayer?.getAttribute("data-map-focus") ?? "",
         mapPixelRatio: terrainLayer?.getAttribute("data-map-pixel-ratio") ?? "",
@@ -162,10 +205,12 @@ async function collectPageMetrics(page) {
         renderer: terrainLayer?.getAttribute("data-renderer") ?? "",
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
+        terrainTexture,
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
         tacticalAfterTerrain: firstTactical
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
           : true,
+        visualSurfaceContract: terrainLayer?.getAttribute("data-visual-surface-contract") ?? "",
         weatherPhase: terrainLayer?.getAttribute("data-weather-phase") ?? ""
       },
       markerSample: markers.slice(0, 24),
@@ -394,6 +439,39 @@ async function collectWeatherAssetMetrics(page) {
   return { heads, records };
 }
 
+async function collectRuntimePublication(page) {
+  const response = await page.request.get(baseUrl);
+  const html = await response.text();
+  const bundleMatch = html.match(/src="([^"]*\/assets\/index-[^"]+\.js)"/);
+  const cssMatch = html.match(/href="([^"]*\/assets\/index-[^"]+\.css)"/);
+  return {
+    bundle: bundleMatch?.[1] ?? "",
+    css: cssMatch?.[1] ?? "",
+    indexCacheControl: response.headers()["cache-control"] ?? "",
+    indexOk: response.ok(),
+    indexStatus: response.status()
+  };
+}
+
+async function collectTerrainTileHeads(page) {
+  const tilePaths = [
+    "/assets/maps/battle-of-britain-3d/topo/8/128-85.jpg",
+    "/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png"
+  ];
+  const heads = {};
+  for (const tilePath of tilePaths) {
+    const response = await page.request.head(`${baseUrl}${tilePath}`);
+    heads[tilePath] = {
+      cacheControl: response.headers()["cache-control"],
+      contentLength: Number(response.headers()["content-length"]),
+      contentType: response.headers()["content-type"],
+      ok: response.ok(),
+      status: response.status()
+    };
+  }
+  return heads;
+}
+
 async function waitForTerrainReady(page) {
   await page.waitForFunction(
     () => document.querySelector('[data-testid="battle-of-britain-terrain-3d"]')?.getAttribute("data-terrain-loaded") === "true",
@@ -451,10 +529,12 @@ async function main() {
     consoleErrors,
     pageErrors,
     he111QualityBand,
+    runtimePublication: await collectRuntimePublication(page),
     screenshots,
     stageMetrics,
     assetHeads: await collectAssetHeads(page),
     aircraftPngMetrics: await collectAssetMetrics(page),
+    terrainTileHeads: await collectTerrainTileHeads(page),
     weatherPngMetrics: await collectWeatherAssetMetrics(page)
   };
   await fs.writeFile(path.join(outDir, "metrics.browser.json"), `${JSON.stringify(metrics, null, 2)}\n`);

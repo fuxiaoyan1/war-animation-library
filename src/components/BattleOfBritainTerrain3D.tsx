@@ -28,8 +28,8 @@ const terrainBounds: [[number, number], [number, number]] = [
 const minCachedTileZoom = 6;
 const cachedTerrainTileZoom = 11;
 const cachedTopoTileZoom = 11;
-const terrainExaggeration = 1;
-const hillshadeExaggeration = 0.16;
+const terrainExaggeration = 1.35;
+const hillshadeExaggeration = 0.36;
 const cameraTransitionDurationMs = 1050;
 const weatherAssetVersion = "20260614-comfy-weather-v1";
 const morningCloudAsset = `${publicPath("/assets/weather/battle-of-britain/morning-cloud-bank.png")}?v=${weatherAssetVersion}`;
@@ -220,7 +220,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#4f7984"
+        "background-color": "#527b84"
       }
     },
     {
@@ -228,11 +228,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.88,
-        "raster-brightness-min": 0.12,
-        "raster-contrast": 0.18,
-        "raster-opacity": 0.9,
-        "raster-saturation": -0.08
+        "raster-brightness-max": 0.8,
+        "raster-brightness-min": 0.02,
+        "raster-contrast": 0.46,
+        "raster-opacity": 0.92,
+        "raster-saturation": 0.12
       }
     },
     {
@@ -242,7 +242,7 @@ const terrainStyle: StyleSpecification = {
       filter: ["==", ["get", "kind"], "channel"],
       paint: {
         "fill-color": "#315f75",
-        "fill-opacity": 0.28
+        "fill-opacity": 0.1
       }
     },
     {
@@ -252,7 +252,7 @@ const terrainStyle: StyleSpecification = {
       filter: ["in", ["get", "kind"], ["literal", ["south-england", "french-coast"]]],
       paint: {
         "fill-color": ["match", ["get", "kind"], "south-england", "#9aa876", "#b4a46f"],
-        "fill-opacity": 0.18
+        "fill-opacity": 0.06
       }
     },
     {
@@ -262,8 +262,8 @@ const terrainStyle: StyleSpecification = {
       paint: {
         "hillshade-accent-color": "#668470",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#f4e2a7",
-        "hillshade-shadow-color": "#435f61"
+        "hillshade-highlight-color": "#f7e9b0",
+        "hillshade-shadow-color": "#2d4950"
       }
     },
     {
@@ -273,7 +273,7 @@ const terrainStyle: StyleSpecification = {
       filter: ["==", ["get", "kind"], "morning"],
       paint: {
         "fill-color": "#d7ddd3",
-        "fill-opacity": 0.16
+        "fill-opacity": 0.08
       }
     },
     {
@@ -283,7 +283,7 @@ const terrainStyle: StyleSpecification = {
       filter: ["==", ["get", "kind"], "afternoon"],
       paint: {
         "fill-color": "#edf1df",
-        "fill-opacity": 0.1
+        "fill-opacity": 0.05
       }
     }
   ],
@@ -408,7 +408,7 @@ export function BattleOfBritainTerrain3D({
       container.dataset.mapFocus = latestStateRef.current.mapFocus;
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       container.dataset.mapZoom = map.getZoom().toFixed(2);
-      container.dataset.terrainLoaded = map.loaded() ? "true" : "false";
+      container.dataset.terrainLoaded = map.loaded() && map.areTilesLoaded() ? "true" : "false";
       container.dataset.weatherPhase = weatherPhase(latestStateRef.current.progress);
     };
     markMapCanvas(container, map);
@@ -478,6 +478,7 @@ export function BattleOfBritainTerrain3D({
       data-topo-source={topoTileUrl}
       data-topo-tile-cache-zoom={`${cachedTopoTileZoom}`}
       data-visible-basemap="local-cached-world-topographic-map"
+      data-visual-surface-contract="maplibre-canvas-primary-country-boundaries-only"
       data-weather-phase={cloudPhase}
     >
       <div

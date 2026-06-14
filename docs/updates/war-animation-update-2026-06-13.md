@@ -154,6 +154,7 @@
 - 伦敦专项 smoke 改为 `expectBattleOfBritainTerrain3DMap` 与 `expectBattleOfBritainWeatherAssets`：检查 `data-renderer="maplibre-real-terrain"`、DEM/topo source、MapLibre canvas 覆盖、terrain loaded、云层在地形之上但在飞机之下、天气 PNG 的版本化 src、HTTP `image/png` 响应、alpha/opaque/边缘透明范围和无通用飞机 fallback。
 - 地图六层合同新增 `tools/tactical-terrain-studio/specs/battle-of-britain-terrain-studio.json`，并已运行 `npm run terrain:pipeline -- --spec tools/tactical-terrain-studio/specs/battle-of-britain-terrain-studio.json --out artifacts/tactical-terrain-studio/battle-of-britain`。当前报告状态是 `needs-review`，无 blockers；它明确后续公开级地图仍需补 QGIS/GDAL DEM 派生层、历史战术底图层、来源/许可信息和密集单位 LOD 复审，不把本轮运行级地图升级伪装成完整专业 GIS 终版。
 - `scripts/probe-london-air-visual-evidence.mjs` 同步从 `mapSurface` 指标改为 `terrain3D` / `weatherPngMetrics` 指标，记录 MapLibre renderer、terrain loaded、terrain/cloud/aircraft DOM 顺序、云层 href、天气 PNG HEAD 响应和 alpha 统计，并继续保存六个关键帧截图到 `artifacts/`，不在会话中展示图片。
+- 用户随后截图显示“没看出来”后，复核确认不是资料层缺失，而是当前 5177 发布目录仍在跑旧 bundle，且新地形 underlay 里 SVG 国家填色仍可能以半透明平面色压住 MapLibre 纹理。修复为重新发布当前 worktree 构建、静态服务补 `.jpg` 为 `image/jpeg`、伦敦地形 underlay 下国家层改为边界-only，并提高 topo/DEM/hillshade 的可见质感。伦敦专项 smoke 与视觉证据脚本新增运行 bundle 指纹、地形瓦片 HEAD、国家填充透明和 canvas 纹理指标，避免“DOM 有地形但肉眼仍是平面图”误过。
 
 真实故障根因同步记录：
 

@@ -1887,19 +1887,29 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-projection", "webgl-gis-terrain");
   await expect(terrain).toHaveAttribute("data-terrain-source", "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png");
   await expect(terrain).toHaveAttribute("data-topo-source", "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg");
-  await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1");
+  await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
+  await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.36");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
+  await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-canvas-primary-country-boundaries-only");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "phase-linked-drifting-overlay");
   await expect(page.getByTestId("battle-of-britain-cloud-layer")).toBeVisible();
   await expect(page.getByTestId("battle-of-britain-terrain-3d-canvas")).toBeVisible();
   await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
   await expect.poll(async () => await terrain.getAttribute("data-map-center")).not.toBe("");
   await expect.poll(async () => await terrain.getAttribute("data-terrain-loaded"), { timeout: 30_000 }).toBe("true");
+  const topoTileResponse = await page.request.head("/assets/maps/battle-of-britain-3d/topo/8/128-85.jpg");
+  expect(topoTileResponse.ok(), "Battle of Britain topographic tile should be present in the deployed preview").toBe(true);
+  expect(topoTileResponse.headers()["content-type"], "topographic tile should be served as a real JPEG, not an SPA fallback").toContain("image/jpeg");
+  const demTileResponse = await page.request.head("/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png");
+  expect(demTileResponse.ok(), "Battle of Britain DEM tile should be present in the deployed preview").toBe(true);
+  expect(demTileResponse.headers()["content-type"], "DEM tile should be served as a PNG Terrarium tile").toContain("image/png");
 
   const visualState = await page.locator(".battle-of-britain").evaluate((shell) => {
     const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
     const cloudLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-cloud-layer"]');
     const svg = shell.querySelector<SVGSVGElement>("svg.battle-map");
+    const countryLayer = shell.querySelector<SVGGElement>(".country-layer");
+    const countries = Array.from(shell.querySelectorAll<SVGPathElement>(".country"));
     const firstAircraft = shell.querySelector<SVGGraphicsElement>(".ww2-aircraft-marker");
     const firstRoute = shell.querySelector<SVGGraphicsElement>(".front-line");
     const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
@@ -1921,6 +1931,51 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
         : true,
       cloudOpacity: Number.parseFloat(cloudStyle?.opacity ?? "0"),
       cloudPointerEvents: cloudStyle?.pointerEvents ?? "",
+      countryFills: countries.map((country) => getComputedStyle(country).fill),
+      countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
+      terrainTexture: (() => {
+        if (!canvas) {
+          return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+        }
+        const sample = document.createElement("canvas");
+        sample.width = 220;
+        sample.height = 140;
+        const context = sample.getContext("2d", { willReadFrequently: true });
+        if (!context) {
+          return { edgeMean: 0, luminanceMean: 0, luminanceStdDev: 0 };
+        }
+        context.drawImage(canvas, 0, 0, sample.width, sample.height);
+        const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+        const luminance = new Float32Array(sample.width * sample.height);
+        let edgeSum = 0;
+        let edgeCount = 0;
+        let luminanceSum = 0;
+        let luminanceSquareSum = 0;
+        for (let y = 0; y < sample.height; y += 1) {
+          for (let x = 0; x < sample.width; x += 1) {
+            const offset = (y * sample.width + x) * 4;
+            const value = pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722;
+            luminance[y * sample.width + x] = value;
+            luminanceSum += value;
+            luminanceSquareSum += value * value;
+          }
+        }
+        for (let y = 1; y < sample.height; y += 1) {
+          for (let x = 1; x < sample.width; x += 1) {
+            const value = luminance[y * sample.width + x];
+            edgeSum += Math.abs(value - luminance[y * sample.width + x - 1]) + Math.abs(value - luminance[(y - 1) * sample.width + x]);
+            edgeCount += 1;
+          }
+        }
+        const count = sample.width * sample.height;
+        const luminanceMean = luminanceSum / count;
+        const variance = luminanceSquareSum / count - luminanceMean * luminanceMean;
+        return {
+          edgeMean: edgeSum / edgeCount,
+          luminanceMean,
+          luminanceStdDev: Math.sqrt(Math.max(0, variance))
+        };
+      })(),
       routeAfterTerrain: firstRoute
         ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstRoute) & Node.DOCUMENT_POSITION_FOLLOWING)
         : true,
@@ -1936,6 +1991,12 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.terrainPointerEvents).toBe("none");
   expect(visualState.cloudPointerEvents).toBe("none");
   expect(visualState.stageOverflow).toBe("hidden");
+  expect(visualState.countryLayerOpacity).toBe("1");
+  expect(visualState.countryFills.every((fill) => fill === "none" || fill === "rgba(0, 0, 0, 0)"), "SVG countries must be boundary-only so the 3D basemap remains visible").toBe(true);
+  expect(visualState.terrainTexture.luminanceStdDev, "3D basemap must not collapse into a single flat color field").toBeGreaterThan(9);
+  expect(visualState.terrainTexture.edgeMean, "3D basemap must expose enough local relief/topographic variation to be visible beneath the tactical layer").toBeGreaterThan(5);
+  expect(visualState.terrainTexture.luminanceMean, "3D basemap should stay bright enough to avoid dark blocks").toBeGreaterThan(80);
+  expect(visualState.terrainTexture.luminanceMean, "3D basemap should not wash out into a near-white flat surface").toBeLessThan(236);
   expect(visualState.cloudAfterTerrain, "weather/cloud layer should sit above the terrain canvas").toBe(true);
   expect(visualState.cloudBeforeAircraft, "weather/cloud layer must stay below aircraft markers").toBe(true);
   expect(visualState.cloudOpacity, "cloud layer should be atmospheric, not a fog blanket over aircraft").toBeGreaterThanOrEqual(0.16);
