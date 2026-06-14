@@ -24,9 +24,10 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (640, 560),
         "fitPadding": (88, 58),
         "rotate": -90,
-        "brightness": 0.74,
-        "contrast": 1.22,
-        "color": 1.03,
+        "brightness": 0.86,
+        "contrast": 1.34,
+        "color": 1.22,
+        "metalSheen": 24,
         "markingPolicy": "raf",
         "note": "IL-2 Spitfire Mk.XIV top view reference with RAF markings; used as Spitfire planform/material proxy, not as a literal 1940 variant claim.",
     },
@@ -36,9 +37,10 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (640, 560),
         "fitPadding": (84, 56),
         "rotate": -90,
-        "brightness": 0.74,
-        "contrast": 1.2,
-        "color": 1.04,
+        "brightness": 0.87,
+        "contrast": 1.32,
+        "color": 1.24,
+        "metalSheen": 24,
         "markingPolicy": "raf",
         "note": "IL-2 Hurricane Mk.II top view reference; close to Battle of Britain Hurricane shape.",
     },
@@ -48,9 +50,10 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (620, 540),
         "fitPadding": (98, 74),
         "rotate": -90,
-        "brightness": 0.74,
-        "contrast": 1.22,
-        "color": 0.96,
+        "brightness": 0.86,
+        "contrast": 1.35,
+        "color": 1.18,
+        "metalSheen": 22,
         "markingPolicy": "luftwaffe",
         "note": "IL-2 Bf 109 E-7 top view reference; same Battle of Britain Emil family planform.",
     },
@@ -60,9 +63,10 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (720, 600),
         "fitPadding": (80, 70),
         "rotate": -90,
-        "brightness": 0.72,
-        "contrast": 1.24,
-        "color": 0.95,
+        "brightness": 0.84,
+        "contrast": 1.36,
+        "color": 1.16,
+        "metalSheen": 24,
         "markingPolicy": "luftwaffe",
         "note": "IL-2 Bf 110 E-2 top view reference; close enough to Battle of Britain Bf 110C/D silhouette.",
     },
@@ -72,13 +76,14 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (760, 620),
         "fitPadding": (92, 76),
         "rotate": -90,
-        "brightness": 1.02,
-        "contrast": 1.2,
-        "color": 1.0,
+        "brightness": 1.12,
+        "contrast": 1.32,
+        "color": 1.14,
         "do17PlanColorLift": True,
         "maskMode": "white-background-plan",
         "markingPolicy": "luftwaffe",
-        "minLuminance": 62,
+        "metalSheen": 28,
+        "minLuminance": 74,
         "note": "Airfix Do 17Z plan-view painting guide used as the Do 17 planform source; annotations and white sheet background are removed.",
     },
     "luftwaffe-he111": {
@@ -87,9 +92,10 @@ ASSETS: dict[str, dict[str, Any]] = {
         "size": (780, 660),
         "fitPadding": (88, 76),
         "rotate": -90,
-        "brightness": 0.74,
-        "contrast": 1.24,
-        "color": 0.96,
+        "brightness": 0.86,
+        "contrast": 1.36,
+        "color": 1.18,
+        "metalSheen": 26,
         "markingPolicy": "luftwaffe",
         "note": "IL-2 He 111 H-6 top view reference; used as He 111 bomber icon source.",
     },
@@ -221,7 +227,7 @@ def restyle_icon(rgba: Image.Image, config: dict[str, Any]) -> Image.Image:
     rgb = ImageEnhance.Brightness(rgb).enhance(float(config.get("brightness", 0.74)))
     rgb = ImageEnhance.Contrast(rgb).enhance(float(config.get("contrast", 1.2)))
     rgb = ImageEnhance.Color(rgb).enhance(float(config.get("color", 1.0)))
-    rgb = ImageEnhance.Sharpness(rgb).enhance(1.26)
+    rgb = ImageEnhance.Sharpness(rgb).enhance(1.42)
     min_luminance = config.get("minLuminance")
     if min_luminance is not None:
         min_value = float(min_luminance)
@@ -262,7 +268,7 @@ def restyle_icon(rgba: Image.Image, config: dict[str, Any]) -> Image.Image:
                     max(0, min(255, green)),
                     max(0, min(255, blue)),
                 )
-    rgb = rgb.filter(ImageFilter.UnsharpMask(radius=0.75, percent=115, threshold=2))
+    rgb = rgb.filter(ImageFilter.UnsharpMask(radius=0.75, percent=145, threshold=2))
     result = rgb.convert("RGBA")
     result.putalpha(alpha)
     if config.get("do17PlanColorLift"):
@@ -283,11 +289,43 @@ def restyle_icon(rgba: Image.Image, config: dict[str, Any]) -> Image.Image:
     return result
 
 
+def add_metal_sheen(rgba: Image.Image, config: dict[str, Any]) -> Image.Image:
+    intensity = float(config.get("metalSheen", 0))
+    if intensity <= 0:
+        return rgba
+    result = rgba.convert("RGBA")
+    alpha = result.getchannel("A")
+    width, height = result.size
+    highlight = Image.new("RGBA", result.size, (0, 0, 0, 0))
+    shadow = Image.new("RGBA", result.size, (0, 0, 0, 0))
+    highlight_pixels = highlight.load()
+    shadow_pixels = shadow.load()
+    alpha_pixels = alpha.load()
+    center_y = height * 0.5
+    for y in range(height):
+        for x in range(width):
+            mask = alpha_pixels[x, y] / 255
+            if mask <= 0.06:
+                continue
+            nx = (x - width * 0.56) / (width * 0.36)
+            centerline = max(0, 1 - nx * nx) * max(0, 1 - abs(y - center_y) / (height * 0.24))
+            wing_sheen = max(0, 1 - abs(x - width * 0.48) / (width * 0.32)) * max(0, 1 - abs(y - center_y) / (height * 0.42))
+            highlight_alpha = round((centerline * 0.72 + wing_sheen * 0.28) * intensity * mask)
+            edge_shadow = max(0, min(1, abs(y - center_y) / (height * 0.43) - 0.42)) * intensity * 0.55 * mask
+            if highlight_alpha > 0:
+                highlight_pixels[x, y] = (246, 242, 218, min(70, highlight_alpha))
+            if edge_shadow > 0.8:
+                shadow_pixels[x, y] = (18, 23, 23, round(edge_shadow))
+    result = Image.alpha_composite(result, shadow)
+    result = Image.alpha_composite(result, highlight)
+    return result.filter(ImageFilter.UnsharpMask(radius=0.6, percent=120, threshold=1))
+
+
 def edge_highlight(rgba: Image.Image) -> Image.Image:
     alpha = rgba.getchannel("A")
     edge = alpha.filter(ImageFilter.FIND_EDGES).filter(ImageFilter.GaussianBlur(0.6))
-    edge = edge.point(lambda value: min(92, round(value * 0.38)))
-    highlight = Image.new("RGBA", rgba.size, (235, 236, 220, 0))
+    edge = edge.point(lambda value: min(112, round(value * 0.46)))
+    highlight = Image.new("RGBA", rgba.size, (248, 246, 226, 0))
     highlight.putalpha(edge)
     return Image.alpha_composite(rgba, highlight)
 
@@ -354,6 +392,7 @@ def build_icon(asset_id: str, config: dict[str, Any]) -> Image.Image:
         subject = subject.rotate(rotate_degrees, expand=True, resample=Image.Resampling.BICUBIC)
     fitted = centered_fit(subject, tuple(config["size"]), tuple(config["fitPadding"]))
     styled = restyle_icon(fitted, config)
+    styled = add_metal_sheen(styled, config)
     styled = edge_highlight(styled)
     if config.get("do17PlanColorLift"):
         styled = enhance_do17_plan_icon(styled)
