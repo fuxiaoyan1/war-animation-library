@@ -131,6 +131,18 @@
 - 使用位置：`中途岛海空战`。
 - 复用位置：`俾斯麦海海空战`。该复用是临时方案；后续公开发布前应替换为独立配乐以重新满足系列配乐不重复规则。
 
+### Mercury, the Winged Messenger
+
+- 文件：`public/audio/wikimedia-holst-mercury.ogg`
+- 曲目：`Mercury, the Winged Messenger`，选自 Holst《The Planets》。
+- 作曲：Gustav Holst。
+- 演奏/来源标注：United States Air Force Heritage of America Band；Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Holst_The_Planets_Mercury.ogg>
+- OGG：<https://upload.wikimedia.org/wikipedia/commons/8/89/Holst_The_Planets_Mercury.ogg>
+- 版权状态：Wikimedia Commons 文件页标注为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小约 `10.45 MB`，Ogg Vorbis，Stereo，44100Hz，`file` 识别约 `499821 bps`；SHA256 `d5b154e804f01599ab41db862f72527814b37292ef3635c9b86d52a32acb9c8d`。
+- 使用位置：`伦敦上空的鹰`。该曲替换 `Rule, Britannia!`，用于提高空战动画的机动、紧张和航空主题听感，并让伦敦空战重新纳入系列配乐唯一性门禁。
+
 ### Rule, Britannia!
 
 - 文件：`public/audio/wikimedia-rule-britannia.ogg`
@@ -140,7 +152,7 @@
 - 文件页：<https://commons.wikimedia.org/wiki/File:Rule,_Britannia.ogg>
 - 版权状态：Wikimedia Commons 文件页标注为公有领域；当前项目在美国本机环境中作为历史动画演示使用。
 - 本地校验：文件大小约 `3.9 MB`，Ogg Vorbis，Monaural，44100Hz，`afinfo` 估算时长约 `247.137s`。
-- 使用位置：`特拉法尔加大海战`、`伦敦上空的鹰`。伦敦临时改用该曲，是为了先解决用户反馈的德法战役配乐错配；后续仍应为伦敦补一首独立且更偏航空战气质的英国主题配乐，再移除 `britain-air` 的配乐唯一性豁免。
+- 使用位置：`特拉法尔加大海战`。
 
 ### Anchors Aweigh
 

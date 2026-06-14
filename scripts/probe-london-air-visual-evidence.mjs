@@ -1,11 +1,13 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { inflateSync } from "node:zlib";
 
 const baseUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:5177";
 const outDir = path.resolve(process.argv[2] ?? "artifacts/london-air-visual-evidence");
 const aircraftAssetVersion = "20260614-he111-standard-v1";
 const weatherAssetVersion = "20260614-comfy-weather-v4";
+const musicAssetPath = "/audio/wikimedia-holst-mercury.ogg";
 
 const he111QualityBand = {
   luminanceMean: { min: 80, max: 150 },
@@ -33,6 +35,138 @@ const aircraftAssets = [
   "luftwaffe-do17",
   "luftwaffe-he111"
 ];
+
+function decodeScreenshotPng(buffer) {
+  const signature = buffer.subarray(0, 8);
+  if (!signature.equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    throw new Error("Screenshot was not a PNG");
+  }
+
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let bitDepth = 0;
+  let colorType = 0;
+  const chunks = [];
+
+  while (offset < buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.subarray(offset + 4, offset + 8).toString("ascii");
+    const data = buffer.subarray(offset + 8, offset + 8 + length);
+    offset += 12 + length;
+
+    if (type === "IHDR") {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      bitDepth = data[8];
+      colorType = data[9];
+    } else if (type === "IDAT") {
+      chunks.push(data);
+    } else if (type === "IEND") {
+      break;
+    }
+  }
+
+  if (width <= 0 || height <= 0 || bitDepth !== 8 || (colorType !== 2 && colorType !== 6)) {
+    throw new Error(`Unsupported PNG format: ${width}x${height}, bitDepth=${bitDepth}, colorType=${colorType}`);
+  }
+
+  const inflated = inflateSync(Buffer.concat(chunks));
+  const bytesPerPixel = colorType === 6 ? 4 : 3;
+  const stride = width * bytesPerPixel;
+  const pixels = Buffer.alloc(width * height * 4);
+  let inputOffset = 0;
+  const prior = Buffer.alloc(stride);
+  const current = Buffer.alloc(stride);
+
+  for (let y = 0; y < height; y += 1) {
+    const filter = inflated[inputOffset];
+    inputOffset += 1;
+    inflated.copy(current, 0, inputOffset, inputOffset + stride);
+    inputOffset += stride;
+
+    for (let x = 0; x < stride; x += 1) {
+      const left = x >= bytesPerPixel ? current[x - bytesPerPixel] : 0;
+      const up = prior[x];
+      const upLeft = x >= bytesPerPixel ? prior[x - bytesPerPixel] : 0;
+      if (filter === 1) {
+        current[x] = (current[x] + left) & 255;
+      } else if (filter === 2) {
+        current[x] = (current[x] + up) & 255;
+      } else if (filter === 3) {
+        current[x] = (current[x] + Math.floor((left + up) / 2)) & 255;
+      } else if (filter === 4) {
+        const p = left + up - upLeft;
+        const pa = Math.abs(p - left);
+        const pb = Math.abs(p - up);
+        const pc = Math.abs(p - upLeft);
+        current[x] = (current[x] + (pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft)) & 255;
+      } else if (filter !== 0) {
+        throw new Error(`Unsupported PNG filter: ${filter}`);
+      }
+    }
+
+    for (let x = 0; x < width; x += 1) {
+      const source = x * bytesPerPixel;
+      const target = (y * width + x) * 4;
+      pixels[target] = current[source];
+      pixels[target + 1] = current[source + 1];
+      pixels[target + 2] = current[source + 2];
+      pixels[target + 3] = colorType === 6 ? current[source + 3] : 255;
+    }
+    current.copy(prior);
+  }
+
+  return { data: pixels, height, width };
+}
+
+function collectRenderedStageColorGrade(buffer) {
+  const png = decodeScreenshotPng(buffer);
+  let bluePixels = 0;
+  let darkPixels = 0;
+  let greenPixels = 0;
+  let luminanceSquareSum = 0;
+  let luminanceSum = 0;
+  let saturationSum = 0;
+  let samples = 0;
+
+  const xStart = Math.floor(png.width * 0.06);
+  const xEnd = Math.floor(png.width * 0.94);
+  const yStart = Math.floor(png.height * 0.16);
+  const yEnd = Math.floor(png.height * 0.88);
+
+  for (let y = yStart; y < yEnd; y += 3) {
+    for (let x = xStart; x < xEnd; x += 3) {
+      const offset = (y * png.width + x) * 4;
+      const red = png.data[offset];
+      const green = png.data[offset + 1];
+      const blue = png.data[offset + 2];
+      const alpha = png.data[offset + 3];
+      if (alpha < 245) {
+        continue;
+      }
+      const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+      const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
+      luminanceSum += luminance;
+      luminanceSquareSum += luminance * luminance;
+      saturationSum += saturation;
+      samples += 1;
+      if (luminance < 34) darkPixels += 1;
+      if (green > blue + 10 && green > red + 4) greenPixels += 1;
+      if (blue > green + 8 && blue > red + 12 && saturation > 24) bluePixels += 1;
+    }
+  }
+
+  const luminanceMean = samples > 0 ? luminanceSum / samples : 0;
+  return {
+    blueRatio: samples > 0 ? bluePixels / samples : 0,
+    darkRatio: samples > 0 ? darkPixels / samples : 0,
+    greenRatio: samples > 0 ? greenPixels / samples : 0,
+    luminanceMean,
+    luminanceStdDev: samples > 0 ? Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean)) : 0,
+    saturationMean: samples > 0 ? saturationSum / samples : 0
+  };
+}
 
 async function ensureDir() {
   await fs.mkdir(outDir, { recursive: true });
@@ -171,6 +305,72 @@ async function collectPageMetrics(page) {
         saturationMean: saturationSum / count
       };
     })();
+    const renderedColorGrade = (() => {
+      if (!mapStage) {
+        return { blueRatio: 0, darkRatio: 0, greenRatio: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
+      }
+      const stageBox = mapStage.getBoundingClientRect();
+      const sample = document.createElement("canvas");
+      sample.width = Math.max(1, Math.round(stageBox.width));
+      sample.height = Math.max(1, Math.round(stageBox.height));
+      const context = sample.getContext("2d", { willReadFrequently: true });
+      const sourceCanvas = terrainCanvas;
+      if (!context || !sourceCanvas) {
+        return { blueRatio: 0, darkRatio: 0, greenRatio: 0, luminanceMean: 0, luminanceStdDev: 0, saturationMean: 0 };
+      }
+      context.drawImage(sourceCanvas, 0, 0, sample.width, sample.height);
+      context.globalCompositeOperation = "multiply";
+      const gradient = context.createLinearGradient(0, 0, sample.width, sample.height);
+      gradient.addColorStop(0, "rgba(9,31,54,0.48)");
+      gradient.addColorStop(0.42, "rgba(12,47,76,0.42)");
+      gradient.addColorStop(0.68, "rgba(49,55,31,0.36)");
+      gradient.addColorStop(1, "rgba(93,70,29,0.34)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, sample.width, sample.height);
+      context.globalCompositeOperation = "screen";
+      const sheen = context.createLinearGradient(0, 0, sample.width, sample.height);
+      sheen.addColorStop(0, "rgba(255,232,155,0.07)");
+      sheen.addColorStop(0.38, "rgba(255,255,255,0)");
+      sheen.addColorStop(0.76, "rgba(91,168,218,0.08)");
+      sheen.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = sheen;
+      context.fillRect(0, 0, sample.width, sample.height);
+      context.globalCompositeOperation = "source-over";
+      const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+      let bluePixels = 0;
+      let darkPixels = 0;
+      let greenPixels = 0;
+      let luminanceSquareSum = 0;
+      let luminanceSum = 0;
+      let saturationSum = 0;
+      let samples = 0;
+      for (let y = Math.floor(sample.height * 0.16); y < Math.floor(sample.height * 0.88); y += 3) {
+        for (let x = Math.floor(sample.width * 0.06); x < Math.floor(sample.width * 0.94); x += 3) {
+          const offset = (y * sample.width + x) * 4;
+          const red = pixels[offset];
+          const green = pixels[offset + 1];
+          const blue = pixels[offset + 2];
+          const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+          const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
+          luminanceSum += luminance;
+          luminanceSquareSum += luminance * luminance;
+          saturationSum += saturation;
+          samples += 1;
+          if (luminance < 34) darkPixels += 1;
+          if (green > blue + 10 && green > red + 4) greenPixels += 1;
+          if (blue > green + 8 && blue > red + 12 && saturation > 24) bluePixels += 1;
+        }
+      }
+      const luminanceMean = samples > 0 ? luminanceSum / samples : 0;
+      return {
+        blueRatio: samples > 0 ? bluePixels / samples : 0,
+        darkRatio: samples > 0 ? darkPixels / samples : 0,
+        greenRatio: samples > 0 ? greenPixels / samples : 0,
+        luminanceMean,
+        luminanceStdDev: samples > 0 ? Math.sqrt(Math.max(0, luminanceSquareSum / samples - luminanceMean * luminanceMean)) : 0,
+        saturationMean: samples > 0 ? saturationSum / samples : 0
+      };
+    })();
 
     return {
       activeEvent: document.querySelector('[data-testid="active-event-card"]')?.textContent?.replace(/\s+/g, " ").trim(),
@@ -202,6 +402,7 @@ async function collectPageMetrics(page) {
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
         terrainTexture,
+        renderedColorGrade,
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
         tacticalAfterTerrain: firstTactical
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -381,6 +582,14 @@ async function collectAssetHeads(page) {
       status: response.status()
     };
   }
+  const musicResponse = await page.request.head(`${baseUrl}${musicAssetPath}`);
+  heads[musicAssetPath] = {
+    cacheControl: musicResponse.headers()["cache-control"],
+    contentLength: Number(musicResponse.headers()["content-length"]),
+    contentType: musicResponse.headers()["content-type"],
+    ok: musicResponse.ok(),
+    status: musicResponse.status()
+  };
   return heads;
 }
 
@@ -528,11 +737,18 @@ async function main() {
     const filePath = path.join(outDir, event.file);
     await page.screenshot({ path: filePath, fullPage: false });
     screenshots.push(filePath);
-    stageMetrics[event.id] = await collectPageMetrics(page);
+    const renderedStageColorGrade = collectRenderedStageColorGrade(
+      await page.locator(".battle-of-britain [data-testid='map-stage']").screenshot()
+    );
+    stageMetrics[event.id] = {
+      ...(await collectPageMetrics(page)),
+      renderedStageColorGrade
+    };
   }
 
   const metrics = {
     aircraftAssetVersion,
+    musicAssetPath,
     weatherAssetVersion,
     baseUrl,
     checkedAt: new Date().toISOString(),

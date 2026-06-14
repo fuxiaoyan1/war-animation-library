@@ -550,7 +550,7 @@
 
 当前注意点：
 
-- `tests/battle-france-smoke.spec.ts` 里仍有 `temporarySharedMusicCampaignIds`，当前把 `big-week`、`bismarck-sea`、`britain-air` 从全局配乐唯一性测试中临时排除。不要把这理解为“这三部不需要配乐唯一性”；伦敦已从德法战役曲换到 `Rule, Britannia!` 作为临时修复，但仍与特拉法尔加复用，后续应补独立空战配乐后移除豁免。
+- `tests/battle-france-smoke.spec.ts` 里仍有 `temporarySharedMusicCampaignIds`，当前只把 `big-week`、`bismarck-sea` 从全局配乐唯一性测试中临时排除。`伦敦上空的鹰` 已改用独立的 `wikimedia-holst-mercury.ogg` 并重新纳入唯一性门禁。
 - 海战齐射不一定使用“爆炸”声，风帆/近代舰炮更适合 `gunpowder` 配置；二战空袭和跳弹轰炸才更偏 `ww2`。
 
 ## 12. 时间轴与节奏规则

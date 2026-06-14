@@ -107,7 +107,7 @@ export function BattleOfBritainAnimation() {
       mapPoints={mapPoints}
       mapTerrainLayer={(state) => <BattleOfBritainTerrain3D {...state} />}
       maxGapDays={3}
-      musicSource={publicPath("/audio/wikimedia-rule-britannia.ogg")}
+      musicSource={publicPath("/audio/wikimedia-holst-mercury.ogg")}
       narrationCues={narrationCues}
       playbackDurationSeconds={300}
       regionLabels={[

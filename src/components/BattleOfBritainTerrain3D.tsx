@@ -43,6 +43,12 @@ const hillshadeExaggeration = 0.5;
 const registeredCameraPitch = 0;
 const registeredCameraBearing = 0;
 const registrationSampleLimit = 10;
+const cameraMoveThreshold = {
+  bearing: 0.01,
+  center: 0.00008,
+  pitch: 0.01,
+  zoom: 0.012
+};
 
 const historicalBaseData = {
   type: "FeatureCollection",
@@ -208,7 +214,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#102f39"
+        "background-color": "#06182c"
       }
     },
     {
@@ -216,31 +222,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.46,
+        "raster-brightness-max": 0.34,
         "raster-brightness-min": 0,
-        "raster-contrast": 0.98,
-        "raster-opacity": 0.94,
-        "raster-saturation": 0.78
-      }
-    },
-    {
-      id: "battle-of-britain-channel-depth",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "channel"],
-      paint: {
-        "fill-color": "#0a465b",
-        "fill-opacity": 0.28
-      }
-    },
-    {
-      id: "battle-of-britain-landform-tone",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["in", ["get", "kind"], ["literal", ["south-england", "french-coast"]]],
-      paint: {
-        "fill-color": ["match", ["get", "kind"], "south-england", "#496426", "#5e531f"],
-        "fill-opacity": 0.24
+        "raster-contrast": 1,
+        "raster-opacity": 0.96,
+        "raster-saturation": 0.92
       }
     },
     {
@@ -248,40 +234,10 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#3f694a",
+        "hillshade-accent-color": "#526f52",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#b49b4d",
-        "hillshade-shadow-color": "#0f2932"
-      }
-    },
-    {
-      id: "battle-of-britain-operational-contrast-veil",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "aoi"],
-      paint: {
-        "fill-color": "#0b252c",
-        "fill-opacity": 0.28
-      }
-    },
-    {
-      id: "battle-of-britain-weather-morning",
-      type: "fill",
-      source: "battle-of-britain-weather",
-      filter: ["==", ["get", "kind"], "morning"],
-      paint: {
-        "fill-color": "#d9dfd4",
-        "fill-opacity": 0.025
-      }
-    },
-    {
-      id: "battle-of-britain-weather-afternoon",
-      type: "fill",
-      source: "battle-of-britain-weather",
-      filter: ["==", ["get", "kind"], "afternoon"],
-      paint: {
-        "fill-color": "#eef0df",
-        "fill-opacity": 0.02
+        "hillshade-highlight-color": "#c59b4a",
+        "hillshade-shadow-color": "#071927"
       }
     }
   ],
@@ -330,6 +286,17 @@ function cameraForState(
     pitch: registeredCameraPitch,
     zoom: clamp(mercatorScaleToMapLibreZoom(terrainView.projectionScale, viewScale, mapView.scale), 6.8, 11.6)
   };
+}
+
+function shouldJumpCamera(map: maplibregl.Map, camera: ReturnType<typeof cameraForState>) {
+  const center = map.getCenter();
+  return (
+    Math.abs(center.lng - camera.center[0]) > cameraMoveThreshold.center ||
+    Math.abs(center.lat - camera.center[1]) > cameraMoveThreshold.center ||
+    Math.abs(map.getZoom() - camera.zoom) > cameraMoveThreshold.zoom ||
+    Math.abs(map.getPitch() - camera.pitch) > cameraMoveThreshold.pitch ||
+    Math.abs(map.getBearing() - camera.bearing) > cameraMoveThreshold.bearing
+  );
 }
 
 function registrationErrorForState(
@@ -528,7 +495,9 @@ export function BattleOfBritainTerrain3D({
       return;
     }
     const camera = cameraForState(terrainView, mapView, container, mapWidth, mapHeight);
-    map.jumpTo(camera);
+    if (shouldJumpCamera(map, camera)) {
+      map.jumpTo(camera);
+    }
     container.dataset.currentEvent = activeEvent.id;
     container.dataset.mapFocus = mapFocus;
     container.dataset.weatherPhase = cloudPhase;
@@ -543,10 +512,12 @@ export function BattleOfBritainTerrain3D({
       ref={containerRef}
       className="battle-of-britain-terrain-3d"
       data-camera-mode="svg-projection-registered-terrain"
+      data-camera-update-threshold={`${cameraMoveThreshold.zoom.toFixed(3)}-zoom`}
       data-camera-pitch={`${registeredCameraPitch.toFixed(1)}`}
       data-camera-transition-ms="0"
       data-cloud-animation="phase-linked-drifting-overlay"
       data-cloud-renderer="svg-camera-layer-comfy-weather-png"
+      data-maplibre-fill-veil="removed"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-modern-imagery-visible="true"
       data-map-registration="svg-projection"
