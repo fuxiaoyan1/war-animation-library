@@ -14,34 +14,28 @@ The demo opens on the library shelf. Each card launches an interactive animation
 
 ## Latest Update
 
-The latest major update refines `韩信十面埋伏：垓下之战` and `淮海战役：碾庄圩围歼战` with real-terrain tactical maps, tighter camera framing, stronger route continuity, and visible contested combat at key breakthrough moments.
+The latest branch update turns `伦敦上空的鹰` into the current Battle of Britain air-combat exemplar: real cross-Channel terrain, registered MapLibre/SVG camera alignment, readable top-down aircraft unit assets, local gray-white cloud units below aircraft, daylight color gates, and browser evidence for the current production preview.
 
-最近一次主要更新重点打磨 `韩信十面埋伏：垓下之战` 和 `淮海战役：碾庄圩围歼战`：加入真实地形战术地图，收紧镜头构图，强化路线连续性，并在关键突破时刻补出可见战斗接触。
+最新分支更新把 `伦敦上空的鹰` 打磨为当前不列颠空战范本：跨海峡真实地形、MapLibre 与 SVG 战术镜头注册、可读的俯视飞机单位、位于飞机下方的局部灰白云朵、白昼色彩门禁，以及当前生产预览的浏览器证据。
 
 Highlights:
 
 更新要点：
 
-- Gaixia now uses a real GIS/MapLibre terrain map with local imagery and elevation tiles, historical fieldworks, formations, route anchors, and multi-point melee contact effects.
-  垓下现在使用真实 GIS/MapLibre 地形地图，包含本地影像和高程瓦片、历史工事、阵形、路线锚点和多点近战接触特效。
-- Gaixia dawn assault no longer shows Han forces entering an empty camp: Chu inner rearguard, south-gate remnants, and east-gate covering cavalry are visible and tested.
-  垓下黎明突击不再表现为汉军进入空营：楚军内营后卫、南门残阵和东门掩护骑兵都可见并有测试覆盖。
-- Gaixia close camera stages keep the active battle surface centered during the tenth-hour songs, farewell, and dawn assault moments.
-  垓下近景镜头在十小时楚歌、别姬和黎明合击阶段保持当前战斗面居中。
-- Nianzhuang now uses a real-terrain tactical map with staged camera focus for Xin'anzhen withdrawal, Xuzhou relief, Daxujia blocking, Nianzhuang compression, final pocket, and Nizhuang endgame.
-  碾庄现在使用真实地形战术地图，并为新安镇撤退、徐州东援、大许家阻援、碾庄压缩、最后内核和倪庄终局分别设置阶段镜头。
-- Nianzhuang defense has layered village lines, corps-level Nationalist labels, PLA column assault axes, relief blocking, trench approaches, final compression, and remnant clean-up contact.
-  碾庄防御包含分层村落防线、国军军级标签、华野纵队攻坚轴、阻援线、对壕近迫、最后压缩和残部清剿接触。
-- Regression gates now verify source-route continuity, unit visibility windows, effect-to-route binding, tactical camera focus, map interaction, terrain rendering, and key late-stage combat density.
-  回归门禁现在验证来源路线连续性、单位可见时间窗、特效与路线绑定、战术镜头焦点、地图交互、地形渲染和后期关键战斗密度。
-- A repository-level [DISCLAIMER.md](DISCLAIMER.md) now documents the educational/non-commercial intent, source limits, third-party media terms, source website entry points, and the maintainers' peace-and-anti-war position.
-  仓库级 [DISCLAIMER.md](DISCLAIMER.md) 现在记录教育/非商业意图、来源限制、第三方媒体条款、来源网站入口，以及维护者热爱和平、反对战争的立场。
-- A repository-local GitHub submit skill records the future submission workflow so update notes, source notes, disclaimers, validation, commits, and pushes are handled consistently.
-  仓库内 GitHub 提交助手 skill 记录后续提交流程，确保更新说明、来源说明、免责声明、验证、提交和推送保持一致。
+- London now uses a committed local terrain package under `public/assets/maps/battle-of-britain-3d/` with MapLibre topo raster, Terrarium DEM, hillshade, and SVG projection registration.
+  伦敦现在使用已提交的本地地形包 `public/assets/maps/battle-of-britain-3d/`，包含 MapLibre topo raster、Terrarium DEM、hillshade 和 SVG 投影注册。
+- Aircraft units use six explicit top-down runtime PNG families: Spitfire, Hurricane, Bf 109, Bf 110, Do 17, and He 111. The London data no longer falls back to generic WWII fighter or bomber markers.
+  作战单位使用六类明确的俯视运行 PNG：喷火、飓风、Bf 109、Bf 110、Do 17 和 He 111；伦敦数据不再回退到通用二战战斗机/轰炸机标记。
+- Weather is now modeled as local ComfyUI cloud units in the tactical camera layer, above terrain and below routes/aircraft, with coverage and opacity gates so clouds are visible without becoming a full-map weather veil.
+  气象现在建模为战术相机层里的局部 ComfyUI 云朵单位，位于地形之上、航线/飞机之下，并通过覆盖率和透明度门禁保证云朵可见但不变成全图天气罩。
+- The new workflow note [docs/tools/london-air-map-weather-workflow.md](docs/tools/london-air-map-weather-workflow.md) records how the London map, weather, unit, evidence, and local-toolchain boundaries should be integrated into the six-layer animation process.
+  新增工艺文档 [docs/tools/london-air-map-weather-workflow.md](docs/tools/london-air-map-weather-workflow.md) 记录伦敦地图、气象、单位、证据和本机工具链边界如何整合进六层动画工艺。
+- Runtime demo assets are committed for GitHub builds, while the full production toolchain such as local ComfyUI, model caches, QGIS/GDAL, Playwright browser caches, `node_modules`, and `artifacts/` remains outside Git.
+  GitHub 构建所需运行资产已提交；完整生产工具链如本机 ComfyUI、模型缓存、QGIS/GDAL、Playwright 浏览器缓存、`node_modules` 和 `artifacts/` 不作为 Git 运行资产提交。
 
-Full update note: [docs/updates/war-animation-update-2026-06-06.md](docs/updates/war-animation-update-2026-06-06.md)
+Full update note: [docs/updates/war-animation-update-2026-06-13.md](docs/updates/war-animation-update-2026-06-13.md)
 
-Previous major update note: [docs/updates/war-animation-update-2026-05-27.md](docs/updates/war-animation-update-2026-05-27.md)
+Previous major update note: [docs/updates/war-animation-update-2026-06-06.md](docs/updates/war-animation-update-2026-06-06.md)
 
 ## Current Library
 
@@ -150,6 +144,18 @@ npm run dev
 Open the Vite URL printed by the command, usually `http://127.0.0.1:5177/`.
 
 打开命令输出的 Vite 地址，通常是 `http://127.0.0.1:5177/`。
+
+## Runtime Assets And Production Toolchain
+
+The current demo build only needs the committed runtime assets and npm dependencies. For `伦敦上空的鹰`, that includes terrain tiles under `public/assets/maps/battle-of-britain-3d/`, aircraft PNGs under `public/assets/unit-icons/`, weather PNGs under `public/assets/weather/battle-of-britain/`, and audio under `public/audio/`.
+
+当前演示构建只需要已提交的运行资产和 npm 依赖。`伦敦上空的鹰` 的运行资产包括 `public/assets/maps/battle-of-britain-3d/` 地形瓦片、`public/assets/unit-icons/` 飞机 PNG、`public/assets/weather/battle-of-britain/` 天气 PNG 和 `public/audio/` 音频。
+
+The full asset-generation toolchain is documented but not fully committed: local ComfyUI and model files, segmentation caches under `engine-cache/`, QGIS/GDAL installations, Playwright browser caches, `node_modules`, and visual-evidence `artifacts/` stay outside Git. Missing those tools does not change the committed GitHub demo output, but it does prevent downstream users from regenerating or improving the assets without setting up the documented local stack.
+
+完整资产生成工具链已记录但不会完整提交：本机 ComfyUI 和模型文件、`engine-cache/` 下的分割缓存、QGIS/GDAL 安装、Playwright 浏览器缓存、`node_modules` 和视觉证据 `artifacts/` 都留在 Git 之外。缺少这些工具不会改变已提交 GitHub 演示的效果，但会让下游用户无法在未配置本机工具链的情况下重新生成或继续改进资产。
+
+See [docs/tools/london-air-map-weather-workflow.md](docs/tools/london-air-map-weather-workflow.md), [docs/tools/britain-air-comfyui-style-pass.md](docs/tools/britain-air-comfyui-style-pass.md), and [docs/tools/tactical-terrain-studio.md](docs/tools/tactical-terrain-studio.md).
 
 ## Verify
 

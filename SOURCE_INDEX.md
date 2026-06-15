@@ -82,6 +82,7 @@ Important limits:
 | [PNGIMG](https://pngimg.com/) | Non-commercial image-derived marker source | `docs/sources/unit-icons.md` |
 | [PNG素材网](https://www.pngsucai.com/) | Local-demo unit-marker source with redistribution caveats | `docs/sources/unit-icons.md` |
 | [PurePNG](https://purepng.com/) | Earlier tank marker candidate retained for traceability | `docs/sources/unit-icons.md` |
+| [Baidu image host](https://img2.baidu.com/) | Local-demo unit-marker candidate source with unresolved redistribution status | `docs/sources/unit-icons.md` |
 
 ## Source Files
 

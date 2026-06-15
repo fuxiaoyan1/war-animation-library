@@ -2,6 +2,90 @@
 
 更新时间：2026-06-13
 
+## GitHub 提交摘要 / GitHub Submission Summary
+
+2026-06-15 本分支准备把 `伦敦上空的鹰` 当前版本提交到 GitHub。相对 `origin/main`，本分支同时包含伦敦空战范本化、坎尼会战与动画六层工具链的阶段性升级；本节重点说明用户当前要求的伦敦地图、气象单位、软件工艺和 GitHub 演示边界。
+
+On 2026-06-15 this branch is prepared for GitHub submission. Compared with `origin/main`, it contains the London air-combat exemplar work plus Cannae and six-layer workflow upgrades. This section focuses on the requested London map, weather-unit, toolchain, and GitHub demo boundaries.
+
+伦敦当前版本：
+
+- `伦敦上空的鹰` 聚焦 1940-09-15 Battle of Britain Day，使用五分钟播放、小时级计数和三段战术镜头：雷达预警、伦敦东南/肯特混战、肯特海岸和海峡返航追击。
+- 地图层使用 `BattleOfBritainTerrain3D`，以 `public/assets/maps/battle-of-britain-3d/` 中已提交的本地 topo raster、Terrarium DEM 与 hillshade 为运行底图；MapLibre canvas 按 SVG 战术相机注册，不再作为独立背景漂移。
+- 当前地图合同为 `real-terrain-texture-no-polygon-blocks`，已废弃全图天气罩、SVG wash/sheen 伪 3D 和 `typed-regional-palette-v2` 大面积 polygon fill 色块。
+- 六类飞机作战单位为运行 PNG：Spitfire、Hurricane、Bf 109、Bf 110、Do 17、He 111。数据门禁禁止回退到通用 `ww2Fighter` / `ww2Bomber`。
+- 云朵不是全图云层，而是同一 SVG `camera-layer` 内的局部 ComfyUI PNG 气象单位，位于地形之上、航线/飞机之下；当前云朵实例为 10 个，最终证据记录开场/上午 5 个、午后 4 个、海峡追击 3 个可见云团。
+
+Current London version:
+
+- The film focuses on Battle of Britain Day, 15 September 1940, with five-minute playback, hour-level time labeling, and three tactical camera stages: radar warning, southeast-London/Kent combat, and Channel return pursuit.
+- The map uses `BattleOfBritainTerrain3D` and committed runtime assets under `public/assets/maps/battle-of-britain-3d/`: topo raster, Terrarium DEM, and hillshade. The MapLibre canvas is registered to the SVG tactical camera.
+- The accepted map contract is `real-terrain-texture-no-polygon-blocks`; full-map weather veils, SVG pseudo-3D wash/sheen layers, and `typed-regional-palette-v2` polygon fill blocks are rejected.
+- Six aircraft unit families are explicit runtime PNGs: Spitfire, Hurricane, Bf 109, Bf 110, Do 17, and He 111. Gates reject generic `ww2Fighter` / `ww2Bomber` fallback.
+- Clouds are local ComfyUI PNG weather units in the same SVG `camera-layer`, above terrain and below routes/aircraft. The current setup has 10 instances; final evidence records 5 visible opening/morning clouds, 4 afternoon clouds, and 3 Channel pursuit clouds.
+
+新增工艺文档：
+
+- `docs/tools/london-air-map-weather-workflow.md` 汇总地图资料、DEM/地形、镜头注册、飞机单位、气象单位、动线预检、视觉证据、失败模式和 GitHub 工具链边界。
+- 该文档建议由六层工艺整合会话引用，而不是并入 `AGENTS.md`；详细战役工艺应留在 tools/source/update/test/artifacts 体系中。
+
+New workflow note:
+
+- `docs/tools/london-air-map-weather-workflow.md` records the source package, DEM/terrain package, camera registration, aircraft units, weather units, movement preflight, visual evidence, failure modes, and GitHub toolchain boundary.
+- It should be integrated into the six-layer workflow as a case contract rather than promoted into `AGENTS.md`.
+
+运行资产和本机工具链边界：
+
+- GitHub 演示运行所需的伦敦资产已经随分支提交：`public/assets/maps/battle-of-britain-3d/`、`public/assets/unit-icons/` 中的飞机 PNG、`public/assets/weather/battle-of-britain/` 中的云图 PNG、`public/audio/` 中的配乐，以及 `package-lock.json` 约束的 npm 依赖。
+- 完整本机生产工具链不会也不应作为普通 Git 文件完整上传：`/Users/asukarei/Documents/我心飞翔/tools/ComfyUI`、Stable Diffusion / ControlNet / BiRefNet 模型、`engine-cache/` 分割模型、QGIS/GDAL 安装、Playwright 浏览器缓存、`node_modules`、`artifacts/`、原型 `vendor/tiles` 和引擎缓存均留在 Git 之外。
+- 因此，其他人拉取分支后可以通过 `npm install` 和 `npm run build` 构建当前演示；他们不具备完整本机工具链时，不能直接复现或继续再生成飞机、云朵、分割和 GIS 派生资产。
+- 这不会影响 GitHub Pages 当前演示效果，因为演示读取的是已提交运行资产；它只影响“重新生产/继续升级资产”的能力。
+
+Runtime asset and local toolchain boundary:
+
+- The current London demo can run from committed branch assets: `public/assets/maps/battle-of-britain-3d/`, aircraft PNGs under `public/assets/unit-icons/`, weather PNGs under `public/assets/weather/battle-of-britain/`, audio under `public/audio/`, and npm dependencies locked by `package-lock.json`.
+- The full local production toolchain is intentionally not uploaded as normal Git content: local ComfyUI, Stable Diffusion / ControlNet / BiRefNet models, segmentation caches under `engine-cache/`, QGIS/GDAL installations, Playwright browser caches, `node_modules`, `artifacts/`, prototype `vendor/tiles`, and engine caches stay outside Git.
+- A downstream user can build the current demo with `npm install` and `npm run build`; without the documented local stack they cannot regenerate or continue improving the aircraft, cloud, segmentation, or GIS-derived assets.
+- This does not degrade the GitHub Pages demo, because the demo uses committed runtime assets. It only affects asset reproduction and further production work.
+
+来源和许可说明：
+
+- 本节没有新增外部来源网站类别；伦敦相关来源仍记录在 `docs/sources/battle-of-britain.md`、`docs/sources/audio.md`、`docs/sources/unit-icons.md` 和 `SOURCE_INDEX.md`。
+- 项目仍保持开源、教育性、维护者非商业意图、热爱和平并反对战争；媒体、地图、音频、字体和单位标记不自动按 MIT 授权，复用前必须阅读 `NOTICE.md`、`DISCLAIMER.md` 和来源文档。
+
+Source and licensing note:
+
+- This section adds no new external source website class. London sources remain documented in `docs/sources/battle-of-britain.md`, `docs/sources/audio.md`, `docs/sources/unit-icons.md`, and `SOURCE_INDEX.md`.
+- The project remains open-source, educational, non-commercial in maintainer intent, peace-oriented, and anti-war. Media, maps, audio, fonts, and unit markers are not automatically MIT licensed; read `NOTICE.md`, `DISCLAIMER.md`, and the source logs before reuse.
+
+提交前验证：
+
+- `git diff --check`
+- `node agents/skills/github-submit-assistant/scripts/check-doc-governance.mjs .`
+- `node tools/check-git-asset-boundary.mjs`
+- `npm exec tsc -- -b`
+- `npm run build`
+- `npm run preview:local -- --skip-build`
+- `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "battle of britain shows radar directed compact air formations" --reporter=line`
+- `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "campaign data quality gates" --reporter=line`
+- `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "gaixia ambush uses terrain map ten-sided formations and pipa score" --reporter=line`
+- `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "nianzhuang battle shows Huang Baitao pocket relief blocking trenches and final pursuit" --reporter=line`
+- `node /Users/asukarei/.codex/skills/animation-assistant/scripts/check-animation-project.mjs /Users/asukarei/Desktop/war-animation-lab-oss-london-air-map`
+
+Pre-submit validation:
+
+- `git diff --check`
+- `node agents/skills/github-submit-assistant/scripts/check-doc-governance.mjs .`
+- `node tools/check-git-asset-boundary.mjs`
+- `npm exec tsc -- -b`
+- `npm run build`
+- `npm run preview:local -- --skip-build`
+- Battle of Britain specialty Playwright gate.
+- Campaign data quality gate.
+- Gaixia reference Playwright gate.
+- Nianzhuang reference Playwright gate.
+- Animation project health check.
+
 ## 坎尼会战与动画助手流程
 
 2026-06-14 继续按 `animation-assistant` 和项目六层生产流程推进坎尼，不再把浏览器截图、DOM 指标和人工观察当作会话临时动作。
