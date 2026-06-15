@@ -3030,13 +3030,11 @@ h1 {
 }
 
 .battle-of-britain .map-stage {
-  background:
-    linear-gradient(180deg, #477d9e 0%, #376b8d 48%, #8d6f4e 100%);
+  background: #476c7d;
 }
 
 .battle-of-britain.cinematic-mode .map-stage {
-  background:
-    linear-gradient(180deg, #4d83a2 0%, #3c718f 52%, #95754f 100%);
+  background: #4a7181;
   box-shadow:
     inset 0 0 0 1px rgba(241, 238, 206, 0.22),
     inset 0 0 34px rgba(12, 35, 48, 0.08),
@@ -3054,15 +3052,14 @@ h1 {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, #497f9f 0%, #336b8f 48%, #8e704f 100%);
-  filter: saturate(1.72) contrast(1.24) brightness(0.8);
+  background: #3f687a;
+  filter: none;
   isolation: isolate;
   pointer-events: none;
 }
 
 .battle-of-britain .battle-of-britain-terrain-3d[data-map-focus="britainAirReturn"] {
-  filter: saturate(1.68) contrast(1.18) brightness(0.99);
+  filter: none;
 }
 
 .battle-of-britain .battle-of-britain-terrain-3d::after {
@@ -3079,6 +3076,8 @@ h1 {
   height: 100%;
   position: relative;
   z-index: 1;
+  filter: saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg);
+  mix-blend-mode: normal;
 }
 
 .battle-of-britain .battle-map.has-terrain-underlay {
@@ -3133,27 +3132,33 @@ h1 {
 }
 
 .battle-of-britain .battle-of-britain-weather-overlay .map-overlay-image {
-  filter: saturate(1.02) contrast(1.12) brightness(0.72);
+  filter: saturate(0.66) contrast(1.55) brightness(0.88);
   transform-box: fill-box;
   transform-origin: center;
 }
 
 .battle-of-britain .weather-overlay-secondary .map-overlay-image {
-  filter: saturate(1) contrast(1.1) brightness(0.7);
+  filter: saturate(0.64) contrast(1.5) brightness(0.84);
 }
 
 .battle-of-britain .weather-overlay-channel .map-overlay-image,
 .battle-of-britain .weather-overlay-kent .map-overlay-image {
-  filter: saturate(1) contrast(1.1) brightness(0.7);
+  filter: saturate(0.62) contrast(1.52) brightness(0.82);
 }
 
 .battle-of-britain .weather-overlay-thames .map-overlay-image,
-.battle-of-britain .weather-overlay-estuary .map-overlay-image {
-  filter: saturate(1) contrast(1.1) brightness(0.72);
+.battle-of-britain .weather-overlay-estuary .map-overlay-image,
+.battle-of-britain .weather-overlay-medway .map-overlay-image,
+.battle-of-britain .weather-overlay-tonbridge .map-overlay-image {
+  filter: saturate(0.64) contrast(1.48) brightness(0.86);
 }
 
 .battle-of-britain .afternoon-weather-overlay .map-overlay-image {
-  filter: saturate(1.02) contrast(1.1) brightness(0.74);
+  filter: saturate(0.62) contrast(1.58) brightness(0.86);
+}
+
+.battle-of-britain .weather-overlay-channel-return .map-overlay-image {
+  filter: saturate(0.6) contrast(1.55) brightness(0.82);
 }
 
 .battle-of-britain .cinematic-vignette {
@@ -3177,6 +3182,10 @@ h1 {
 .battle-of-britain .battle-dogfight-effect *,
 .battle-of-britain .dogfight-clash *,
 .battle-of-britain .aircraft-contact-pulse * {
+  animation: none;
+}
+
+.battle-of-britain .front-line.is-active circle {
   animation: none;
 }
 

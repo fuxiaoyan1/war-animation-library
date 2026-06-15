@@ -130,6 +130,9 @@ export function BattleOfBritainAnimation() {
       }}
       tacticalTerrainFeatures={tacticalTerrainFeatures}
       terrainZones={[]}
+      testAnchors={{
+        "britain-air-1230": timeline.dateToProgress("1940-09-15T12:30")
+      }}
       testId="battle-of-britain-app"
       timeCounterLabel="小时"
       timeStepDays={1 / 24}

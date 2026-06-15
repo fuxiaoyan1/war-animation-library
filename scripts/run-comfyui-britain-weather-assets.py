@@ -281,13 +281,30 @@ def extract_cloud_alpha(
     alpha = normalize_alpha_density(alpha, target_alpha_ratio=target_alpha_ratio, max_opaque_ratio=max_opaque_ratio)
     alpha = ImageChops.multiply(alpha, edge_fade)
 
-    rgba = image.convert("RGBA")
-    rgba.putalpha(alpha)
-    # Keep clouds visible as finished weather art while staying below aircraft/routes.
-    rgb = rgba.convert("RGB")
-    rgb = ImageEnhance.Brightness(rgb).enhance(0.86)
-    rgb = ImageEnhance.Contrast(rgb).enhance(1.2)
-    rgb = ImageEnhance.Sharpness(rgb).enhance(1.16)
+    # Runtime sprites should read as cloud units, not as a translucent terrain
+    # texture. Keep the ComfyUI topology in alpha, but grade visible RGB toward
+    # daylight cloud whites with soft cool shadows.
+    source = image.load()
+    alpha_pixels = alpha.load()
+    cloud = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    output = cloud.load()
+    for y in range(height):
+        for x in range(width):
+            opacity = alpha_pixels[x, y]
+            if opacity <= 0:
+                continue
+            red, green, blue = source[x, y]
+            luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722
+            cloud_depth = opacity / 230
+            highlight = max(0, luminance - background_luminance) / 140
+            body = max(0, min(1, cloud_depth * 0.72 + highlight * 0.28))
+            shade = 1 - body
+            out_red = round(168 + body * 70 + shade * 8)
+            out_green = round(178 + body * 66 + shade * 5)
+            out_blue = round(185 + body * 58)
+            output[x, y] = (min(246, out_red), min(246, out_green), min(244, out_blue), opacity)
+    rgb = ImageEnhance.Contrast(cloud.convert("RGB")).enhance(1.08)
+    rgb = ImageEnhance.Sharpness(rgb).enhance(1.12)
     rgba = rgb.convert("RGBA")
     rgba.putalpha(alpha)
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -235,7 +235,9 @@ async function collectPageMetrics(page) {
     const terrainLayer = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d"]');
     const terrainCanvas = battle?.querySelector('[data-testid="battle-of-britain-terrain-3d-canvas"]');
     const weatherOverlays = Array.from(battle?.querySelectorAll(".battle-of-britain-weather-overlay") ?? []);
+    const mapOverlayElements = battle?.querySelector('[data-testid="map-overlay-elements"]');
     const firstTactical = battle?.querySelector(".tactical-terrain-layer, .fortified-line-layer, .front-line, .map-overlay-elements");
+    const firstRoute = battle?.querySelector(".front-line");
     const firstAircraft = battle?.querySelector(".ww2-aircraft-marker");
     const countryLayer = battle?.querySelector(".country-layer");
     const countries = Array.from(battle?.querySelectorAll(".country") ?? []);
@@ -251,6 +253,27 @@ async function collectPageMetrics(page) {
         right: (rect.right - mapBox.left) / mapBox.width,
         top: (rect.top - mapBox.top) / mapBox.height,
         width: rect.width
+      };
+    };
+    const clippedRectFor = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      const left = Math.max(rect.left, mapBox.left);
+      const right = Math.min(rect.right, mapBox.right);
+      const top = Math.max(rect.top, mapBox.top);
+      const bottom = Math.min(rect.bottom, mapBox.bottom);
+      const width = Math.max(0, right - left);
+      const height = Math.max(0, bottom - top);
+      return {
+        bottom: (bottom - mapBox.top) / mapBox.height,
+        centerX: (left + width / 2 - mapBox.left) / mapBox.width,
+        centerY: (top + height / 2 - mapBox.top) / mapBox.height,
+        coverage: (width * height) / Math.max(1, mapBox.width * mapBox.height),
+        height,
+        left: (left - mapBox.left) / mapBox.width,
+        right: (right - mapBox.left) / mapBox.width,
+        top: (top - mapBox.top) / mapBox.height,
+        width
       };
     };
 
@@ -340,18 +363,39 @@ async function collectPageMetrics(page) {
         saturationMean: saturationSum / count
       };
     })();
-    const colorZones = (() => {
-      const declaredLayerIds = terrainLayer?.getAttribute("data-terrain-color-layer-ids") ?? "";
-      const layerIds = [
-        "battle-of-britain-channel-color",
-        "battle-of-britain-channel-lane-color",
-        "battle-of-britain-england-downs-color",
-        "battle-of-britain-thames-lowland-color",
-        "battle-of-britain-france-chalk-color",
-        "battle-of-britain-france-inland-color"
-      ];
-      return layerIds.map((id) => ({ id, present: declaredLayerIds.split(",").includes(id) }));
-    })();
+    const bannedMaplibreLayerIds = (terrainLayer?.getAttribute("data-banned-maplibre-layer-ids") ?? "")
+      .split(",")
+      .filter(Boolean);
+    const maplibreStyleLayerIds = (terrainLayer?.getAttribute("data-maplibre-style-layer-ids") ?? "")
+      .split(",")
+      .filter(Boolean);
+    const bannedMaplibreLayersPresent = (terrainLayer?.getAttribute("data-banned-maplibre-layers-present") ?? "")
+      .split(",")
+      .filter(Boolean);
+    const weatherOverlayRecords = weatherOverlays.map((overlay) => {
+      const image = overlay.querySelector("image");
+      const box = overlay.getBoundingClientRect();
+      const clipped = clippedRectFor(overlay);
+      const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "1");
+      const rawCoverage = (box.width * box.height) / Math.max(1, mapBox.width * mapBox.height);
+      return {
+        beforeAircraft: firstAircraft ? Boolean(overlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+        beforeRoute: firstRoute ? Boolean(overlay.compareDocumentPosition(firstRoute) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+        className: overlay.getAttribute("class") ?? "",
+        clippedCoverage: clipped?.coverage ?? 0,
+        clippedRect: clipped,
+        coverage: clipped?.coverage ?? 0,
+        href: image?.getAttribute("href") ?? "",
+        id: overlay.getAttribute("data-testid") ?? "",
+        inCameraLayer: Boolean(cameraLayer && mapOverlayElements?.closest(".camera-layer") === cameraLayer),
+        opacity,
+        phase: overlay.getAttribute("data-scene-transition-phase") ?? "",
+        rect: rectFor(overlay),
+        rawCoverage,
+        visible: (clipped?.width ?? 0) > 12 && (clipped?.height ?? 0) > 12 && opacity > 0.06
+      };
+    });
+    const visibleWeatherRecords = weatherOverlayRecords.filter((overlay) => overlay.visible);
 
     return {
       activeEvent: document.querySelector('[data-testid="active-event-card"]')?.textContent?.replace(/\s+/g, " ").trim(),
@@ -383,7 +427,10 @@ async function collectPageMetrics(page) {
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
         terrainTexture,
-        colorZones,
+        bannedMaplibreLayerIds,
+        bannedMaplibreLayersPresent,
+        maplibreStyleLayerIds,
+        polygonColorBlocksRemoved: bannedMaplibreLayersPresent.length === 0,
         topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
         topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
@@ -396,22 +443,15 @@ async function collectPageMetrics(page) {
         visualSurfaceContract: terrainLayer?.getAttribute("data-visual-surface-contract") ?? "",
         weatherPhase: terrainLayer?.getAttribute("data-weather-phase") ?? ""
       },
-      weatherOverlays: weatherOverlays.map((overlay) => {
-        const image = overlay.querySelector("image");
-        const box = overlay.getBoundingClientRect();
-        const coverage = (box.width * box.height) / Math.max(1, mapBox.width * mapBox.height);
-        return {
-          beforeAircraft: firstAircraft ? Boolean(overlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
-          beforeRoute: firstTactical ? Boolean(overlay.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
-          coverage,
-          href: image?.getAttribute("href") ?? "",
-          id: overlay.getAttribute("data-testid") ?? "",
-          opacity: Number.parseFloat(getComputedStyle(overlay).opacity || "1"),
-          phase: overlay.getAttribute("data-scene-transition-phase") ?? "",
-          rect: rectFor(overlay),
-          visible: box.width > 1 && box.height > 1 && Number.parseFloat(getComputedStyle(overlay).opacity || "1") > 0.04
-        };
-      }),
+      weatherOverlaySummary: {
+        maxCoverage: Math.max(0, ...visibleWeatherRecords.map((overlay) => overlay.coverage)),
+        minCoverage: visibleWeatherRecords.length > 0 ? Math.min(...visibleWeatherRecords.map((overlay) => overlay.coverage)) : 0,
+        opacityMax: Math.max(0, ...visibleWeatherRecords.map((overlay) => overlay.opacity)),
+        opacityMin: visibleWeatherRecords.length > 0 ? Math.min(...visibleWeatherRecords.map((overlay) => overlay.opacity)) : 0,
+        totalCoverage: visibleWeatherRecords.reduce((sum, overlay) => sum + overlay.coverage, 0),
+        visibleCount: visibleWeatherRecords.length
+      },
+      weatherOverlays: weatherOverlayRecords,
       markerSample: markers.slice(0, 24),
       radarRouteBox: rectFor(radarRoute),
       title: document.querySelector('[data-testid="map-title-card"] h1, [data-testid="map-title-card"] h2')?.textContent
@@ -708,11 +748,20 @@ async function collectDenseStageJitter(page) {
         const stageNode = shell.querySelector('[data-testid="map-stage"]');
         const dogfight = shell.querySelector('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"]');
         const activeRoute = shell.querySelector(".front-line.is-active .front-route, .front-line .front-route");
+        const visibleClouds = Array.from(shell.querySelectorAll(".battle-of-britain-weather-overlay")).filter((cloud) => {
+          const box = cloud.getBoundingClientRect();
+          const opacity = Number.parseFloat(getComputedStyle(cloud).opacity || "0");
+          return box.width > 12 && box.height > 12 && opacity > 0.06;
+        });
         return {
           activeRouteRect: rectFor(activeRoute),
           cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
           cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
           canvasRect: rectFor(canvas),
+          cloudRects: visibleClouds.map((cloud) => ({
+            id: cloud.getAttribute("data-testid") ?? "",
+            rect: rectFor(cloud)
+          })),
           dogfightRect: rectFor(dogfight),
           mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
           mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
@@ -739,6 +788,21 @@ async function collectDenseStageJitter(page) {
     const uniqueMapCenters = new Set(samples.map((sample) => sample.mapCenter)).size;
     const uniqueMapZooms = new Set(samples.map((sample) => sample.mapZoom)).size;
     const rectMaxDelta = (key) => {
+      const firstValue = samples[0]?.[key];
+      if (Array.isArray(firstValue)) {
+        const ids = [...new Set(samples.flatMap((sample) => sample[key].map((item) => item.id)))];
+        return Math.max(
+          0,
+          ...ids.map((id) => {
+            const values = samples
+              .map((sample) => sample[key].find((item) => item.id === id)?.rect)
+              .filter(Boolean);
+            if (values.length === 0) return 999;
+            const deltaFor = (field) => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+            return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+          })
+        );
+      }
       const values = samples.map((sample) => sample[key]).filter(Boolean);
       if (values.length === 0) return 999;
       const deltaFor = (field) => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
@@ -758,6 +822,7 @@ async function collectDenseStageJitter(page) {
 
     output[stage.id] = {
       cameraFocuses: [...new Set(samples.map((sample) => sample.cameraFocus))],
+      cloudRectMaxDelta: rectMaxDelta("cloudRects"),
       dogfightCenterMaxJump: maxCenterJump("dogfightRect"),
       maxRegistrationError: Math.max(...samples.map((sample) => sample.registrationMaxError)),
       routeCenterMaxJump: maxCenterJump("activeRouteRect"),
@@ -771,6 +836,116 @@ async function collectDenseStageJitter(page) {
   }
 
   return output;
+}
+
+async function collectPlaybackJitterAroundAnchor(page, anchorTestId, label) {
+  const anchorProgress = Number(await page.getByTestId(anchorTestId).getAttribute("data-progress"));
+  const startValue = Math.max(0, Math.round((anchorProgress - 0.006) * 1000));
+  await page.getByTestId("timeline").fill(String(startValue));
+  await page.waitForTimeout(650);
+  await page.getByTestId("play-pause").click();
+  await page.getByTestId("play-pause").waitFor({ state: "visible" });
+
+  const samples = await page.locator(".battle-of-britain").evaluate(async (shell) => {
+    const rectFor = (element) => {
+      const box = element?.getBoundingClientRect();
+      return box
+        ? {
+            height: box.height,
+            left: box.left,
+            top: box.top,
+            width: box.width
+          }
+        : null;
+    };
+    const measure = () => {
+      const cameraLayer = shell.querySelector(".camera-layer");
+      const terrainLayer = shell.querySelector('[data-testid="battle-of-britain-terrain-3d"]');
+      const canvas = shell.querySelector('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+      const stageNode = shell.querySelector('[data-testid="map-stage"]');
+      const activeRoutes = Array.from(shell.querySelectorAll(".front-line.is-active .front-route"));
+      const visibleClouds = Array.from(shell.querySelectorAll(".battle-of-britain-weather-overlay")).filter((cloud) => {
+        const box = cloud.getBoundingClientRect();
+        const opacity = Number.parseFloat(getComputedStyle(cloud).opacity || "0");
+        return box.width > 12 && box.height > 12 && opacity > 0.06;
+      });
+      const routeSetSignature = activeRoutes
+        .slice(0, 6)
+        .map((route) => route.closest(".front-line")?.getAttribute("data-route-id") ?? "")
+        .sort()
+        .join("|");
+      return {
+        activeEventText: shell.querySelector('[data-testid="active-event-card"]')?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+        cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
+        cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
+        canvasRect: rectFor(canvas),
+        cloudRects: visibleClouds.map((cloud) => ({
+          id: cloud.getAttribute("data-testid") ?? "",
+          rect: rectFor(cloud)
+        })),
+        mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
+        mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
+        registrationMaxError: Number(terrainLayer?.getAttribute("data-registration-max-error") ?? "999"),
+        routeSetSignature,
+        stageRect: rectFor(stageNode)
+      };
+    };
+
+    return new Promise((resolve) => {
+      const records = [];
+      const tick = () => {
+        records.push(measure());
+        if (records.length >= 150) {
+          resolve(records);
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+
+  await page.getByTestId("play-pause").click();
+  await page.waitForTimeout(250);
+
+  const rectMaxDelta = (key) => {
+    const firstValue = samples[0]?.[key];
+    if (Array.isArray(firstValue)) {
+      const ids = [...new Set(samples.flatMap((sample) => sample[key].map((item) => item.id)))];
+      return Math.max(
+        0,
+        ...ids.map((id) => {
+          const values = samples
+            .map((sample) => sample[key].find((item) => item.id === id)?.rect)
+            .filter(Boolean);
+          if (values.length === 0) return 999;
+          const deltaFor = (field) => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+          return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+        })
+      );
+    }
+    const values = samples.map((sample) => sample[key]).filter(Boolean);
+    if (values.length === 0) return 999;
+    const deltaFor = (field) => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+    return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+  };
+
+  return {
+    anchorProgress,
+    cameraFocuses: [...new Set(samples.map((sample) => sample.cameraFocus))],
+    cloudRectMaxDelta: rectMaxDelta("cloudRects"),
+    label,
+    maxRegistrationError: Math.max(...samples.map((sample) => sample.registrationMaxError)),
+    routeSetChanges: new Set(samples.map((sample) => sample.routeSetSignature)).size,
+    sampleCount: samples.length,
+    sampledReturnAttackEvent: samples.some((sample) => sample.activeEventText.includes("回程仍遭攻击")),
+    stageRectMaxDelta: rectMaxDelta("stageRect"),
+    startValue,
+    terrainCanvasRectMaxDelta: rectMaxDelta("canvasRect"),
+    uniqueCameraTransforms: new Set(samples.map((sample) => sample.cameraTransform)).size,
+    uniqueMapCenters: new Set(samples.map((sample) => sample.mapCenter)).size,
+    uniqueMapZooms: new Set(samples.map((sample) => sample.mapZoom)).size
+  };
 }
 
 async function waitForTerrainReady(page) {
@@ -844,6 +1019,9 @@ async function main() {
     aircraftPngMetrics: await collectAssetMetrics(page),
     terrainTileHeads: await collectTerrainTileHeads(page),
     denseStageJitter: await collectDenseStageJitter(page),
+    playbackJitter: {
+      thirdHourReturnCorridor: await collectPlaybackJitterAroundAnchor(page, "britain-air-1230", "third-hour return corridor")
+    },
     weatherPngMetrics: await collectWeatherAssetMetrics(page)
   };
   await fs.writeFile(path.join(outDir, "metrics.browser.json"), `${JSON.stringify(metrics, null, 2)}\n`);

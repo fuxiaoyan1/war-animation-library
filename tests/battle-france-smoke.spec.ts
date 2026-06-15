@@ -2087,10 +2087,19 @@ async function expectBattleOfBritainDenseStageNoMapJitter(page: Page, label: str
       const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
       const dogfight = shell.querySelector<SVGGraphicsElement>('[data-testid="britain-morning-dogfight"], [data-testid="britain-afternoon-dogfight"]');
       const route = shell.querySelector<SVGGraphicsElement>(".front-line.is-active .front-route, .front-line .front-route");
+      const visibleClouds = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")).filter((cloud) => {
+        const box = cloud.getBoundingClientRect();
+        const opacity = Number.parseFloat(getComputedStyle(cloud).opacity || "0");
+        return box.width > 12 && box.height > 12 && opacity > 0.06;
+      });
       return {
         cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
         cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
         canvasRect: rectFor(canvas),
+        cloudRects: visibleClouds.map((cloud) => ({
+          id: cloud.getAttribute("data-testid") ?? "",
+          rect: rectFor(cloud)
+        })),
         dogfightRect: rectFor(dogfight),
         mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
         mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
@@ -2137,6 +2146,20 @@ async function expectBattleOfBritainDenseStageNoMapJitter(page: Page, label: str
     }
     return maxJump;
   })();
+  const cloudRectMaxDelta = (() => {
+    const ids = [...new Set(samples.flatMap((sample) => sample.cloudRects.map((cloud) => cloud.id)))];
+    return Math.max(
+      0,
+      ...ids.map((id) => {
+        const rects = samples
+          .map((sample) => sample.cloudRects.find((cloud) => cloud.id === id)?.rect)
+          .filter((rect): rect is NonNullable<typeof rect> => rect !== null && rect !== undefined);
+        if (rects.length === 0) return 999;
+        const deltaFor = (field: "height" | "left" | "top" | "width") => Math.max(...rects.map((rect) => rect[field])) - Math.min(...rects.map((rect) => rect[field]));
+        return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+      })
+    );
+  })();
 
   expect(first.cameraFocus, `${label} dense stage should keep the tactical air-combat camera focus`).toBe("britainAirCombat");
   expect(last.cameraFocus, `${label} dense stage should not drift out of the tactical air-combat camera focus`).toBe("britainAirCombat");
@@ -2145,8 +2168,118 @@ async function expectBattleOfBritainDenseStageNoMapJitter(page: Page, label: str
   expect(uniqueMapZooms.size, `${label} MapLibre terrain should not resync/jump zoom every frame`).toBeLessThanOrEqual(1);
   expect(rectMaxDelta("stageRect"), `${label} map-stage layout should not jitter`).toBeLessThan(0.5);
   expect(rectMaxDelta("canvasRect"), `${label} terrain canvas should not jitter against tactical routes`).toBeLessThan(0.5);
+  expect(cloudRectMaxDelta, `${label} local cloud units should not reintroduce the old weather-layer shimmer`).toBeLessThan(0.5);
   expect(Math.max(...samples.map((sample) => sample.registrationMaxError)), `${label} terrain registration should stay locked to the battle layer`).toBeLessThan(24);
   expect(routeCenterJump, `${label} active tactical route geometry should not visibly jump after the camera settles`).toBeLessThan(1.2);
+}
+
+async function expectBattleOfBritainPlaybackNoMapJitterAround(page: Page, anchorTestId: string, label: string) {
+  const anchorProgress = Number(await page.getByTestId(anchorTestId).getAttribute("data-progress"));
+  expect(anchorProgress, `${label} test anchor should expose a finite timeline progress`).toBeGreaterThan(0);
+  const startValue = Math.max(0, Math.round((anchorProgress - 0.006) * 1000));
+  await page.getByTestId("timeline").fill(String(startValue));
+  await page.waitForTimeout(600);
+  await page.getByTestId("play-pause").click();
+  await expect(page.getByTestId("play-pause")).toContainText("暂停");
+
+  const samples = await page.locator(".battle-of-britain").evaluate(async (shell) => {
+    const measure = () => {
+      const rectFor = (element: Element | null) => {
+        const box = element?.getBoundingClientRect();
+        return box
+          ? {
+              height: box.height,
+              left: box.left,
+              top: box.top,
+              width: box.width
+            }
+          : null;
+      };
+      const cameraLayer = shell.querySelector<SVGGElement>(".camera-layer");
+      const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
+      const canvas = shell.querySelector<HTMLCanvasElement>('[data-testid="battle-of-britain-terrain-3d-canvas"]');
+      const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+      const activeRoutes = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".front-line.is-active .front-route"));
+      const visibleClouds = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")).filter((cloud) => {
+        const box = cloud.getBoundingClientRect();
+        const opacity = Number.parseFloat(getComputedStyle(cloud).opacity || "0");
+        return box.width > 12 && box.height > 12 && opacity > 0.06;
+      });
+      const routeSetSignature = activeRoutes
+        .slice(0, 6)
+        .map((route) => route.closest(".front-line")?.getAttribute("data-route-id") ?? "")
+        .sort()
+        .join("|");
+      return {
+        activeEventText: shell.querySelector('[data-testid="active-event-card"]')?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+        cameraFocus: cameraLayer?.getAttribute("data-map-focus") ?? "",
+        cameraTransform: cameraLayer?.getAttribute("transform") ?? "",
+        canvasRect: rectFor(canvas),
+        cloudRects: visibleClouds.map((cloud) => ({
+          id: cloud.getAttribute("data-testid") ?? "",
+          rect: rectFor(cloud)
+        })),
+        mapCenter: terrainLayer?.getAttribute("data-map-center") ?? "",
+        mapZoom: terrainLayer?.getAttribute("data-map-zoom") ?? "",
+        registrationMaxError: Number(terrainLayer?.getAttribute("data-registration-max-error") ?? "999"),
+        routeSetSignature,
+        stageRect: rectFor(stage)
+      };
+    };
+
+    return new Promise<ReturnType<typeof measure>[]>((resolve) => {
+      const output: ReturnType<typeof measure>[] = [];
+      const tick = () => {
+        output.push(measure());
+        if (output.length >= 150) {
+          resolve(output);
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+
+  await page.getByTestId("play-pause").click();
+  await expect(page.getByTestId("play-pause")).toContainText("播放");
+
+  const uniqueCameraTransforms = new Set(samples.map((sample) => sample.cameraTransform));
+  const uniqueMapCenters = new Set(samples.map((sample) => sample.mapCenter));
+  const uniqueMapZooms = new Set(samples.map((sample) => sample.mapZoom));
+  const rectMaxDelta = (key: "canvasRect" | "stageRect") => {
+    const values = samples
+      .map((sample) => sample[key])
+      .filter((rect): rect is NonNullable<typeof rect> => rect !== null);
+    const deltaFor = (field: "height" | "left" | "top" | "width") => Math.max(...values.map((rect) => rect[field])) - Math.min(...values.map((rect) => rect[field]));
+    return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+  };
+  const routeSetChanges = new Set(samples.map((sample) => sample.routeSetSignature)).size;
+  const cloudRectMaxDelta = (() => {
+    const ids = [...new Set(samples.flatMap((sample) => sample.cloudRects.map((cloud) => cloud.id)))];
+    return Math.max(
+      0,
+      ...ids.map((id) => {
+        const rects = samples
+          .map((sample) => sample.cloudRects.find((cloud) => cloud.id === id)?.rect)
+          .filter((rect): rect is NonNullable<typeof rect> => rect !== null && rect !== undefined);
+        if (rects.length === 0) return 999;
+        const deltaFor = (field: "height" | "left" | "top" | "width") => Math.max(...rects.map((rect) => rect[field])) - Math.min(...rects.map((rect) => rect[field]));
+        return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
+      })
+    );
+  })();
+
+  expect(samples.some((sample) => sample.activeEventText.includes("回程仍遭攻击")), `${label} should actually sample the third-hour return-attack playback window`).toBe(true);
+  expect(new Set(samples.map((sample) => sample.cameraFocus))).toEqual(new Set(["britainAirReturn"]));
+  expect(uniqueCameraTransforms.size, `${label} camera-layer transform should stay stable during playback through 12:30`).toBe(1);
+  expect(uniqueMapCenters.size, `${label} MapLibre terrain center should not resync every frame during playback through 12:30`).toBeLessThanOrEqual(1);
+  expect(uniqueMapZooms.size, `${label} MapLibre terrain zoom should not resync every frame during playback through 12:30`).toBeLessThanOrEqual(1);
+  expect(rectMaxDelta("stageRect"), `${label} map-stage layout should not jitter during playback`).toBeLessThan(0.5);
+  expect(rectMaxDelta("canvasRect"), `${label} terrain canvas should stay locked while the timeline plays`).toBeLessThan(0.5);
+  expect(cloudRectMaxDelta, `${label} progress-linked local cloud units should move smoothly with the camera, not shimmer as a weather layer`).toBeLessThan(1.2);
+  expect(Math.max(...samples.map((sample) => sample.registrationMaxError)), `${label} terrain registration should stay locked while the timeline plays`).toBeLessThan(24);
+  expect(routeSetChanges, `${label} active route set should not churn while route geometry progresses`).toBeLessThanOrEqual(3);
 }
 
 async function expectBattleOfBritainForegroundReadable(page: Page) {
@@ -2185,24 +2318,22 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
   await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
-  await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-typed-terrain-palette-country-boundaries-only");
-  await expect(terrain).toHaveAttribute("data-terrain-color-model", "typed-regional-palette-v2");
-  await expect(terrain).toHaveAttribute("data-terrain-color-zones", "channel,channel-lane,england-downs,thames-lowland,france-chalk,france-inland");
-  await expect(terrain).toHaveAttribute(
-    "data-terrain-color-layer-ids",
-    "battle-of-britain-channel-color,battle-of-britain-channel-lane-color,battle-of-britain-england-downs-color,battle-of-britain-thames-lowland-color,battle-of-britain-france-chalk-color,battle-of-britain-france-inland-color"
-  );
+  await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-real-terrain-no-polygon-color-blocks");
+  await expect(terrain).toHaveAttribute("data-terrain-color-model", "real-terrain-texture-no-polygon-blocks");
+  await expect(terrain).toHaveAttribute("data-terrain-color-zones", "none");
+  await expect(terrain).toHaveAttribute("data-terrain-color-layer-ids", "");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "progress-linked-local-weather-units");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
   await expect(terrain).toHaveAttribute("data-camera-update-threshold", "0.025-zoom");
   await expect(terrain).toHaveAttribute("data-topo-labels-suppressed", "true");
-  await expect(terrain).toHaveAttribute("data-topo-raster-opacity", "0.20");
+  await expect(terrain).toHaveAttribute("data-topo-raster-opacity", "0.15");
   await expect(page.getByTestId("battle-of-britain-weather-overlay-morning")).toBeVisible();
   await expect(page.getByTestId("battle-of-britain-terrain-3d-canvas")).toBeVisible();
   await expect.poll(async () => Number(await terrain.getAttribute("data-map-zoom"))).toBeGreaterThan(0);
   await expect.poll(async () => await terrain.getAttribute("data-map-center")).not.toBe("");
   await expect.poll(async () => await terrain.getAttribute("data-terrain-loaded"), { timeout: 30_000 }).toBe("true");
+  await expect.poll(async () => await terrain.getAttribute("data-banned-maplibre-layers-present"), { timeout: 30_000 }).toBe("");
   await expect.poll(async () => Number(await terrain.getAttribute("data-registration-sample-count"))).toBeGreaterThanOrEqual(6);
   await expect
     .poll(async () => Number(await terrain.getAttribute("data-registration-max-error")), { timeout: 30_000 })
@@ -2219,8 +2350,6 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     const svg = shell.querySelector<SVGSVGElement>("svg.battle-map");
     const countryLayer = shell.querySelector<SVGGElement>(".country-layer");
     const countries = Array.from(shell.querySelectorAll<SVGPathElement>(".country"));
-    const firstAircraft = shell.querySelector<SVGGraphicsElement>(".ww2-aircraft-marker");
-    const firstRoute = shell.querySelector<SVGGraphicsElement>(".front-line");
     const firstWeatherOverlay = shell.querySelector<SVGGraphicsElement>(".battle-of-britain-weather-overlay");
     const weatherOverlays = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay"));
     const mapPointLabels = Array.from(shell.querySelectorAll<SVGTextElement>(".map-point text"));
@@ -2231,13 +2360,64 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     const stageStyle = stage ? getComputedStyle(stage) : null;
     const terrainStyle = terrainLayer ? getComputedStyle(terrainLayer) : null;
     const svgStyle = svg ? getComputedStyle(svg) : null;
+    const canvasStyle = canvas ? getComputedStyle(canvas) : null;
     const canvasBox = canvas?.getBoundingClientRect();
     const stageBox = stage?.getBoundingClientRect();
+    const clippedBoxFor = (element: SVGGraphicsElement) => {
+      if (!stageBox) {
+        return { coverage: 0, height: 0, width: 0 };
+      }
+      const box = element.getBoundingClientRect();
+      const left = Math.max(box.left, stageBox.left);
+      const right = Math.min(box.right, stageBox.right);
+      const top = Math.max(box.top, stageBox.top);
+      const bottom = Math.min(box.bottom, stageBox.bottom);
+      const width = Math.max(0, right - left);
+      const height = Math.max(0, bottom - top);
+      return {
+        coverage: (width * height) / Math.max(1, stageBox.width * stageBox.height),
+        height,
+        width
+      };
+    };
+    const isVisibleInStage = (element: SVGGraphicsElement | null) => {
+      if (!element) return false;
+      const clipped = clippedBoxFor(element);
+      const style = getComputedStyle(element);
+      return clipped.width > 12 && clipped.height > 12 && Number.parseFloat(style.opacity || "1") > 0.04 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const firstAircraft = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".ww2-aircraft-marker")).find(isVisibleInStage) ?? null;
+    const firstRoute = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".front-line")).find(isVisibleInStage) ?? null;
+    const largeFilledTacticalShapes = Array.from(
+      shell.querySelectorAll<SVGGraphicsElement>(".tactical-terrain-layer path, .terrain-layer ellipse, .terrain-layer path, .map-overlay-elements path")
+    )
+      .map((node) => {
+        const box = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        const stageArea = stageBox ? Math.max(1, stageBox.width * stageBox.height) : 1;
+        return {
+          areaRatio: (box.width * box.height) / stageArea,
+          className: node.getAttribute("class") ?? "",
+          fill: style.fill,
+          opacity: Number.parseFloat(style.opacity || "1")
+        };
+      })
+      .filter((shape) => shape.areaRatio > 0.018 && shape.fill !== "none" && shape.fill !== "rgba(0, 0, 0, 0)" && shape.opacity > 0.08);
+    const activeRouteCircleAnimationCount = Array.from(shell.querySelectorAll<SVGCircleElement>(".front-line.is-active circle")).filter(
+      (circle) => getComputedStyle(circle).animationName !== "none"
+    ).length;
     return {
       aircraftAfterTerrain: firstAircraft
         ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
         : true,
+      bannedMaplibreLayerIds: terrainLayer?.getAttribute("data-banned-maplibre-layer-ids") ?? "",
+      bannedMaplibreLayersPresent: terrainLayer?.getAttribute("data-banned-maplibre-layers-present") ?? "",
       canvasCoverage: canvasBox && stageBox ? (canvasBox.width * canvasBox.height) / (stageBox.width * stageBox.height) : 0,
+      canvasFilter: canvasStyle?.filter ?? "",
+      canvasMixBlendMode: canvasStyle?.mixBlendMode ?? "",
+      maplibreStyleLayerIds: terrainLayer?.getAttribute("data-maplibre-style-layer-ids") ?? "",
+      largeFilledTacticalShapes,
+      activeRouteCircleAnimationCount,
       weatherAfterTerrain: Boolean(terrainLayer && firstWeatherOverlay && terrainLayer.compareDocumentPosition(firstWeatherOverlay) & Node.DOCUMENT_POSITION_FOLLOWING),
       weatherBeforeAircraft: firstAircraft
         ? Boolean(firstWeatherOverlay && firstWeatherOverlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2245,23 +2425,24 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       weatherOpacity: Number.parseFloat(firstWeatherOverlay ? getComputedStyle(firstWeatherOverlay).opacity : "0"),
       weatherPointerEvents: firstWeatherOverlay ? getComputedStyle(firstWeatherOverlay).pointerEvents : "",
       weatherCoverage: (() => {
-        if (!stage) {
+        if (!stageBox) {
           return { max: 0, total: 0 };
         }
-        const stageBox = stage.getBoundingClientRect();
-        const stageArea = Math.max(1, stageBox.width * stageBox.height);
         const visibleAreas = weatherOverlays
           .map((overlay) => {
-            const box = overlay.getBoundingClientRect();
+            const clipped = clippedBoxFor(overlay);
             const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
-            return box.width > 12 && box.height > 12 && opacity > 0.06 ? (box.width * box.height) / stageArea : 0;
+            return clipped.width > 12 && clipped.height > 12 && opacity > 0.06 ? clipped.coverage : 0;
           })
           .filter((area) => area > 0);
         return {
           max: Math.max(0, ...visibleAreas),
+          min: visibleAreas.length > 0 ? Math.min(...visibleAreas) : 0,
           total: visibleAreas.reduce((sum, area) => sum + area, 0)
         };
       })(),
+      weatherInCameraLayer: weatherOverlays.every((overlay) => overlay.closest(".camera-layer") === shell.querySelector(".camera-layer")),
+      weatherUnitClassCount: weatherOverlays.filter((overlay) => overlay.classList.contains("battle-of-britain-cloud-unit")).length,
       countryFills: countries.map((country) => getComputedStyle(country).fill),
       countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
       mapPointLabels: mapPointLabels.map((label) => {
@@ -2339,12 +2520,13 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       stageOverflow: stageStyle?.overflow ?? "",
       svgBackground: svgStyle?.backgroundColor ?? "",
       svgZIndex: Number(svgStyle?.zIndex ?? 0),
+      terrainBackground: terrainStyle?.backgroundImage ?? "",
       terrainPointerEvents: terrainStyle?.pointerEvents ?? "",
       terrainZIndex: Number(terrainStyle?.zIndex ?? 0),
       visibleWeatherOverlayCount: weatherOverlays.filter((overlay) => {
-        const box = overlay.getBoundingClientRect();
+        const clipped = clippedBoxFor(overlay);
         const style = getComputedStyle(overlay);
-        return box.width > 12 && box.height > 12 && Number.parseFloat(style.opacity || "0") > 0.06;
+        return clipped.width > 12 && clipped.height > 12 && Number.parseFloat(style.opacity || "0") > 0.06;
       }).length,
       windVector: windPath
         ? {
@@ -2356,6 +2538,15 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   });
 
   expect(visualState.canvasCoverage, "Battle of Britain MapLibre terrain canvas should fill the map stage").toBeGreaterThan(0.92);
+  expect(visualState.canvasMixBlendMode, "MapLibre terrain must not be recolored by a full-surface blend mode that creates broad blocks").toBe("normal");
+  expect(visualState.canvasFilter, "MapLibre terrain should keep real map colors instead of being crushed into a dark/flat tint").not.toContain("brightness(0.65)");
+  expect(visualState.terrainBackground, "Battle of Britain terrain container should not add a multi-stop full-map gradient color block layer").not.toContain("gradient");
+  expect(visualState.largeFilledTacticalShapes, "Battle of Britain tactical/weather layers must not add large filled color-block shapes over the real terrain").toEqual([]);
+  expect(visualState.activeRouteCircleAnimationCount, "Battle of Britain dense route markers should not breathe/flash during playback").toBe(0);
+  expect(visualState.bannedMaplibreLayersPresent, "large polygon color-block MapLibre layers must not be present in the loaded style").toBe("");
+  for (const bannedLayerId of visualState.bannedMaplibreLayerIds.split(",").filter(Boolean)) {
+    expect(visualState.maplibreStyleLayerIds, `${bannedLayerId} should not be reintroduced as a terrain color block`).not.toContain(bannedLayerId);
+  }
   expect(visualState.terrainPointerEvents).toBe("none");
   expect(visualState.weatherPointerEvents).toBe("none");
   expect(visualState.stageOverflow).toBe("hidden");
@@ -2376,13 +2567,17 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     "Battle of Britain key place labels need a readable halo on both overview and zoomed camera stages"
   ).toBeGreaterThanOrEqual(8);
   expect(visualState.windVector?.strokeWidth ?? 99, "radar command vector should not read as a heavy black coastline/connector line").toBeLessThanOrEqual(1.4);
-  expect(visualState.visibleWeatherOverlayCount, "Battle of Britain should show multiple ComfyUI cloud banks, not one barely visible weather stamp").toBeGreaterThanOrEqual(2);
+  expect(visualState.visibleWeatherOverlayCount, "Battle of Britain should show several readable gray-white cloud banks, not a few barely visible weather stamps").toBeGreaterThanOrEqual(4);
+  expect(visualState.weatherInCameraLayer, "local cloud units should share the same camera-layer coordinate system as routes and aircraft").toBe(true);
+  expect(visualState.weatherUnitClassCount, "weather bitmaps should be treated as local cloud units, not an unscoped cloud layer").toBeGreaterThanOrEqual(4);
   expect(visualState.weatherAfterTerrain, "ComfyUI weather overlay should sit above the terrain canvas").toBe(true);
   expect(visualState.weatherBeforeAircraft, "ComfyUI weather overlay must stay below aircraft markers").toBe(true);
-  expect(visualState.weatherOpacity, "ComfyUI cloud units should be visible without becoming a full-screen weather veil").toBeGreaterThanOrEqual(0.16);
-  expect(visualState.weatherOpacity, "ComfyUI cloud units must stay below map-color grading strength").toBeLessThanOrEqual(0.3);
-  expect(visualState.weatherCoverage.max, "a single cloud unit should not cover the tactical map like a weather blanket").toBeLessThan(0.075);
-  expect(visualState.weatherCoverage.total, "cloud units should remain local tactical/weather assets, not a full-map color layer").toBeLessThan(0.16);
+  expect(visualState.weatherOpacity, "ComfyUI cloud units should be visible without becoming a full-screen weather veil").toBeGreaterThanOrEqual(0.2);
+  expect(visualState.weatherOpacity, "ComfyUI cloud units must stay below map-color grading strength").toBeLessThanOrEqual(0.45);
+  expect(visualState.weatherCoverage.min, "visible cloud units should have enough in-frame area to read as clouds instead of off-screen DOM remnants").toBeGreaterThan(0.008);
+  expect(visualState.weatherCoverage.max, "a single cloud unit should not cover the tactical map like a weather blanket").toBeLessThan(0.085);
+  expect(visualState.weatherCoverage.total, "cloud units should now be visually legible while remaining local tactical/weather assets").toBeGreaterThan(0.065);
+  expect(visualState.weatherCoverage.total, "cloud units should remain local tactical/weather assets, not a full-map color layer").toBeLessThan(0.22);
   expect(visualState.routeAfterTerrain, "tactical routes must render above the terrain underlay").toBe(true);
   expect(visualState.aircraftAfterTerrain, "aircraft must render above the terrain underlay").toBe(true);
   expect(visualState.svgBackground).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
@@ -2404,7 +2599,7 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
     expect(response.ok(), `${asset.path} should be served as a runtime weather asset`).toBe(true);
     expect(response.headers()["content-type"], `${asset.path} should be a PNG image`).toContain("image/png");
     expect(response.headers()["cache-control"], `${asset.path} should not hide regenerated weather assets behind immutable local cache`).toBe("no-cache");
-    expect(Number(response.headers()["content-length"]), `${asset.path} should be a finished bitmap asset, not a tiny CSS/geometry placeholder`).toBeGreaterThan(240_000);
+    expect(Number(response.headers()["content-length"]), `${asset.path} should be a finished bitmap asset, not a tiny CSS/geometry placeholder`).toBeGreaterThan(120_000);
   }
   const activeOverlay = page.getByTestId(activeAsset.testId);
   await expect(activeOverlay.locator("image.map-overlay-image")).toHaveAttribute("href", `${activeAsset.path}?v=20260614-comfy-weather-v4`);
@@ -2412,28 +2607,55 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
   const weatherVisualState = await page.locator(".battle-of-britain").evaluate((shell, activeTestId) => {
     const morning = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
     const afternoon = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-afternoon"]');
-      const active = shell.querySelector<SVGGraphicsElement>(`[data-testid="${activeTestId}"]`);
-      const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
-      const visibleOverlays = [...shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")].filter((overlay) => {
-        const box = overlay.getBoundingClientRect();
-        const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
-        return box.width > 12 && box.height > 12 && opacity > 0.06;
-      });
+    const active = shell.querySelector<SVGGraphicsElement>(`[data-testid="${activeTestId}"]`);
+    const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+    const stageBox = stage?.getBoundingClientRect();
+    const clippedBoxFor = (element: SVGGraphicsElement | null) => {
+      const box = element?.getBoundingClientRect();
+      if (!box || !stageBox) {
+        return { coverage: 0, height: 0, width: 0 };
+      }
+      const left = Math.max(box.left, stageBox.left);
+      const right = Math.min(box.right, stageBox.right);
+      const top = Math.max(box.top, stageBox.top);
+      const bottom = Math.min(box.bottom, stageBox.bottom);
+      const width = Math.max(0, right - left);
+      const height = Math.max(0, bottom - top);
+      return {
+        coverage: (width * height) / Math.max(1, stageBox.width * stageBox.height),
+        height,
+        width
+      };
+    };
+    const visibleOverlays = [...shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay")].filter((overlay) => {
+      const clipped = clippedBoxFor(overlay);
+      const opacity = Number.parseFloat(getComputedStyle(overlay).opacity || "0");
+      return clipped.width > 12 && clipped.height > 12 && opacity > 0.06;
+    });
     const mapOverlayElements = shell.querySelector<SVGGraphicsElement>('[data-testid="map-overlay-elements"]');
-    const firstRoute = shell.querySelector<SVGGraphicsElement>(".front-line");
-    const firstAircraft = shell.querySelector<SVGGraphicsElement>(".ww2-aircraft-marker");
-      const stateFor = (element: SVGGraphicsElement | null) => {
-        const box = element?.getBoundingClientRect();
-        const style = element ? getComputedStyle(element) : null;
-        const stageBox = stage?.getBoundingClientRect();
-        const stageArea = stageBox ? Math.max(1, stageBox.width * stageBox.height) : 1;
-        return {
-          coverage: box ? (box.width * box.height) / stageArea : 0,
-          height: box?.height ?? 0,
-          href: element?.querySelector("image")?.getAttribute("href") ?? "",
-          opacity: Number.parseFloat(style?.opacity ?? "0"),
+    const isVisibleInStage = (element: SVGGraphicsElement | null) => {
+      if (!element) return false;
+      const clipped = clippedBoxFor(element);
+      const style = getComputedStyle(element);
+      return clipped.width > 12 && clipped.height > 12 && Number.parseFloat(style.opacity || "1") > 0.04 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const firstRoute = [...shell.querySelectorAll<SVGGraphicsElement>(".front-line")].find(isVisibleInStage) ?? null;
+    const firstAircraft = [...shell.querySelectorAll<SVGGraphicsElement>(".ww2-aircraft-marker")].find(isVisibleInStage) ?? null;
+    const stateFor = (element: SVGGraphicsElement | null) => {
+      const box = element?.getBoundingClientRect();
+      const clipped = clippedBoxFor(element);
+      const style = element ? getComputedStyle(element) : null;
+      return {
+        clippedCoverage: clipped.coverage,
+        clippedHeight: clipped.height,
+        clippedWidth: clipped.width,
+        coverage: clipped.coverage,
+        height: box?.height ?? 0,
+        href: element?.querySelector("image")?.getAttribute("href") ?? "",
+        opacity: Number.parseFloat(style?.opacity ?? "0"),
         phase: element?.getAttribute("data-scene-transition-phase") ?? "",
         pointerEvents: style?.pointerEvents ?? "",
+        rawCoverage: box && stageBox ? (box.width * box.height) / Math.max(1, stageBox.width * stageBox.height) : 0,
         width: box?.width ?? 0
       };
     };
@@ -2443,6 +2665,7 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
       imageOverlayCount: shell.querySelectorAll(".battle-of-britain-weather-overlay image.map-overlay-image").length,
       morning: stateFor(morning),
       overlayInsideCameraLayer: Boolean(mapOverlayElements && mapOverlayElements.closest(".camera-layer")),
+      weatherUnitClassCount: shell.querySelectorAll(".battle-of-britain-weather-overlay.battle-of-britain-cloud-unit").length,
       visibleOverlayCount: visibleOverlays.length,
       weatherBeforeAircraft: firstAircraft && active
         ? Boolean(active.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2451,19 +2674,23 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
     };
   }, activeAsset.testId);
 
-  expect(weatherVisualState.imageOverlayCount, "weather should render multiple ComfyUI bitmap overlays in the tactical SVG layer").toBeGreaterThanOrEqual(2);
-  expect(weatherVisualState.visibleOverlayCount, "weather should have more than one visible cloud bank in the active phase").toBeGreaterThanOrEqual(2);
+  expect(weatherVisualState.imageOverlayCount, "weather should render multiple ComfyUI bitmap overlays in the tactical SVG layer").toBeGreaterThanOrEqual(4);
+  expect(weatherVisualState.visibleOverlayCount, "weather should have several visible cloud banks in the active phase").toBeGreaterThanOrEqual(4);
   expect(weatherVisualState.overlayInsideCameraLayer, "weather overlays must follow the battle camera layer, not sit as an independent background").toBe(true);
+  expect(weatherVisualState.weatherUnitClassCount, "ComfyUI weather bitmaps should be local cloud units, not a full cloud layer").toBeGreaterThanOrEqual(4);
   const visibleWeather = weatherVisualState.active;
   expect(weatherVisualState.active.href).toBe(activeAsset.path + "?v=20260614-comfy-weather-v4");
   expect(visibleWeather.pointerEvents).toBe("none");
-  expect(visibleWeather.width).toBeGreaterThan(95);
-  expect(visibleWeather.width).toBeLessThan(340);
-  expect(visibleWeather.height).toBeGreaterThan(32);
-  expect(visibleWeather.height).toBeLessThan(125);
-  expect(visibleWeather.opacity).toBeGreaterThanOrEqual(0.16);
-  expect(visibleWeather.opacity).toBeLessThanOrEqual(0.3);
-  expect(visibleWeather.coverage, "active cloud should behave like a local weather unit, not a full-map overlay").toBeLessThan(0.075);
+  expect(visibleWeather.width).toBeGreaterThan(140);
+  expect(visibleWeather.width).toBeLessThan(430);
+  expect(visibleWeather.height).toBeGreaterThan(44);
+  expect(visibleWeather.height).toBeLessThan(155);
+  expect(visibleWeather.clippedWidth, "active cloud should actually sit inside the map viewport, not only exist in the DOM").toBeGreaterThan(140);
+  expect(visibleWeather.clippedHeight, "active cloud should actually sit inside the map viewport, not only exist in the DOM").toBeGreaterThan(44);
+  expect(visibleWeather.opacity).toBeGreaterThanOrEqual(0.34);
+  expect(visibleWeather.opacity).toBeLessThanOrEqual(0.45);
+  expect(visibleWeather.coverage, "active cloud should have enough in-frame area to read as a cloud unit").toBeGreaterThan(0.025);
+  expect(visibleWeather.coverage, "active cloud should behave like a local weather unit, not a full-map overlay").toBeLessThan(0.085);
   expect(weatherVisualState.weatherBeforeRoutes, "weather must stay under tactical routes").toBe(true);
   expect(weatherVisualState.weatherBeforeAircraft, "weather must stay under aircraft markers").toBe(true);
 
@@ -2532,6 +2759,86 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
     expect(item.edgeVisibleRatio, `${path} should not have a rectangular image edge`).toBeLessThan(0.02);
     expect(item.cornerAlphaMax, `${path} should keep transparent corners`).toBeLessThanOrEqual(8);
   }
+}
+
+async function expectBattleOfBritainCloudUnitsFollowCameraZoom(page: Page) {
+  await page.getByTestId("map-reset").click();
+  const resetTransform = await expectMapResetSettles(page);
+  const beforeZoom = await page.locator(".battle-of-britain").evaluate((shell) => {
+    const cloud = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
+    const cameraLayer = shell.querySelector<SVGGElement>(".camera-layer");
+    const stage = shell.querySelector<HTMLElement>('[data-testid="map-stage"]');
+    const stageBox = stage?.getBoundingClientRect();
+    const clippedBoxFor = (element: SVGGraphicsElement | null) => {
+      const box = element?.getBoundingClientRect();
+      if (!box || !stageBox) {
+        return { height: 0, width: 0 };
+      }
+      const left = Math.max(box.left, stageBox.left);
+      const right = Math.min(box.right, stageBox.right);
+      const top = Math.max(box.top, stageBox.top);
+      const bottom = Math.min(box.bottom, stageBox.bottom);
+      return {
+        height: Math.max(0, bottom - top),
+        width: Math.max(0, right - left)
+      };
+    };
+    const isVisibleInStage = (element: SVGGraphicsElement | null) => {
+      if (!element) return false;
+      const clipped = clippedBoxFor(element);
+      const style = getComputedStyle(element);
+      return clipped.width > 12 && clipped.height > 12 && Number.parseFloat(style.opacity || "1") > 0.04 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const aircraft = [...shell.querySelectorAll<SVGGraphicsElement>(".ww2-aircraft-marker")].find(isVisibleInStage) ?? null;
+    const route = [...shell.querySelectorAll<SVGGraphicsElement>(".front-line")].find(isVisibleInStage) ?? null;
+    const cloudBox = cloud?.getBoundingClientRect();
+    return {
+      aircraftAfterCloud: Boolean(cloud && aircraft && cloud.compareDocumentPosition(aircraft) & Node.DOCUMENT_POSITION_FOLLOWING),
+      cloudHeight: cloudBox?.height ?? 0,
+      cloudInCameraLayer: Boolean(cloud && cameraLayer && cloud.closest(".camera-layer") === cameraLayer),
+      cloudUnitClass: Boolean(cloud?.classList.contains("battle-of-britain-cloud-unit")),
+      cloudWidth: cloudBox?.width ?? 0,
+      visibleAircraftCount: [...shell.querySelectorAll<SVGGraphicsElement>(".ww2-aircraft-marker")].filter(isVisibleInStage).length,
+      routeAfterCloud: Boolean(cloud && route && cloud.compareDocumentPosition(route) & Node.DOCUMENT_POSITION_FOLLOWING),
+      transform: cameraLayer?.getAttribute("transform") ?? ""
+    };
+  });
+
+  expect(beforeZoom.cloudInCameraLayer, "cloud units must share the tactical camera-layer before manual zoom").toBe(true);
+  expect(beforeZoom.cloudUnitClass, "cloud units should be scoped as local cloud units, not a generic weather layer").toBe(true);
+  expect(beforeZoom.visibleAircraftCount, "Battle of Britain should render visible aircraft markers while checking cloud layering").toBeGreaterThan(0);
+  expect(beforeZoom.routeAfterCloud, "routes must stay above cloud units").toBe(true);
+  expect(beforeZoom.aircraftAfterCloud, "aircraft must stay above cloud units").toBe(true);
+
+  await page.getByTestId("map-zoom-in").click();
+  await expect.poll(async () => page.getByTestId("camera-layer").getAttribute("transform")).not.toBe(resetTransform);
+  const afterZoom = await page.locator(".battle-of-britain").evaluate((shell) => {
+    const cloud = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
+    const cameraLayer = shell.querySelector<SVGGElement>(".camera-layer");
+    const cloudBox = cloud?.getBoundingClientRect();
+    return {
+      cloudHeight: cloudBox?.height ?? 0,
+      cloudWidth: cloudBox?.width ?? 0,
+      transform: cameraLayer?.getAttribute("transform") ?? ""
+    };
+  });
+
+  expect(afterZoom.transform, "manual zoom should update the same camera-layer used by clouds/routes/aircraft").not.toBe(beforeZoom.transform);
+  expect(afterZoom.cloudWidth, "local cloud unit should scale with the tactical camera zoom").toBeGreaterThan(beforeZoom.cloudWidth * 1.08);
+  expect(afterZoom.cloudHeight, "local cloud unit should scale with the tactical camera zoom").toBeGreaterThan(beforeZoom.cloudHeight * 1.08);
+
+  await page.getByTestId("map-reset").click();
+  await expect.poll(async () => page.getByTestId("camera-layer").getAttribute("transform")).toBe(resetTransform);
+  const resetCloud = await page.locator(".battle-of-britain").evaluate((shell) => {
+    const cloud = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
+    const cloudBox = cloud?.getBoundingClientRect();
+    return {
+      cloudHeight: cloudBox?.height ?? 0,
+      cloudWidth: cloudBox?.width ?? 0
+    };
+  });
+  expect(resetCloud.cloudWidth, "reset should return cloud unit scale with the rest of the map").toBeCloseTo(beforeZoom.cloudWidth, 0);
+  expect(resetCloud.cloudHeight, "reset should return cloud unit scale with the rest of the map").toBeCloseTo(beforeZoom.cloudHeight, 0);
 }
 
 type TransparentAircraftPngOptions = {
@@ -7597,6 +7904,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectCurrentEventInBattleOfBritainCore(page, { minY: 0.24, maxY: 0.62 });
   await expectBattleOfBritainElementInMapCore(page, '[data-testid="britain-morning-dogfight"]', { minX: 0.3, maxX: 0.68, minY: 0.22, maxY: 0.62 });
   await expect(page.getByTestId("britain-morning-dogfight")).toBeVisible();
+  await expectBattleOfBritainCloudUnitsFollowCameraZoom(page);
   await expect(page.locator('.battle-of-britain .battle-salvo-effect')).toHaveCount(0);
   await expect(page.locator('.front-line[data-route-id="morning-raid-second-wave"]')).toHaveAttribute("data-route-to", "boulogne");
   await expect(page.locator('.front-line[data-route-id="twelve-group-morning-wing"]')).toHaveAttribute("data-route-to", "duxford");
@@ -7608,6 +7916,7 @@ test("battle of britain shows radar directed compact air formations", async ({ p
   await expectBattleOfBritainForegroundReadable(page);
   await expectBattleOfBritainDenseStageNoMapJitter(page, "morning London dogfight");
   await expect(page.getByTestId("dogfight-clash")).toBeVisible();
+  await expectBattleOfBritainPlaybackNoMapJitterAround(page, "britain-air-1230", "third-hour return corridor");
 
   await page.waitForTimeout(900);
   await page.evaluate(() => {

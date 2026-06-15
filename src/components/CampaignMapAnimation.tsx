@@ -241,6 +241,7 @@ type CampaignMapAnimationProps = {
     rx: number;
     ry: number;
   }>;
+  testAnchors?: Record<string, number>;
   testId: string;
   timeCounterLabel?: "天" | "小时" | "周";
   timeStepDays?: number;
@@ -967,6 +968,7 @@ export function CampaignMapAnimation({
   tacticalMapReference,
   tacticalTerrainFeatures = [],
   terrainZones = [],
+  testAnchors = {},
   testId,
   timeCounterLabel = "周",
   timeStepDays = 7,
@@ -1455,6 +1457,11 @@ export function CampaignMapAnimation({
 
       <section className="cinema-grid">
         <article ref={stageRef} className="map-stage" data-testid="map-stage">
+          <div className="timeline-test-anchors" data-testid="timeline-test-anchors" hidden>
+            {Object.entries(testAnchors).map(([id, anchorProgress]) => (
+              <span key={id} data-testid={id} data-progress={timeline.clampProgress(anchorProgress).toFixed(4)} />
+            ))}
+          </div>
           {mapTerrainLayer?.({
             activeEvent,
             focusState,

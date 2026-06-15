@@ -40,7 +40,7 @@ const cachedTerrainTileZoom = 11;
 const cachedTopoTileZoom = 11;
 const terrainExaggeration = 1.35;
 const hillshadeExaggeration = 0.72;
-const topoRasterOpacity = 0.2;
+const topoRasterOpacity = 0.15;
 const registeredCameraPitch = 0;
 const registeredCameraBearing = 0;
 const registrationSampleLimit = 10;
@@ -50,129 +50,15 @@ const cameraMoveThreshold = {
   pitch: 0.02,
   zoom: 0.025
 };
-
-const historicalBaseData = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      id: "battle-of-britain-cross-channel-aoi",
-      properties: { kind: "aoi" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [terrainSourceBounds[0], terrainSourceBounds[1]],
-          [terrainSourceBounds[2], terrainSourceBounds[1]],
-          [terrainSourceBounds[2], terrainSourceBounds[3]],
-          [terrainSourceBounds[0], terrainSourceBounds[3]],
-          [terrainSourceBounds[0], terrainSourceBounds[1]]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "channel-deep-water-surface",
-      properties: { kind: "channel" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [-1.32, 50.62],
-          [-0.18, 50.52],
-          [0.94, 50.54],
-          [2.08, 50.72],
-          [2.1, 51.18],
-          [1.2, 51.23],
-          [0.18, 51.14],
-          [-0.94, 51.02],
-          [-1.32, 50.62]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "channel-traffic-lane-surface",
-      properties: { kind: "channel-lane" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [0.12, 50.82],
-          [0.76, 50.72],
-          [1.42, 50.84],
-          [1.66, 50.98],
-          [1.08, 51.03],
-          [0.36, 50.94],
-          [0.12, 50.82]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "south-england-downs",
-      properties: { kind: "england-downs" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [-1.12, 51.06],
-          [-0.52, 51.76],
-          [0.4, 51.92],
-          [1.38, 51.38],
-          [1.2, 50.9],
-          [0.34, 51.04],
-          [-0.42, 51.18],
-          [-1.12, 51.06]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "thames-estuary-lowland",
-      properties: { kind: "thames-lowland" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [-0.2, 51.32],
-          [0.22, 51.24],
-          [0.82, 51.34],
-          [1.16, 51.42],
-          [0.78, 51.62],
-          [0.12, 51.58],
-          [-0.2, 51.32]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "french-coast-chalk",
-      properties: { kind: "france-chalk" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [1.08, 50.58],
-          [2.12, 50.6],
-          [2.12, 51.08],
-          [1.42, 51.08],
-          [1.08, 50.94],
-          [1.08, 50.58]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      id: "french-inland-launch-zone",
-      properties: { kind: "france-inland" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [1.34, 50.58],
-          [2.12, 50.62],
-          [2.12, 50.88],
-          [1.46, 50.86],
-          [1.34, 50.58]
-        ]]
-      }
-    }
-  ]
-} satisfies GeoJSON.FeatureCollection;
+const bannedMaplibreLayerIds = [
+  "battle-of-britain-channel-color",
+  "battle-of-britain-channel-lane-color",
+  "battle-of-britain-england-downs-color",
+  "battle-of-britain-thames-lowland-color",
+  "battle-of-britain-france-chalk-color",
+  "battle-of-britain-france-inland-color",
+  "battle-of-britain-palette-boundaries"
+];
 
 const terrainStyle: StyleSpecification = {
   version: 8,
@@ -205,10 +91,6 @@ const terrainStyle: StyleSpecification = {
       minzoom: minCachedTileZoom,
       maxzoom: cachedTerrainTileZoom,
       attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
-    },
-    "battle-of-britain-tactical-ground": {
-      type: "geojson",
-      data: historicalBaseData
     }
   },
   layers: [
@@ -216,7 +98,7 @@ const terrainStyle: StyleSpecification = {
       id: "battle-of-britain-sea-background",
       type: "background",
       paint: {
-        "background-color": "#477fa4"
+        "background-color": "#365d72"
       }
     },
     {
@@ -224,71 +106,11 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-topo",
       paint: {
-        "raster-brightness-max": 0.54,
-        "raster-brightness-min": 0.06,
-        "raster-contrast": 0.98,
+        "raster-brightness-max": 0.4,
+        "raster-brightness-min": 0.02,
+        "raster-contrast": 0.96,
         "raster-opacity": topoRasterOpacity,
-        "raster-saturation": 0
-      }
-    },
-    {
-      id: "battle-of-britain-channel-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "channel"],
-      paint: {
-        "fill-color": "#4b8bb6",
-        "fill-opacity": 0.84
-      }
-    },
-    {
-      id: "battle-of-britain-channel-lane-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "channel-lane"],
-      paint: {
-        "fill-color": "#5b9bc3",
-        "fill-opacity": 0.42
-      }
-    },
-    {
-      id: "battle-of-britain-england-downs-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "england-downs"],
-      paint: {
-        "fill-color": "#a4784b",
-        "fill-opacity": 0.46
-      }
-    },
-    {
-      id: "battle-of-britain-thames-lowland-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "thames-lowland"],
-      paint: {
-        "fill-color": "#91774d",
-        "fill-opacity": 0.36
-      }
-    },
-    {
-      id: "battle-of-britain-france-chalk-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "france-chalk"],
-      paint: {
-        "fill-color": "#b17245",
-        "fill-opacity": 0.44
-      }
-    },
-    {
-      id: "battle-of-britain-france-inland-color",
-      type: "fill",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["==", ["get", "kind"], "france-inland"],
-      paint: {
-        "fill-color": "#856a52",
-        "fill-opacity": 0.34
+        "raster-saturation": 0.24
       }
     },
     {
@@ -300,17 +122,6 @@ const terrainStyle: StyleSpecification = {
         "hillshade-exaggeration": hillshadeExaggeration,
         "hillshade-highlight-color": "#d6b16e",
         "hillshade-shadow-color": "#31566b"
-      }
-    },
-    {
-      id: "battle-of-britain-palette-boundaries",
-      type: "line",
-      source: "battle-of-britain-tactical-ground",
-      filter: ["in", ["get", "kind"], ["literal", ["channel", "channel-lane", "england-downs", "thames-lowland", "france-chalk", "france-inland"]]],
-      paint: {
-        "line-color": "#d5ceb1",
-        "line-opacity": 0.12,
-        "line-width": 0.55
       }
     }
   ],
@@ -508,9 +319,13 @@ export function BattleOfBritainTerrain3D({
       const canvas = map.getCanvas();
       const center = map.getCenter();
       const registration = registrationErrorForState(map, container, latestStateRef.current);
+      const styleLayerIds = map.getStyle().layers?.map((layer) => layer.id) ?? [];
+      const bannedLayersPresent = bannedMaplibreLayerIds.filter((id) => styleLayerIds.includes(id));
       container.dataset.currentEvent = latestStateRef.current.activeEvent.id;
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
       container.dataset.mapFocus = latestStateRef.current.mapFocus;
+      container.dataset.maplibreStyleLayerIds = styleLayerIds.join(",");
+      container.dataset.bannedMaplibreLayersPresent = bannedLayersPresent.join(",");
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       container.dataset.mapZoom = map.getZoom().toFixed(2);
       container.dataset.registrationMaxError = registration.max.toFixed(2);
@@ -589,11 +404,13 @@ export function BattleOfBritainTerrain3D({
       data-camera-transition-ms="0"
       data-cloud-animation="progress-linked-local-weather-units"
       data-cloud-renderer="svg-camera-layer-comfy-weather-png"
+      data-banned-maplibre-layer-ids={bannedMaplibreLayerIds.join(",")}
+      data-banned-maplibre-layers-present=""
       data-maplibre-fill-veil="removed"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
-      data-terrain-color-layer-ids="battle-of-britain-channel-color,battle-of-britain-channel-lane-color,battle-of-britain-england-downs-color,battle-of-britain-thames-lowland-color,battle-of-britain-france-chalk-color,battle-of-britain-france-inland-color"
-      data-terrain-color-model="typed-regional-palette-v2"
-      data-terrain-color-zones="channel,channel-lane,england-downs,thames-lowland,france-chalk,france-inland"
+      data-terrain-color-layer-ids=""
+      data-terrain-color-model="real-terrain-texture-no-polygon-blocks"
+      data-terrain-color-zones="none"
       data-topo-labels-suppressed="true"
       data-topo-raster-opacity={topoRasterOpacity.toFixed(2)}
       data-modern-imagery-visible="true"
@@ -609,7 +426,7 @@ export function BattleOfBritainTerrain3D({
       data-topo-source={topoTileUrl}
       data-topo-tile-cache-zoom={`${cachedTopoTileZoom}`}
       data-visible-basemap="local-cached-world-topographic-map"
-      data-visual-surface-contract="maplibre-typed-terrain-palette-country-boundaries-only"
+      data-visual-surface-contract="maplibre-real-terrain-no-polygon-color-blocks"
       data-weather-phase={cloudPhase}
     >
     </div>
