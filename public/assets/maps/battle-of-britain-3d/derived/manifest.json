@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T12:05:41.875471+00:00",
+  "generatedAt": "2026-06-15T12:51:18.253931+00:00",
   "battle": "battle-of-britain",
-  "purpose": "runtime-fifth-layer-gis-derivatives-validation",
+  "purpose": "runtime-fifth-layer-gis-final-derivatives",
   "source": {
     "terrainManifest": "public/assets/maps/battle-of-britain-3d/manifest.json",
     "qaManifest": "artifacts/london-air-terrain-gis-20260615/terrain-gis-derivatives-manifest.json"
@@ -39,9 +39,23 @@
     "alphaMean": 18.249789694081183,
     "output": "public/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
   },
+  "transportReference": {
+    "url": "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png",
+    "height": 1024,
+    "width": 1472,
+    "alphaCoverageRatio": 0.5225000796110734,
+    "alphaMax": 82,
+    "alphaMean": 12.317938099736752,
+    "blueInkPixels": 516893,
+    "darkLinePixels": 32428,
+    "missingTiles": [],
+    "output": "public/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png",
+    "warmRoadPixels": 39712
+  },
   "limitations": [
     "Runtime GeoJSON is a thinned validation layer derived from committed Terrarium tiles, not a final public GIS dataset.",
     "It is intentionally limited to subtle contour/coastline cues below aircraft, routes, labels, and local weather units.",
-    "The runtime relief texture is derived from the same local hillshade and slope outputs and is intended as a subtle texture lift, not a new full-map paint layer."
+    "The runtime relief texture is derived from the same local hillshade and slope outputs and is intended as a subtle texture lift, not a new full-map paint layer.",
+    "The runtime transport reference is extracted from the committed Esri topo cache as transparent linework, not as a restored full topo raster wash."
   ]
 }

@@ -2319,13 +2319,14 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
   await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-real-terrain-no-polygon-color-blocks");
-  await expect(terrain).toHaveAttribute("data-terrain-color-model", "real-terrain-texture-runtime-relief-contours-no-polygon-blocks");
+  await expect(terrain).toHaveAttribute("data-terrain-color-model", "real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks");
   await expect(terrain).toHaveAttribute("data-terrain-color-zones", "none");
   await expect(terrain).toHaveAttribute("data-terrain-color-layer-ids", "");
-  await expect(terrain).toHaveAttribute("data-gis-derivatives", "dem-hillshade-slope-runtime-contours-relief-texture");
+  await expect(terrain).toHaveAttribute("data-gis-derivatives", "dem-hillshade-slope-runtime-contours-relief-texture-transport-reference");
   await expect(terrain).toHaveAttribute("data-gis-derivatives-manifest", "/assets/maps/battle-of-britain-3d/derived/manifest.json");
   await expect(terrain).toHaveAttribute("data-runtime-contour-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson");
   await expect(terrain).toHaveAttribute("data-runtime-relief-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
+  await expect(terrain).toHaveAttribute("data-runtime-transport-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "progress-linked-local-weather-units");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
@@ -2354,15 +2355,26 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   const runtimeReliefResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
   expect(runtimeReliefResponse.ok(), "Battle of Britain runtime GIS relief texture should be present in the deployed preview").toBe(true);
   expect(runtimeReliefResponse.headers()["content-type"], "runtime relief texture should be served as PNG, not an SPA fallback").toContain("image/png");
+  const runtimeTransportResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
+  expect(runtimeTransportResponse.ok(), "Battle of Britain runtime transport reference texture should be present in the deployed preview").toBe(true);
+  expect(runtimeTransportResponse.headers()["content-type"], "runtime transport reference texture should be served as PNG, not an SPA fallback").toContain("image/png");
   const runtimeDerivedManifestResponse = await page.request.get("/assets/maps/battle-of-britain-3d/derived/manifest.json");
   expect(runtimeDerivedManifestResponse.ok(), "Battle of Britain runtime GIS manifest should be present in the deployed preview").toBe(true);
   const runtimeDerivedManifest = await runtimeDerivedManifestResponse.json();
-  expect(runtimeDerivedManifest.purpose).toBe("runtime-fifth-layer-gis-derivatives-validation");
+  expect(runtimeDerivedManifest.purpose).toBe("runtime-fifth-layer-gis-final-derivatives");
   expect(runtimeDerivedManifest.contours.featureCount).toBeGreaterThan(1500);
   expect(runtimeDerivedManifest.contours.runtimeIntervalMeters).toBe(50);
   expect(runtimeDerivedManifest.reliefTexture.url).toBe("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
   expect(runtimeDerivedManifest.reliefTexture.alphaMax).toBeGreaterThan(24);
   expect(runtimeDerivedManifest.reliefTexture.alphaMean).toBeLessThan(32);
+  expect(runtimeDerivedManifest.transportReference.url).toBe("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
+  expect(runtimeDerivedManifest.transportReference.alphaCoverageRatio).toBeGreaterThan(0.22);
+  expect(runtimeDerivedManifest.transportReference.alphaCoverageRatio).toBeLessThan(0.72);
+  expect(runtimeDerivedManifest.transportReference.alphaMean).toBeGreaterThan(4);
+  expect(runtimeDerivedManifest.transportReference.alphaMean).toBeLessThan(24);
+  expect(runtimeDerivedManifest.transportReference.blueInkPixels).toBeGreaterThan(80_000);
+  expect(runtimeDerivedManifest.transportReference.warmRoadPixels).toBeGreaterThan(5_000);
+  expect(runtimeDerivedManifest.transportReference.missingTiles).toEqual([]);
 
   const visualState = await page.locator(".battle-of-britain").evaluate((shell) => {
     const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
@@ -2444,6 +2456,9 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
       runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
       runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
+      runtimeTransportLayerId: terrainLayer?.getAttribute("data-runtime-transport-layer-id") ?? "",
+      runtimeTransportLayerPresent: terrainLayer?.getAttribute("data-runtime-transport-layer-present") ?? "",
+      runtimeTransportSource: terrainLayer?.getAttribute("data-runtime-transport-source") ?? "",
       weatherAfterTerrain: Boolean(terrainLayer && firstWeatherOverlay && terrainLayer.compareDocumentPosition(firstWeatherOverlay) & Node.DOCUMENT_POSITION_FOLLOWING),
       weatherBeforeAircraft: firstAircraft
         ? Boolean(firstWeatherOverlay && firstWeatherOverlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2574,7 +2589,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     expect(visualState.maplibreStyleLayerIds, `${bannedLayerId} should not be reintroduced as a terrain color block`).not.toContain(bannedLayerId);
   }
   expect(visualState.gisDerivatives, "Battle of Britain fifth map layer should expose the validated GIS derivative chain").toBe(
-    "dem-hillshade-slope-runtime-contours-relief-texture"
+    "dem-hillshade-slope-runtime-contours-relief-texture-transport-reference"
   );
   expect(visualState.runtimeContourSource, "runtime GIS contours should come from the local derived package").toBe(
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson"
@@ -2587,6 +2602,10 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
   );
   expect(visualState.runtimeReliefLayerPresent, "runtime GIS relief texture layer should load in the MapLibre style").toBe(visualState.runtimeReliefLayerId);
+  expect(visualState.runtimeTransportSource, "runtime transport reference should come from the local derived package").toBe(
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png"
+  );
+  expect(visualState.runtimeTransportLayerPresent, "runtime transport reference layer should load in the MapLibre style").toBe(visualState.runtimeTransportLayerId);
   expect(visualState.terrainPointerEvents).toBe("none");
   expect(visualState.weatherPointerEvents).toBe("none");
   expect(visualState.stageOverflow).toBe("hidden");

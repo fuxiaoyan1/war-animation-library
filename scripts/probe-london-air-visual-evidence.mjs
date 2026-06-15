@@ -443,6 +443,9 @@ async function collectPageMetrics(page) {
         runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
         runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
         runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
+        runtimeTransportLayerId: terrainLayer?.getAttribute("data-runtime-transport-layer-id") ?? "",
+        runtimeTransportLayerPresent: terrainLayer?.getAttribute("data-runtime-transport-layer-present") ?? "",
+        runtimeTransportSource: terrainLayer?.getAttribute("data-runtime-transport-source") ?? "",
         topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
         topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
@@ -718,6 +721,7 @@ async function collectTerrainTileHeads(page) {
     "/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png",
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson",
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png",
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png",
     "/assets/maps/battle-of-britain-3d/derived/manifest.json"
   ];
   const heads = {};

@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 
 
 WEB_MERCATOR_RADIUS = 6378137.0
@@ -113,6 +113,10 @@ def web_mercator_bounds(row: dict[str, int], sample_step: int) -> dict[str, floa
 
 def tile_path(terrain_dir: Path, zoom: int, x: int, y: int) -> Path:
     return terrain_dir / "terrarium" / str(zoom) / f"{x}-{y}.png"
+
+
+def topo_tile_path(terrain_dir: Path, zoom: int, x: int, y: int) -> Path:
+    return terrain_dir / "topo" / str(zoom) / f"{x}-{y}.jpg"
 
 
 def write_dem_ascii(
@@ -386,6 +390,99 @@ def write_runtime_relief_texture(
     }
 
 
+def write_runtime_transport_reference(
+    terrain_dir: Path,
+    row: dict[str, int],
+    sample_step: int,
+    output_png: Path,
+    root: Path,
+) -> dict[str, Any]:
+    tile_sample_size = TILE_SIZE // sample_step
+    width = (row["xMax"] - row["xMin"] + 1) * tile_sample_size
+    height = (row["yMax"] - row["yMin"] + 1) * tile_sample_size
+    topo_mosaic = Image.new("RGB", (width, height), (236, 240, 229))
+    missing_tiles: list[str] = []
+
+    for tile_y, y in enumerate(range(row["yMin"], row["yMax"] + 1)):
+        for tile_x, x in enumerate(range(row["xMin"], row["xMax"] + 1)):
+            path = topo_tile_path(terrain_dir, row["z"], x, y)
+            if not path.exists():
+                missing_tiles.append(str(path.relative_to(root)))
+                continue
+            with Image.open(path).convert("RGB") as tile:
+                sampled = tile.resize((tile_sample_size, tile_sample_size), Image.Resampling.LANCZOS)
+                topo_mosaic.paste(sampled, (tile_x * tile_sample_size, tile_y * tile_sample_size))
+
+    gray = ImageOps.grayscale(topo_mosaic)
+    edges = gray.filter(ImageFilter.FIND_EDGES).filter(ImageFilter.GaussianBlur(radius=0.55))
+    output_png.parent.mkdir(parents=True, exist_ok=True)
+    output = Image.new("RGBA", (width, height))
+    topo_pixels = topo_mosaic.load()
+    edge_pixels = edges.load()
+    out_pixels = output.load()
+
+    coverage = 0
+    alpha_sum = 0
+    max_alpha = 0
+    blue_ink_count = 0
+    warm_road_count = 0
+    dark_line_count = 0
+
+    for y in range(height):
+        for x in range(width):
+            red, green, blue = topo_pixels[x, y]
+            edge = edge_pixels[x, y]
+            luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722
+            saturation = max(red, green, blue) - min(red, green, blue)
+            blue_ink = blue > red + 10 and green > red + 4 and luminance < 232
+            warm_road = red > blue + 8 and green > blue + 4 and luminance < 238 and saturation > 14
+            dark_line = luminance < 206 and edge > 4
+            high_frequency = edge > 7 and luminance < 240
+
+            if not (blue_ink or warm_road or dark_line or high_frequency):
+                out_pixels[x, y] = (0, 0, 0, 0)
+                continue
+
+            alpha = int(round((max(0, edge - 4) * 1.25) + max(0, 230 - luminance) * 0.32 + min(54, saturation) * 0.18))
+            if blue_ink:
+                alpha += 10
+                blue_ink_count += 1
+            if warm_road:
+                alpha += 8
+                warm_road_count += 1
+            if dark_line:
+                alpha += 6
+                dark_line_count += 1
+            alpha = max(0, min(82, alpha))
+            if alpha <= 4:
+                out_pixels[x, y] = (0, 0, 0, 0)
+                continue
+
+            coverage += 1
+            alpha_sum += alpha
+            max_alpha = max(max_alpha, alpha)
+            if blue_ink:
+                out_pixels[x, y] = (34, 82, 103, alpha)
+            elif warm_road:
+                out_pixels[x, y] = (112, 92, 58, alpha)
+            else:
+                out_pixels[x, y] = (38, 63, 64, alpha)
+
+    output.save(output_png)
+    return {
+        "height": height,
+        "width": width,
+        "alphaCoverageRatio": coverage / (width * height),
+        "alphaMax": max_alpha,
+        "alphaMean": alpha_sum / (width * height),
+        "blueInkPixels": blue_ink_count,
+        "darkLinePixels": dark_line_count,
+        "missingTiles": missing_tiles,
+        "output": str(output_png.relative_to(root)),
+        "warmRoadPixels": warm_road_count,
+    }
+
+
 def main() -> int:
     args = parse_args()
     root = Path.cwd()
@@ -419,6 +516,7 @@ def main() -> int:
     runtime_contours_geojson = runtime_derived_dir / "battle-of-britain-contours-runtime.geojson"
     runtime_manifest_path = runtime_derived_dir / "manifest.json"
     runtime_relief_png = runtime_derived_dir / "battle-of-britain-runtime-relief.png"
+    runtime_transport_png = runtime_derived_dir / "battle-of-britain-transport-reference.png"
     gdal_stats_path = products_dir / "gdal-stats.json"
 
     dem_info = write_dem_ascii(terrain_dir, row, args.sample_step, dem_ascii)
@@ -496,10 +594,11 @@ def main() -> int:
         args.contour_interval,
     )
     runtime_relief = write_runtime_relief_texture(hillshade_png, slope_png, runtime_relief_png, root)
+    runtime_transport = write_runtime_transport_reference(terrain_dir, row, args.sample_step, runtime_transport_png, root)
     runtime_manifest = {
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "battle": "battle-of-britain",
-        "purpose": "runtime-fifth-layer-gis-derivatives-validation",
+        "purpose": "runtime-fifth-layer-gis-final-derivatives",
         "source": {
             "terrainManifest": str(manifest_path.relative_to(root)),
             "qaManifest": str((out_dir / "terrain-gis-derivatives-manifest.json").relative_to(root)),
@@ -514,10 +613,15 @@ def main() -> int:
             "url": "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png",
             **runtime_relief,
         },
+        "transportReference": {
+            "url": "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png",
+            **runtime_transport,
+        },
         "limitations": [
             "Runtime GeoJSON is a thinned validation layer derived from committed Terrarium tiles, not a final public GIS dataset.",
             "It is intentionally limited to subtle contour/coastline cues below aircraft, routes, labels, and local weather units.",
             "The runtime relief texture is derived from the same local hillshade and slope outputs and is intended as a subtle texture lift, not a new full-map paint layer.",
+            "The runtime transport reference is extracted from the committed Esri topo cache as transparent linework, not as a restored full topo raster wash.",
         ],
     }
     write_json(runtime_manifest_path, runtime_manifest)
@@ -538,6 +642,7 @@ def main() -> int:
         "runtimeContoursGeoJson": str(runtime_contours_geojson.relative_to(root)),
         "runtimeDerivedManifest": str(runtime_manifest_path.relative_to(root)),
         "runtimeReliefTexture": str(runtime_relief_png.relative_to(root)),
+        "runtimeTransportReference": str(runtime_transport_png.relative_to(root)),
         "gdalStats": str(gdal_stats_path.relative_to(root)),
     }
     output_manifest = {
@@ -565,6 +670,7 @@ def main() -> int:
         "limitations": [
             "The QA DEM is sampled from committed Terrarium tiles and is intended for review evidence, not as a higher-authority source than the original terrain tile cache.",
             "Runtime still uses the existing MapLibre Terrarium tile source; these products are GIS derivatives for inspection, rule capture, and future refinement.",
+            "The transport-reference texture intentionally keeps roads and cartographic linework without restoring full third-party label dominance.",
             "gdal_calc.py is not required because local Homebrew Python currently has a numpy ABI issue.",
         ],
     }

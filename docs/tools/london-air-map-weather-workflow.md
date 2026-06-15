@@ -19,7 +19,7 @@ Battle of Britain London Layer 5 near-3D map workflow.
 对 `伦敦上空的鹰` 来说，用户的目标已经明确过：跨海峡、跨国家空战地图主要看 3D 质感，不需要精细画山脉、高楼、海浪和云朵。成熟答案不是在 SVG 上画山纹、海浪、黑影或大雾，而是：
 
 - 使用真实地形数据和 topo 纹理做底板；
-- 通过 DEM hillshade、地形明暗、局部纹理、钢蓝海面、暖土地表和标签分离制造近似 3D 观感；
+- 通过 DEM hillshade、地形明暗、局部纹理、透明交通/水系线网、钢蓝海面、暖土地表和标签分离制造近似 3D 观感；
 - 让地图始终低于飞机、航线、雷达链、狗斗效果和地名标签的视觉优先级；
 - 让 MapLibre 地形和 SVG 战术层注册到同一套相机语义，避免地图层与战斗层分裂；
 - 用浏览器最终截图和连续帧指标验收，不接受“DOM 有地形节点”作为合格证明。
@@ -30,8 +30,8 @@ Current accepted runtime target:
 - terrain model: `real-dem-raster-terrain`
 - camera mode: `svg-projection-registered-terrain`
 - visual contract: `maplibre-real-terrain-no-polygon-color-blocks`
-- terrain color model: `real-terrain-texture-runtime-relief-contours-no-polygon-blocks`
-- latest evidence: `artifacts/london-air-terrain-gis-runtime-20260615-final-v6/metrics.browser.json`
+- terrain color model: `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`
+- latest evidence: `artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json`
 
 ## 与六层工艺的关系
 
@@ -75,6 +75,7 @@ Current accepted runtime target:
 - topo raster opacity: `0.15`
 - runtime GIS derivatives: `/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson`
 - runtime relief texture: `/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png`
+- runtime transport reference: `/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png`
 - runtime GIS manifest: `/assets/maps/battle-of-britain-3d/derived/manifest.json`
 - registered camera pitch: `0`
 - registered camera bearing: `0`
@@ -133,7 +134,7 @@ scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11
 边界：
 
 - 当前运行演示需要这些 committed runtime tiles，不需要本机 QGIS/GDAL。
-- 2026-06-15 验证版已经用本机 GDAL 从 committed Terrarium tiles 派生 DEM、hillshade、slope 和 contour QA 包，并把轻量 runtime contours 接入 MapLibre；这证明工具链可跑通，但仍不是最终公开级专业 GIS 版本。
+- 2026-06-15 最终运行版已经用本机 GDAL 从 committed Terrarium tiles 派生 DEM、hillshade、slope 和 contour QA 包，并把轻量 runtime contours、runtime relief texture 和透明 transport-reference 纹理接入 MapLibre；这证明工具链可跑通，且综合了地形质感与道路/交通骨架，但仍不是完整公开级专业 GIS 版本。
 - 后续若要做公开级专业地图，需要 QGIS/GDAL/QGIS 交叉校验 DEM 派生、历史战术底图和来源/许可链；这不阻塞当前运行级验收。
 
 ### 镜头输入
@@ -199,6 +200,7 @@ scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11
 - DEM hillshade layer: `battle-of-britain-dem-hillshade`
 - real DEM terrain: `battle-of-britain-real-dem`
 - runtime relief texture layer: `battle-of-britain-gis-relief-texture`
+- runtime transport reference layer: `battle-of-britain-gis-transport-reference`
 - runtime GIS contour source: `battle-of-britain-runtime-contours`
 - runtime contour layers: `battle-of-britain-gis-subsea-contours`、`battle-of-britain-gis-land-contours`、`battle-of-britain-gis-coastline-contour`
 
@@ -225,16 +227,31 @@ raster-saturation = 0.24
 
 这么做的原因是：第三方 topo 自带英文标注、黑碎线和青绿海面，如果让它主导画面，会压过本项目地名、航线和飞机。伦敦最终经验是把 topo raster 降为纹理参考，把地名可读性交给项目自有 SVG label plate。
 
-2026-06-15 验证版新增了 GDAL 派生的轻量坡面纹理与等高线/海岸线运行图层。它不是为了把动画变成 GIS 软件，而是把第五层地图的地形丰富度从“只有 raster/hillshade 感觉”推进到可验收的 GIS 派生信号：
+2026-06-15 最终运行版新增了 GDAL 派生的轻量坡面纹理、等高线/海岸线运行图层和透明交通参考纹理。它不是为了把动画变成 GIS 软件，而是把第五层地图从“terrain-only”推进到“地形质感 + 道路/交通/水系骨架”的可验收综合层：
 
 - QA 包：`artifacts/london-air-terrain-gis-20260615/`
 - DEM: `1472 x 1024`, EPSG:3857, elevation min/max about `-367m / 340m`, missing tiles `0`
 - full contours: `5788` features at `25m`
 - runtime contours: `3137` features at `50m`, stored under `public/assets/maps/battle-of-britain-3d/derived/`
 - runtime relief texture: `1472 x 1024` transparent PNG derived from hillshade/slope, stored under `public/assets/maps/battle-of-britain-3d/derived/`
-- derived manifest purpose: `runtime-fifth-layer-gis-derivatives-validation`
+- runtime transport reference: `1472 x 1024` transparent PNG extracted from the committed Esri topo cache, stored under `public/assets/maps/battle-of-britain-3d/derived/`
+- transport metrics: `alphaCoverageRatio≈0.5225`, `alphaMean≈12.32`, `blueInkPixels=516893`, `warmRoadPixels=39712`, `missingTiles=[]`
+- derived manifest purpose: `runtime-fifth-layer-gis-final-derivatives`
 
-这个版本的验收口径是“工具链可跑通，并且视觉效果好于原版”，不是最终专业 GIS 交付。最终专业 GIS 版目标样图保存在 `artifacts/london-air-professional-gis-target-sample-20260615/battle-of-britain-professional-gis-target-sample.png`，它展示了后续应追求的 DEM hillshade、slope texture、0/50/100m contours、海陆分层、标签 plate 和战术 AOI 同屏效果。当前 runtime 只接入其中不打乱动画的底层地形信号。
+这个版本的验收口径是“工具链可跑通，并且视觉效果好于原版，同时补回道路/交通识别优势”，不是完整专业 GIS 交付。最终专业 GIS 版目标样图保存在 `artifacts/london-air-professional-gis-target-sample-20260615/battle-of-britain-professional-gis-target-sample.png`，它展示了后续应追求的 DEM hillshade、slope texture、0/50/100m contours、海陆分层、标签 plate 和战术 AOI 同屏效果。当前 runtime 只接入其中不打乱动画的底层地形信号，并用透明 transport reference 保留道路、河网和交通线索。
+
+交通参考层不是把旧 topo raster 整张盖回来。正确做法是从 committed Esri topo cache 抽取高频线网、蓝色水系墨线、暖色道路和暗色交通/边界线，输出透明 PNG，再作为 MapLibre image source 叠在 relief texture 之上、contours 之下。当前运行 paint 为：
+
+```text
+source = battle-of-britain-runtime-transport
+raster-brightness-max = 0.86
+raster-brightness-min = 0
+raster-contrast = 0.48
+raster-opacity = interpolate zoom 6.8:0.24 -> 10.8:0.48
+raster-saturation = 0.1
+```
+
+这组参数的目标是让伦敦、萨里、肯特、泰晤士口、梅德韦和海峡沿岸的道路/交通/河网骨架在 1440px 画面中可辨识，同时不恢复第三方英文底图标注为主层，不增加 topo raster opacity，不压过飞机、航线和本项目中文 label plate。
 
 ### 4. 把 MapLibre 注册到 SVG 战术相机
 
@@ -338,7 +355,7 @@ MapLibre 是底板，SVG 是战术层。两者不能互相抢职责。
 - 有地形/金属质感；
 - 飞机、航线、雷达线和地名第一眼可读。
 
-当前参考指标来自 `artifacts/london-air-cloud-stronger-20260615-final-v2/metrics.browser.json`：
+白昼钢蓝目标带来自用户已验收的 `artifacts/london-air-cloud-stronger-20260615-final-v2/metrics.browser.json`，当前综合 GIS+transport 运行证据以 `artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 为准：
 
 - `brightnessScore100` about `60.22-63.56`
 - saturation about `51.06-90.91`
@@ -346,6 +363,10 @@ MapLibre 是底板，SVG 是战术层。两者不能互相抢职责。
 - green ratio about `0.070-0.103`
 - low daylight ratio about `0.036-0.058`
 - night blue ratio about `0.0059-0.0105`
+- v8 runtime publication: bundle `/assets/index-Cy_eE1GQ.js`, CSS `/assets/index-Dheb11PY.css`
+- v8 transport layer: `battle-of-britain-gis-transport-reference` present in all six key frames
+- v8 terrain texture edgeMean: radar about `15.21`, combat about `24.97`, return about `20.29`
+- v8 stability: dense combat stages and third-hour return corridor keep `uniqueCameraTransforms=1`, `uniqueMapCenters=1`, `uniqueMapZooms=1`, `terrainCanvasRectMaxDelta=0`
 
 2026-06-15 GIS 派生层接入后，默认 Playwright 视口 `1280 x 720` 会比 1440 证据视口更容易把海面采到青绿边界。最终运行 filter 从 `14deg` 收敛到 `16deg`，把默认视口开场 `cyanGreenSeaRatio` 从约 `0.203` 降到约 `0.183`，同时保持亮度约 `61.36`、对比约 `29.98`、钢蓝比例约 `0.608`。这属于视口稳定性修正，不是恢复 polygon 色块或全图调色罩。
 
@@ -435,15 +456,17 @@ data-terrain-source="/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png
 data-topo-source="/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg"
 data-terrain-exaggeration="1.35"
 data-hillshade-exaggeration="0.72"
-data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture"
+data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture-transport-reference"
 data-gis-derivatives-manifest="/assets/maps/battle-of-britain-3d/derived/manifest.json"
 data-runtime-contour-source="/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson"
 data-runtime-contour-layer-ids="battle-of-britain-gis-subsea-contours,battle-of-britain-gis-land-contours,battle-of-britain-gis-coastline-contour"
 data-runtime-relief-source="/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
 data-runtime-relief-layer-id="battle-of-britain-gis-relief-texture"
+data-runtime-transport-source="/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png"
+data-runtime-transport-layer-id="battle-of-britain-gis-transport-reference"
 data-visible-basemap="local-cached-world-topographic-map"
 data-visual-surface-contract="maplibre-real-terrain-no-polygon-color-blocks"
-data-terrain-color-model="real-terrain-texture-runtime-relief-contours-no-polygon-blocks"
+data-terrain-color-model="real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks"
 data-terrain-color-zones="none"
 data-terrain-color-layer-ids=""
 data-cloud-animation="progress-linked-local-weather-units"
@@ -500,13 +523,15 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 - DEM tile HEAD `image/png`；
 - runtime contours HEAD JSON / non-SPA；
 - runtime relief texture HEAD `image/png`；
-- runtime GIS manifest `purpose=runtime-fifth-layer-gis-derivatives-validation`；
+- runtime transport reference HEAD `image/png`；
+- runtime GIS manifest `purpose=runtime-fifth-layer-gis-final-derivatives`；
 - MapLibre canvas coverage `> 0.92`；
 - country fill transparent / none；
 - banned MapLibre polygon layers absent；
 - registration sample count and max/mean error；
 - raw canvas texture `luminanceStdDev > 9`、`edgeMean > 5`；
-- runtime contour layer IDs and relief texture layer ID all present in loaded MapLibre style；
+- runtime contour layer IDs, relief texture layer ID and transport reference layer ID all present in loaded MapLibre style；
+- manifest transport metrics: coverage `0.22-0.72`, alpha mean `4-24`, blue ink `>80000`, warm road `>5000`, missing tiles `[]`；
 - rendered map-stage daylight color gate；
 - no large filled tactical shapes；
 - no large dark rendered blocks；
@@ -528,6 +553,8 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | 地图像黑天 | 均值门禁漏掉低亮分位和深蓝大面积 | 增加 `luminanceP10`、`luminanceP25`、`lowDaylightRatio`、`nightBlueRatio` | daylightColorGate |
 | 海面发绿 | 底图默认 topo 颜色或 sepia/green bias | canvas filter 收敛为冷调钢蓝，降低 topo opacity | steel-blue ratio, green ratio |
 | 地名看不清 | 依赖第三方 topo 黑字或无 label plate | 项目自有 SVG label + halo + plate | label plate count and stroke width |
+| GIS 版太偏地形、缺少道路/交通 | 只接入 DEM/hillshade/contours，topo raster 又被压到纹理级 | 从 topo cache 抽取透明 transport-reference 线网，低透明叠加到 relief 之上 | transport PNG HEAD, manifest transport metrics, runtime transport layer present, screenshots |
+| 道路/交通层重新压过作战层 | 直接提高整张 topo raster opacity 或恢复第三方标注主层 | 只增强透明 linework 层，topo opacity 仍保持 `0.15`，项目中文 label plate 负责标注 | topo opacity, layer order, label plate count |
 | 黑块遮地图 | `.battle-of-britain` scoped CSS 缺失或 SVG `polyline` 默认 fill | scoped `fill:none`，polyline 显式 fill none，截图连通域 | `expectNoLargeDarkRenderedBlocks` |
 | 云朵像全图雾毯 | 天气当背景层或调色层 | 云朵作为局部 weather unit，放入 camera-layer | cloud coverage max/total, layer order |
 | 云朵看不见 | 只满足 DOM/layer/jitter，覆盖率和 opacity 太低 | 提高灰白云体对比，增加关键区域实例 | visible cloud count, coverage, user screenshot |

@@ -32,6 +32,7 @@ const terrainTileUrl = "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.
 const topoTileUrl = "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg";
 const runtimeContourUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson";
 const runtimeReliefTextureUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png";
+const runtimeTransportReferenceUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png";
 const runtimeDerivedManifestUrl = "/assets/maps/battle-of-britain-3d/derived/manifest.json";
 const terrainSourceBounds: [number, number, number, number] = [-1.75, 50.52, 2.12, 52.22];
 const runtimeDerivedBounds: [number, number, number, number] = [-1.7578125, 50.5134265, 2.2851563, 52.2681574];
@@ -54,6 +55,7 @@ const runtimeContourLayerIds = [
   "battle-of-britain-gis-coastline-contour"
 ];
 const runtimeReliefLayerId = "battle-of-britain-gis-relief-texture";
+const runtimeTransportLayerId = "battle-of-britain-gis-transport-reference";
 const cameraMoveThreshold = {
   bearing: 0.02,
   center: 0.00016,
@@ -116,6 +118,16 @@ const terrainStyle: StyleSpecification = {
         [runtimeDerivedBounds[2], runtimeDerivedBounds[1]],
         [runtimeDerivedBounds[0], runtimeDerivedBounds[1]]
       ]
+    },
+    "battle-of-britain-runtime-transport": {
+      type: "image",
+      url: runtimeTransportReferenceUrl,
+      coordinates: [
+        [runtimeDerivedBounds[0], runtimeDerivedBounds[3]],
+        [runtimeDerivedBounds[2], runtimeDerivedBounds[3]],
+        [runtimeDerivedBounds[2], runtimeDerivedBounds[1]],
+        [runtimeDerivedBounds[0], runtimeDerivedBounds[1]]
+      ]
     }
   },
   layers: [
@@ -159,6 +171,18 @@ const terrainStyle: StyleSpecification = {
         "raster-contrast": 0.12,
         "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.07, 10.8, 0.12],
         "raster-saturation": 0
+      }
+    },
+    {
+      id: "battle-of-britain-gis-transport-reference",
+      type: "raster",
+      source: "battle-of-britain-runtime-transport",
+      paint: {
+        "raster-brightness-max": 0.86,
+        "raster-brightness-min": 0,
+        "raster-contrast": 0.48,
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.24, 10.8, 0.48],
+        "raster-saturation": 0.1
       }
     },
     {
@@ -410,6 +434,7 @@ export function BattleOfBritainTerrain3D({
       const bannedLayersPresent = bannedMaplibreLayerIds.filter((id) => styleLayerIds.includes(id));
       const runtimeContourLayersPresent = runtimeContourLayerIds.filter((id) => styleLayerIds.includes(id));
       const runtimeReliefLayerPresent = styleLayerIds.includes(runtimeReliefLayerId) ? runtimeReliefLayerId : "";
+      const runtimeTransportLayerPresent = styleLayerIds.includes(runtimeTransportLayerId) ? runtimeTransportLayerId : "";
       container.dataset.currentEvent = latestStateRef.current.activeEvent.id;
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
       container.dataset.mapFocus = latestStateRef.current.mapFocus;
@@ -417,6 +442,7 @@ export function BattleOfBritainTerrain3D({
       container.dataset.bannedMaplibreLayersPresent = bannedLayersPresent.join(",");
       container.dataset.runtimeContourLayersPresent = runtimeContourLayersPresent.join(",");
       container.dataset.runtimeReliefLayerPresent = runtimeReliefLayerPresent;
+      container.dataset.runtimeTransportLayerPresent = runtimeTransportLayerPresent;
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       container.dataset.mapZoom = map.getZoom().toFixed(2);
       container.dataset.registrationMaxError = registration.max.toFixed(2);
@@ -499,7 +525,7 @@ export function BattleOfBritainTerrain3D({
       data-banned-maplibre-layers-present=""
       data-maplibre-fill-veil="removed"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
-      data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture"
+      data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture-transport-reference"
       data-gis-derivatives-manifest={runtimeDerivedManifestUrl}
       data-runtime-contour-layer-ids={runtimeContourLayerIds.join(",")}
       data-runtime-contour-layers-present=""
@@ -507,8 +533,11 @@ export function BattleOfBritainTerrain3D({
       data-runtime-relief-layer-id={runtimeReliefLayerId}
       data-runtime-relief-layer-present=""
       data-runtime-relief-source={runtimeReliefTextureUrl}
+      data-runtime-transport-layer-id={runtimeTransportLayerId}
+      data-runtime-transport-layer-present=""
+      data-runtime-transport-source={runtimeTransportReferenceUrl}
       data-terrain-color-layer-ids=""
-      data-terrain-color-model="real-terrain-texture-runtime-relief-contours-no-polygon-blocks"
+      data-terrain-color-model="real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks"
       data-terrain-color-zones="none"
       data-topo-labels-suppressed="true"
       data-topo-raster-opacity={topoRasterOpacity.toFixed(2)}
