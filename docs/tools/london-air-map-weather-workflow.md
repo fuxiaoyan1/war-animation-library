@@ -555,6 +555,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | 地名看不清 | 依赖第三方 topo 黑字或无 label plate | 项目自有 SVG label + halo + plate | label plate count and stroke width |
 | GIS 版太偏地形、缺少道路/交通 | 只接入 DEM/hillshade/contours，topo raster 又被压到纹理级 | 从 topo cache 抽取透明 transport-reference 线网，低透明叠加到 relief 之上 | transport PNG HEAD, manifest transport metrics, runtime transport layer present, screenshots |
 | 道路/交通层重新压过作战层 | 直接提高整张 topo raster opacity 或恢复第三方标注主层 | 只增强透明 linework 层，topo opacity 仍保持 `0.15`，项目中文 label plate 负责标注 | topo opacity, layer order, label plate count |
+| 用户看到旧平面图但测试曾通过 | 5177 被其他发布覆盖，且缺失 `/assets/...` 被静态服务 fallback 成 `200 text/html` 首页 | 重新发布当前 worktree；缺失 `/assets/*` 必须返回 `404`，不能 SPA fallback | current bundle fingerprint, transport PNG HEAD `image/png`, stale asset HEAD `404` |
 | 黑块遮地图 | `.battle-of-britain` scoped CSS 缺失或 SVG `polyline` 默认 fill | scoped `fill:none`，polyline 显式 fill none，截图连通域 | `expectNoLargeDarkRenderedBlocks` |
 | 云朵像全图雾毯 | 天气当背景层或调色层 | 云朵作为局部 weather unit，放入 camera-layer | cloud coverage max/total, layer order |
 | 云朵看不见 | 只满足 DOM/layer/jitter，覆盖率和 opacity 太低 | 提高灰白云体对比，增加关键区域实例 | visible cloud count, coverage, user screenshot |

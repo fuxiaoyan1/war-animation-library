@@ -54,8 +54,10 @@ async function resolveRequestPath(urlPath) {
   const decodedPath = decodeURIComponent(urlPath.split("?")[0] || "/");
   const cleanPath = decodedPath === "/" ? "/index.html" : decodedPath;
   const filePath = resolve(distDir, `.${cleanPath}`);
+  const isAssetRequest = cleanPath.startsWith("/assets/");
+
   if (!isInsideDist(filePath)) {
-    return indexPath;
+    return isAssetRequest ? null : indexPath;
   }
 
   try {
@@ -64,10 +66,10 @@ async function resolveRequestPath(urlPath) {
       return filePath;
     }
   } catch {
-    return indexPath;
+    return isAssetRequest ? null : indexPath;
   }
 
-  return indexPath;
+  return isAssetRequest ? null : indexPath;
 }
 
 async function ensureDistReady() {
@@ -100,6 +102,16 @@ const server = createServer(async (request, response) => {
   }
 
   const filePath = await resolveRequestPath(request.url);
+  if (!filePath) {
+    const message = "Not Found";
+    response.writeHead(404, {
+      "Cache-Control": "no-cache",
+      "Content-Length": Buffer.byteLength(message),
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+    response.end(request.method === "HEAD" ? undefined : message);
+    return;
+  }
   const contentType = mimeTypes.get(extname(filePath)) ?? "application/octet-stream";
 
   try {

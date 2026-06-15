@@ -2358,6 +2358,11 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   const runtimeTransportResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
   expect(runtimeTransportResponse.ok(), "Battle of Britain runtime transport reference texture should be present in the deployed preview").toBe(true);
   expect(runtimeTransportResponse.headers()["content-type"], "runtime transport reference texture should be served as PNG, not an SPA fallback").toContain("image/png");
+  const missingAssetResponse = await page.request.head("/assets/__war-animation-missing-asset-check__.js");
+  expect(
+    missingAssetResponse.status(),
+    "local preview must return 404 for missing /assets files; SPA fallback hides stale-bundle and wrong-worktree deployments"
+  ).toBe(404);
   const runtimeDerivedManifestResponse = await page.request.get("/assets/maps/battle-of-britain-3d/derived/manifest.json");
   expect(runtimeDerivedManifestResponse.ok(), "Battle of Britain runtime GIS manifest should be present in the deployed preview").toBe(true);
   const runtimeDerivedManifest = await runtimeDerivedManifestResponse.json();
