@@ -502,11 +502,37 @@ node tools/check-git-asset-boundary.mjs
 ```bash
 npm exec tsc -- -b
 npm run build
-npm run preview:local -- --skip-build
+npm run preview:local -- --skip-build --instance london-air-map --port 5177
 FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "battle of britain shows radar directed compact air formations"
 FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "campaign data quality gates"
 node /Users/asukarei/.codex/skills/animation-assistant/scripts/check-animation-project.mjs /Users/asukarei/Desktop/war-animation-lab-oss-london-air-map
 ```
+
+伦敦审片预览必须使用 `--instance london-air-map --port 5177`。这会发布到
+`~/Library/Application Support/war-animation-lab-oss-london-air-map` 并启动
+`com.asukarei.war-animation-lab-london-air-map-5177`，避免共享
+`war-animation-lab-oss` 预览目录被其他 worktree 覆盖后把 5177 拉回旧平面图。
+确认无其他预览依赖时，可以删除旧共享包和旧 plist：
+
+```bash
+launchctl bootout gui/$(id -u)/com.asukarei.war-animation-lab-5177 2>/dev/null || true
+rm -rf "$HOME/Library/Application Support/war-animation-lab-oss" \
+  "$HOME/Library/LaunchAgents/com.asukarei.war-animation-lab-5177.plist"
+```
+
+5177 发布后必须核对：
+
+```bash
+curl -s http://127.0.0.1:5177/preview-publication-manifest.json
+curl -s http://127.0.0.1:5177/ | rg -o 'assets/(index-[^" ]+\\.(js|css))'
+curl -sI http://127.0.0.1:5177/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png
+curl -sI http://127.0.0.1:5177/assets/__missing_after_cleanup__.js
+```
+
+合格状态：manifest 的 `instance` 为 `london-air-map`，`sourceRoot` 指向
+`/Users/asukarei/Desktop/war-animation-lab-oss-london-air-map`；首页 bundle 与当前
+`dist/index.html` 一致；transport reference 返回 `200 image/png`；缺失 `/assets/*`
+返回 `404 text/plain`。
 
 如果第五层影响 shared renderer、相机、地图交互、全局 CSS 或成熟门禁，还要跑：
 
@@ -556,6 +582,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | GIS 版太偏地形、缺少道路/交通 | 只接入 DEM/hillshade/contours，topo raster 又被压到纹理级 | 从 topo cache 抽取透明 transport-reference 线网，低透明叠加到 relief 之上 | transport PNG HEAD, manifest transport metrics, runtime transport layer present, screenshots |
 | 道路/交通层重新压过作战层 | 直接提高整张 topo raster opacity 或恢复第三方标注主层 | 只增强透明 linework 层，topo opacity 仍保持 `0.15`，项目中文 label plate 负责标注 | topo opacity, layer order, label plate count |
 | 用户看到旧平面图但测试曾通过 | 5177 被其他发布覆盖，且缺失 `/assets/...` 被静态服务 fallback 成 `200 text/html` 首页 | 重新发布当前 worktree；缺失 `/assets/*` 必须返回 `404`，不能 SPA fallback | current bundle fingerprint, transport PNG HEAD `image/png`, stale asset HEAD `404` |
+| 5177 反复回到旧平面图 | 旧共享 LaunchAgent/发布目录还在，其他 worktree 可继续覆盖共享 `war-animation-lab-oss/dist` | 伦敦用 `--instance london-air-map --port 5177` 独立发布；确认后删除旧共享包和旧 plist | preview-publication-manifest instance/sourceRoot, lsof serve-dist path, only london LaunchAgent remains |
 | 黑块遮地图 | `.battle-of-britain` scoped CSS 缺失或 SVG `polyline` 默认 fill | scoped `fill:none`，polyline 显式 fill none，截图连通域 | `expectNoLargeDarkRenderedBlocks` |
 | 云朵像全图雾毯 | 天气当背景层或调色层 | 云朵作为局部 weather unit，放入 camera-layer | cloud coverage max/total, layer order |
 | 云朵看不见 | 只满足 DOM/layer/jitter，覆盖率和 opacity 太低 | 提高灰白云体对比，增加关键区域实例 | visible cloud count, coverage, user screenshot |
