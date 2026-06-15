@@ -13,6 +13,7 @@ On 2026-06-15 this branch is prepared for GitHub submission. Compared with `orig
 - `伦敦上空的鹰` 聚焦 1940-09-15 Battle of Britain Day，使用五分钟播放、小时级计数和三段战术镜头：雷达预警、伦敦东南/肯特混战、肯特海岸和海峡返航追击。
 - 地图层使用 `BattleOfBritainTerrain3D`，以 `public/assets/maps/battle-of-britain-3d/` 中已提交的本地 topo raster、Terrarium DEM、hillshade 和透明交通参考纹理为运行底图；MapLibre canvas 按 SVG 战术相机注册，不再作为独立背景漂移。
 - 当前地图合同为 `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`，已废弃全图天气罩、SVG wash/sheen 伪 3D 和 `typed-regional-palette-v2` 大面积 polygon fill 色块；道路、交通和水系骨架通过 `battle-of-britain-transport-reference.png` 透明线网补回，而不是提高整张 topo raster opacity。
+- 当前最终色彩证据为 `artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json`：GIS/transport 线网仍加载，topo raster opacity 仍为 `0.15`，但伦敦专属 canvas filter 已收敛到 `saturate(2.12) contrast(1.2) brightness(0.7) hue-rotate(18deg)`，用于修正用户指出的灰雾感。
 - 六类飞机作战单位为运行 PNG：Spitfire、Hurricane、Bf 109、Bf 110、Do 17、He 111。数据门禁禁止回退到通用 `ww2Fighter` / `ww2Bomber`。
 - 云朵不是全图云层，而是同一 SVG `camera-layer` 内的局部 ComfyUI PNG 气象单位，位于地形之上、航线/飞机之下；当前云朵实例为 10 个，最终证据记录开场/上午 5 个、午后 4 个、海峡追击 3 个可见云团。
 
@@ -21,6 +22,7 @@ Current London version:
 - The film focuses on Battle of Britain Day, 15 September 1940, with five-minute playback, hour-level time labeling, and three tactical camera stages: radar warning, southeast-London/Kent combat, and Channel return pursuit.
 - The map uses `BattleOfBritainTerrain3D` and committed runtime assets under `public/assets/maps/battle-of-britain-3d/`: topo raster, Terrarium DEM, hillshade, and a transparent transport-reference texture. The MapLibre canvas is registered to the SVG tactical camera.
 - The accepted map contract is `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`; full-map weather veils, SVG pseudo-3D wash/sheen layers, and `typed-regional-palette-v2` polygon fill blocks are rejected. Roads, transport cues, and water-system linework are restored through `battle-of-britain-transport-reference.png`, not by raising full topo raster opacity.
+- The current final color evidence is `artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json`: GIS/transport layers stay loaded, topo raster opacity remains `0.15`, and the London-specific canvas filter is now `saturate(2.12) contrast(1.2) brightness(0.7) hue-rotate(18deg)` to address the user-reported gray/foggy read.
 - Six aircraft unit families are explicit runtime PNGs: Spitfire, Hurricane, Bf 109, Bf 110, Do 17, and He 111. Gates reject generic `ww2Fighter` / `ww2Bomber` fallback.
 - Clouds are local ComfyUI PNG weather units in the same SVG `camera-layer`, above terrain and below routes/aircraft. The current setup has 10 instances; final evidence records 5 visible opening/morning clouds, 4 afternoon clouds, and 3 Channel pursuit clouds.
 
@@ -65,7 +67,7 @@ Source and licensing note:
 - `node tools/check-git-asset-boundary.mjs`
 - `npm exec tsc -- -b`
 - `npm run build`
-- `npm run preview:local -- --skip-build`
+- `npm run preview:local -- --skip-build --instance london-air-map --port 5177`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "battle of britain shows radar directed compact air formations" --reporter=line`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "campaign data quality gates" --reporter=line`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "gaixia ambush uses terrain map ten-sided formations and pipa score" --reporter=line`
@@ -79,7 +81,7 @@ Pre-submit validation:
 - `node tools/check-git-asset-boundary.mjs`
 - `npm exec tsc -- -b`
 - `npm run build`
-- `npm run preview:local -- --skip-build`
+- `npm run preview:local -- --skip-build --instance london-air-map --port 5177`
 - Battle of Britain specialty Playwright gate.
 - Campaign data quality gate.
 - Gaixia reference Playwright gate.
@@ -155,7 +157,7 @@ Pre-submit validation:
 - `git diff --check`
 - `npm exec tsc -- -b`
 - `npm run build`
-- `npm run preview:local -- --skip-build`
+- `npm run preview:local -- --skip-build --instance london-air-map --port 5177`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "campaign data quality gates"`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "battle of britain shows radar directed compact air formations"`
 - `FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-france-smoke.spec.ts -g "gaixia ambush uses terrain map ten-sided formations and pipa score"`
@@ -267,9 +269,10 @@ Pre-submit validation:
 
 - 配乐从 `wikimedia-holst-mercury.ogg` 改为 `wikimedia-wagner-ride-valkyries.ogg`。来源、本地校验和许可记录已补入 `docs/sources/audio.md`；伦敦专项 Playwright 与 `scripts/probe-london-air-visual-evidence.mjs` 同步检查新音频路径。
 - 地图不再靠三块高透明度大面色层调色；随后尝试的六个 MapLibre 低透明度地形角色 fill 层被用户截图判定为大色块问题，已废弃。当前合同改为 `data-terrain-color-model="real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks"`，`data-visual-surface-contract="maplibre-real-terrain-no-polygon-color-blocks"`，专项门禁检查这些被禁用的大色块 layer ID 不得出现在实际 MapLibre style 中。地图质感回到真实 topo/DEM/hillshade、runtime relief/contours、透明 transport reference、最终截图色彩评分、项目自有地名标签和局部天气作战单位。
-- 继续接手后把 canvas 调色从偏土绿的 `sepia` 方案收敛到小幅冷调钢蓝：先用 `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg)` 跑通六帧证据，GIS 派生层接入后为默认 Playwright 视口留出青绿海面安全余量，最终运行参数收敛为 `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(16deg)`。topo raster opacity 降到 `0.15`，仍不恢复大面积 polygon color blocks。新证据 `artifacts/london-air-followup-20260615-v2/metrics.browser.json` 记录 bundle `/assets/index-CpFNPXG4.js`、CSS `/assets/index-FMJIeP17.css`，六个关键帧 `daylightColorGate` 全 true、`bannedMaplibreLayersPresent=[]`、第三小时回程走廊 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`stageRectMaxDelta=0`、`terrainCanvasRectMaxDelta=0`。
+- 继续接手后把 canvas 调色从偏土绿的 `sepia` 方案收敛到小幅冷调钢蓝：先用 `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg)` 跑通六帧证据，GIS 派生层接入后为默认 Playwright 视口留出青绿海面安全余量，该阶段参数收敛为 `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(16deg)`。topo raster opacity 降到 `0.15`，仍不恢复大面积 polygon color blocks。新证据 `artifacts/london-air-followup-20260615-v2/metrics.browser.json` 记录 bundle `/assets/index-CpFNPXG4.js`、CSS `/assets/index-FMJIeP17.css`，六个关键帧 `daylightColorGate` 全 true、`bannedMaplibreLayersPresent=[]`、第三小时回程走廊 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`stageRectMaxDelta=0`、`terrainCanvasRectMaxDelta=0`。
 - 地名标识不再寄希望于第三方 topo raster 黑字，改由本项目 SVG 地名标签和 `.map-point-label-plate` 半透明底板保证可读；专项门禁要求至少 8 个地名底板在伦敦页可见。
 - 全图 multiply/soft-light 伪层继续禁止；云层仍使用 ComfyUI PNG，但作为局部天气作战单位放在同一个 `camera-layer` 中。云层运动改为播放进度驱动的轻微位移，不使用无限 CSS drift；狗斗闪点、接触圈和云图无限 CSS 动画停用，避免密集航线阶段出现屏幕闪烁。
 - 继续恢复“云朵”但不恢复“云层”：云图 PNG 后处理为白灰云体，多个局部云朵实例收进雷达/混战/返航镜头核心，仍位于航线和飞机下方。`tests/battle-france-smoke.spec.ts` 新增云朵随 `camera-layer` 缩放、可见云朵裁剪面积、云朵层级和连续帧不抖门禁；层级断言放在混战节点用可见飞机/路线检查，避免开场雷达段无可见飞机造成假失败。最终证据 `artifacts/london-air-cloud-followup-20260615-final-verified/metrics.browser.json` 记录 bundle `/assets/index-BY_iEpx3.js`、CSS `/assets/index-CbfJSsXk.css`，`consoleErrors=[]`、`pageErrors=[]`，六帧 `daylightColorGate` 全 true，可见云朵 `2-3` 个，总覆盖率约 `0.034-0.047`，密集段 `cloudRectMaxDelta=0`，第三小时播放段云朵 rect 最大变化约 `1.02px`。
 - 用户截图继续指出云朵“太少太浅，不细看根本看不到”后，本轮把验收口径从“有云且不抖”提高到“局部云朵肉眼可辨识”：在肯特、梅德韦、汤布里奇、泰晤士口和海峡返航走廊增加/放大云朵，实例从 6 个增至 10 个，主云 opacity 提至 `0.42`、辅助云 `0.34-0.38`，CSS 改为低饱和高对比灰白云体。仍不恢复全图云层，云朵继续位于 `camera-layer`、航线/飞机下方；为避免可见度提升带来抖感，进度漂移幅度收紧到 `1.5-2px` 内。最终证据 `artifacts/london-air-cloud-stronger-20260615-final-v2/metrics.browser.json` 记录 bundle `/assets/index-DXkfmaws.js`、CSS `/assets/index-C-8Em0-3.css`，`consoleErrors=[]`、`pageErrors=[]`，六帧 `daylightColorGate` 全 true；开场/上午可见云朵 `5` 个、午后 `4` 个、海峡追击 `3` 个，总覆盖率约 `0.066-0.098`，单体最大覆盖率约 `0.034-0.037`，opacity 范围 `0.34-0.42`；密集段 `cloudRectMaxDelta=0`，第三小时播放段云朵 rect 最大变化约 `0.78px`。
-- 2026-06-15 第五层 GIS 运行版继续把 committed Terrarium tiles 派生为 runtime contour GeoJSON 和轻量 relief texture，并针对用户指出的“GIS 图偏地形、缺少道路/交通元素”补入透明 transport-reference 纹理。`scripts/derive-britain-air-terrain-gis.py` 从 committed Esri topo cache 抽取道路、交通线、水系和高频线网为 `battle-of-britain-transport-reference.png`，Manifest 记录 `alphaCoverageRatio≈0.5225`、`alphaMean≈12.32`、`blueInkPixels=516893`、`warmRoadPixels=39712`、`missingTiles=[]`。最终证据 `artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 记录 bundle `/assets/index-Cy_eE1GQ.js`、CSS `/assets/index-Dheb11PY.css`，`consoleErrors=[]`、`pageErrors=[]`；runtime contour 三层、`battle-of-britain-gis-relief-texture` 和 `battle-of-britain-gis-transport-reference` 均加载，topo raster opacity 仍为 `0.15`，密集段与第三小时播放段保持 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`terrainCanvasRectMaxDelta=0`。
+- 2026-06-15 第五层 GIS 运行版继续把 committed Terrarium tiles 派生为 runtime contour GeoJSON 和轻量 relief texture，并针对用户指出的“GIS 图偏地形、缺少道路/交通元素”补入透明 transport-reference 纹理。`scripts/derive-britain-air-terrain-gis.py` 从 committed Esri topo cache 抽取道路、交通线、水系和高频线网为 `battle-of-britain-transport-reference.png`，Manifest 记录 `alphaCoverageRatio≈0.5225`、`alphaMean≈12.32`、`blueInkPixels=516893`、`warmRoadPixels=39712`、`missingTiles=[]`。阶段证据 `artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 记录 bundle `/assets/index-Cy_eE1GQ.js`、CSS `/assets/index-Dheb11PY.css`，`consoleErrors=[]`、`pageErrors=[]`；runtime contour 三层、`battle-of-britain-gis-relief-texture` 和 `battle-of-britain-gis-transport-reference` 均加载，topo raster opacity 仍为 `0.15`，密集段与第三小时播放段保持 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`terrainCanvasRectMaxDelta=0`。
+- 2026-06-15 继续按用户截图修正 GIS/transport 版的灰雾感：先用 `artifacts/london-air-gray-fog-diagnosis-20260615/` 做 layer-toggle 诊断，对比当前、隐藏云朵、移除 canvas filter、偏暖高对比候选和偏暖无云候选，确认灰雾感不是单纯云朵覆盖造成；修复不是恢复暖色罩或 polygon fill，而是保留局部天气单位，微调伦敦专属 canvas filter 到 `saturate(2.12) contrast(1.2) brightness(0.7) hue-rotate(18deg)`，并提高天气 PNG 对比、压低亮度。最终证据 `artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 记录 bundle `/assets/index-BYYUJg2W.js`、CSS `/assets/index-DcwRWiY4.css`，`consoleErrors=[]`、`pageErrors=[]`，六帧 `daylightColorGate` 全 true，`brightnessScore100≈59.00-62.30`、`cyanGreenSeaRatio≈0.1469-0.1571`，上午/下午密集段和第三小时返航播放段保持 `uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`terrainCanvasRectMaxDelta=0`。
