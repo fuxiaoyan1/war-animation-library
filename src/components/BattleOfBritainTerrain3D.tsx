@@ -30,7 +30,11 @@ type BattleOfBritainTerrain3DProps = {
 const terrainCanvasTestId = "battle-of-britain-terrain-3d-canvas";
 const terrainTileUrl = "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png";
 const topoTileUrl = "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg";
+const runtimeContourUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson";
+const runtimeReliefTextureUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png";
+const runtimeDerivedManifestUrl = "/assets/maps/battle-of-britain-3d/derived/manifest.json";
 const terrainSourceBounds: [number, number, number, number] = [-1.75, 50.52, 2.12, 52.22];
+const runtimeDerivedBounds: [number, number, number, number] = [-1.7578125, 50.5134265, 2.2851563, 52.2681574];
 const terrainBounds: [[number, number], [number, number]] = [
   [terrainSourceBounds[0], terrainSourceBounds[1]],
   [terrainSourceBounds[2], terrainSourceBounds[3]]
@@ -44,6 +48,12 @@ const topoRasterOpacity = 0.15;
 const registeredCameraPitch = 0;
 const registeredCameraBearing = 0;
 const registrationSampleLimit = 10;
+const runtimeContourLayerIds = [
+  "battle-of-britain-gis-subsea-contours",
+  "battle-of-britain-gis-land-contours",
+  "battle-of-britain-gis-coastline-contour"
+];
+const runtimeReliefLayerId = "battle-of-britain-gis-relief-texture";
 const cameraMoveThreshold = {
   bearing: 0.02,
   center: 0.00016,
@@ -91,6 +101,21 @@ const terrainStyle: StyleSpecification = {
       minzoom: minCachedTileZoom,
       maxzoom: cachedTerrainTileZoom,
       attribution: "Elevation: AWS Terrain Tiles, SRTM/GMTED"
+    },
+    "battle-of-britain-runtime-contours": {
+      type: "geojson",
+      data: runtimeContourUrl,
+      attribution: "Contours: GDAL derivatives from local Terrarium DEM cache"
+    },
+    "battle-of-britain-runtime-relief": {
+      type: "image",
+      url: runtimeReliefTextureUrl,
+      coordinates: [
+        [runtimeDerivedBounds[0], runtimeDerivedBounds[3]],
+        [runtimeDerivedBounds[2], runtimeDerivedBounds[3]],
+        [runtimeDerivedBounds[2], runtimeDerivedBounds[1]],
+        [runtimeDerivedBounds[0], runtimeDerivedBounds[1]]
+      ]
     }
   },
   layers: [
@@ -122,6 +147,68 @@ const terrainStyle: StyleSpecification = {
         "hillshade-exaggeration": hillshadeExaggeration,
         "hillshade-highlight-color": "#d6b16e",
         "hillshade-shadow-color": "#31566b"
+      }
+    },
+    {
+      id: "battle-of-britain-gis-relief-texture",
+      type: "raster",
+      source: "battle-of-britain-runtime-relief",
+      paint: {
+        "raster-brightness-max": 0.72,
+        "raster-brightness-min": 0,
+        "raster-contrast": 0.12,
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.07, 10.8, 0.12],
+        "raster-saturation": 0
+      }
+    },
+    {
+      id: "battle-of-britain-gis-subsea-contours",
+      type: "line",
+      source: "battle-of-britain-runtime-contours",
+      filter: ["<", ["get", "elev_m"], 0],
+      paint: {
+        "line-blur": 0.18,
+        "line-color": "#9bbcc2",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.08, 10.8, 0.22],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.18, 10.8, 0.62]
+      }
+    },
+    {
+      id: "battle-of-britain-gis-land-contours",
+      type: "line",
+      source: "battle-of-britain-runtime-contours",
+      filter: [">", ["get", "elev_m"], 0],
+      paint: {
+        "line-blur": 0.2,
+        "line-color": [
+          "case",
+          [">=", ["get", "elev_m"], 150],
+          "#e0c978",
+          [">=", ["get", "elev_m"], 100],
+          "#d0c486",
+          "#bdc88d"
+        ],
+        "line-opacity": [
+          "case",
+          [">=", ["get", "elev_m"], 150],
+          0.28,
+          [">=", ["get", "elev_m"], 100],
+          0.22,
+          0.16
+        ],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.2, 10.8, 0.68]
+      }
+    },
+    {
+      id: "battle-of-britain-gis-coastline-contour",
+      type: "line",
+      source: "battle-of-britain-runtime-contours",
+      filter: ["==", ["get", "elev_m"], 0],
+      paint: {
+        "line-blur": 0.08,
+        "line-color": "#dfe9ca",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.34, 10.8, 0.72],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.46, 10.8, 1.1]
       }
     }
   ],
@@ -321,11 +408,15 @@ export function BattleOfBritainTerrain3D({
       const registration = registrationErrorForState(map, container, latestStateRef.current);
       const styleLayerIds = map.getStyle().layers?.map((layer) => layer.id) ?? [];
       const bannedLayersPresent = bannedMaplibreLayerIds.filter((id) => styleLayerIds.includes(id));
+      const runtimeContourLayersPresent = runtimeContourLayerIds.filter((id) => styleLayerIds.includes(id));
+      const runtimeReliefLayerPresent = styleLayerIds.includes(runtimeReliefLayerId) ? runtimeReliefLayerId : "";
       container.dataset.currentEvent = latestStateRef.current.activeEvent.id;
       container.dataset.mapCenter = `${center.lng.toFixed(5)},${center.lat.toFixed(5)}`;
       container.dataset.mapFocus = latestStateRef.current.mapFocus;
       container.dataset.maplibreStyleLayerIds = styleLayerIds.join(",");
       container.dataset.bannedMaplibreLayersPresent = bannedLayersPresent.join(",");
+      container.dataset.runtimeContourLayersPresent = runtimeContourLayersPresent.join(",");
+      container.dataset.runtimeReliefLayerPresent = runtimeReliefLayerPresent;
       container.dataset.mapPixelRatio = canvas.clientWidth > 0 ? (canvas.width / canvas.clientWidth).toFixed(2) : "0";
       container.dataset.mapZoom = map.getZoom().toFixed(2);
       container.dataset.registrationMaxError = registration.max.toFixed(2);
@@ -408,8 +499,16 @@ export function BattleOfBritainTerrain3D({
       data-banned-maplibre-layers-present=""
       data-maplibre-fill-veil="removed"
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
+      data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture"
+      data-gis-derivatives-manifest={runtimeDerivedManifestUrl}
+      data-runtime-contour-layer-ids={runtimeContourLayerIds.join(",")}
+      data-runtime-contour-layers-present=""
+      data-runtime-contour-source={runtimeContourUrl}
+      data-runtime-relief-layer-id={runtimeReliefLayerId}
+      data-runtime-relief-layer-present=""
+      data-runtime-relief-source={runtimeReliefTextureUrl}
       data-terrain-color-layer-ids=""
-      data-terrain-color-model="real-terrain-texture-no-polygon-blocks"
+      data-terrain-color-model="real-terrain-texture-runtime-relief-contours-no-polygon-blocks"
       data-terrain-color-zones="none"
       data-topo-labels-suppressed="true"
       data-topo-raster-opacity={topoRasterOpacity.toFixed(2)}

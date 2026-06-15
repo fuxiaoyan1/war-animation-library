@@ -43,7 +43,7 @@
 
 - 目标：白昼钢蓝、浓郁高对比、有 3D 地形质感，但不影响飞机图标和航线识别。
 - topo raster：仅作纹理参考，当前为 `data-topo-raster-opacity="0.15"`，`data-topo-labels-suppressed="true"`。
-- 分区配色：不要用覆盖战区的大多边形色块来“补地形分区”。伦敦空战已废弃 `typed-regional-palette-v2` 六层 MapLibre fill 方案；当前运行合同为 `real-terrain-texture-no-polygon-blocks`，以真实 topo/DEM/hillshade 和最终截图调色为准。若需要地形角色差异，应通过底图素材、色彩评分、标签/边界和局部战术图层表达，禁止重新引入大面积 polygon color blocks、全图雾罩、伪阴影块或三块高透明度大色面。
+- 分区配色：不要用覆盖战区的大多边形色块来“补地形分区”。伦敦空战已废弃 `typed-regional-palette-v2` 六层 MapLibre fill 方案；当前运行合同为 `real-terrain-texture-runtime-relief-contours-no-polygon-blocks`，以真实 topo/DEM/hillshade、轻量 runtime relief/contours 和最终截图调色为准。若需要地形角色差异，应通过底图素材、色彩评分、标签/边界和局部战术图层表达，禁止重新引入大面积 polygon color blocks、全图雾罩、伪阴影块或三块高透明度大色面。
 - 最新浏览器证据：`artifacts/london-air-cloud-stronger-20260615-final-v2/metrics.browser.json`。
 - 六个关键帧明暗度评分约 `60.22-63.56`，用于白昼但不发白的钢蓝底图。
 - 饱和度均值约 `51.06-90.91`。

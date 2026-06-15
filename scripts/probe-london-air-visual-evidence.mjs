@@ -431,6 +431,18 @@ async function collectPageMetrics(page) {
         bannedMaplibreLayersPresent,
         maplibreStyleLayerIds,
         polygonColorBlocksRemoved: bannedMaplibreLayersPresent.length === 0,
+        gisDerivatives: terrainLayer?.getAttribute("data-gis-derivatives") ?? "",
+        gisDerivativesManifest: terrainLayer?.getAttribute("data-gis-derivatives-manifest") ?? "",
+        runtimeContourLayerIds: (terrainLayer?.getAttribute("data-runtime-contour-layer-ids") ?? "")
+          .split(",")
+          .filter(Boolean),
+        runtimeContourLayersPresent: (terrainLayer?.getAttribute("data-runtime-contour-layers-present") ?? "")
+          .split(",")
+          .filter(Boolean),
+        runtimeContourSource: terrainLayer?.getAttribute("data-runtime-contour-source") ?? "",
+        runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
+        runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
+        runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
         topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
         topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
@@ -703,7 +715,10 @@ async function collectRuntimePublication(page) {
 async function collectTerrainTileHeads(page) {
   const tilePaths = [
     "/assets/maps/battle-of-britain-3d/topo/8/128-85.jpg",
-    "/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png"
+    "/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png",
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson",
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png",
+    "/assets/maps/battle-of-britain-3d/derived/manifest.json"
   ];
   const heads = {};
   for (const tilePath of tilePaths) {

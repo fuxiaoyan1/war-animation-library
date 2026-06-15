@@ -23,6 +23,7 @@
     "animation:visual-evidence": "node tools/tactical-terrain-studio/capture-runtime-visual-evidence.mjs",
     "animation:first-draft": "node tools/tactical-terrain-studio/run-animation-first-draft.mjs",
     "terrain:pipeline": "node tools/tactical-terrain-studio/run-terrain-pipeline.mjs",
+    "terrain:britain-air:gis": "python3 scripts/derive-britain-air-terrain-gis.py",
     "terrain:studio": "node tools/tactical-terrain-studio/tactical-terrain-studio.mjs",
     "terrain:assets": "python3 tools/tactical-terrain-studio/unit-asset-package.py",
     "terrain:units": "node tools/tactical-terrain-studio/terrain-unit-layer.mjs",

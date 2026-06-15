@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-15T12:05:41.875471+00:00",
+  "battle": "battle-of-britain",
+  "purpose": "runtime-fifth-layer-gis-derivatives-validation",
+  "source": {
+    "terrainManifest": "public/assets/maps/battle-of-britain-3d/manifest.json",
+    "qaManifest": "artifacts/london-air-terrain-gis-20260615/terrain-gis-derivatives-manifest.json"
+  },
+  "contours": {
+    "url": "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson",
+    "sourceIntervalMeters": 25.0,
+    "runtimeIntervalMeters": 50.0,
+    "coordinateCount": 85702,
+    "elevationsMeters": [
+      -350.0,
+      -300.0,
+      -250.0,
+      -200.0,
+      -150.0,
+      -100.0,
+      -50.0,
+      0.0,
+      50.0,
+      100.0,
+      150.0,
+      200.0,
+      250.0,
+      300.0
+    ],
+    "featureCount": 3137,
+    "sourceFeatureCount": 5788
+  },
+  "reliefTexture": {
+    "url": "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png",
+    "height": 1024,
+    "width": 1472,
+    "alphaCoverageRatio": 1.0,
+    "alphaMax": 49,
+    "alphaMean": 18.249789694081183,
+    "output": "public/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
+  },
+  "limitations": [
+    "Runtime GeoJSON is a thinned validation layer derived from committed Terrarium tiles, not a final public GIS dataset.",
+    "It is intentionally limited to subtle contour/coastline cues below aircraft, routes, labels, and local weather units.",
+    "The runtime relief texture is derived from the same local hillshade and slope outputs and is intended as a subtle texture lift, not a new full-map paint layer."
+  ]
+}

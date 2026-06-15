@@ -3076,7 +3076,7 @@ h1 {
   height: 100%;
   position: relative;
   z-index: 1;
-  filter: saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg);
+  filter: saturate(2) contrast(1.16) brightness(0.71) hue-rotate(16deg);
   mix-blend-mode: normal;
 }
 

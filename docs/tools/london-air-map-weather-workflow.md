@@ -30,8 +30,8 @@ Current accepted runtime target:
 - terrain model: `real-dem-raster-terrain`
 - camera mode: `svg-projection-registered-terrain`
 - visual contract: `maplibre-real-terrain-no-polygon-color-blocks`
-- terrain color model: `real-terrain-texture-no-polygon-blocks`
-- latest evidence: `artifacts/london-air-cloud-stronger-20260615-final-v2/metrics.browser.json`
+- terrain color model: `real-terrain-texture-runtime-relief-contours-no-polygon-blocks`
+- latest evidence: `artifacts/london-air-terrain-gis-runtime-20260615-final-v6/metrics.browser.json`
 
 ## 与六层工艺的关系
 
@@ -73,10 +73,13 @@ Current accepted runtime target:
 - terrain exaggeration: `1.35`
 - hillshade exaggeration: `0.72`
 - topo raster opacity: `0.15`
+- runtime GIS derivatives: `/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson`
+- runtime relief texture: `/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png`
+- runtime GIS manifest: `/assets/maps/battle-of-britain-3d/derived/manifest.json`
 - registered camera pitch: `0`
 - registered camera bearing: `0`
 - MapLibre camera update threshold: `0.025-zoom`
-- canvas color filter: `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg)`
+- canvas color filter: `saturate(2) contrast(1.16) brightness(0.71) hue-rotate(16deg)`
 - country fill when terrain active: transparent or none, boundary-only
 
 注意：terrain studio spec 里保留过早期 pitched stage 参数，例如 pitch `55-57`、bearing `-18` 到 `-24`。那是生产合同和能力探索材料。当前最终运行版为了解决“地图层和战斗层分裂”，采用 `svg-projection-registered-terrain`，MapLibre pitch/bearing 固定为 `0/0`，用 topo/DEM/hillshade/调色制造近似 3D 质感。
@@ -112,6 +115,9 @@ scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11
 - `public/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg`
 - `public/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png`
 - `public/assets/maps/battle-of-britain-3d/manifest.json`
+- `public/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson`
+- `public/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png`
+- `public/assets/maps/battle-of-britain-3d/derived/manifest.json`
 
 已记录的资产规模：
 
@@ -127,7 +133,8 @@ scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11
 边界：
 
 - 当前运行演示需要这些 committed runtime tiles，不需要本机 QGIS/GDAL。
-- 后续若要做公开级专业地图，需要 QGIS/GDAL 交叉校验 DEM 派生、历史战术底图和来源/许可链；这不阻塞当前运行级验收。
+- 2026-06-15 验证版已经用本机 GDAL 从 committed Terrarium tiles 派生 DEM、hillshade、slope 和 contour QA 包，并把轻量 runtime contours 接入 MapLibre；这证明工具链可跑通，但仍不是最终公开级专业 GIS 版本。
+- 后续若要做公开级专业地图，需要 QGIS/GDAL/QGIS 交叉校验 DEM 派生、历史战术底图和来源/许可链；这不阻塞当前运行级验收。
 
 ### 镜头输入
 
@@ -191,6 +198,9 @@ scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11
 - topo raster layer: `battle-of-britain-topo-base`
 - DEM hillshade layer: `battle-of-britain-dem-hillshade`
 - real DEM terrain: `battle-of-britain-real-dem`
+- runtime relief texture layer: `battle-of-britain-gis-relief-texture`
+- runtime GIS contour source: `battle-of-britain-runtime-contours`
+- runtime contour layers: `battle-of-britain-gis-subsea-contours`、`battle-of-britain-gis-land-contours`、`battle-of-britain-gis-coastline-contour`
 
 当前地形参数：
 
@@ -214,6 +224,17 @@ raster-saturation = 0.24
 ```
 
 这么做的原因是：第三方 topo 自带英文标注、黑碎线和青绿海面，如果让它主导画面，会压过本项目地名、航线和飞机。伦敦最终经验是把 topo raster 降为纹理参考，把地名可读性交给项目自有 SVG label plate。
+
+2026-06-15 验证版新增了 GDAL 派生的轻量坡面纹理与等高线/海岸线运行图层。它不是为了把动画变成 GIS 软件，而是把第五层地图的地形丰富度从“只有 raster/hillshade 感觉”推进到可验收的 GIS 派生信号：
+
+- QA 包：`artifacts/london-air-terrain-gis-20260615/`
+- DEM: `1472 x 1024`, EPSG:3857, elevation min/max about `-367m / 340m`, missing tiles `0`
+- full contours: `5788` features at `25m`
+- runtime contours: `3137` features at `50m`, stored under `public/assets/maps/battle-of-britain-3d/derived/`
+- runtime relief texture: `1472 x 1024` transparent PNG derived from hillshade/slope, stored under `public/assets/maps/battle-of-britain-3d/derived/`
+- derived manifest purpose: `runtime-fifth-layer-gis-derivatives-validation`
+
+这个版本的验收口径是“工具链可跑通，并且视觉效果好于原版”，不是最终专业 GIS 交付。最终专业 GIS 版目标样图保存在 `artifacts/london-air-professional-gis-target-sample-20260615/battle-of-britain-professional-gis-target-sample.png`，它展示了后续应追求的 DEM hillshade、slope texture、0/50/100m contours、海陆分层、标签 plate 和战术 AOI 同屏效果。当前 runtime 只接入其中不打乱动画的底层地形信号。
 
 ### 4. 把 MapLibre 注册到 SVG 战术相机
 
@@ -270,7 +291,7 @@ MapLibre 是底板，SVG 是战术层。两者不能互相抢职责。
 }
 
 .battle-of-britain .battle-of-britain-terrain-3d canvas {
-  filter: saturate(2) contrast(1.16) brightness(0.71) hue-rotate(14deg);
+  filter: saturate(2) contrast(1.16) brightness(0.71) hue-rotate(16deg);
   mix-blend-mode: normal;
 }
 ```
@@ -325,6 +346,8 @@ MapLibre 是底板，SVG 是战术层。两者不能互相抢职责。
 - green ratio about `0.070-0.103`
 - low daylight ratio about `0.036-0.058`
 - night blue ratio about `0.0059-0.0105`
+
+2026-06-15 GIS 派生层接入后，默认 Playwright 视口 `1280 x 720` 会比 1440 证据视口更容易把海面采到青绿边界。最终运行 filter 从 `14deg` 收敛到 `16deg`，把默认视口开场 `cyanGreenSeaRatio` 从约 `0.203` 降到约 `0.183`，同时保持亮度约 `61.36`、对比约 `29.98`、钢蓝比例约 `0.608`。这属于视口稳定性修正，不是恢复 polygon 色块或全图调色罩。
 
 门禁必须采最终 `map-stage` 截图，而不是 raw MapLibre canvas。最终画面包含 MapLibre、SVG overlay、标签、云朵、路线、飞机和 CSS filter，raw canvas 只能证明底图有纹理，不能证明产品观感合格。
 
@@ -412,9 +435,15 @@ data-terrain-source="/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png
 data-topo-source="/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg"
 data-terrain-exaggeration="1.35"
 data-hillshade-exaggeration="0.72"
+data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture"
+data-gis-derivatives-manifest="/assets/maps/battle-of-britain-3d/derived/manifest.json"
+data-runtime-contour-source="/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson"
+data-runtime-contour-layer-ids="battle-of-britain-gis-subsea-contours,battle-of-britain-gis-land-contours,battle-of-britain-gis-coastline-contour"
+data-runtime-relief-source="/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
+data-runtime-relief-layer-id="battle-of-britain-gis-relief-texture"
 data-visible-basemap="local-cached-world-topographic-map"
 data-visual-surface-contract="maplibre-real-terrain-no-polygon-color-blocks"
-data-terrain-color-model="real-terrain-texture-no-polygon-blocks"
+data-terrain-color-model="real-terrain-texture-runtime-relief-contours-no-polygon-blocks"
 data-terrain-color-zones="none"
 data-terrain-color-layer-ids=""
 data-cloud-animation="progress-linked-local-weather-units"
@@ -469,11 +498,15 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 - terrain loaded；
 - topo tile HEAD `image/jpeg`；
 - DEM tile HEAD `image/png`；
+- runtime contours HEAD JSON / non-SPA；
+- runtime relief texture HEAD `image/png`；
+- runtime GIS manifest `purpose=runtime-fifth-layer-gis-derivatives-validation`；
 - MapLibre canvas coverage `> 0.92`；
 - country fill transparent / none；
 - banned MapLibre polygon layers absent；
 - registration sample count and max/mean error；
 - raw canvas texture `luminanceStdDev > 9`、`edgeMean > 5`；
+- runtime contour layer IDs and relief texture layer ID all present in loaded MapLibre style；
 - rendered map-stage daylight color gate；
 - no large filled tactical shapes；
 - no large dark rendered blocks；

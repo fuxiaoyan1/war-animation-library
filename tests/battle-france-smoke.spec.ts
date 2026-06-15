@@ -2319,9 +2319,13 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
   await expect(terrain).toHaveAttribute("data-visual-surface-contract", "maplibre-real-terrain-no-polygon-color-blocks");
-  await expect(terrain).toHaveAttribute("data-terrain-color-model", "real-terrain-texture-no-polygon-blocks");
+  await expect(terrain).toHaveAttribute("data-terrain-color-model", "real-terrain-texture-runtime-relief-contours-no-polygon-blocks");
   await expect(terrain).toHaveAttribute("data-terrain-color-zones", "none");
   await expect(terrain).toHaveAttribute("data-terrain-color-layer-ids", "");
+  await expect(terrain).toHaveAttribute("data-gis-derivatives", "dem-hillshade-slope-runtime-contours-relief-texture");
+  await expect(terrain).toHaveAttribute("data-gis-derivatives-manifest", "/assets/maps/battle-of-britain-3d/derived/manifest.json");
+  await expect(terrain).toHaveAttribute("data-runtime-contour-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson");
+  await expect(terrain).toHaveAttribute("data-runtime-relief-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
   await expect(terrain).toHaveAttribute("data-cloud-animation", "progress-linked-local-weather-units");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
@@ -2344,6 +2348,21 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   const demTileResponse = await page.request.head("/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png");
   expect(demTileResponse.ok(), "Battle of Britain DEM tile should be present in the deployed preview").toBe(true);
   expect(demTileResponse.headers()["content-type"], "DEM tile should be served as a PNG Terrarium tile").toContain("image/png");
+  const runtimeContoursResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson");
+  expect(runtimeContoursResponse.ok(), "Battle of Britain runtime GIS contours should be present in the deployed preview").toBe(true);
+  expect(runtimeContoursResponse.headers()["content-type"], "runtime contours should be served as GeoJSON/JSON, not an SPA fallback").toMatch(/json|octet-stream/);
+  const runtimeReliefResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
+  expect(runtimeReliefResponse.ok(), "Battle of Britain runtime GIS relief texture should be present in the deployed preview").toBe(true);
+  expect(runtimeReliefResponse.headers()["content-type"], "runtime relief texture should be served as PNG, not an SPA fallback").toContain("image/png");
+  const runtimeDerivedManifestResponse = await page.request.get("/assets/maps/battle-of-britain-3d/derived/manifest.json");
+  expect(runtimeDerivedManifestResponse.ok(), "Battle of Britain runtime GIS manifest should be present in the deployed preview").toBe(true);
+  const runtimeDerivedManifest = await runtimeDerivedManifestResponse.json();
+  expect(runtimeDerivedManifest.purpose).toBe("runtime-fifth-layer-gis-derivatives-validation");
+  expect(runtimeDerivedManifest.contours.featureCount).toBeGreaterThan(1500);
+  expect(runtimeDerivedManifest.contours.runtimeIntervalMeters).toBe(50);
+  expect(runtimeDerivedManifest.reliefTexture.url).toBe("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
+  expect(runtimeDerivedManifest.reliefTexture.alphaMax).toBeGreaterThan(24);
+  expect(runtimeDerivedManifest.reliefTexture.alphaMean).toBeLessThan(32);
 
   const visualState = await page.locator(".battle-of-britain").evaluate((shell) => {
     const terrainLayer = shell.querySelector<HTMLElement>('[data-testid="battle-of-britain-terrain-3d"]');
@@ -2416,8 +2435,15 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       canvasFilter: canvasStyle?.filter ?? "",
       canvasMixBlendMode: canvasStyle?.mixBlendMode ?? "",
       maplibreStyleLayerIds: terrainLayer?.getAttribute("data-maplibre-style-layer-ids") ?? "",
+      gisDerivatives: terrainLayer?.getAttribute("data-gis-derivatives") ?? "",
       largeFilledTacticalShapes,
       activeRouteCircleAnimationCount,
+      runtimeContourLayerIds: terrainLayer?.getAttribute("data-runtime-contour-layer-ids") ?? "",
+      runtimeContourLayersPresent: terrainLayer?.getAttribute("data-runtime-contour-layers-present") ?? "",
+      runtimeContourSource: terrainLayer?.getAttribute("data-runtime-contour-source") ?? "",
+      runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
+      runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
+      runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
       weatherAfterTerrain: Boolean(terrainLayer && firstWeatherOverlay && terrainLayer.compareDocumentPosition(firstWeatherOverlay) & Node.DOCUMENT_POSITION_FOLLOWING),
       weatherBeforeAircraft: firstAircraft
         ? Boolean(firstWeatherOverlay && firstWeatherOverlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2547,6 +2573,20 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   for (const bannedLayerId of visualState.bannedMaplibreLayerIds.split(",").filter(Boolean)) {
     expect(visualState.maplibreStyleLayerIds, `${bannedLayerId} should not be reintroduced as a terrain color block`).not.toContain(bannedLayerId);
   }
+  expect(visualState.gisDerivatives, "Battle of Britain fifth map layer should expose the validated GIS derivative chain").toBe(
+    "dem-hillshade-slope-runtime-contours-relief-texture"
+  );
+  expect(visualState.runtimeContourSource, "runtime GIS contours should come from the local derived package").toBe(
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson"
+  );
+  expect(visualState.runtimeContourLayerIds.split(",").filter(Boolean).length, "runtime GIS contour layers should be explicitly declared").toBe(3);
+  expect(visualState.runtimeContourLayersPresent.split(",").filter(Boolean).sort(), "runtime GIS contour layers should load in the MapLibre style").toEqual(
+    visualState.runtimeContourLayerIds.split(",").filter(Boolean).sort()
+  );
+  expect(visualState.runtimeReliefSource, "runtime relief texture should come from the local derived package").toBe(
+    "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
+  );
+  expect(visualState.runtimeReliefLayerPresent, "runtime GIS relief texture layer should load in the MapLibre style").toBe(visualState.runtimeReliefLayerId);
   expect(visualState.terrainPointerEvents).toBe("none");
   expect(visualState.weatherPointerEvents).toBe("none");
   expect(visualState.stageOverflow).toBe("hidden");
@@ -2559,7 +2599,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.registrationMaxError, "MapLibre terrain must follow the SVG battle projection instead of behaving like an independent background").toBeLessThan(24);
   expect(visualState.registrationMeanError, "MapLibre terrain average registration error should stay tight enough for tactical geography").toBeLessThan(12);
   expect(visualState.terrainTexture.luminanceStdDev, "3D basemap must not collapse into a single flat color field").toBeGreaterThan(9);
-  expect(visualState.terrainTexture.edgeMean, "3D basemap must expose enough local relief/topographic variation to be visible beneath the tactical layer").toBeGreaterThan(5);
+  expect(visualState.terrainTexture.edgeMean, "3D basemap must expose enough local relief/topographic variation to be visible beneath the tactical layer").toBeGreaterThan(7);
   expect(visualState.terrainTexture.saturationMean, "raw MapLibre canvas should contain nonzero color data; final color grade is checked from rendered pixels").toBeGreaterThan(1);
   expect(visualState.terrainTexture.luminanceMean, "raw MapLibre canvas should be populated before CSS color grading is applied").toBeGreaterThan(52);
   expect(
