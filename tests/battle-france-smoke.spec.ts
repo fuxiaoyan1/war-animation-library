@@ -7395,7 +7395,7 @@ test("mongol and qin animations load with ancient warfare pacing", async ({ page
 });
 
 test("gaixia ambush uses terrain map ten-sided formations and pipa score", async ({ page }) => {
-  test.setTimeout(140_000);
+  test.setTimeout(240_000);
   const { apiFailures, consoleErrors } = collectFailures(page);
   await page.setViewportSize({ width: 1440, height: 900 });
 

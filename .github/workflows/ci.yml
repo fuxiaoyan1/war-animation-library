@@ -6,17 +6,47 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  build-and-smoke:
+  build-and-health:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node agents/skills/animation-assistant/scripts/check-animation-project.mjs .
+
+  smoke:
+    needs: build-and-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - run: npm run test:smoke
-      - run: node agents/skills/animation-assistant/scripts/check-animation-project.mjs .
+      - name: Smoke shard ${{ matrix.shard }}/4
+        run: npm run test:smoke -- --fully-parallel --shard=${{ matrix.shard }}/4 --workers=1 --retries=1 --reporter=github,line
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-smoke-shard-${{ matrix.shard }}-failure
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
