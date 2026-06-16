@@ -2386,6 +2386,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
     const svg = shell.querySelector<SVGSVGElement>("svg.battle-map");
     const countryLayer = shell.querySelector<SVGGElement>(".country-layer");
     const countries = Array.from(shell.querySelectorAll<SVGPathElement>(".country"));
+    const legacyBaseMapNodeCount = shell.querySelectorAll(".map-base, .map-texture, .country-layer, .country").length;
     const firstWeatherOverlay = shell.querySelector<SVGGraphicsElement>(".battle-of-britain-weather-overlay");
     const weatherOverlays = Array.from(shell.querySelectorAll<SVGGraphicsElement>(".battle-of-britain-weather-overlay"));
     const mapPointLabels = Array.from(shell.querySelectorAll<SVGTextElement>(".map-point text"));
@@ -2491,6 +2492,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       weatherUnitClassCount: weatherOverlays.filter((overlay) => overlay.classList.contains("battle-of-britain-cloud-unit")).length,
       countryFills: countries.map((country) => getComputedStyle(country).fill),
       countryLayerOpacity: countryLayer ? getComputedStyle(countryLayer).opacity : "",
+      legacyBaseMapNodeCount,
       mapPointLabels: mapPointLabels.map((label) => {
         const style = getComputedStyle(label);
         return {
@@ -2584,6 +2586,7 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   });
 
   expect(visualState.canvasCoverage, "Battle of Britain MapLibre terrain canvas should fill the map stage").toBeGreaterThan(0.92);
+  expect(visualState.legacyBaseMapNodeCount, "Battle of Britain must not keep the deprecated SVG basemap/country fallback in the runtime tree").toBe(0);
   expect(visualState.canvasMixBlendMode, "MapLibre terrain must not be recolored by a full-surface blend mode that creates broad blocks").toBe("normal");
   expect(visualState.canvasFilter, "MapLibre terrain should keep real map colors instead of being crushed into a dark/flat tint").not.toContain("brightness(0.65)");
   expect(visualState.terrainBackground, "Battle of Britain terrain container should not add a multi-stop full-map gradient color block layer").not.toContain("gradient");
@@ -2614,8 +2617,8 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.terrainPointerEvents).toBe("none");
   expect(visualState.weatherPointerEvents).toBe("none");
   expect(visualState.stageOverflow).toBe("hidden");
-  expect(visualState.countryLayerOpacity).toBe("1");
-  expect(visualState.countryFills.every((fill) => fill === "none" || fill === "rgba(0, 0, 0, 0)"), "SVG countries must be boundary-only so the 3D basemap remains visible").toBe(true);
+  expect(visualState.countryLayerOpacity, "Battle of Britain should delete the deprecated SVG country layer rather than hide it with CSS").toBe("");
+  expect(visualState.countryFills, "Battle of Britain should not keep old SVG country paths that can flatten the terrain").toEqual([]);
   expect(
     visualState.mapPointLabelPlates.filter((plate) => plate.display !== "none" && plate.width > 24 && plate.height > 12 && plate.opacity > 0.2).length,
     "Battle of Britain place labels need actual label plates, not black text lost on a complex basemap"

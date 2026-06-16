@@ -480,6 +480,11 @@ data-topo-labels-suppressed="true"
 data-topo-raster-opacity="0.15"
 ```
 
+伦敦页还必须满足一个负合同：旧 SVG 平面底图不能继续留在运行 DOM
+里等待 CSS 隐藏。`map-base`、`map-texture`、`country-layer` 和
+`country` 路径在 `BattleOfBritain` 运行树中必须为 `0`，否则地形层
+异常、旧 bundle 或样式覆盖时会再次露出废弃平面图。
+
 运行资产必须在仓库内：
 
 - `public/assets/maps/battle-of-britain-3d/`
@@ -587,6 +592,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | 道路/交通层重新压过作战层 | 直接提高整张 topo raster opacity 或恢复第三方标注主层 | 只增强透明 linework 层，topo opacity 仍保持 `0.15`，项目中文 label plate 负责标注 | topo opacity, layer order, label plate count |
 | 用户看到旧平面图但测试曾通过 | 5177 被其他发布覆盖，且缺失 `/assets/...` 被静态服务 fallback 成 `200 text/html` 首页 | 重新发布当前 worktree；缺失 `/assets/*` 必须返回 `404`，不能 SPA fallback | current bundle fingerprint, transport PNG HEAD `image/png`, stale asset HEAD `404` |
 | 5177 反复回到旧平面图 | 旧共享 LaunchAgent/发布目录还在，其他 worktree 可继续覆盖共享 `war-animation-lab-oss/dist` | 伦敦用 `--instance london-air-map --port 5177` 独立发布；确认后删除旧共享包和旧 plist | preview-publication-manifest instance/sourceRoot, lsof serve-dist path, only london LaunchAgent remains |
+| 废弃平面底图又露出来 | 旧 `map-base` / `map-texture` / `country-layer` 仍在 DOM，只靠 CSS 隐藏 | 在 renderer 层用 `suppressBaseMapLayer` 删除旧节点，伦敦运行树中旧节点数量必须为 `0` | `legacyBaseMapNodeCount=0` in Battle of Britain smoke |
 | 黑块遮地图 | `.battle-of-britain` scoped CSS 缺失或 SVG `polyline` 默认 fill | scoped `fill:none`，polyline 显式 fill none，截图连通域 | `expectNoLargeDarkRenderedBlocks` |
 | 云朵像全图雾毯 | 天气当背景层或调色层 | 云朵作为局部 weather unit，放入 camera-layer | cloud coverage max/total, layer order |
 | 云朵看不见 | 只满足 DOM/layer/jitter，覆盖率和 opacity 太低 | 提高灰白云体对比，增加关键区域实例 | visible cloud count, coverage, user screenshot |

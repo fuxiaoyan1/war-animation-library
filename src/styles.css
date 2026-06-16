@@ -3086,42 +3086,6 @@ h1 {
   background: transparent;
 }
 
-.battle-of-britain .battle-map.has-terrain-underlay .map-base,
-.battle-of-britain .battle-map.has-terrain-underlay .map-texture {
-  opacity: 0;
-}
-
-.battle-of-britain .battle-map.has-terrain-underlay .country-layer {
-  opacity: 1;
-}
-
-.battle-of-britain .battle-map.has-terrain-underlay .country {
-  fill: transparent;
-  opacity: 1;
-  stroke: rgba(233, 221, 176, 0.32);
-  stroke-width: 0.82;
-  vector-effect: non-scaling-stroke;
-}
-
-.battle-of-britain .battle-map.has-terrain-underlay .country-core {
-  fill: transparent;
-  opacity: 1;
-  stroke: rgba(249, 233, 180, 0.4);
-  stroke-width: 0.9;
-}
-
-.battle-of-britain .battle-map.has-terrain-underlay .country-context {
-  fill: transparent;
-  opacity: 1;
-  stroke: rgba(184, 203, 195, 0.14);
-  stroke-width: 0.58;
-}
-
-.battle-of-britain .battle-map.has-terrain-underlay .country-united-kingdom,
-.battle-of-britain .battle-map.has-terrain-underlay .country-france {
-  stroke: rgba(250, 235, 182, 0.46);
-}
-
 .battle-of-britain .battle-map.has-terrain-underlay .river {
   opacity: 0.74;
 }

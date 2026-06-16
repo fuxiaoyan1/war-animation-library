@@ -179,6 +179,7 @@ type CampaignMapAnimationProps = {
   showAncientMapOrnaments?: boolean;
   smoothSceneContentTransitions?: boolean;
   sceneContentTransitionProgress?: number;
+  suppressBaseMapLayer?: boolean;
   focusTransitionProgress?: number;
   fortifiedLines?: GeoLine[];
   gapScale?: number;
@@ -939,6 +940,7 @@ export function CampaignMapAnimation({
   showAncientMapOrnaments = true,
   smoothSceneContentTransitions = false,
   sceneContentTransitionProgress,
+  suppressBaseMapLayer = false,
   focusTransitionProgress = 0,
   fortifiedLines = [],
   gapScale,
@@ -1561,8 +1563,12 @@ export function CampaignMapAnimation({
               </marker>
             </defs>
 
-            <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
-            <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
+            {!suppressBaseMapLayer && (
+              <>
+                <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
+                <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
+              </>
+            )}
             <g
               className="camera-layer"
               data-focus-from={focusState.fromFocus}
@@ -1587,15 +1593,17 @@ export function CampaignMapAnimation({
                   aria-hidden="true"
                 />
               )}
-              <g className="country-layer">
-                {projectedCountries.map((country) => (
-                  <path
-                    key={country.key}
-                    d={country.d}
-                    className={country.className}
-                  />
-                ))}
-              </g>
+              {!suppressBaseMapLayer && (
+                <g className="country-layer">
+                  {projectedCountries.map((country) => (
+                    <path
+                      key={country.key}
+                      d={country.d}
+                      className={country.className}
+                    />
+                  ))}
+                </g>
+              )}
               {historicalRegions.length > 0 && (
                 <g className="historical-map-layer" data-testid="historical-map-layer">
                   <rect className="historical-paper-field" x={26} y={24} width={mapWidth - 52} height={mapHeight - 48} rx={28} />

@@ -119,6 +119,7 @@ export function BattleOfBritainAnimation() {
       shellClassName="battle-of-britain modern-war ww2-air-war"
       sfxProfile="ww2"
       showAncientMapOrnaments={false}
+      suppressBaseMapLayer
       subtitle="聚焦1940年9月15日伦敦方向两次大规模昼间空袭：雷达发现、11群升空、12群增援、伦敦上空混战与回程追击。"
       tacticalRouteRetention
       tacticalMapReference={{
