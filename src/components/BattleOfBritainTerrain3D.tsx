@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { BattleEvent } from "../data/battleOfFrance";
+import { publicPath } from "../lib/publicPath";
 import type { FocusTransitionState } from "./CampaignMapAnimation";
 import type { MapView } from "../lib/useMapInteraction";
 
@@ -34,6 +35,12 @@ const runtimeContourUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-b
 const runtimeReliefTextureUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png";
 const runtimeTransportReferenceUrl = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png";
 const runtimeDerivedManifestUrl = "/assets/maps/battle-of-britain-3d/derived/manifest.json";
+const resolvedTerrainTileUrl = publicPath(terrainTileUrl);
+const resolvedTopoTileUrl = publicPath(topoTileUrl);
+const resolvedRuntimeContourUrl = publicPath(runtimeContourUrl);
+const resolvedRuntimeReliefTextureUrl = publicPath(runtimeReliefTextureUrl);
+const resolvedRuntimeTransportReferenceUrl = publicPath(runtimeTransportReferenceUrl);
+const resolvedRuntimeDerivedManifestUrl = publicPath(runtimeDerivedManifestUrl);
 const terrainSourceBounds: [number, number, number, number] = [-1.75, 50.52, 2.12, 52.22];
 const runtimeDerivedBounds: [number, number, number, number] = [-1.7578125, 50.5134265, 2.2851563, 52.2681574];
 const terrainBounds: [[number, number], [number, number]] = [
@@ -77,7 +84,7 @@ const terrainStyle: StyleSpecification = {
   sources: {
     "battle-of-britain-topo": {
       type: "raster",
-      tiles: [topoTileUrl],
+      tiles: [resolvedTopoTileUrl],
       bounds: terrainSourceBounds,
       tileSize: 256,
       minzoom: minCachedTileZoom,
@@ -86,7 +93,7 @@ const terrainStyle: StyleSpecification = {
     },
     "battle-of-britain-real-dem": {
       type: "raster-dem",
-      tiles: [terrainTileUrl],
+      tiles: [resolvedTerrainTileUrl],
       bounds: terrainSourceBounds,
       encoding: "terrarium",
       tileSize: 256,
@@ -96,7 +103,7 @@ const terrainStyle: StyleSpecification = {
     },
     "battle-of-britain-hillshade-dem": {
       type: "raster-dem",
-      tiles: [terrainTileUrl],
+      tiles: [resolvedTerrainTileUrl],
       bounds: terrainSourceBounds,
       encoding: "terrarium",
       tileSize: 256,
@@ -106,12 +113,12 @@ const terrainStyle: StyleSpecification = {
     },
     "battle-of-britain-runtime-contours": {
       type: "geojson",
-      data: runtimeContourUrl,
+      data: resolvedRuntimeContourUrl,
       attribution: "Contours: GDAL derivatives from local Terrarium DEM cache"
     },
     "battle-of-britain-runtime-relief": {
       type: "image",
-      url: runtimeReliefTextureUrl,
+      url: resolvedRuntimeReliefTextureUrl,
       coordinates: [
         [runtimeDerivedBounds[0], runtimeDerivedBounds[3]],
         [runtimeDerivedBounds[2], runtimeDerivedBounds[3]],
@@ -121,7 +128,7 @@ const terrainStyle: StyleSpecification = {
     },
     "battle-of-britain-runtime-transport": {
       type: "image",
-      url: runtimeTransportReferenceUrl,
+      url: resolvedRuntimeTransportReferenceUrl,
       coordinates: [
         [runtimeDerivedBounds[0], runtimeDerivedBounds[3]],
         [runtimeDerivedBounds[2], runtimeDerivedBounds[3]],
@@ -527,15 +534,19 @@ export function BattleOfBritainTerrain3D({
       data-hillshade-exaggeration={`${hillshadeExaggeration}`}
       data-gis-derivatives="dem-hillshade-slope-runtime-contours-relief-texture-transport-reference"
       data-gis-derivatives-manifest={runtimeDerivedManifestUrl}
+      data-resolved-gis-derivatives-manifest={resolvedRuntimeDerivedManifestUrl}
       data-runtime-contour-layer-ids={runtimeContourLayerIds.join(",")}
       data-runtime-contour-layers-present=""
       data-runtime-contour-source={runtimeContourUrl}
+      data-resolved-runtime-contour-source={resolvedRuntimeContourUrl}
       data-runtime-relief-layer-id={runtimeReliefLayerId}
       data-runtime-relief-layer-present=""
       data-runtime-relief-source={runtimeReliefTextureUrl}
+      data-resolved-runtime-relief-source={resolvedRuntimeReliefTextureUrl}
       data-runtime-transport-layer-id={runtimeTransportLayerId}
       data-runtime-transport-layer-present=""
       data-runtime-transport-source={runtimeTransportReferenceUrl}
+      data-resolved-runtime-transport-source={resolvedRuntimeTransportReferenceUrl}
       data-terrain-color-layer-ids=""
       data-terrain-color-model="real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks"
       data-terrain-color-zones="none"
@@ -549,9 +560,11 @@ export function BattleOfBritainTerrain3D({
       data-terrain-exaggeration={`${terrainExaggeration}`}
       data-terrain-model="real-dem-raster-terrain"
       data-terrain-source={terrainTileUrl}
+      data-resolved-terrain-source={resolvedTerrainTileUrl}
       data-terrain-tile-cache-zoom={`${cachedTerrainTileZoom}`}
       data-testid="battle-of-britain-terrain-3d"
       data-topo-source={topoTileUrl}
+      data-resolved-topo-source={resolvedTopoTileUrl}
       data-topo-tile-cache-zoom={`${cachedTopoTileZoom}`}
       data-visible-basemap="local-cached-world-topographic-map"
       data-visual-surface-contract="maplibre-real-terrain-no-polygon-color-blocks"

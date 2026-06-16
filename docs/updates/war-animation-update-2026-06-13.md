@@ -42,6 +42,7 @@ New workflow note:
 - 完整本机生产工具链不会也不应作为普通 Git 文件完整上传：`/Users/asukarei/Documents/我心飞翔/tools/ComfyUI`、Stable Diffusion / ControlNet / BiRefNet 模型、`engine-cache/` 分割模型、QGIS/GDAL 安装、Playwright 浏览器缓存、`node_modules`、`artifacts/`、原型 `vendor/tiles` 和引擎缓存均留在 Git 之外。
 - 因此，其他人拉取分支后可以通过 `npm install` 和 `npm run build` 构建当前演示；他们不具备完整本机工具链时，不能直接复现或继续再生成飞机、云朵、分割和 GIS 派生资产。
 - 这不会影响 GitHub Pages 当前演示效果，因为演示读取的是已提交运行资产；它只影响“重新生产/继续升级资产”的能力。
+- 2026-06-16 用户截图显示 GitHub Pages 又退回暗色/简化底图，根因不是本机 ComfyUI/QGIS/GDAL 没上传，而是 `BattleOfBritainTerrain3D` 的 MapLibre style 仍用站点根路径 `/assets/...` 加载 topo/DEM/GIS 图片。GitHub Pages 应用部署在 `/war-animation-library/` 下，根路径请求会命中 `https://fuxiaoyan1.github.io/assets/...` 并返回 404；正确运行资产已经在 `https://fuxiaoyan1.github.io/war-animation-library/assets/...` 下。现已把 MapLibre 实际加载 URL 改为 `publicPath(...)`，并让伦敦专项 Playwright、视觉证据脚本和 Pages workflow 检查 resolved runtime paths。
 
 Runtime asset and local toolchain boundary:
 
@@ -49,6 +50,7 @@ Runtime asset and local toolchain boundary:
 - The full local production toolchain is intentionally not uploaded as normal Git content: local ComfyUI, Stable Diffusion / ControlNet / BiRefNet models, segmentation caches under `engine-cache/`, QGIS/GDAL installations, Playwright browser caches, `node_modules`, `artifacts/`, prototype `vendor/tiles`, and engine caches stay outside Git.
 - A downstream user can build the current demo with `npm install` and `npm run build`; without the documented local stack they cannot regenerate or continue improving the aircraft, cloud, segmentation, or GIS-derived assets.
 - This does not degrade the GitHub Pages demo, because the demo uses committed runtime assets. It only affects asset reproduction and further production work.
+- 2026-06-16 follow-up: a GitHub Pages screenshot showed the dark/simple fallback map again. The cause was not a missing local ComfyUI/QGIS/GDAL stack; MapLibre was still requesting terrain assets from site-root `/assets/...` while Pages serves this app under `/war-animation-library/`. The runtime terrain style now resolves actual asset URLs through `publicPath(...)`, and the London Playwright/probe/Pages workflow checks the resolved paths.
 
 来源和许可说明：
 

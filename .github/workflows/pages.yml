@@ -26,6 +26,7 @@ jobs:
       - uses: actions/configure-pages@v6
       - run: npm ci
       - run: GITHUB_PAGES=true npm run build
+      - run: node tools/check-pages-asset-paths.mjs
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

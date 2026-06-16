@@ -607,6 +607,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | 道路/交通层重新压过作战层 | 直接提高整张 topo raster opacity 或恢复第三方标注主层 | 只增强透明 linework 层，topo opacity 仍保持 `0.15`，项目中文 label plate 负责标注 | topo opacity, layer order, label plate count |
 | 用户看到旧平面图但测试曾通过 | 5177 被其他发布覆盖，且缺失 `/assets/...` 被静态服务 fallback 成 `200 text/html` 首页 | 重新发布当前 worktree；缺失 `/assets/*` 必须返回 `404`，不能 SPA fallback | current bundle fingerprint, transport PNG HEAD `image/png`, stale asset HEAD `404` |
 | 5177 反复回到旧平面图 | 旧共享 LaunchAgent/发布目录还在，其他 worktree 可继续覆盖共享 `war-animation-lab-oss/dist` | 伦敦用 `--instance london-air-map --port 5177` 独立发布；确认后删除旧共享包和旧 plist | preview-publication-manifest instance/sourceRoot, lsof serve-dist path, only london LaunchAgent remains |
+| GitHub Pages 线上退回暗色/简化底图 | MapLibre style 硬编码 `/assets/...`，Pages 子路径 `/war-animation-library/` 下实际请求根域资产并 404 | MapLibre 和证据探针的实际请求用 `publicPath(...)`/base-aware URL，保留 `/assets/...` 只作为逻辑合同 | root `/assets/...` 404, `/war-animation-library/assets/...` 200, resolved data attributes, `check-pages-asset-paths.mjs` |
 | 废弃平面底图又露出来 | 旧 `map-base` / `map-texture` / `country-layer` 仍在 DOM，只靠 CSS 隐藏 | 在 renderer 层用 `suppressBaseMapLayer` 删除旧节点，伦敦运行树中旧节点数量必须为 `0` | `legacyBaseMapNodeCount=0` in Battle of Britain smoke |
 | 黑块遮地图 | `.battle-of-britain` scoped CSS 缺失或 SVG `polyline` 默认 fill | scoped `fill:none`，polyline 显式 fill none，截图连通域 | `expectNoLargeDarkRenderedBlocks` |
 | 云朵像全图雾毯 | 天气当背景层或调色层 | 云朵作为局部 weather unit，放入 camera-layer | cloud coverage max/total, layer order |
@@ -645,6 +646,8 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 - 只要 committed runtime assets 存在，`npm install` + `npm run build` 应保留当前视觉效果。
 - 重新生成飞机图标、云朵 PNG、DEM package、专业 GIS 派生层或新的地形证据，才需要上述本机工具链和网络/source 访问。
 - 所以“工具链不能完整上传”不会影响 GitHub 上当前演示动画效果，但会影响别人复现资产生产过程。
+- 运行代码必须区分“逻辑资产路径”和“部署后实际 URL”。文档、manifest 和 data attributes 可以保留 `/assets/...` 作为逻辑合同，但 MapLibre、SVG image、Audio 和浏览器证据探针的实际请求必须通过 Vite `BASE_URL`/`publicPath(...)` 解析。GitHub Pages 部署在 `/war-animation-library/` 下，硬编码根路径会请求到 `https://fuxiaoyan1.github.io/assets/...` 并 404，即使运行资产已经正确提交到 `/war-animation-library/assets/...`。
+- Pages 构建必须额外跑 `node tools/check-pages-asset-paths.mjs`。它检查 `BattleOfBritainTerrain3D` 是否继续用 `publicPath(...)` 解析 MapLibre topo/DEM/contour/relief/transport URL，并检查 `GITHUB_PAGES=true npm run build` 后 `dist/index.html` 的 bundle 引用是否带 `/war-animation-library/`。
 
 ## 给整合会话的落地建议
 
@@ -672,4 +675,5 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 4. 视觉验收顺序是：先确认发布实例和资产真实，后看最终 `map-stage` 像素，再跑专项 Playwright。不要用 raw MapLibre canvas、DOM layer 存在、单张截图或子代理结论替代最终截图证据。
 5. 用户截图是最高优先级的负反馈来源。用户说“灰雾”“黑”“旧平面图”“云朵看不见”时，先做 layer-toggle / publication / final-pixel 诊断，再改最小参数；不要直接加全图罩、恢复 polygon 色块或改大面积结构。
 6. 第五层的可复用门禁应记录失败模式而不是只记录成功数值：旧 bundle、SPA asset fallback、共享 LaunchAgent 覆盖、国家填色压平地形、polygon color blocks、全图天气罩、云朵不可见、灰雾 filter、低亮分位漏检和连续帧抖动。
-7. 当前伦敦 accepted artifact 是 `artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`。整合会话应引用这个作为最新证据，同时保留 `london-air-visual-boost-20260616-v5` 作为过饱和失败样本、`london-air-gray-fog-fix-20260615-v1` 作为灰雾修正证据、`london-air-terrain-gis-runtime-20260615-final-v8` 作为 GIS/transport 线网接入阶段证据。
+7. GitHub Pages 是第五层发布门禁的一部分。线上看见暗色/简化 fallback 时，先查 publicPath/base path：根 URL `/assets/...` 404 而 `/war-animation-library/assets/...` 200，说明运行 URL 错了，不是本机工具链或资产生成缺失。
+8. 当前伦敦 accepted artifact 是 `artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`。整合会话应引用这个作为最新证据，同时保留 `london-air-visual-boost-20260616-v5` 作为过饱和失败样本、`london-air-gray-fog-fix-20260615-v1` 作为灰雾修正证据、`london-air-terrain-gis-runtime-20260615-final-v8` 作为 GIS/transport 线网接入阶段证据。

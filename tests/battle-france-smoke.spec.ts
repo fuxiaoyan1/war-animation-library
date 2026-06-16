@@ -42,6 +42,18 @@ const battleOfBritainAircraftGameIconQualityBand = {
   topBottomBalanceRatio: { min: 0.82 }
 };
 
+function runtimePathForPage(page: Page, logicalPath: string) {
+  const currentUrl = new URL(page.url());
+  const currentDirectory = currentUrl.pathname.endsWith("/") ? currentUrl.pathname : currentUrl.pathname.replace(/\/[^/]*$/, "/");
+  const pathPrefix = currentDirectory === "/" ? "" : currentDirectory.replace(/\/$/, "");
+  const normalizedPath = logicalPath.startsWith("/") ? logicalPath : `/${logicalPath}`;
+  return `${pathPrefix}${normalizedPath}`;
+}
+
+function runtimeUrlForPage(page: Page, logicalPath: string) {
+  return new URL(runtimePathForPage(page, logicalPath), page.url()).toString();
+}
+
 function decodeScreenshotPng(buffer: Buffer) {
   const signature = buffer.subarray(0, 8);
   if (!signature.equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
@@ -1133,16 +1145,17 @@ async function expectRealisticUnitIcon(
 ) {
   const assetPath = expectedAssetPath ?? expectedAssetKind;
   const expectedHref = `/assets/unit-icons/${assetPath}.${extension}`;
+  const expectedRuntimeHref = runtimePathForPage(page, expectedHref);
   const expectedDomHref = expectedAssetKind.startsWith("britain") || expectedAssetKind.startsWith("luftwaffe")
-    ? `${expectedHref}?v=${battleOfBritainAircraftAssetVersion}`
-    : expectedHref;
+    ? `${expectedRuntimeHref}?v=${battleOfBritainAircraftAssetVersion}`
+    : expectedRuntimeHref;
   const marker = page.getByTestId(markerTestId).first();
   await expect(marker).toBeVisible();
   const image = marker.locator(".unit-icon-image");
   await expect(image).toHaveAttribute("data-asset-kind", expectedAssetKind);
   await expect(image).toHaveAttribute("href", expectedDomHref);
 
-  const assetResponse = await page.request.head(expectedHref);
+  const assetResponse = await page.request.head(runtimeUrlForPage(page, expectedHref));
   expect(assetResponse.ok()).toBe(true);
   expect(assetResponse.headers()["content-type"]).toContain("image");
   const minimumContentLength = expectedAssetKind.startsWith("trafalgar")
@@ -2313,6 +2326,12 @@ async function expectBattleOfBritainForegroundReadable(page: Page) {
 }
 
 async function expectBattleOfBritainTerrain3DMap(page: Page) {
+  const terrainSource = "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png";
+  const topoSource = "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg";
+  const runtimeDerivedManifestPath = "/assets/maps/battle-of-britain-3d/derived/manifest.json";
+  const runtimeContourSource = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson";
+  const runtimeReliefSource = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png";
+  const runtimeTransportSource = "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png";
   const terrain = page.getByTestId("battle-of-britain-terrain-3d");
   await expect(terrain).toBeVisible();
   await expect(terrain).toHaveAttribute("data-renderer", "maplibre-real-terrain");
@@ -2321,8 +2340,10 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-camera-mode", "svg-projection-registered-terrain");
   await expect(terrain).toHaveAttribute("data-map-registration", "svg-projection");
   await expect(terrain).toHaveAttribute("data-projection", "registered-web-mercator-hillshade");
-  await expect(terrain).toHaveAttribute("data-terrain-source", "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png");
-  await expect(terrain).toHaveAttribute("data-topo-source", "/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg");
+  await expect(terrain).toHaveAttribute("data-terrain-source", terrainSource);
+  await expect(terrain).toHaveAttribute("data-topo-source", topoSource);
+  await expect(terrain).toHaveAttribute("data-resolved-terrain-source", runtimePathForPage(page, terrainSource));
+  await expect(terrain).toHaveAttribute("data-resolved-topo-source", runtimePathForPage(page, topoSource));
   await expect(terrain).toHaveAttribute("data-terrain-exaggeration", "1.35");
   await expect(terrain).toHaveAttribute("data-hillshade-exaggeration", "0.72");
   await expect(terrain).toHaveAttribute("data-visible-basemap", "local-cached-world-topographic-map");
@@ -2331,10 +2352,14 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect(terrain).toHaveAttribute("data-terrain-color-zones", "none");
   await expect(terrain).toHaveAttribute("data-terrain-color-layer-ids", "");
   await expect(terrain).toHaveAttribute("data-gis-derivatives", "dem-hillshade-slope-runtime-contours-relief-texture-transport-reference");
-  await expect(terrain).toHaveAttribute("data-gis-derivatives-manifest", "/assets/maps/battle-of-britain-3d/derived/manifest.json");
-  await expect(terrain).toHaveAttribute("data-runtime-contour-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson");
-  await expect(terrain).toHaveAttribute("data-runtime-relief-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
-  await expect(terrain).toHaveAttribute("data-runtime-transport-source", "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
+  await expect(terrain).toHaveAttribute("data-gis-derivatives-manifest", runtimeDerivedManifestPath);
+  await expect(terrain).toHaveAttribute("data-runtime-contour-source", runtimeContourSource);
+  await expect(terrain).toHaveAttribute("data-runtime-relief-source", runtimeReliefSource);
+  await expect(terrain).toHaveAttribute("data-runtime-transport-source", runtimeTransportSource);
+  await expect(terrain).toHaveAttribute("data-resolved-gis-derivatives-manifest", runtimePathForPage(page, runtimeDerivedManifestPath));
+  await expect(terrain).toHaveAttribute("data-resolved-runtime-contour-source", runtimePathForPage(page, runtimeContourSource));
+  await expect(terrain).toHaveAttribute("data-resolved-runtime-relief-source", runtimePathForPage(page, runtimeReliefSource));
+  await expect(terrain).toHaveAttribute("data-resolved-runtime-transport-source", runtimePathForPage(page, runtimeTransportSource));
   await expect(terrain).toHaveAttribute("data-cloud-animation", "progress-linked-local-weather-units");
   await expect(terrain).toHaveAttribute("data-cloud-renderer", "svg-camera-layer-comfy-weather-png");
   await expect(terrain).toHaveAttribute("data-maplibre-fill-veil", "removed");
@@ -2351,27 +2376,27 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   await expect
     .poll(async () => Number(await terrain.getAttribute("data-registration-max-error")), { timeout: 30_000 })
     .toBeLessThan(24);
-  const topoTileResponse = await page.request.head("/assets/maps/battle-of-britain-3d/topo/8/128-85.jpg");
+  const topoTileResponse = await page.request.head(runtimeUrlForPage(page, "/assets/maps/battle-of-britain-3d/topo/8/128-85.jpg"));
   expect(topoTileResponse.ok(), "Battle of Britain topographic tile should be present in the deployed preview").toBe(true);
   expect(topoTileResponse.headers()["content-type"], "topographic tile should be served as a real JPEG, not an SPA fallback").toContain("image/jpeg");
-  const demTileResponse = await page.request.head("/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png");
+  const demTileResponse = await page.request.head(runtimeUrlForPage(page, "/assets/maps/battle-of-britain-3d/terrarium/8/128-85.png"));
   expect(demTileResponse.ok(), "Battle of Britain DEM tile should be present in the deployed preview").toBe(true);
   expect(demTileResponse.headers()["content-type"], "DEM tile should be served as a PNG Terrarium tile").toContain("image/png");
-  const runtimeContoursResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson");
+  const runtimeContoursResponse = await page.request.head(runtimeUrlForPage(page, runtimeContourSource));
   expect(runtimeContoursResponse.ok(), "Battle of Britain runtime GIS contours should be present in the deployed preview").toBe(true);
   expect(runtimeContoursResponse.headers()["content-type"], "runtime contours should be served as GeoJSON/JSON, not an SPA fallback").toMatch(/json|octet-stream/);
-  const runtimeReliefResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png");
+  const runtimeReliefResponse = await page.request.head(runtimeUrlForPage(page, runtimeReliefSource));
   expect(runtimeReliefResponse.ok(), "Battle of Britain runtime GIS relief texture should be present in the deployed preview").toBe(true);
   expect(runtimeReliefResponse.headers()["content-type"], "runtime relief texture should be served as PNG, not an SPA fallback").toContain("image/png");
-  const runtimeTransportResponse = await page.request.head("/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png");
+  const runtimeTransportResponse = await page.request.head(runtimeUrlForPage(page, runtimeTransportSource));
   expect(runtimeTransportResponse.ok(), "Battle of Britain runtime transport reference texture should be present in the deployed preview").toBe(true);
   expect(runtimeTransportResponse.headers()["content-type"], "runtime transport reference texture should be served as PNG, not an SPA fallback").toContain("image/png");
-  const missingAssetResponse = await page.request.head("/assets/__war-animation-missing-asset-check__.js");
+  const missingAssetResponse = await page.request.head(runtimeUrlForPage(page, "/assets/__war-animation-missing-asset-check__.js"));
   expect(
     missingAssetResponse.status(),
     "local preview must return 404 for missing /assets files; SPA fallback hides stale-bundle and wrong-worktree deployments"
   ).toBe(404);
-  const runtimeDerivedManifestResponse = await page.request.get("/assets/maps/battle-of-britain-3d/derived/manifest.json");
+  const runtimeDerivedManifestResponse = await page.request.get(runtimeUrlForPage(page, runtimeDerivedManifestPath));
   expect(runtimeDerivedManifestResponse.ok(), "Battle of Britain runtime GIS manifest should be present in the deployed preview").toBe(true);
   const runtimeDerivedManifest = await runtimeDerivedManifestResponse.json();
   expect(runtimeDerivedManifest.purpose).toBe("runtime-fifth-layer-gis-final-derivatives");
@@ -2467,12 +2492,15 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
       runtimeContourLayerIds: terrainLayer?.getAttribute("data-runtime-contour-layer-ids") ?? "",
       runtimeContourLayersPresent: terrainLayer?.getAttribute("data-runtime-contour-layers-present") ?? "",
       runtimeContourSource: terrainLayer?.getAttribute("data-runtime-contour-source") ?? "",
+      resolvedRuntimeContourSource: terrainLayer?.getAttribute("data-resolved-runtime-contour-source") ?? "",
       runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
       runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
       runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
+      resolvedRuntimeReliefSource: terrainLayer?.getAttribute("data-resolved-runtime-relief-source") ?? "",
       runtimeTransportLayerId: terrainLayer?.getAttribute("data-runtime-transport-layer-id") ?? "",
       runtimeTransportLayerPresent: terrainLayer?.getAttribute("data-runtime-transport-layer-present") ?? "",
       runtimeTransportSource: terrainLayer?.getAttribute("data-runtime-transport-source") ?? "",
+      resolvedRuntimeTransportSource: terrainLayer?.getAttribute("data-resolved-runtime-transport-source") ?? "",
       weatherAfterTerrain: Boolean(terrainLayer && firstWeatherOverlay && terrainLayer.compareDocumentPosition(firstWeatherOverlay) & Node.DOCUMENT_POSITION_FOLLOWING),
       weatherBeforeAircraft: firstAircraft
         ? Boolean(firstWeatherOverlay && firstWeatherOverlay.compareDocumentPosition(firstAircraft) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2610,6 +2638,9 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.runtimeContourSource, "runtime GIS contours should come from the local derived package").toBe(
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson"
   );
+  expect(visualState.resolvedRuntimeContourSource, "MapLibre should resolve runtime GIS contours through the deployed base path").toBe(
+    runtimePathForPage(page, "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-contours-runtime.geojson")
+  );
   expect(visualState.runtimeContourLayerIds.split(",").filter(Boolean).length, "runtime GIS contour layers should be explicitly declared").toBe(3);
   expect(visualState.runtimeContourLayersPresent.split(",").filter(Boolean).sort(), "runtime GIS contour layers should load in the MapLibre style").toEqual(
     visualState.runtimeContourLayerIds.split(",").filter(Boolean).sort()
@@ -2617,9 +2648,15 @@ async function expectBattleOfBritainTerrain3DMap(page: Page) {
   expect(visualState.runtimeReliefSource, "runtime relief texture should come from the local derived package").toBe(
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png"
   );
+  expect(visualState.resolvedRuntimeReliefSource, "MapLibre should resolve runtime relief texture through the deployed base path").toBe(
+    runtimePathForPage(page, "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-runtime-relief.png")
+  );
   expect(visualState.runtimeReliefLayerPresent, "runtime GIS relief texture layer should load in the MapLibre style").toBe(visualState.runtimeReliefLayerId);
   expect(visualState.runtimeTransportSource, "runtime transport reference should come from the local derived package").toBe(
     "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png"
+  );
+  expect(visualState.resolvedRuntimeTransportSource, "MapLibre should resolve runtime transport reference through the deployed base path").toBe(
+    runtimePathForPage(page, "/assets/maps/battle-of-britain-3d/derived/battle-of-britain-transport-reference.png")
   );
   expect(visualState.runtimeTransportLayerPresent, "runtime transport reference layer should load in the MapLibre style").toBe(visualState.runtimeTransportLayerId);
   expect(visualState.terrainPointerEvents).toBe("none");
@@ -2670,14 +2707,17 @@ async function expectBattleOfBritainWeatherAssets(page: Page, expectedVisible: "
   }
 
   for (const asset of expectedAssets) {
-    const response = await page.request.head(asset.path);
+    const response = await page.request.head(runtimeUrlForPage(page, asset.path));
     expect(response.ok(), `${asset.path} should be served as a runtime weather asset`).toBe(true);
     expect(response.headers()["content-type"], `${asset.path} should be a PNG image`).toContain("image/png");
     expect(response.headers()["cache-control"], `${asset.path} should not hide regenerated weather assets behind immutable local cache`).toBe("no-cache");
     expect(Number(response.headers()["content-length"]), `${asset.path} should be a finished bitmap asset, not a tiny CSS/geometry placeholder`).toBeGreaterThan(120_000);
   }
   const activeOverlay = page.getByTestId(activeAsset.testId);
-  await expect(activeOverlay.locator("image.map-overlay-image")).toHaveAttribute("href", `${activeAsset.path}?v=20260614-comfy-weather-v4`);
+  await expect(activeOverlay.locator("image.map-overlay-image")).toHaveAttribute(
+    "href",
+    `${runtimePathForPage(page, activeAsset.path)}?v=20260614-comfy-weather-v4`
+  );
 
   const weatherVisualState = await page.locator(".battle-of-britain").evaluate((shell, activeTestId) => {
     const morning = shell.querySelector<SVGGraphicsElement>('[data-testid="battle-of-britain-weather-overlay-morning"]');
@@ -3079,7 +3119,7 @@ async function expectTransparentAircraftPng(page: Page, assetPath: string, optio
       tailRootRearFuselageRgbDistance: rgbDistance(tailRootMeanRgb, rearFuselageMeanRgb),
       topBottomBalanceRatio: Math.min(upperHalfPixels, lowerHalfPixels) / Math.max(upperHalfPixels, lowerHalfPixels, 1)
     };
-  }, assetPath);
+  }, runtimePathForPage(page, assetPath));
 
   expect(stats.alphaRatio, `${assetPath} should be a cutout, not a rectangular photo`).toBeLessThan(maxAlphaRatio);
   expect(stats.opaqueRatio, `${assetPath} should retain a readable aircraft body`).toBeGreaterThan(0.05);
@@ -4157,8 +4197,8 @@ async function eventRailPositionByTitle(page: Page, titlePattern: RegExp) {
 }
 
 async function expectScoreUsesMusic(page: Page, expectedSource: string) {
-  await expect(page.getByTestId("score-toggle")).toHaveAttribute("data-music-source", expectedSource);
-  const response = await page.request.head(expectedSource);
+  await expect(page.getByTestId("score-toggle")).toHaveAttribute("data-music-source", runtimePathForPage(page, expectedSource));
+  const response = await page.request.head(runtimeUrlForPage(page, expectedSource));
   expect(response.ok()).toBe(true);
   expect(response.headers()["content-type"]).toMatch(/audio|ogg|mpeg/);
   expect(Number(response.headers()["content-length"])).toBeGreaterThan(900_000);

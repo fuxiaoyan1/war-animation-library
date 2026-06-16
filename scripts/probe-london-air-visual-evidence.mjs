@@ -36,6 +36,14 @@ const aircraftAssets = [
   "luftwaffe-he111"
 ];
 
+function runtimeUrl(logicalPath) {
+  return new URL(logicalPath.replace(/^\//, ""), baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+}
+
+function runtimePath(logicalPath) {
+  return new URL(runtimeUrl(logicalPath)).pathname;
+}
+
 function decodeScreenshotPng(buffer) {
   const signature = buffer.subarray(0, 8);
   if (!signature.equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
@@ -427,6 +435,7 @@ async function collectPageMetrics(page) {
         renderer: terrainLayer?.getAttribute("data-renderer") ?? "",
         terrainLoaded: terrainLayer?.getAttribute("data-terrain-loaded") ?? "",
         terrainSource: terrainLayer?.getAttribute("data-terrain-source") ?? "",
+        resolvedTerrainSource: terrainLayer?.getAttribute("data-resolved-terrain-source") ?? "",
         terrainTexture,
         bannedMaplibreLayerIds,
         bannedMaplibreLayersPresent,
@@ -434,6 +443,7 @@ async function collectPageMetrics(page) {
         polygonColorBlocksRemoved: bannedMaplibreLayersPresent.length === 0,
         gisDerivatives: terrainLayer?.getAttribute("data-gis-derivatives") ?? "",
         gisDerivativesManifest: terrainLayer?.getAttribute("data-gis-derivatives-manifest") ?? "",
+        resolvedGisDerivativesManifest: terrainLayer?.getAttribute("data-resolved-gis-derivatives-manifest") ?? "",
         runtimeContourLayerIds: (terrainLayer?.getAttribute("data-runtime-contour-layer-ids") ?? "")
           .split(",")
           .filter(Boolean),
@@ -441,15 +451,19 @@ async function collectPageMetrics(page) {
           .split(",")
           .filter(Boolean),
         runtimeContourSource: terrainLayer?.getAttribute("data-runtime-contour-source") ?? "",
+        resolvedRuntimeContourSource: terrainLayer?.getAttribute("data-resolved-runtime-contour-source") ?? "",
         runtimeReliefLayerId: terrainLayer?.getAttribute("data-runtime-relief-layer-id") ?? "",
         runtimeReliefLayerPresent: terrainLayer?.getAttribute("data-runtime-relief-layer-present") ?? "",
         runtimeReliefSource: terrainLayer?.getAttribute("data-runtime-relief-source") ?? "",
+        resolvedRuntimeReliefSource: terrainLayer?.getAttribute("data-resolved-runtime-relief-source") ?? "",
         runtimeTransportLayerId: terrainLayer?.getAttribute("data-runtime-transport-layer-id") ?? "",
         runtimeTransportLayerPresent: terrainLayer?.getAttribute("data-runtime-transport-layer-present") ?? "",
         runtimeTransportSource: terrainLayer?.getAttribute("data-runtime-transport-source") ?? "",
+        resolvedRuntimeTransportSource: terrainLayer?.getAttribute("data-resolved-runtime-transport-source") ?? "",
         topoLabelsSuppressed: terrainLayer?.getAttribute("data-topo-labels-suppressed") ?? "",
         topoRasterOpacity: Number(terrainLayer?.getAttribute("data-topo-raster-opacity") ?? 999),
         topoSource: terrainLayer?.getAttribute("data-topo-source") ?? "",
+        resolvedTopoSource: terrainLayer?.getAttribute("data-resolved-topo-source") ?? "",
         tacticalAfterTerrain: firstTactical
           ? Boolean(terrainLayer && terrainLayer.compareDocumentPosition(firstTactical) & Node.DOCUMENT_POSITION_FOLLOWING)
           : true,
@@ -476,11 +490,11 @@ async function collectPageMetrics(page) {
 }
 
 async function collectAssetMetrics(page) {
-  const metrics = await page.evaluate(async ({ assetNames, version }) => {
+  const metrics = await page.evaluate(async ({ assetNames, basePath, version }) => {
     const output = {};
     for (const asset of assetNames) {
       const image = new Image();
-      image.src = `/assets/unit-icons/${asset}.png?v=${version}`;
+      image.src = `${basePath}/assets/unit-icons/${asset}.png?v=${version}`;
       await image.decode();
       const canvas = document.createElement("canvas");
       canvas.width = image.naturalWidth;
@@ -601,7 +615,7 @@ async function collectAssetMetrics(page) {
       };
     }
     return output;
-  }, { assetNames: aircraftAssets, version: aircraftAssetVersion });
+  }, { assetNames: aircraftAssets, basePath: runtimePath("/").replace(/\/$/, ""), version: aircraftAssetVersion });
 
   return Object.fromEntries(
     Object.entries(metrics).map(([asset, stats]) => [
@@ -617,28 +631,35 @@ async function collectAssetMetrics(page) {
 async function collectAssetHeads(page) {
   const heads = {};
   for (const asset of aircraftAssets) {
-    const response = await page.request.head(`${baseUrl}/assets/unit-icons/${asset}.png?v=${aircraftAssetVersion}`);
+    const logicalPath = `/assets/unit-icons/${asset}.png`;
+    const url = runtimeUrl(`${logicalPath}?v=${aircraftAssetVersion}`);
+    const response = await page.request.head(url);
     heads[asset] = {
       cacheControl: response.headers()["cache-control"],
       contentLength: Number(response.headers()["content-length"]),
       contentType: response.headers()["content-type"],
+      logicalPath,
       ok: response.ok(),
+      resolvedUrl: url,
       status: response.status()
     };
   }
-  const musicResponse = await page.request.head(`${baseUrl}${musicAssetPath}`);
+  const musicUrl = runtimeUrl(musicAssetPath);
+  const musicResponse = await page.request.head(musicUrl);
   heads[musicAssetPath] = {
     cacheControl: musicResponse.headers()["cache-control"],
     contentLength: Number(musicResponse.headers()["content-length"]),
     contentType: musicResponse.headers()["content-type"],
+    logicalPath: musicAssetPath,
     ok: musicResponse.ok(),
+    resolvedUrl: musicUrl,
     status: musicResponse.status()
   };
   return heads;
 }
 
 async function collectWeatherAssetMetrics(page) {
-  const records = await page.evaluate(async ({ version }) => {
+  const records = await page.evaluate(async ({ basePath, version }) => {
     const assetPaths = [
       "/assets/weather/battle-of-britain/morning-cloud-bank.png",
       "/assets/weather/battle-of-britain/afternoon-cloud-breaks.png"
@@ -646,7 +667,7 @@ async function collectWeatherAssetMetrics(page) {
     const output = {};
     for (const assetPath of assetPaths) {
       const image = new Image();
-      image.src = `${assetPath}?v=${version}`;
+      image.src = `${basePath}${assetPath}?v=${version}`;
       await image.decode();
       const canvas = document.createElement("canvas");
       canvas.width = image.naturalWidth;
@@ -686,16 +707,19 @@ async function collectWeatherAssetMetrics(page) {
       };
     }
     return output;
-  }, { version: weatherAssetVersion });
+  }, { basePath: runtimePath("/").replace(/\/$/, ""), version: weatherAssetVersion });
 
   const heads = {};
   for (const assetPath of Object.keys(records)) {
-    const response = await page.request.head(`${baseUrl}${assetPath}?v=${weatherAssetVersion}`);
+    const url = runtimeUrl(`${assetPath}?v=${weatherAssetVersion}`);
+    const response = await page.request.head(url);
     heads[assetPath] = {
       cacheControl: response.headers()["cache-control"],
       contentLength: Number(response.headers()["content-length"]),
       contentType: response.headers()["content-type"],
+      logicalPath: assetPath,
       ok: response.ok(),
+      resolvedUrl: url,
       status: response.status()
     };
   }
@@ -727,12 +751,15 @@ async function collectTerrainTileHeads(page) {
   ];
   const heads = {};
   for (const tilePath of tilePaths) {
-    const response = await page.request.head(`${baseUrl}${tilePath}`);
+    const url = runtimeUrl(tilePath);
+    const response = await page.request.head(url);
     heads[tilePath] = {
       cacheControl: response.headers()["cache-control"],
       contentLength: Number(response.headers()["content-length"]),
       contentType: response.headers()["content-type"],
+      logicalPath: tilePath,
       ok: response.ok(),
+      resolvedUrl: url,
       status: response.status()
     };
   }
