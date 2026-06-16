@@ -26,6 +26,7 @@
    - `brightnessScore100 = luminanceMean / 255 * 100`。
    - 日间战斗通常先设目标带，例如 `48-61`；夜战、沙漠、雪地、海战应按片种另设目标带。
    - 同时检查亮度标准差、饱和度、主色比例、绿海/黑块比例、低亮分位、夜景蓝比例、前景作战单位可读性和标签 halo。
+   - 饱和度和主色比例必须有上限。伦敦的 `visual-boost-v5` 证明，只设“不要灰、不要黑、要钢蓝”的下限，会把刺眼的高饱和青蓝误判为优化。
    - 分数不能替代人工视觉检查；它是高效调参语言。
    - 仅看均值会漏掉“大面积暗蓝但不纯黑”的夜景化问题。白昼战斗至少要看 `luminanceP10`、`luminanceP25`、`lowDaylightRatio` 和 `nightBlueRatio`。
 
@@ -41,16 +42,17 @@
 
 ## 伦敦空战本轮参考值
 
-- 目标：白昼钢蓝、浓郁高对比、有 3D 地形质感，但不影响飞机图标和航线识别。
+- 目标：自然白昼钢蓝、有 3D 地形质感、航线和标签清楚，但不能刺眼、不能荧光青绿、不能让蓝色底图压过战术层。
 - topo raster：仅作纹理参考，当前为 `data-topo-raster-opacity="0.15"`，`data-topo-labels-suppressed="true"`。
 - 分区配色：不要用覆盖战区的大多边形色块来“补地形分区”。伦敦空战已废弃 `typed-regional-palette-v2` 六层 MapLibre fill 方案；当前运行合同为 `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`，以真实 topo/DEM/hillshade、轻量 runtime relief/contours、透明 transport-reference 线网和最终截图调色为准。若需要地形角色差异，应通过底图素材、色彩评分、交通/水系骨架、标签/边界和局部战术图层表达，禁止重新引入大面积 polygon color blocks、全图雾罩、伪阴影块或三块高透明度大色面。
-- 最新浏览器证据：`artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`。`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是上一轮灰雾修正证据；`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网接入阶段证据，但它们不再是当前最终色彩口径。
-- 六个关键帧明暗度评分约 `56.25-59.73`，用于白昼但不发白的钢蓝底图。
-- 饱和度均值约 `91.83-139.49`。
-- 钢蓝比例约 `0.676-0.793`。
-- 青绿海面比例约 `0.119-0.127`。
-- 低亮区占比约 `0.041-0.064`，暗像素比例约 `0.026-0.044`。
-- 灰雾感不能只靠“关云层”判断。`artifacts/london-air-gray-fog-diagnosis-20260615/` 的 layer-toggle 诊断显示，隐藏云朵并没有改变底层地形纹理指标；去掉 canvas filter 或改成偏暖 `hue-rotate(4deg)` 候选也不能解决海面/陆地读感。2026-06-16 的视觉增强进一步说明：只把交通/等高线加亮会降低最终截图饱和度，正确做法是收敛透明线网权重，并用伦敦专属 `saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)` 恢复钢蓝/暖陆地分离，再用最终 `map-stage` 像素门禁确认。
+- 最新浏览器证据：`artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`。`artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json` 是用户截图否决的过饱和失败样本；`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是灰雾修正证据；`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网接入阶段证据。
+- 当前 canvas filter 为 `saturate(2.2) contrast(1.2) brightness(0.71) hue-rotate(18deg)`。
+- 六个关键帧明暗度评分约 `59.13-62.90`，用于自然白昼但不发白的钢蓝底图。
+- 饱和度均值约 `54.91-104.69`；上限门禁为 `<112`，避免再次出现 `visual-boost-v5` 的 `139.69` 刺眼过冲。
+- 钢蓝/蓝色主导比例约 `0.458-0.660`；上限门禁为 `<0.70`，避免蓝色底图压过地形、航线和标签。
+- 青绿海面比例约 `0.163-0.181`。
+- 低亮区占比约 `0.041-0.065`，夜景蓝比例约 `0.006-0.009`。
+- 灰雾感不能只靠“关云层”判断。`artifacts/london-air-gray-fog-diagnosis-20260615/` 的 layer-toggle 诊断显示，隐藏云朵并没有改变底层地形纹理指标；去掉 canvas filter 或改成偏暖 `hue-rotate(4deg)` 候选也不能解决海面/陆地读感。2026-06-16 的过饱和回退进一步说明：只看“更高饱和、更高钢蓝比例”会制造刺眼画面。正确做法是在最终合成截图上设双边目标带，小步调整，既防灰雾/黑图，也防高饱和青蓝过冲。
 - 云层作为天气作战单位渲染：开场/上午可见云团约 `5` 个，午后约 `4` 个，海峡追击约 `3` 个；总覆盖率约 `0.066-0.098`，单体最大覆盖率约 `0.034-0.037`，opacity 约 `0.34-0.42`。上一版 `2-3` 个淡云、总覆盖率约 `0.034-0.047` 已被用户截图判定为肉眼不可辨识，不再作为合格目标。
 - 道路/交通参考层：保持 topo raster opacity `0.15`，不要把旧 topo 整张盖回来；从 topo cache 抽取透明 linework 后，以 `battle-of-britain-gis-transport-reference` 叠加到 relief 之上、contours 之下。当前 v8 证据中 transport PNG 为 `200 image/png`，MapLibre style 已加载该 layer，密集段仍保持 `uniqueMapCenters=1`、`uniqueMapZooms=1`。
 - 云层运动应优先由播放进度驱动，不使用无限 CSS drift。密集战斗段如果出现闪屏，先检查 CSS animation、MapLibre camera 重同步、路线/效果层是否每帧无意义变化。
@@ -61,5 +63,6 @@
 
 - 在地图层设计阶段新增“配色表”：地形类型、基础色、允许亮度带、饱和度带、前景分离策略。
 - 在视觉证据脚本中统一输出 `brightnessScore100`，并把用户反馈目标转成数值调整。
+- 所有“提升色彩”的任务必须先建立上限：饱和度、蓝色主导比例、青绿海面比例都不能只设下限。
 - 在 Playwright 中对每部成熟动画建立片种目标带，避免一套阈值同时误判白昼空战、夜战、沙漠战和古代纸本风格。
 - 自动门禁只覆盖高风险退化；最终仍要人工查看 artifacts 截图，不在会话中嵌入图片。

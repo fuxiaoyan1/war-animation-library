@@ -31,7 +31,7 @@ Current accepted runtime target:
 - camera mode: `svg-projection-registered-terrain`
 - visual contract: `maplibre-real-terrain-no-polygon-color-blocks`
 - terrain color model: `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`
-- latest visual evidence: `artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`
+- latest visual evidence: `artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`
 - latest retired-basemap evidence: `artifacts/london-air-remove-legacy-basemap-20260616-v1/metrics.browser.json`
 
 ## 新工具链的实质提升
@@ -41,7 +41,7 @@ Current accepted runtime target:
 1. **资产包可发布**：topo raster、Terrarium DEM、runtime relief、runtime contours、transport reference、天气 PNG 和飞机 PNG 都作为 runtime assets 进入仓库。GitHub 或其他会话运行当前演示不依赖本机 ComfyUI/QGIS/GDAL，只在重新生产资产时才需要本机工具链。
 2. **GIS 派生能补回信息密度**：第五层不再只靠 DEM/hillshade 做“地形感”。从 committed topo cache 派生透明 transport-reference 后，道路、交通线、水系和高频线网回到画面里，同时 topo raster 仍保持 `0.15`，不会重新压住中文标签和战术层。
 3. **注册相机代替双系统漂移**：MapLibre underlay 消费 `terrainView`/`mapView`，SVG tactical overlay 继续承载航线、飞机、云朵和标签。注册误差、MapLibre center/zoom 和连续帧稳定进入证据，不再凭“看起来对齐”判断。
-4. **最终像素门禁代替 DOM 门禁**：验收采样最终 `map-stage`，同时覆盖亮度分位、饱和度、钢蓝海面、青绿海面、低亮比例、暗块、前景分离和连续帧。raw canvas、单个 DOM 节点或子代理截图结论都不能替代最终合成证据。
+4. **最终像素门禁代替 DOM 门禁**：验收采样最终 `map-stage`，同时覆盖亮度分位、饱和度上下限、钢蓝海面上下限、青绿海面、低亮比例、暗块、前景分离和连续帧。raw canvas、单个 DOM 节点或子代理截图结论都不能替代最终合成证据。
 5. **发布归属变成门禁**：统一用 `5177`，但通过 `--instance london-air-map`、独立 app-support 目录、`preview-publication-manifest.json`、bundle/CSS 指纹、tile HEAD 和缺失资产 `404` 来防止旧 worktree/旧 bundle 误导验收。
 6. **废弃资源从隐藏改为删除**：London 运行树不再保留旧 `map-base`、`map-texture`、`country-layer` 和 `country` path。旧资源没有生产价值时必须从运行 DOM 断开，否则 CSS 失效、旧 bundle 或发布错位都会把废弃平面图暴露给用户。
 
@@ -94,7 +94,7 @@ Current accepted runtime target:
 - registered camera pitch: `0`
 - registered camera bearing: `0`
 - MapLibre camera update threshold: `0.025-zoom`
-- canvas color filter: `saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)`
+- canvas color filter: `saturate(2.2) contrast(1.2) brightness(0.71) hue-rotate(18deg)`
 - country fill when terrain active: transparent or none, boundary-only
 
 注意：terrain studio spec 里保留过早期 pitched stage 参数，例如 pitch `55-57`、bearing `-18` 到 `-24`。那是生产合同和能力探索材料。当前最终运行版为了解决“地图层和战斗层分裂”，采用 `svg-projection-registered-terrain`，MapLibre pitch/bearing 固定为 `0/0`，用 topo/DEM/hillshade/调色制造近似 3D 质感。
@@ -318,7 +318,7 @@ London runtime DOM:
   .country = absent
 
 Battle of Britain terrain canvas:
-  filter = saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)
+  filter = saturate(2.2) contrast(1.2) brightness(0.71) hue-rotate(18deg)
   mix-blend-mode = normal
 ```
 
@@ -358,29 +358,29 @@ Battle of Britain terrain canvas:
 
 当前色彩目标：
 
-- 白昼钢蓝；
-- 浓郁但不是夜战；
+- 自然白昼钢蓝；
+- 有色彩层次但不能刺眼；
 - 高对比但不产生黑块；
 - 有地形/金属质感；
 - 飞机、航线、雷达线和地名第一眼可读。
 
-白昼钢蓝目标带来自多轮用户截图和浏览器证据。`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网跑通证据；`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是灰雾修正证据。用户继续要求“实质性提升”后，当前 accepted 证据改为 `artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`：
+白昼钢蓝目标带来自多轮用户截图和浏览器证据。`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网跑通证据；`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是灰雾修正证据；`artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json` 是用户截图否决的过饱和失败样本；当前 accepted 证据为 `artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`：
 
-- runtime publication: bundle `/assets/index-Bs_3ObPW.js`, CSS `/assets/index-D1cEYi_x.css`
+- runtime publication: bundle `/assets/index-DrIBis1V.js`, CSS `/assets/index-BXlpAOKi.css`
 - `consoleErrors=[]`, `pageErrors=[]`
 - six key frames: `daylightColorGate` all true
-- `brightnessScore100` about `56.25-59.73`
-- saturation about `91.83-139.49`
-- steel-blue ratio about `0.676-0.793`
-- `cyanGreenSeaRatio` about `0.119-0.127`
-- low daylight ratio about `0.041-0.064`
-- dark ratio about `0.026-0.044`
+- `brightnessScore100` about `59.13-62.90`
+- saturation about `54.91-104.69`, with upper gate `<112`
+- steel-blue / blue-dominance ratio about `0.458-0.660`, with upper gate `<0.70`
+- `cyanGreenSeaRatio` about `0.163-0.181`
+- low daylight ratio about `0.041-0.065`
+- night-blue ratio about `0.006-0.009`
 - runtime transport layer `battle-of-britain-gis-transport-reference` and runtime relief/contour layers present
 - topo raster opacity remains `0.15`
 - dense combat stages keep `uniqueCameraTransforms=1`, `uniqueMapCenters=1`, `uniqueMapZooms=1`, `stageRectMaxDelta=0`, `terrainCanvasRectMaxDelta=0`, `cloudRectMaxDelta=0`
-- third-hour return playback keeps `uniqueCameraTransforms=1`, `uniqueMapCenters=1`, `uniqueMapZooms=1`, `terrainCanvasRectMaxDelta=0`, `cloudRectMaxDelta≈0.33px`
+- third-hour return playback keeps `uniqueCameraTransforms=1`, `uniqueMapCenters=1`, `uniqueMapZooms=1`, `terrainCanvasRectMaxDelta=0`, `cloudRectMaxDelta≈0.27px`
 
-2026-06-15 灰雾诊断证明：隐藏云朵几乎不改变底层地形纹理指标，`canvas filter removed` 或 `hue-rotate(4deg)` 的偏暖候选反而更容易把海面和陆地带回青绿/灰雾读感。2026-06-16 实质提升证明：只提高交通/等高线亮度会把最终截图饱和度压低，必须把透明 transport/reference 线网收敛为支撑层，同时用更高饱和/对比的伦敦专属 canvas filter 恢复钢蓝海面和暖陆地体感。正确修正不是删除云朵、恢复暖色罩或重新上 polygon 色块，而是在最终合成截图上小步调整，保持冷调钢蓝、高饱和/对比和白昼低亮分位门禁。当前 filter 为 `saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)`，天气 PNG 同步提高对比并压低亮度，让云朵更像局部灰白天气单位而不是全图雾。
+2026-06-15 灰雾诊断证明：隐藏云朵几乎不改变底层地形纹理指标，`canvas filter removed` 或 `hue-rotate(4deg)` 的偏暖候选反而更容易把海面和陆地带回青绿/灰雾读感。2026-06-16 过饱和回退证明：只提高交通/等高线亮度会把最终截图饱和度压低，但把 canvas filter 推到 `saturate(4.4) contrast(1.42)` 又会把画面推成刺眼青蓝。正确修正不是删除云朵、恢复暖色罩、重新上 polygon 色块或盲目加饱和，而是在最终合成截图上小步调整，并同时设下限和上限。当前 filter 为 `saturate(2.2) contrast(1.2) brightness(0.71) hue-rotate(18deg)`。
 
 门禁必须采最终 `map-stage` 截图，而不是 raw MapLibre canvas。最终画面包含 MapLibre、SVG overlay、标签、云朵、路线、飞机和 CSS filter，raw canvas 只能证明底图有纹理，不能证明产品观感合格。
 
@@ -600,6 +600,7 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 | 地图太亮、太浅 | 只追求不黑，topo/raster 亮度过高 | 白昼钢蓝目标带，最终截图色彩评分 | brightness/saturation/steel-blue/green ratios |
 | 地图像黑天 | 均值门禁漏掉低亮分位和深蓝大面积 | 增加 `luminanceP10`、`luminanceP25`、`lowDaylightRatio`、`nightBlueRatio` | daylightColorGate |
 | 地图像灰雾 | 最终合成的全局 canvas filter 与低分离度造成冷灰读感；云朵不一定是主因 | 用 layer-toggle 诊断云朵、canvas filter、偏暖候选和最终截图像素；小步提高饱和/对比并保持冷调钢蓝，不恢复全图雾罩 | `london-air-gray-fog-diagnosis-20260615`, `london-air-gray-fog-fix-20260615-v1`, cyanGreenSeaRatio, lowDaylightRatio |
+| 地图刺眼、荧光青绿或金属蓝过冲 | 门禁只有饱和度/钢蓝下限，把高饱和当优化 | 设饱和度和蓝色主导比例上限，回到自然白昼双边目标带 | saturationMean `<112`, blueRatio `<0.70`, `london-air-natural-palette-fix-20260616-v1` |
 | 海面发绿 | 底图默认 topo 颜色或 sepia/green bias | canvas filter 收敛为冷调钢蓝，降低 topo opacity | steel-blue ratio, green ratio |
 | 地名看不清 | 依赖第三方 topo 黑字或无 label plate | 项目自有 SVG label + halo + plate | label plate count and stroke width |
 | GIS 版太偏地形、缺少道路/交通 | 只接入 DEM/hillshade/contours，topo raster 又被压到纹理级 | 从 topo cache 抽取透明 transport-reference 线网，低透明叠加到 relief 之上 | transport PNG HEAD, manifest transport metrics, runtime transport layer present, screenshots |
@@ -671,4 +672,4 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 4. 视觉验收顺序是：先确认发布实例和资产真实，后看最终 `map-stage` 像素，再跑专项 Playwright。不要用 raw MapLibre canvas、DOM layer 存在、单张截图或子代理结论替代最终截图证据。
 5. 用户截图是最高优先级的负反馈来源。用户说“灰雾”“黑”“旧平面图”“云朵看不见”时，先做 layer-toggle / publication / final-pixel 诊断，再改最小参数；不要直接加全图罩、恢复 polygon 色块或改大面积结构。
 6. 第五层的可复用门禁应记录失败模式而不是只记录成功数值：旧 bundle、SPA asset fallback、共享 LaunchAgent 覆盖、国家填色压平地形、polygon color blocks、全图天气罩、云朵不可见、灰雾 filter、低亮分位漏检和连续帧抖动。
-7. 当前伦敦 accepted artifact 是 `artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`。整合会话应引用这个作为最新证据，同时保留 `london-air-gray-fog-fix-20260615-v1` 作为灰雾修正证据、`london-air-terrain-gis-runtime-20260615-final-v8` 作为 GIS/transport 线网接入阶段证据。
+7. 当前伦敦 accepted artifact 是 `artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`。整合会话应引用这个作为最新证据，同时保留 `london-air-visual-boost-20260616-v5` 作为过饱和失败样本、`london-air-gray-fog-fix-20260615-v1` 作为灰雾修正证据、`london-air-terrain-gis-runtime-20260615-final-v8` 作为 GIS/transport 线网接入阶段证据。

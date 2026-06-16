@@ -2058,7 +2058,9 @@ async function expectBattleOfBritainRenderedMapColorGrade(page: Page) {
   expect(percentile(0.1), "Battle of Britain daylight map should not have a night-like low-luminance tail").toBeGreaterThan(82);
   expect(percentile(0.25), "Battle of Britain daylight map should keep at least the lower quarter out of black/night territory").toBeGreaterThan(105);
   expect(saturationMean, "Battle of Britain rendered map should keep richer color after CSS compositing").toBeGreaterThan(42);
+  expect(saturationMean, "Battle of Britain rendered map should not become harsh neon/cyan from over-saturation").toBeLessThan(112);
   expect(metalBlueRatio, "Battle of Britain sea should read as daylight steel-blue, not pale green or flat gray").toBeGreaterThan(0.14);
+  expect(metalBlueRatio, "Battle of Britain sea should not turn into a dominant electric-blue layer that overwhelms terrain and routes").toBeLessThan(0.7);
   expect(greenDominantRatio, "Battle of Britain sea should not read as a green wash").toBeLessThan(0.24);
   expect(cyanGreenSeaRatio, "Battle of Britain sea should not drift into cyan/green map software coloring").toBeLessThan(0.2);
   expect(darkRatio, "Battle of Britain daylight map should not introduce black/night-looking regions").toBeLessThan(0.045);

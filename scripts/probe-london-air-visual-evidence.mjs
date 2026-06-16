@@ -188,6 +188,7 @@ function collectRenderedStageColorGrade(buffer) {
 function evaluateDaylightMapColorGate(colorGrade, cameraFocus = "") {
   const isLandCombatFocus = cameraFocus === "britainAirCombat";
   return {
+    blueDominance: colorGrade.blueRatio < 0.7,
     brightnessScore: colorGrade.brightnessScore100 > 56 && colorGrade.brightnessScore100 < 70,
     contrast: colorGrade.luminanceStdDev > 20,
     darkRatio: colorGrade.darkRatio < 0.045,
@@ -198,7 +199,7 @@ function evaluateDaylightMapColorGate(colorGrade, cameraFocus = "") {
     luminanceP10: colorGrade.luminanceP10 > 82,
     luminanceP25: colorGrade.luminanceP25 > 105,
     nightBlueRatio: colorGrade.nightBlueRatio < 0.16,
-    saturation: colorGrade.saturationMean > 42,
+    saturation: colorGrade.saturationMean > 42 && colorGrade.saturationMean < 112,
     steelBlue: isLandCombatFocus ? true : colorGrade.blueRatio > 0.14
   };
 }
