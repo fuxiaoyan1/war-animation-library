@@ -31,7 +31,21 @@ Current accepted runtime target:
 - camera mode: `svg-projection-registered-terrain`
 - visual contract: `maplibre-real-terrain-no-polygon-color-blocks`
 - terrain color model: `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`
-- latest evidence: `artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json`
+- latest visual evidence: `artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`
+- latest retired-basemap evidence: `artifacts/london-air-remove-legacy-basemap-20260616-v1/metrics.browser.json`
+
+## 新工具链的实质提升
+
+这一轮工具链变化的价值不在“多了几个脚本”，而在第五层从手工调参变成了可复跑的地图产品合同。相对旧链路，实质提升集中在六点：
+
+1. **资产包可发布**：topo raster、Terrarium DEM、runtime relief、runtime contours、transport reference、天气 PNG 和飞机 PNG 都作为 runtime assets 进入仓库。GitHub 或其他会话运行当前演示不依赖本机 ComfyUI/QGIS/GDAL，只在重新生产资产时才需要本机工具链。
+2. **GIS 派生能补回信息密度**：第五层不再只靠 DEM/hillshade 做“地形感”。从 committed topo cache 派生透明 transport-reference 后，道路、交通线、水系和高频线网回到画面里，同时 topo raster 仍保持 `0.15`，不会重新压住中文标签和战术层。
+3. **注册相机代替双系统漂移**：MapLibre underlay 消费 `terrainView`/`mapView`，SVG tactical overlay 继续承载航线、飞机、云朵和标签。注册误差、MapLibre center/zoom 和连续帧稳定进入证据，不再凭“看起来对齐”判断。
+4. **最终像素门禁代替 DOM 门禁**：验收采样最终 `map-stage`，同时覆盖亮度分位、饱和度、钢蓝海面、青绿海面、低亮比例、暗块、前景分离和连续帧。raw canvas、单个 DOM 节点或子代理截图结论都不能替代最终合成证据。
+5. **发布归属变成门禁**：统一用 `5177`，但通过 `--instance london-air-map`、独立 app-support 目录、`preview-publication-manifest.json`、bundle/CSS 指纹、tile HEAD 和缺失资产 `404` 来防止旧 worktree/旧 bundle 误导验收。
+6. **废弃资源从隐藏改为删除**：London 运行树不再保留旧 `map-base`、`map-texture`、`country-layer` 和 `country` path。旧资源没有生产价值时必须从运行 DOM 断开，否则 CSS 失效、旧 bundle 或发布错位都会把废弃平面图暴露给用户。
+
+所以，第五层现在的交付物不是“一个更像 3D 的背景”，而是“资产、相机、层级、颜色、发布和证据都可追溯的地图底板合同”。下个整合会话应复制这个合同形态，而不是复制伦敦的具体色彩数值。
 
 ## 与六层工艺的关系
 
@@ -294,26 +308,21 @@ MapLibre 是底板，SVG 是战术层。两者不能互相抢职责。
 5. local cloud units inside the same `.camera-layer`, above terrain and below routes/aircraft
 6. aircraft markers, route halos, dogfight effects and labels above the map
 
-关键 CSS 合同：
+关键层级合同：
 
-```css
-.battle-of-britain .battle-map.has-terrain-underlay .map-base,
-.battle-of-britain .battle-map.has-terrain-underlay .map-texture {
-  opacity: 0;
-}
+```text
+London runtime DOM:
+  .map-base = absent
+  .map-texture = absent
+  .country-layer = absent
+  .country = absent
 
-.battle-of-britain .battle-map.has-terrain-underlay .country {
-  fill: transparent;
-  stroke: rgba(202, 218, 204, 0.24);
-}
-
-.battle-of-britain .battle-of-britain-terrain-3d canvas {
-  filter: saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg);
-  mix-blend-mode: normal;
-}
+Battle of Britain terrain canvas:
+  filter = saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)
+  mix-blend-mode = normal
 ```
 
-国家层必须 boundary-only。旧失败模式表明，只要 SVG 国家层继续半透明铺色，真实 DEM/hillshade 会被压成平面色块。
+对通用动画，国家层仍可作为 shared renderer 的默认底图；对 London 这种已有 MapLibre real terrain underlay 的页面，旧 SVG 国家层必须从运行树删除。旧失败模式表明，只要 SVG 国家层继续半透明铺色，真实 DEM/hillshade 会被压成平面色块；进一步的用户截图又证明“CSS 隐藏旧层”仍会在发布错位或样式失效时暴露废弃平面图。
 
 ### 6. 禁止 polygon color blocks
 
@@ -542,6 +551,8 @@ curl -sI http://127.0.0.1:5177/assets/__missing_after_cleanup__.js
 `dist/index.html` 一致；transport reference 返回 `200 image/png`；缺失 `/assets/*`
 返回 `404 text/plain`。
 
+注意：各 worktree 保持代码隔离，但项目审片端口统一为 `5177`。不要再用 `5187` 或其他临时端口绕过冲突；端口冲突说明发布归属错了，应该修 manifest、LaunchAgent 和 app-support 目录，而不是另开端口。
+
 如果第五层影响 shared renderer、相机、地图交互、全局 CSS 或成熟门禁，还要跑：
 
 ```bash
@@ -558,9 +569,12 @@ FRONTEND_URL=http://127.0.0.1:5177 npm exec playwright -- test tests/battle-fran
 - runtime contours HEAD JSON / non-SPA；
 - runtime relief texture HEAD `image/png`；
 - runtime transport reference HEAD `image/png`；
+- preview-publication-manifest `instance=london-air-map` and `sourceRoot` equals London worktree；
+- served bundle/CSS fingerprint matches current London `dist`；
+- missing `/assets/*` returns `404 text/plain`；
 - runtime GIS manifest `purpose=runtime-fifth-layer-gis-final-derivatives`；
 - MapLibre canvas coverage `> 0.92`；
-- country fill transparent / none；
+- legacy SVG basemap nodes count `0` in London runtime；
 - banned MapLibre polygon layers absent；
 - registration sample count and max/mean error；
 - raw canvas texture `luminanceStdDev > 9`、`edgeMean > 5`；

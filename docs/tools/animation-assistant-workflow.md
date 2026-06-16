@@ -40,6 +40,8 @@ npm run animation:workflow -- \
 
 The capture tool opens the configured animation and reference animations, saves keyframe screenshots under `artifacts/`, and writes `metrics.dom.json` with runtime unit counts, marker footprint, route groups, asset hrefs, and facing data. The workflow review can then reopen phase 4, 5, or 6 if the browser evidence shows visual density, asset reuse, parade-like final groups, missing winner/remnant presence, or other product drift.
 
+For fifth-layer map work, runtime evidence must also prove the served preview is the intended worktree and asset package. The London/Battle of Britain failure mode was not only visual: `5177` was repeatedly serving an old shared deploy, and deprecated SVG basemap nodes were still present behind CSS. The fifth-layer evidence loop must therefore record `preview-publication-manifest.json`, bundle/CSS fingerprints, tile/media `HEAD` results, missing `/assets/*` returning `404`, final `map-stage` pixel gates, and zero deprecated fallback DOM for pages that have a real terrain underlay.
+
 ## Operating Rule
 
 When the user asks to make or repair an animation, the executor should call this workflow first unless the user explicitly says to edit the assistant/tooling itself. The workflow then tells the executor the current phase and work items. The executor completes that phase, reruns the workflow, and continues until the workflow says implementation can proceed. After implementation, the executor still runs browser visual evidence and mature series gates.
@@ -69,6 +71,8 @@ Those tools cover the six production phases:
 4. Unit assets, scale, and terrain placement.
 5. Tactical movement preflight.
 6. Visual evidence and first-draft gate.
+
+For cross-channel/cross-country air maps, use `docs/tools/london-air-map-weather-workflow.md` as the current fifth-layer case contract. The reusable lesson is the contract shape, not London's exact palette numbers: committed runtime assets, MapLibre underlay, transparent tactical overlay, registered camera, final-pixel color gates, layer-order evidence, canonical `5177` publication proof, and removal of obsolete fallback resources when they are no longer valid.
 
 ## ComfyUI And Other Asset Tools
 
