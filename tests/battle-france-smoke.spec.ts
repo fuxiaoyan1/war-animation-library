@@ -2257,6 +2257,11 @@ async function expectBattleOfBritainPlaybackNoMapJitterAround(page: Page, anchor
     return Math.max(deltaFor("height"), deltaFor("left"), deltaFor("top"), deltaFor("width"));
   };
   const routeSetChanges = new Set(samples.map((sample) => sample.routeSetSignature)).size;
+  const routeSignatureTimeline = samples
+    .map((sample) => sample.routeSetSignature)
+    .filter((signature) => signature.length > 0)
+    .filter((signature, index, signatures) => index === 0 || signature !== signatures[index - 1]);
+  const routeSignatureRevisits = routeSignatureTimeline.filter((signature, index) => routeSignatureTimeline.indexOf(signature) !== index);
   const cloudRectMaxDelta = (() => {
     const ids = [...new Set(samples.flatMap((sample) => sample.cloudRects.map((cloud) => cloud.id)))];
     return Math.max(
@@ -2281,7 +2286,8 @@ async function expectBattleOfBritainPlaybackNoMapJitterAround(page: Page, anchor
   expect(rectMaxDelta("canvasRect"), `${label} terrain canvas should stay locked while the timeline plays`).toBeLessThan(0.5);
   expect(cloudRectMaxDelta, `${label} progress-linked local cloud units should move smoothly with the camera, not shimmer as a weather layer`).toBeLessThan(1.2);
   expect(Math.max(...samples.map((sample) => sample.registrationMaxError)), `${label} terrain registration should stay locked while the timeline plays`).toBeLessThan(24);
-  expect(routeSetChanges, `${label} active route set should not churn while route geometry progresses`).toBeLessThanOrEqual(3);
+  expect(routeSetChanges, `${label} active route set may advance through route lifecycle windows but should not churn while geometry progresses`).toBeLessThanOrEqual(5);
+  expect(routeSignatureRevisits, `${label} active route set should not flicker back to an earlier signature`).toEqual([]);
 }
 
 async function expectBattleOfBritainForegroundReadable(page: Page) {
