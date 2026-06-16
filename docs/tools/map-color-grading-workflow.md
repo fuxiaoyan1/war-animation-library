@@ -44,13 +44,13 @@
 - 目标：白昼钢蓝、浓郁高对比、有 3D 地形质感，但不影响飞机图标和航线识别。
 - topo raster：仅作纹理参考，当前为 `data-topo-raster-opacity="0.15"`，`data-topo-labels-suppressed="true"`。
 - 分区配色：不要用覆盖战区的大多边形色块来“补地形分区”。伦敦空战已废弃 `typed-regional-palette-v2` 六层 MapLibre fill 方案；当前运行合同为 `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`，以真实 topo/DEM/hillshade、轻量 runtime relief/contours、透明 transport-reference 线网和最终截图调色为准。若需要地形角色差异，应通过底图素材、色彩评分、交通/水系骨架、标签/边界和局部战术图层表达，禁止重新引入大面积 polygon color blocks、全图雾罩、伪阴影块或三块高透明度大色面。
-- 最新浏览器证据：`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json`。GIS/transport 线网接入的上一阶段证据为 `artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json`，但它不再是当前最终色彩口径。
-- 六个关键帧明暗度评分约 `59.00-62.30`，用于白昼但不发白的钢蓝底图。
-- 饱和度均值约 `53.40-96.74`。
-- 青绿海面比例约 `0.1469-0.1571`。
-- 低亮区占比约 `0.0380-0.0597`，夜景蓝比例约 `0.0081-0.0116`。
-- `luminanceP10` 约 `131.66-145.01`，`luminanceP25` 约 `147.25-156.51`。
-- 灰雾感不能只靠“关云层”判断。`artifacts/london-air-gray-fog-diagnosis-20260615/` 的 layer-toggle 诊断显示，隐藏云朵并没有改变底层地形纹理指标；去掉 canvas filter 或改成偏暖 `hue-rotate(4deg)` 候选也不能解决海面/陆地读感。当前有效模式是保留局部云朵，使用伦敦专属 `saturate(2.12) contrast(1.2) brightness(0.7) hue-rotate(18deg)` 小步冷调，并用最终 `map-stage` 像素门禁确认。
+- 最新浏览器证据：`artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json`。`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是上一轮灰雾修正证据；`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网接入阶段证据，但它们不再是当前最终色彩口径。
+- 六个关键帧明暗度评分约 `56.25-59.73`，用于白昼但不发白的钢蓝底图。
+- 饱和度均值约 `91.83-139.49`。
+- 钢蓝比例约 `0.676-0.793`。
+- 青绿海面比例约 `0.119-0.127`。
+- 低亮区占比约 `0.041-0.064`，暗像素比例约 `0.026-0.044`。
+- 灰雾感不能只靠“关云层”判断。`artifacts/london-air-gray-fog-diagnosis-20260615/` 的 layer-toggle 诊断显示，隐藏云朵并没有改变底层地形纹理指标；去掉 canvas filter 或改成偏暖 `hue-rotate(4deg)` 候选也不能解决海面/陆地读感。2026-06-16 的视觉增强进一步说明：只把交通/等高线加亮会降低最终截图饱和度，正确做法是收敛透明线网权重，并用伦敦专属 `saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg)` 恢复钢蓝/暖陆地分离，再用最终 `map-stage` 像素门禁确认。
 - 云层作为天气作战单位渲染：开场/上午可见云团约 `5` 个，午后约 `4` 个，海峡追击约 `3` 个；总覆盖率约 `0.066-0.098`，单体最大覆盖率约 `0.034-0.037`，opacity 约 `0.34-0.42`。上一版 `2-3` 个淡云、总覆盖率约 `0.034-0.047` 已被用户截图判定为肉眼不可辨识，不再作为合格目标。
 - 道路/交通参考层：保持 topo raster opacity `0.15`，不要把旧 topo 整张盖回来；从 topo cache 抽取透明 linework 后，以 `battle-of-britain-gis-transport-reference` 叠加到 relief 之上、contours 之下。当前 v8 证据中 transport PNG 为 `200 image/png`，MapLibre style 已加载该 layer，密集段仍保持 `uniqueMapCenters=1`、`uniqueMapZooms=1`。
 - 云层运动应优先由播放进度驱动，不使用无限 CSS drift。密集战斗段如果出现闪屏，先检查 CSS animation、MapLibre camera 重同步、路线/效果层是否每帧无意义变化。

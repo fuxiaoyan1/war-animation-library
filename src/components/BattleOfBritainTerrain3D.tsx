@@ -147,7 +147,7 @@ const terrainStyle: StyleSpecification = {
         "raster-brightness-min": 0.02,
         "raster-contrast": 0.96,
         "raster-opacity": topoRasterOpacity,
-        "raster-saturation": 0.24
+        "raster-saturation": 0.3
       }
     },
     {
@@ -155,10 +155,10 @@ const terrainStyle: StyleSpecification = {
       type: "hillshade",
       source: "battle-of-britain-hillshade-dem",
       paint: {
-        "hillshade-accent-color": "#9b8a63",
+        "hillshade-accent-color": "#b49a63",
         "hillshade-exaggeration": hillshadeExaggeration,
-        "hillshade-highlight-color": "#d6b16e",
-        "hillshade-shadow-color": "#31566b"
+        "hillshade-highlight-color": "#ecd28a",
+        "hillshade-shadow-color": "#274b62"
       }
     },
     {
@@ -166,10 +166,10 @@ const terrainStyle: StyleSpecification = {
       type: "raster",
       source: "battle-of-britain-runtime-relief",
       paint: {
-        "raster-brightness-max": 0.72,
+        "raster-brightness-max": 0.74,
         "raster-brightness-min": 0,
-        "raster-contrast": 0.12,
-        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.07, 10.8, 0.12],
+        "raster-contrast": 0.24,
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.08, 10.8, 0.14],
         "raster-saturation": 0
       }
     },
@@ -180,9 +180,9 @@ const terrainStyle: StyleSpecification = {
       paint: {
         "raster-brightness-max": 0.86,
         "raster-brightness-min": 0,
-        "raster-contrast": 0.48,
-        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.24, 10.8, 0.48],
-        "raster-saturation": 0.1
+        "raster-contrast": 0.58,
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.24, 10.8, 0.44],
+        "raster-saturation": 0.26
       }
     },
     {
@@ -193,8 +193,8 @@ const terrainStyle: StyleSpecification = {
       paint: {
         "line-blur": 0.18,
         "line-color": "#9bbcc2",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.08, 10.8, 0.22],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.18, 10.8, 0.62]
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.1, 10.8, 0.28],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.2, 10.8, 0.72]
       }
     },
     {
@@ -207,20 +207,20 @@ const terrainStyle: StyleSpecification = {
         "line-color": [
           "case",
           [">=", ["get", "elev_m"], 150],
-          "#e0c978",
+          "#efd478",
           [">=", ["get", "elev_m"], 100],
-          "#d0c486",
-          "#bdc88d"
+          "#ddcb83",
+          "#cad28f"
         ],
         "line-opacity": [
           "case",
           [">=", ["get", "elev_m"], 150],
-          0.28,
+          0.38,
           [">=", ["get", "elev_m"], 100],
-          0.22,
-          0.16
+          0.3,
+          0.2
         ],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.2, 10.8, 0.68]
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.22, 10.8, 0.82]
       }
     },
     {
@@ -230,9 +230,9 @@ const terrainStyle: StyleSpecification = {
       filter: ["==", ["get", "elev_m"], 0],
       paint: {
         "line-blur": 0.08,
-        "line-color": "#dfe9ca",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.34, 10.8, 0.72],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.46, 10.8, 1.1]
+        "line-color": "#f2ebbd",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6.8, 0.46, 10.8, 0.86],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6.8, 0.58, 10.8, 1.35]
       }
     }
   ],

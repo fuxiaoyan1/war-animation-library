@@ -3030,15 +3030,15 @@ h1 {
 }
 
 .battle-of-britain .map-stage {
-  background: #476c7d;
+  background: #355f75;
 }
 
 .battle-of-britain.cinematic-mode .map-stage {
-  background: #4a7181;
+  background: #386479;
   box-shadow:
-    inset 0 0 0 1px rgba(241, 238, 206, 0.22),
-    inset 0 0 34px rgba(12, 35, 48, 0.08),
-    0 24px 74px rgba(0, 0, 0, 0.36);
+    inset 0 0 0 1px rgba(244, 233, 184, 0.24),
+    inset 0 0 46px rgba(5, 24, 38, 0.14),
+    0 24px 78px rgba(0, 0, 0, 0.38);
 }
 
 .battle-of-britain.cinematic-mode .battle-map {
@@ -3052,7 +3052,7 @@ h1 {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #3f687a;
+  background: #2f586f;
   filter: none;
   isolation: isolate;
   pointer-events: none;
@@ -3076,7 +3076,7 @@ h1 {
   height: 100%;
   position: relative;
   z-index: 1;
-  filter: saturate(2.12) contrast(1.2) brightness(0.7) hue-rotate(18deg);
+  filter: saturate(4.4) contrast(1.42) brightness(0.7) hue-rotate(18deg);
   mix-blend-mode: normal;
 }
 
@@ -3098,32 +3098,32 @@ h1 {
 .battle-of-britain .battle-map.has-terrain-underlay .country {
   fill: transparent;
   opacity: 1;
-  stroke: rgba(202, 218, 204, 0.24);
-  stroke-width: 0.72;
+  stroke: rgba(233, 221, 176, 0.32);
+  stroke-width: 0.82;
   vector-effect: non-scaling-stroke;
 }
 
 .battle-of-britain .battle-map.has-terrain-underlay .country-core {
   fill: transparent;
   opacity: 1;
-  stroke: rgba(221, 230, 208, 0.28);
-  stroke-width: 0.78;
+  stroke: rgba(249, 233, 180, 0.4);
+  stroke-width: 0.9;
 }
 
 .battle-of-britain .battle-map.has-terrain-underlay .country-context {
   fill: transparent;
   opacity: 1;
-  stroke: rgba(174, 192, 184, 0.13);
-  stroke-width: 0.55;
+  stroke: rgba(184, 203, 195, 0.14);
+  stroke-width: 0.58;
 }
 
 .battle-of-britain .battle-map.has-terrain-underlay .country-united-kingdom,
 .battle-of-britain .battle-map.has-terrain-underlay .country-france {
-  stroke: rgba(236, 232, 206, 0.34);
+  stroke: rgba(250, 235, 182, 0.46);
 }
 
 .battle-of-britain .battle-map.has-terrain-underlay .river {
-  opacity: 0.64;
+  opacity: 0.74;
 }
 
 .battle-of-britain .battle-of-britain-weather-overlay {
@@ -3163,10 +3163,10 @@ h1 {
 
 .battle-of-britain .cinematic-vignette {
   background:
-    linear-gradient(180deg, rgba(39, 76, 92, 0.08), transparent 20%, transparent 78%, rgba(45, 74, 77, 0.1)),
-    radial-gradient(circle at 50% 48%, transparent 64%, rgba(11, 38, 50, 0.08) 100%),
-    linear-gradient(120deg, rgba(255, 229, 151, 0.08), transparent 44%, rgba(154, 211, 230, 0.06));
-  box-shadow: inset 0 0 36px rgba(8, 31, 43, 0.08);
+    linear-gradient(180deg, rgba(35, 76, 94, 0.08), transparent 18%, transparent 80%, rgba(26, 61, 66, 0.12)),
+    radial-gradient(circle at 50% 48%, transparent 68%, rgba(7, 30, 43, 0.09) 100%),
+    linear-gradient(120deg, rgba(255, 226, 140, 0.1), transparent 44%, rgba(130, 211, 238, 0.08));
+  box-shadow: inset 0 0 42px rgba(7, 28, 40, 0.1);
 }
 
 .battle-of-britain .cinematic-map-effects circle:not(.cinematic-focus-glow) {
@@ -3248,22 +3248,22 @@ h1 {
 
 .battle-of-britain .tactical-terrain-shadow {
   fill: none;
-  stroke: rgba(10, 32, 36, 0.18);
-  stroke-width: 5.5;
+  stroke: rgba(1, 12, 17, 0.24);
+  stroke-width: 6.4;
   filter: none;
   opacity: 0.4;
 }
 
 .battle-of-britain .tactical-terrain-highlight {
   fill: none;
-  stroke: rgba(219, 244, 212, 0.5);
+  stroke: rgba(255, 236, 168, 0.62);
   stroke-dasharray: 12 10;
   stroke-width: 2.6;
 }
 
 .battle-of-britain .tactical-terrain-surface {
   fill: none;
-  stroke: rgba(126, 211, 190, 0.64);
+  stroke: rgba(134, 224, 207, 0.78);
   stroke-dasharray: 12 9;
   stroke-width: 2.2;
 }
@@ -3303,27 +3303,27 @@ h1 {
 }
 
 .battle-of-britain .fortified-line-shadow {
-  stroke: rgba(4, 14, 18, 0.14);
-  stroke-width: 5.2;
+  stroke: rgba(1, 9, 13, 0.2);
+  stroke-width: 6;
   filter: none;
 }
 
 .battle-of-britain .fortified-line-body {
-  stroke: rgba(255, 218, 118, 0.8);
+  stroke: rgba(255, 226, 124, 0.9);
   stroke-dasharray: 11 8;
-  stroke-width: 2.6;
+  stroke-width: 3;
 }
 
 .battle-of-britain .fortified-line-crest {
-  stroke: rgba(136, 215, 255, 0.76);
+  stroke: rgba(150, 227, 255, 0.84);
   stroke-dasharray: 5 8;
-  stroke-width: 1.8;
+  stroke-width: 2.1;
 }
 
 .battle-of-britain .wind-overlay.chain-home-vector-overlay path {
-  stroke: rgba(255, 226, 132, 0.22);
+  stroke: rgba(255, 226, 132, 0.34);
   stroke-dasharray: 4 12;
-  stroke-width: 1.1;
+  stroke-width: 1.25;
   filter: none;
 }
 
@@ -3351,25 +3351,25 @@ h1 {
 
 .battle-of-britain .ww2-aircraft-marker.is-active {
   filter:
-    drop-shadow(0 0 7px rgba(255, 235, 157, 0.5))
-    drop-shadow(0 4px 7px rgba(0, 0, 0, 0.5));
+    drop-shadow(0 0 9px rgba(255, 238, 156, 0.68))
+    drop-shadow(0 5px 8px rgba(0, 0, 0, 0.58));
 }
 
 .battle-of-britain .line-label,
 .battle-of-britain .active-event-label {
   fill: rgba(255, 248, 219, 0.99);
-  font-size: 13px;
+  font-size: 14px;
   stroke: rgba(1, 7, 10, 0.98);
-  stroke-width: 5.4px;
+  stroke-width: 6px;
 }
 
 .battle-of-britain .front-line .front-route {
-  stroke-width: 2.9px;
+  stroke-width: 3.35px;
 }
 
 .battle-of-britain .front-line .front-halo {
-  stroke-width: 8.5px;
-  stroke-opacity: 0.28;
+  stroke-width: 10.5px;
+  stroke-opacity: 0.34;
 }
 
 .battle-of-britain .map-point circle {
@@ -3380,30 +3380,30 @@ h1 {
 
 .battle-of-britain .map-point-label-plate {
   display: block;
-  fill: rgba(8, 19, 22, 0.48);
-  stroke: rgba(255, 242, 194, 0.22);
-  stroke-width: 0.7;
+  fill: rgba(5, 16, 20, 0.62);
+  stroke: rgba(255, 238, 178, 0.38);
+  stroke-width: 0.9;
   vector-effect: non-scaling-stroke;
 }
 
 .battle-of-britain .map-point text {
   fill: rgba(255, 249, 224, 1);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
   stroke: rgba(1, 6, 9, 0.99);
-  stroke-width: 6.8px;
+  stroke-width: 7.4px;
 }
 
 .battle-of-britain .region-labels text {
-  fill: rgba(238, 228, 190, 0.32);
+  fill: rgba(244, 231, 188, 0.42);
   font-size: 30px;
   font-weight: 900;
   letter-spacing: 0;
   paint-order: stroke;
-  stroke: rgba(2, 8, 12, 0.22);
-  stroke-width: 4px;
+  stroke: rgba(2, 8, 12, 0.32);
+  stroke-width: 4.8px;
 }
 
 .ship-marker.is-active,
