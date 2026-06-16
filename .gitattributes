@@ -1,0 +1,2 @@
+*.onnx binary -whitespace
+public/prototypes/web3d-terrain-prototype/vendor/** -whitespace

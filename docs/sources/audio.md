@@ -131,6 +131,30 @@
 - 使用位置：`中途岛海空战`。
 - 复用位置：`俾斯麦海海空战`。该复用是临时方案；后续公开发布前应替换为独立配乐以重新满足系列配乐不重复规则。
 
+### Mercury, the Winged Messenger
+
+- 文件：`public/audio/wikimedia-holst-mercury.ogg`
+- 曲目：`Mercury, the Winged Messenger`，选自 Holst《The Planets》。
+- 作曲：Gustav Holst。
+- 演奏/来源标注：United States Air Force Heritage of America Band；Wikimedia Commons 音频文件。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Holst_The_Planets_Mercury.ogg>
+- OGG：<https://upload.wikimedia.org/wikipedia/commons/8/89/Holst_The_Planets_Mercury.ogg>
+- 版权状态：Wikimedia Commons 文件页标注为美国政府作品/公有领域标注；当前项目在美国本机环境中作为历史动画演示使用。
+- 本地校验：文件大小约 `10.45 MB`，Ogg Vorbis，Stereo，44100Hz，`file` 识别约 `499821 bps`；SHA256 `d5b154e804f01599ab41db862f72527814b37292ef3635c9b86d52a32acb9c8d`。
+- 历史使用：`伦敦上空的鹰` 曾使用该曲替换 `Rule, Britannia!`，用于提高空战动画的机动、紧张和航空主题听感；2026-06-15 已继续替换为 `Ride of the Valkyries`，避免当前伦敦版本继续使用用户反馈不合适的配乐。
+
+### Ride of the Valkyries
+
+- 文件：`public/audio/wikimedia-wagner-ride-valkyries.ogg`
+- 曲目：`Ride of the Valkyries`，选自 Richard Wagner 歌剧 `Die Walkuere` 第三幕前奏。
+- 作曲：Richard Wagner。
+- 演奏/来源标注：Wikimedia Commons 音频文件；音频元数据记录 `Ulm Philharmonic, Conductor: James Allen Gähres`，上传用户为 `Sphinxdutroene`。
+- 文件页：<https://commons.wikimedia.org/wiki/File:Richard_Wagner_-_The_Valkyrie_-_Ride_of_the_Valkyries.ogg>
+- OGG：<https://commons.wikimedia.org/wiki/Special:Redirect/file/Richard_Wagner_-_The_Valkyrie_-_Ride_of_the_Valkyries.ogg>
+- 许可状态：Wikimedia Commons 文件页标注为 `EFF: Open Audio License version 1`。该许可允许复制、再发布、演奏或修改该音乐，但不得修改原作者署名或许可条款。当前项目保留音频文件元数据和本来源记录。
+- 本地校验：文件大小 `9,862,857 bytes`，Ogg Vorbis，Stereo，44100Hz，`afinfo` 估算时长 `338.886531s`，约 `231kbps`；SHA256 `f20cf2597e5eea8209ca5a17c270dd5a3411bf9b864743953c047db1fb9cb7ac`。
+- 使用位置：`伦敦上空的鹰`。该曲替换 `Mercury, the Winged Messenger`，作为更强烈、推进感更明确的二战空战背景配乐；伦敦专项 Playwright 检查 `score-toggle` 的 `data-music-source` 指向本文件。
+
 ### Rule, Britannia!
 
 - 文件：`public/audio/wikimedia-rule-britannia.ogg`
@@ -140,7 +164,7 @@
 - 文件页：<https://commons.wikimedia.org/wiki/File:Rule,_Britannia.ogg>
 - 版权状态：Wikimedia Commons 文件页标注为公有领域；当前项目在美国本机环境中作为历史动画演示使用。
 - 本地校验：文件大小约 `3.9 MB`，Ogg Vorbis，Monaural，44100Hz，`afinfo` 估算时长约 `247.137s`。
-- 使用位置：`特拉法尔加大海战`、`伦敦上空的鹰`。伦敦临时改用该曲，是为了先解决用户反馈的德法战役配乐错配；后续仍应为伦敦补一首独立且更偏航空战气质的英国主题配乐，再移除 `britain-air` 的配乐唯一性豁免。
+- 使用位置：`特拉法尔加大海战`。
 
 ### Anchors Aweigh
 
@@ -226,6 +250,17 @@
 - 许可状态：FiftySounds 页面标注可用于商业和非商业项目，但 `ATTRIBUTION IS REQUIRED`。页面要求署名信息为 `Track: Only the Braves` 和 `Music by https://www.fiftysounds.com`。
 - 本地校验：文件大小 `5,851,496 bytes`，MP3，Stereo，44100Hz，320kbps，`afinfo` 估算时长约 `146.260s`。
 - 使用位置：`罗马与迦太基：三次布匿战争史`。
+
+### Carnyx
+
+- 文件：`public/audio/wikimedia-carnyx.ogg`
+- 曲目：`Carnyx.ogg`
+- 来源页：<https://commons.wikimedia.org/wiki/File:Carnyx.ogg>
+- 直接 OGG：<https://upload.wikimedia.org/wikipedia/commons/e/e6/Carnyx.ogg>
+- 许可状态：Wikimedia Commons 文件页记录许可信息；本轮作为古代战场号角氛围层和坎尼动画独立音频占位使用。
+- 本地校验：文件大小约 `233,289 bytes`，Ogg/Vorbis，Stereo，44100Hz，约 128kbps。
+- 使用位置：`坎尼会战：双重围歼`。
+- 质量说明：该文件时长和体量不足以作为最终电影化背景配乐，只能作为当前本地演示的时代声层。正式发布前应替换为独立、高质量、时长足够的坎尼专属背景配乐。
 
 ## 配乐分配原则
 

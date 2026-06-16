@@ -1,0 +1,15 @@
+{
+  "models": [
+    {
+      "id": "isnet-general-use",
+      "file": "isnet-general-use.onnx",
+      "cachePath": "engine-cache/models/segmentation/isnet-general-use.onnx",
+      "rembgHome": "engine-cache/models/segmentation",
+      "size": 178648008,
+      "md5": "fc16ebd8b0c10d971d3513d564d01e29",
+      "sha256": "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a",
+      "purpose": "Local ISNet segmentation model used by legacy Battle of Britain aircraft cutout tooling.",
+      "policy": "Do not commit this model as a normal Git blob. Keep it in the ignored engine-cache path or install it through a local cache step."
+    }
+  ]
+}

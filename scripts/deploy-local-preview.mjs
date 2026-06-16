@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import { homedir, userInfo } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -8,13 +8,7 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(scriptDir, "..");
 const home = homedir();
-const label = "com.asukarei.war-animation-lab-5177";
 const launchAgentsDir = resolve(home, "Library/LaunchAgents");
-const deployRoot = resolve(home, "Library/Application Support/war-animation-lab-oss");
-const deployDist = resolve(deployRoot, "dist");
-const deployServer = resolve(deployRoot, "serve-dist.mjs");
-const logDir = resolve(home, "Library/Logs/war-animation-lab");
-const plistPath = resolve(launchAgentsDir, `${label}.plist`);
 const sourceDist = resolve(root, "dist");
 const sourceServer = resolve(root, "scripts/serve-dist.mjs");
 const preferredNodeBins = [
@@ -29,6 +23,18 @@ const npmBin = existsSync(resolve(dirname(nodeBin), "npm")) ? resolve(dirname(no
 const args = new Set(process.argv.slice(2));
 const host = readArg("--host") ?? "127.0.0.1";
 const port = Number(readArg("--port") ?? 5177);
+const instance = normalizeInstance(readArg("--instance") ?? process.env.WAR_ANIMATION_PREVIEW_INSTANCE ?? "");
+const label = instance ? `com.asukarei.war-animation-lab-${instance}-${port}` : `com.asukarei.war-animation-lab-${port}`;
+const defaultLabelForPort = `com.asukarei.war-animation-lab-${port}`;
+const deployRootName = instance ? `war-animation-lab-oss-${instance}` : "war-animation-lab-oss";
+const deployRoot = resolve(home, "Library/Application Support", deployRootName);
+const deployDist = resolve(deployRoot, "dist");
+const deployDistPrevious = resolve(deployRoot, "dist.previous");
+const deployDistStaging = resolve(deployRoot, "dist.staging");
+const deployServer = resolve(deployRoot, "serve-dist.mjs");
+const logDir = resolve(home, "Library/Logs/war-animation-lab");
+const logPrefix = instance ? `war-animation-lab-${instance}-${port}` : `war-animation-lab-${port}`;
+const plistPath = resolve(launchAgentsDir, `${label}.plist`);
 const shouldBuild = !args.has("--skip-build");
 const shouldStart = !args.has("--no-start");
 
@@ -46,6 +52,18 @@ function readArg(name) {
   return undefined;
 }
 
+function normalizeInstance(value) {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!normalized || normalized === "default" || normalized === "shared") {
+    return "";
+  }
+  return normalized;
+}
+
 function run(command, commandArgs, options = {}) {
   const result = spawnSync(command, commandArgs, {
     cwd: options.cwd ?? root,
@@ -58,6 +76,15 @@ function run(command, commandArgs, options = {}) {
   return result;
 }
 
+function readCommand(command, commandArgs) {
+  const result = spawnSync(command, commandArgs, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  return result.status === 0 ? result.stdout.trim() : "";
+}
+
 function xmlEscape(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -68,8 +95,8 @@ function xmlEscape(value) {
 }
 
 function plist() {
-  const stdoutPath = resolve(logDir, "war-animation-lab-5177.out.log");
-  const stderrPath = resolve(logDir, "war-animation-lab-5177.err.log");
+  const stdoutPath = resolve(logDir, `${logPrefix}.out.log`);
+  const stderrPath = resolve(logDir, `${logPrefix}.err.log`);
   const pathValue = [
     dirname(process.execPath),
     dirname(nodeBin),
@@ -118,14 +145,45 @@ function plist() {
 `;
 }
 
+function buildPublicationManifest() {
+  const indexHtmlPath = resolve(deployDist, "index.html");
+  const indexHtml = existsSync(indexHtmlPath) ? readFileSync(indexHtmlPath, "utf8") : "";
+  const assetRefs = [...indexHtml.matchAll(/(?:src|href)="([^"]*\/assets\/index-[^"]+\.(?:js|css))"/g)].map((match) => match[1]);
+  const gitStatus = readCommand("git", ["status", "--short"]);
+  return {
+    schemaVersion: 1,
+    project: "war-animation-lab-oss",
+    instance: instance || "default",
+    sourceRoot: root,
+    branch: readCommand("git", ["branch", "--show-current"]),
+    commit: readCommand("git", ["rev-parse", "HEAD"]),
+    dirty: gitStatus.length > 0,
+    assetRefs,
+    host,
+    port,
+    label,
+    deployRoot,
+    publishedAt: new Date().toISOString()
+  };
+}
+
 function copyDeployFiles() {
   if (!existsSync(resolve(sourceDist, "index.html"))) {
     throw new Error("dist/index.html is missing; run npm run build first or omit --skip-build.");
   }
   mkdirSync(deployRoot, { recursive: true });
-  rmSync(deployDist, { recursive: true, force: true });
-  cpSync(sourceDist, deployDist, { recursive: true });
+  rmSync(deployDistStaging, { recursive: true, force: true });
+  rmSync(deployDistPrevious, { recursive: true, force: true });
+  cpSync(sourceDist, deployDistStaging, { recursive: true });
+  if (existsSync(deployDist)) {
+    renameSync(deployDist, deployDistPrevious);
+  }
+  renameSync(deployDistStaging, deployDist);
+  rmSync(deployDistPrevious, { recursive: true, force: true });
   cpSync(sourceServer, deployServer);
+  const publicationManifest = JSON.stringify(buildPublicationManifest(), null, 2);
+  writeFileSync(resolve(deployDist, "preview-publication-manifest.json"), `${publicationManifest}\n`, "utf8");
+  writeFileSync(resolve(deployRoot, "preview-publication-manifest.json"), `${publicationManifest}\n`, "utf8");
 }
 
 function launchctl(commandArgs, allowFailure = false) {
@@ -142,18 +200,18 @@ function sleep(ms) {
   });
 }
 
-function servicePath(domain) {
-  return `${domain}/${label}`;
+function servicePath(domain, serviceLabel = label) {
+  return `${domain}/${serviceLabel}`;
 }
 
-function isServiceLoaded(domain) {
-  return launchctl(["print", servicePath(domain)], true).status === 0;
+function isServiceLoaded(domain, serviceLabel = label) {
+  return launchctl(["print", servicePath(domain, serviceLabel)], true).status === 0;
 }
 
-async function waitForServiceUnloaded(domain, timeoutMs = 5000) {
+async function waitForServiceUnloaded(domain, serviceLabel = label, timeoutMs = 5000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
-    if (!isServiceLoaded(domain)) {
+    if (!isServiceLoaded(domain, serviceLabel)) {
       return true;
     }
     await sleep(250);
@@ -161,9 +219,21 @@ async function waitForServiceUnloaded(domain, timeoutMs = 5000) {
   return false;
 }
 
+async function stopConflictingServices(domain) {
+  if (!instance || defaultLabelForPort === label) {
+    return;
+  }
+
+  if (isServiceLoaded(domain, defaultLabelForPort)) {
+    launchctl(["bootout", servicePath(domain, defaultLabelForPort)], true);
+    await waitForServiceUnloaded(domain, defaultLabelForPort);
+  }
+}
+
 async function restartService(domain) {
+  await stopConflictingServices(domain);
   launchctl(["bootout", servicePath(domain)], true);
-  await waitForServiceUnloaded(domain);
+  await waitForServiceUnloaded(domain, label);
   const bootstrap = launchctl(["bootstrap", domain, plistPath], true);
   if (bootstrap.status === 0) {
     return;
@@ -224,5 +294,6 @@ if (shouldStart) {
 }
 
 console.log(`Local preview deployed at http://${host}:${port}/`);
+console.log(`Instance: ${instance || "default"}`);
 console.log(`LaunchAgent: ${plistPath}`);
 console.log(`Published dist: ${deployDist}`);

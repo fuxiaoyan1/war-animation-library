@@ -1,0 +1,68 @@
+# 地图配色体系与明暗评分工艺
+
+本文件记录可整合进统一动画六层生产线的通用地图配色工艺。它不是伦敦空战专属方案；伦敦上空的鹰只是本轮验证样例。
+
+## 目标
+
+- 地图层先有明确配色体系，再进入亮度、饱和度和对比度微调。
+- 不同地形类型有基础色角色，合成后仍服务于作战单位、航线、标签和镜头叙事。
+- 验收时输出 0-100 明暗度评分，便于后续按目标数值调参，例如“整体降 5 分”或“提高到 58 分附近”。
+
+## 基本流程
+
+1. 建立地形色彩角色：
+   - 海面：低绿偏的钢蓝或深蓝灰，避免地图软件常见青绿海。
+   - 平原/陆地：暖绿、橄榄、土黄或灰褐，按时代和地理确定基础色。
+   - 高地/山地：比平原更高对比，不能抢过作战单位。
+   - 城市/战术目标：只用点、线、标签和轻量 halo 表达，不用大面积黑块。
+   - 天气/云层：作为独立视觉层定义透明度、冷暖和运动速度，不能当成不规则阴影块。
+
+2. 设计整体调色关系：
+   - 先确定地图主调、辅调和前景作战单位色，而不是逐项随手改亮暗。
+   - 地图层应低于作战单位和航线的视觉优先级。
+   - 如果使用第三方/topo raster，必须明确其用途是纹理参考还是标注主层；若项目已有自有中文标签，第三方底图文字应降低到不可主导。
+
+3. 建立可量化门禁：
+   - `brightnessScore100 = luminanceMean / 255 * 100`。
+   - 日间战斗通常先设目标带，例如 `48-61`；夜战、沙漠、雪地、海战应按片种另设目标带。
+   - 同时检查亮度标准差、饱和度、主色比例、绿海/黑块比例、低亮分位、夜景蓝比例、前景作战单位可读性和标签 halo。
+   - 饱和度和主色比例必须有上限。伦敦的 `visual-boost-v5` 证明，只设“不要灰、不要黑、要钢蓝”的下限，会把刺眼的高饱和青蓝误判为优化。
+   - 分数不能替代人工视觉检查；它是高效调参语言。
+   - 仅看均值会漏掉“大面积暗蓝但不纯黑”的夜景化问题。白昼战斗至少要看 `luminanceP10`、`luminanceP25`、`lowDaylightRatio` 和 `nightBlueRatio`。
+
+4. 浏览器取证：
+   - 必须采最终 `map-stage` 渲染截图，而不是只看 raw canvas、DOM 属性或构建成功。
+   - 至少覆盖开场、中段高密度战斗、后段收束。
+   - 密集战斗段要连续帧检查地图舞台、地形 canvas、相机 transform、MapLibre center/zoom 和关键路线是否稳定。
+
+5. 天气/云层单位化：
+   - 云朵如果来自 ComfyUI 或其他位图资产，应按“天气作战单位”放入战术层，而不是覆盖全图的天气罩。
+   - 云团需要有尺寸、位置、可见窗口、透明度和覆盖率上限；它可以提示天气和增加动感，但不能参与全图调色。
+   - 地图配色门禁和云层门禁分开：地图采最终 `map-stage` 渲染色彩；云层检查实例数量、单体覆盖率、总覆盖率、层级和 opacity。
+
+## 伦敦空战本轮参考值
+
+- 目标：自然白昼钢蓝、有 3D 地形质感、航线和标签清楚，但不能刺眼、不能荧光青绿、不能让蓝色底图压过战术层。
+- topo raster：仅作纹理参考，当前为 `data-topo-raster-opacity="0.15"`，`data-topo-labels-suppressed="true"`。
+- 分区配色：不要用覆盖战区的大多边形色块来“补地形分区”。伦敦空战已废弃 `typed-regional-palette-v2` 六层 MapLibre fill 方案；当前运行合同为 `real-terrain-texture-runtime-relief-contours-transport-no-polygon-blocks`，以真实 topo/DEM/hillshade、轻量 runtime relief/contours、透明 transport-reference 线网和最终截图调色为准。若需要地形角色差异，应通过底图素材、色彩评分、交通/水系骨架、标签/边界和局部战术图层表达，禁止重新引入大面积 polygon color blocks、全图雾罩、伪阴影块或三块高透明度大色面。
+- 最新浏览器证据：`artifacts/london-air-natural-palette-fix-20260616-v1/metrics.browser.json`。`artifacts/london-air-visual-boost-20260616-v5/metrics.browser.json` 是用户截图否决的过饱和失败样本；`artifacts/london-air-gray-fog-fix-20260615-v1/metrics.browser.json` 是灰雾修正证据；`artifacts/london-air-terrain-gis-runtime-20260615-final-v8/metrics.browser.json` 是 GIS/transport 线网接入阶段证据。
+- 当前 canvas filter 为 `saturate(2.2) contrast(1.2) brightness(0.71) hue-rotate(18deg)`。
+- 六个关键帧明暗度评分约 `59.13-62.90`，用于自然白昼但不发白的钢蓝底图。
+- 饱和度均值约 `54.91-104.69`；上限门禁为 `<112`，避免再次出现 `visual-boost-v5` 的 `139.69` 刺眼过冲。
+- 钢蓝/蓝色主导比例约 `0.458-0.660`；上限门禁为 `<0.70`，避免蓝色底图压过地形、航线和标签。
+- 青绿海面比例约 `0.163-0.181`。
+- 低亮区占比约 `0.041-0.065`，夜景蓝比例约 `0.006-0.009`。
+- 灰雾感不能只靠“关云层”判断。`artifacts/london-air-gray-fog-diagnosis-20260615/` 的 layer-toggle 诊断显示，隐藏云朵并没有改变底层地形纹理指标；去掉 canvas filter 或改成偏暖 `hue-rotate(4deg)` 候选也不能解决海面/陆地读感。2026-06-16 的过饱和回退进一步说明：只看“更高饱和、更高钢蓝比例”会制造刺眼画面。正确做法是在最终合成截图上设双边目标带，小步调整，既防灰雾/黑图，也防高饱和青蓝过冲。
+- 云层作为天气作战单位渲染：开场/上午可见云团约 `5` 个，午后约 `4` 个，海峡追击约 `3` 个；总覆盖率约 `0.066-0.098`，单体最大覆盖率约 `0.034-0.037`，opacity 约 `0.34-0.42`。上一版 `2-3` 个淡云、总覆盖率约 `0.034-0.047` 已被用户截图判定为肉眼不可辨识，不再作为合格目标。
+- 道路/交通参考层：保持 topo raster opacity `0.15`，不要把旧 topo 整张盖回来；从 topo cache 抽取透明 linework 后，以 `battle-of-britain-gis-transport-reference` 叠加到 relief 之上、contours 之下。当前 v8 证据中 transport PNG 为 `200 image/png`，MapLibre style 已加载该 layer，密集段仍保持 `uniqueMapCenters=1`、`uniqueMapZooms=1`。
+- 云层运动应优先由播放进度驱动，不使用无限 CSS drift。密集战斗段如果出现闪屏，先检查 CSS animation、MapLibre camera 重同步、路线/效果层是否每帧无意义变化。
+- 对跨海峡空战这类多视角动画，颜色门禁要按镜头类型解释：雷达/返航/海峡视角检查钢蓝水面；陆地主战区不应强行要求高海面占比，应改看暖土/地形分区饱和度、低绿雾比例和前景单位可读性。
+- 上午、下午密集段连续帧：`uniqueCameraTransforms=1`、`uniqueMapCenters=1`、`uniqueMapZooms=1`、`stageRectMaxDelta=0`、`terrainCanvasRectMaxDelta=0`、`cloudRectMaxDelta=0`。第三小时回程播放段云朵 rect 最大变化约 `0.78px`，仍低于 `1.2px` 抖动门禁。
+
+## 生产线整合建议
+
+- 在地图层设计阶段新增“配色表”：地形类型、基础色、允许亮度带、饱和度带、前景分离策略。
+- 在视觉证据脚本中统一输出 `brightnessScore100`，并把用户反馈目标转成数值调整。
+- 所有“提升色彩”的任务必须先建立上限：饱和度、蓝色主导比例、青绿海面比例都不能只设下限。
+- 在 Playwright 中对每部成熟动画建立片种目标带，避免一套阈值同时误判白昼空战、夜战、沙漠战和古代纸本风格。
+- 自动门禁只覆盖高风险退化；最终仍要人工查看 artifacts 截图，不在会话中嵌入图片。

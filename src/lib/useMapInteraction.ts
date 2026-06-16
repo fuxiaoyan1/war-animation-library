@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 
 export type MapView = {
   scale: number;
@@ -63,7 +63,7 @@ export function useMapInteraction(
     [height, maxScale, minScale, width]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     dragRef.current = null;
     setIsMapDragging(false);
     setMapView(clampView(initialMapView));

@@ -1,6 +1,6 @@
 import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { BattleEvent, FrontLine, MapPoint } from "../data/battleOfFrance";
 import { UnitIcon, type HorizontalFacing } from "./UnitIcon";
 import type { UnitIconKind } from "../types/units";
@@ -14,7 +14,7 @@ import {
 import { createCampaignTimeline } from "../lib/campaignTimeline";
 import { publicPath } from "../lib/publicPath";
 import { formatChineseDate, interpolatePoint } from "../lib/timeline";
-import { useMapInteraction } from "../lib/useMapInteraction";
+import { useMapInteraction, type MapView } from "../lib/useMapInteraction";
 import { WarScore, type BattleCueKind } from "../lib/warScore";
 
 type FocusStep = {
@@ -22,7 +22,7 @@ type FocusStep = {
   focus: string;
 };
 
-type FocusTransitionState = {
+export type FocusTransitionState = {
   fromFocus: string;
   focus: string;
   isTransitioning: boolean;
@@ -77,6 +77,26 @@ export type MapOverlayElement =
       visibleUntil?: string;
       from: [number, number];
       to: [number, number];
+    }
+  | {
+      className?: string;
+      height: number;
+      href: string;
+      id: string;
+      label?: string;
+      opacity?: number;
+      revealAt?: string;
+      drift?: {
+        dx: number;
+        dy: number;
+        phaseOffset?: number;
+        scale?: number;
+      };
+      testId?: string;
+      type: "image";
+      visibleUntil?: string;
+      width: number;
+      coordinates: [number, number];
     }
   | {
       className?: string;
@@ -156,8 +176,10 @@ type CampaignMapAnimationProps = {
   eyebrow: string;
   frontLines: FrontLine[];
   focusSteps: FocusStep[];
+  showAncientMapOrnaments?: boolean;
   smoothSceneContentTransitions?: boolean;
   sceneContentTransitionProgress?: number;
+  suppressBaseMapLayer?: boolean;
   focusTransitionProgress?: number;
   fortifiedLines?: GeoLine[];
   gapScale?: number;
@@ -177,6 +199,25 @@ type CampaignMapAnimationProps = {
   };
   mapPoints: MapPoint[];
   mapOverlays?: MapOverlayElement[];
+  mapTerrainLayer?: (state: {
+    activeEvent: BattleEvent;
+    focusState: FocusTransitionState;
+    mapBaseView: MapView;
+    mapFocus: string;
+    mapHeight: number;
+    mapView: MapView;
+    mapWidth: number;
+    progress: number;
+    registrationSamples: Array<{
+      coordinates: [number, number];
+      id: string;
+      projected: [number, number];
+    }>;
+    terrainView: {
+      center: [number, number];
+      projectionScale: number;
+    };
+  }) => ReactNode;
   maxGapDays?: number;
   musicSource?: string;
   cinematicMode?: boolean;
@@ -201,6 +242,7 @@ type CampaignMapAnimationProps = {
     rx: number;
     ry: number;
   }>;
+  testAnchors?: Record<string, number>;
   testId: string;
   timeCounterLabel?: "天" | "小时" | "周";
   timeStepDays?: number;
@@ -485,6 +527,10 @@ function routeDirectionVector(from: [number, number], to: [number, number], fall
   return { x: 1, y: 0 };
 }
 
+function routeDirectionDegrees(direction: { x: number; y: number }) {
+  return Number((Math.atan2(direction.y, direction.x) * 180 / Math.PI).toFixed(2));
+}
+
 function routeLocalOffset(
   point: [number, number],
   direction: { x: number; y: number },
@@ -523,6 +569,7 @@ function formationUnitPlacement(
     direction,
     facingX: routeFacingX(directionAnchor, pointOnRoute, fallbackPoint),
     point: markerPoint,
+    rotationDegrees: routeDirectionDegrees(direction),
     routeProgress: unitProgress
   };
 }
@@ -890,8 +937,10 @@ export function CampaignMapAnimation({
   eyebrow,
   frontLines,
   focusSteps,
+  showAncientMapOrnaments = true,
   smoothSceneContentTransitions = false,
   sceneContentTransitionProgress,
+  suppressBaseMapLayer = false,
   focusTransitionProgress = 0,
   fortifiedLines = [],
   gapScale,
@@ -904,6 +953,7 @@ export function CampaignMapAnimation({
   mapDimensions,
   mapPoints,
   mapOverlays = [],
+  mapTerrainLayer,
   maxGapDays,
   musicSource,
   narrationCues = [],
@@ -920,6 +970,7 @@ export function CampaignMapAnimation({
   tacticalMapReference,
   tacticalTerrainFeatures = [],
   terrainZones = [],
+  testAnchors = {},
   testId,
   timeCounterLabel = "周",
   timeStepDays = 7,
@@ -994,14 +1045,19 @@ export function CampaignMapAnimation({
     isMapDragging,
     mapInteractionProps,
     mapTransform,
+    mapView,
     resetMapView,
     stageRef,
     svgRef,
     zoomIn,
     zoomOut
   } = useMapInteraction(mapWidth, mapHeight, mapFocus);
-  const projection = useMemo(() => createFocusProjection(mapWidth, mapHeight, focusState), [focusState]);
-  const targetFocusProjection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus]);
+  const mapBaseView = useMemo(() => ({ scale: 1, x: 0, y: 0 }), []);
+  const projection = useMemo(
+    () => createFocusProjection(mapWidth, mapHeight, focusState),
+    [focusState.focus, focusState.fromFocus, focusState.ratio, mapHeight, mapWidth]
+  );
+  const targetFocusProjection = useMemo(() => createCampaignProjection(mapWidth, mapHeight, mapFocus), [mapFocus, mapHeight, mapWidth]);
   const formationOffsetScale = useMemo(() => {
     const targetScale = targetFocusProjection.scale();
     const currentScale = projection.scale();
@@ -1012,6 +1068,15 @@ export function CampaignMapAnimation({
     return Math.min(1.35, Math.max(0.35, currentScale / targetScale));
   }, [projection, targetFocusProjection]);
   const countryPath = useMemo(() => countryPathFactory(projection), [projection]);
+  const projectedCountries = useMemo(
+    () =>
+      countries.map((country, index) => ({
+        className: countryClassName(country),
+        d: countryPath(country) ?? undefined,
+        key: country.properties?.name ?? `country-${index}`
+      })),
+    [countries, countryClassName, countryPath]
+  );
 
   useEffect(() => {
     scoreRef.current = new WarScore(musicSource);
@@ -1081,6 +1146,26 @@ export function CampaignMapAnimation({
 
   const projectedPoints = useMemo(
     () => new Map(mapPoints.map((point) => [point.id, projectPoint(projection, point.coordinates)] as const)),
+    [mapPoints, projection]
+  );
+  const terrainView = useMemo(() => {
+    const visibleCenter: [number, number] = [
+      (mapWidth / 2 - mapView.x) / Math.max(mapView.scale, 0.001),
+      (mapHeight / 2 - mapView.y) / Math.max(mapView.scale, 0.001)
+    ];
+    const inverted = projection.invert?.(visibleCenter) as [number, number] | undefined;
+    return {
+      center: inverted ?? activeEvent.coordinates,
+      projectionScale: projection.scale()
+    };
+  }, [activeEvent.coordinates, mapHeight, mapView.scale, mapView.x, mapView.y, mapWidth, projection]);
+  const terrainRegistrationSamples = useMemo(
+    () =>
+      mapPoints.map((point) => ({
+        coordinates: point.coordinates,
+        id: point.id,
+        projected: projectPoint(projection, point.coordinates)
+      })),
     [mapPoints, projection]
   );
   const activeRouteAnchorIds = useMemo(() => {
@@ -1374,6 +1459,23 @@ export function CampaignMapAnimation({
 
       <section className="cinema-grid">
         <article ref={stageRef} className="map-stage" data-testid="map-stage">
+          <div className="timeline-test-anchors" data-testid="timeline-test-anchors" hidden>
+            {Object.entries(testAnchors).map(([id, anchorProgress]) => (
+              <span key={id} data-testid={id} data-progress={timeline.clampProgress(anchorProgress).toFixed(4)} />
+            ))}
+          </div>
+          {mapTerrainLayer?.({
+            activeEvent,
+            focusState,
+            mapBaseView,
+            mapFocus,
+            mapHeight,
+            mapView,
+            mapWidth,
+            progress,
+            registrationSamples: terrainRegistrationSamples,
+            terrainView
+          })}
           <div className="map-topbar map-overlay">
             <div className="map-title-card" data-testid="map-title-card">
               <p className="map-eyebrow">{eyebrow}</p>
@@ -1386,7 +1488,7 @@ export function CampaignMapAnimation({
 
           <svg
             ref={svgRef}
-            className={`battle-map is-interactive-map ${isMapDragging ? "is-dragging" : ""}`}
+            className={`battle-map is-interactive-map ${mapTerrainLayer ? "has-terrain-underlay" : ""} ${isMapDragging ? "is-dragging" : ""}`}
             viewBox={`0 0 ${mapWidth} ${mapHeight}`}
             preserveAspectRatio="xMidYMid meet"
             role="img"
@@ -1461,8 +1563,12 @@ export function CampaignMapAnimation({
               </marker>
             </defs>
 
-            <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
-            <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
+            {!suppressBaseMapLayer && (
+              <>
+                <rect className="map-base" width={mapWidth} height={mapHeight} fill="url(#oceanGradient)" />
+                <rect className="map-texture" width={mapWidth} height={mapHeight} fill="url(#mapTexture)" opacity="0.72" />
+              </>
+            )}
             <g
               className="camera-layer"
               data-focus-from={focusState.fromFocus}
@@ -1476,7 +1582,7 @@ export function CampaignMapAnimation({
               data-testid="camera-layer"
               transform={mapTransform}
             >
-              {historicalRegions.length === 0 && (
+              {showAncientMapOrnaments && historicalRegions.length === 0 && (
                 <image
                   className="ancient-map-ornaments"
                   data-testid="ancient-map-ornaments"
@@ -1487,15 +1593,17 @@ export function CampaignMapAnimation({
                   aria-hidden="true"
                 />
               )}
-              <g className="country-layer">
-                {countries.map((country) => (
-                  <path
-                    key={country.properties?.name}
-                    d={countryPath(country) ?? undefined}
-                    className={countryClassName(country)}
-                  />
-                ))}
-              </g>
+              {!suppressBaseMapLayer && (
+                <g className="country-layer">
+                  {projectedCountries.map((country) => (
+                    <path
+                      key={country.key}
+                      d={country.d}
+                      className={country.className}
+                    />
+                  ))}
+                </g>
+              )}
               {historicalRegions.length > 0 && (
                 <g className="historical-map-layer" data-testid="historical-map-layer">
                   <rect className="historical-paper-field" x={26} y={24} width={mapWidth - 52} height={mapHeight - 48} rx={28} />
@@ -1648,9 +1756,9 @@ export function CampaignMapAnimation({
                         data-testid={line.testId ?? `fortified-line-${line.id}`}
                         style={opacityStyle(lineVisibility.opacity)}
                       >
-                        <polyline className="fortified-line-shadow" points={loweredPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
-                        <polyline className="fortified-line-body" points={points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
-                        <polyline className="fortified-line-crest" points={raisedPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-shadow" fill="none" points={loweredPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-body" fill="none" points={points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
+                        <polyline className="fortified-line-crest" fill="none" points={raisedPoints.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} />
                         <text x={x} y={y - 10}>
                           {line.label}
                         </text>
@@ -1690,7 +1798,7 @@ export function CampaignMapAnimation({
                     const overlayVisibility = sceneElementVisibility(
                       progress,
                       overlay.revealAt ? timeline.dateToProgress(overlay.revealAt) : 0,
-                      Number.POSITIVE_INFINITY,
+                      overlay.visibleUntil ? timeline.dateToProgress(overlay.visibleUntil) : Number.POSITIVE_INFINITY,
                       contentTransitionProgress
                     );
                     if (!overlayVisibility.isDrawn) {
@@ -1712,6 +1820,35 @@ export function CampaignMapAnimation({
                           <text x={(x1 + x2) / 2 + 12} y={(y1 + y2) / 2 - 10}>
                             {overlay.label}
                           </text>
+                        </g>
+                      );
+                    }
+
+                    if (overlay.type === "image") {
+                      const [x, y] = projectPoint(projection, overlay.coordinates);
+                      const driftPhase = Math.sin(progress * Math.PI * 2 + (overlay.drift?.phaseOffset ?? 0));
+                      const driftX = overlay.drift ? overlay.drift.dx * driftPhase : 0;
+                      const driftY = overlay.drift ? overlay.drift.dy * driftPhase : 0;
+                      const driftScale = overlay.drift?.scale ? 1 + overlay.drift.scale * driftPhase : 1;
+                      return (
+                        <g
+                          key={overlay.id}
+                          className={`image-overlay ${overlay.className ?? ""}`}
+                          data-scene-transition-phase={overlayVisibility.phase}
+                          data-testid={overlay.testId ?? `image-overlay-${overlay.id}`}
+                          style={opacityStyle(overlayVisibility.opacity * (overlay.opacity ?? 1))}
+                          transform={`translate(${x + driftX} ${y + driftY}) scale(${driftScale})`}
+                        >
+                          <image
+                            className="map-overlay-image"
+                            data-overlay-label={overlay.label ?? overlay.id}
+                            href={publicPath(overlay.href)}
+                            x={-overlay.width / 2}
+                            y={-overlay.height / 2}
+                            width={overlay.width}
+                            height={overlay.height}
+                            preserveAspectRatio="xMidYMid meet"
+                          />
                         </g>
                       );
                     }
@@ -1818,6 +1955,7 @@ export function CampaignMapAnimation({
                 const fallbackDirectionPoint = interpolateRoute(projectedRoutePoints, Math.min(1, segmentProgress + 0.018));
                 const facingX = routeFacingX(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
                 const routeDirection = routeDirectionVector(directionAnchorPoint, movingPoint, fallbackDirectionPoint);
+                const routeRotationDegrees = routeDirectionDegrees(routeDirection);
                 const formationUnits =
                   line.formationUnits && line.formationUnits.length > 0
                     ? line.formationUnits
@@ -1887,6 +2025,7 @@ export function CampaignMapAnimation({
                                   routeDirection,
                                   [0, (formationUnit.offset?.[1] ?? 0) * formationOffsetScale]
                                 ),
+                                rotationDegrees: routeRotationDegrees,
                                 routeProgress: segmentProgress
                               }
                             : formationUnitPlacement(
@@ -1904,6 +2043,7 @@ export function CampaignMapAnimation({
                               key={formationUnit.id}
                               className={`unit-icon-orientation formation-unit ${raisedUnitMarkers ? "has-force-echelon" : ""} ${formationUnit.className ?? ""}`}
                               data-facing-x={placement.facingX}
+                              data-route-rotation-deg={placement.rotationDegrees.toFixed(2)}
                               data-ship-label={formationUnit.label}
                               data-route-progress={segmentProgress.toFixed(4)}
                               data-unit-route-progress={placement.routeProgress.toFixed(4)}
@@ -1924,6 +2064,7 @@ export function CampaignMapAnimation({
                                 isActive={isActive}
                                 facingX={placement.facingX}
                                 faction={markerFaction}
+                                rotationDegrees={placement.rotationDegrees}
                               />
                               {formationUnit.label && (
                                 <text className="formation-unit-label" x={0} y={-38}>
@@ -2006,6 +2147,7 @@ export function CampaignMapAnimation({
 
                 const [x, y] = projectedPoints.get(point.id) ?? projectPoint(projection, point.coordinates);
                 const isFocused = activeEvent.mapFocus.includes(point.id);
+                const labelPlateWidth = point.label.length * 15 + 16;
                 return (
                   <g
                     key={point.id}
@@ -2015,6 +2157,7 @@ export function CampaignMapAnimation({
                     style={opacityStyle(pointVisibility.opacity)}
                   >
                     <circle cx={x} cy={y} r={isFocused ? 5.2 : 3.2} />
+                    <rect className="map-point-label-plate" x={x + 4} y={y - 16} width={labelPlateWidth} height={24} rx={4} />
                     <text x={x + 8} y={y + 4}>
                       {point.label}
                     </text>

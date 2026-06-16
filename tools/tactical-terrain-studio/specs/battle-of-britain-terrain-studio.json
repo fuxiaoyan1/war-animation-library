@@ -1,0 +1,239 @@
+{
+  "battle": {
+    "id": "battle-of-britain",
+    "title": "伦敦上空的鹰：1940年9月15日伦敦方向昼间空战",
+    "period": "1940-09-15T10:30/1940-09-15T18:00",
+    "qualityTarget": "Cross-Channel air-combat template with real MapLibre terrain, readable top-down aircraft icons, radar/combat/return camera stages, and ComfyUI bitmap weather overlays that never obscure aircraft or routes."
+  },
+  "map": {
+    "bounds": [-1.75, 50.52, 2.12, 52.22],
+    "renderer": {
+      "bearing": -21,
+      "maxZoom": 11.55,
+      "minZoom": 6.8,
+      "pitch": 57,
+      "viewport": [1412, 796]
+    },
+    "tileCache": {
+      "attribution": "Topographic basemap: Esri World Topographic Map local cache for production review; Elevation: AWS Terrain Tiles Terrarium / SRTM-GMTED local cache.",
+      "encoding": "terrarium",
+      "exaggeration": 1,
+      "maxZoom": 11,
+      "minZoom": 6,
+      "terrainTemplate": "/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png",
+      "tileSize": 256
+    }
+  },
+  "sourceInputs": {
+    "minReferenceCount": 5,
+    "requiredReferenceCategories": [
+      "official-raf-history",
+      "museum-transcript",
+      "secondary-interpretation",
+      "topographic-basemap",
+      "dem"
+    ],
+    "confidence": {
+      "overall": "medium-high for one-day operational chronology and broad air routes; medium for exact minute-by-minute squadron contact geometry",
+      "mapEnvelope": "high for London, Kent, Channel, and French coast operating area",
+      "weather": "medium; rendered as phase-linked visibility/cloud texture, not precise cloud-cell reconstruction"
+    },
+    "references": [
+      {
+        "title": "Royal Air Force: Battle of Britain overview and chronology",
+        "url": "https://www.raf.mod.uk/what-we-do/our-history/battle-of-britain/",
+        "category": "official-raf-history",
+        "role": "official chronology and operational framing for RAF defense of Britain",
+        "confidence": "high"
+      },
+      {
+        "title": "RAF Museum podcast transcript: 15 September 1940 / Battle of Britain Day",
+        "url": "https://www.rafmuseum.org.uk/documents/podcasts/transcripts/15_Sept_Podcast.pdf",
+        "category": "museum-transcript",
+        "role": "time anchors, raid scale, radar warning, 11 Group and 12 Group operational narrative",
+        "confidence": "high for narrative sequence; medium for exact route geometry"
+      },
+      {
+        "title": "Imperial War Museums: What Was The Battle Of Britain?",
+        "url": "https://www.iwm.org.uk/history/what-was-the-battle-of-britain",
+        "category": "secondary-interpretation",
+        "role": "interpretive context for London, fighter defense, and symbolic importance",
+        "confidence": "medium-high"
+      },
+      {
+        "title": "Esri World Topographic Map local cache",
+        "url": "public/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg",
+        "category": "topographic-basemap",
+        "role": "local raster reference underlay for cross-Channel 3D map texture",
+        "confidence": "medium for production review; replace or attribute carefully before public release if needed"
+      },
+      {
+        "title": "AWS Terrain Tiles Terrarium cache",
+        "url": "public/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png",
+        "category": "dem",
+        "role": "DEM raster terrain source for MapLibre 3D terrain and hillshade",
+        "confidence": "medium-high for regional terrain texture"
+      }
+    ],
+    "modernControlPoints": [
+      { "id": "london", "label": "London", "point": [-0.1278, 51.5074], "role": "urban objective and active combat reference", "confidence": "high" },
+      { "id": "uxbridge", "label": "RAF Uxbridge", "point": [-0.478, 51.548], "role": "11 Group control-room reference", "confidence": "medium-high" },
+      { "id": "dover", "label": "Dover", "point": [1.313, 51.127], "role": "Channel crossing and radar/coastal reference", "confidence": "high" },
+      { "id": "dungeness", "label": "Dungeness", "point": [0.976, 50.913], "role": "Kent coast return corridor reference", "confidence": "high" },
+      { "id": "calais", "label": "Calais", "point": [1.8587, 50.9513], "role": "Luftwaffe return/launch coast reference", "confidence": "high" },
+      { "id": "biggin-hill", "label": "Biggin Hill", "point": [0.034, 51.331], "role": "RAF sector airfield reference", "confidence": "medium" },
+      { "id": "duxford", "label": "Duxford", "point": [0.131, 52.093], "role": "12 Group support reference", "confidence": "medium" }
+    ],
+    "historicalMapRefs": [
+      {
+        "title": "RAF / RAF Museum Battle of Britain Day chronology",
+        "url": "docs/sources/battle-of-britain.md",
+        "role": "project source brief and uncertainty register"
+      },
+      {
+        "title": "Local MapLibre terrain cache manifest",
+        "url": "public/assets/maps/battle-of-britain-3d/manifest.json",
+        "role": "bounded cross-Channel tile coverage and download result"
+      }
+    ],
+    "requiredFeatureKinds": ["coast", "channel", "city", "airfield", "radar-chain", "intercept-zone", "return-corridor"],
+    "uncertainties": [
+      "Aircraft counts and exact squadron contact minutes differ across accounts; animation uses route groups and phase anchors rather than per-aircraft reconstruction.",
+      "Weather/cloud overlays are visualized as morning and afternoon visibility texture from ComfyUI bitmap assets; they are not a literal meteorological grid.",
+      "Topographic basemap and DEM are local review caches. Public release should revisit source attribution and replacement options."
+    ]
+  },
+  "terrainDerivatives": {
+    "required": ["clipped-dem", "hillshade", "channel-surface", "coastline", "visibility-weather-overlay"],
+    "needsCrossCheck": true,
+    "outputs": [
+      {
+        "id": "clipped-dem",
+        "type": "terrarium-tile-cache",
+        "path": "public/assets/maps/battle-of-britain-3d/terrarium/{z}/{x}-{y}.png",
+        "source": "AWS Terrain Tiles Terrarium cache",
+        "tool": "scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11",
+        "status": "runtime-available"
+      },
+      {
+        "id": "topographic-basemap",
+        "type": "raster-tile-cache",
+        "path": "public/assets/maps/battle-of-britain-3d/topo/{z}/{x}-{y}.jpg",
+        "source": "Esri World Topographic Map tile cache",
+        "tool": "scripts/prepare-britain-air-terrain3d.mjs --max-zoom 11",
+        "status": "runtime-available"
+      },
+      {
+        "id": "hillshade",
+        "type": "maplibre-hillshade-layer",
+        "path": "src/components/BattleOfBritainTerrain3D.tsx:battle-of-britain-dem-hillshade",
+        "source": "same Terrarium DEM cache",
+        "tool": "MapLibre hillshade layer",
+        "status": "runtime-available"
+      },
+      {
+        "id": "weather-cloud-overlays",
+        "type": "comfyui-bitmap-alpha-overlays",
+        "path": "public/assets/weather/battle-of-britain/*.png",
+        "source": "ComfyUI generated weather texture, controlled alpha extraction by scripts/run-comfyui-britain-weather-assets.py",
+        "tool": "scripts/run-comfyui-britain-weather-assets.py",
+        "status": "runtime-available"
+      }
+    ],
+    "deferredEnhancements": [
+      "Cross-check DEM and basemap with QGIS/GDAL terrain derivatives before a public release.",
+      "If weather becomes a narrative focus, replace phase texture overlays with source-backed meteorological layers."
+    ]
+  },
+  "historicalBasemap": {
+    "visibleProductLayer": "MapLibre local topographic raster + DEM hillshade + restrained channel/landform tone, with SVG tactical routes and aircraft above it.",
+    "forbiddenFallbacks": [
+      "SVG-only wash/sheen/veil pretending to be 3D terrain",
+      "black terrain ellipses or unscoped filled polylines",
+      "weather labels or decorative cloud shapes that compete with aircraft",
+      "terrain overlays above aircraft/routes"
+    ],
+    "layers": [
+      { "id": "battle-of-britain-topo-base", "kind": "raster-topographic-underlay", "source": "topographic-basemap" },
+      { "id": "battle-of-britain-dem-hillshade", "kind": "dem-hillshade", "source": "clipped-dem" },
+      { "id": "battle-of-britain-cloud-layer", "kind": "comfyui-weather-png-overlay", "source": "weather-cloud-overlays" }
+    ]
+  },
+  "features": [
+    { "id": "channel-operational-surface", "type": "channel", "points": [[-0.58, 50.72], [0.16, 50.58], [0.82, 50.62], [1.7, 50.78], [1.94, 50.98], [1.28, 51.05], [0.54, 50.96], [-0.38, 50.86], [-0.58, 50.72]], "avoid": false },
+    { "id": "south-england-airfields", "type": "airfield-zone", "points": [[-1.12, 51.06], [-0.52, 51.76], [0.4, 51.92], [1.38, 51.38], [1.2, 50.9], [0.34, 51.04], [-0.42, 51.18], [-1.12, 51.06]], "avoid": false },
+    { "id": "french-coast-launch-zone", "type": "coast", "points": [[1.08, 50.58], [2.12, 50.6], [2.12, 51.08], [1.42, 51.08], [1.08, 50.94], [1.08, 50.58]], "avoid": false },
+    { "id": "kent-radar-chain", "type": "radar-chain", "points": [[0.58, 51.13], [0.86, 51.08], [1.12, 51.0], [1.31, 51.13]], "avoid": false },
+    { "id": "london-air-combat-core", "type": "intercept-zone", "points": [[-0.24, 51.38], [0.04, 51.3], [0.34, 51.36], [0.18, 51.54], [-0.16, 51.58], [-0.24, 51.38]], "avoid": false },
+    { "id": "kent-return-corridor", "type": "return-corridor", "points": [[0.32, 51.22], [0.72, 51.06], [1.12, 50.94], [1.72, 50.86]], "avoid": false }
+  ],
+  "routes": [
+    { "id": "morning-radar-plots", "faction": "britain", "points": [[1.31, 51.13], [0.86, 51.08], [0.58, 51.13], [0.18, 51.36]], "start": "1940-09-15T10:30", "end": "1940-09-15T11:05" },
+    { "id": "morning-raid-first-wave", "faction": "germany", "points": [[1.86, 50.95], [1.18, 50.96], [0.54, 51.08], [0.12, 51.36], [-0.06, 51.5], [0.54, 51.05], [1.86, 50.95]], "start": "1940-09-15T10:50", "end": "1940-09-15T12:00" },
+    { "id": "eleven-group-morning-scramble", "faction": "britain", "points": [[0.03, 51.33], [0.16, 51.42], [0.3, 51.36], [0.54, 51.1], [0.03, 51.33]], "start": "1940-09-15T11:05", "end": "1940-09-15T12:15" },
+    { "id": "afternoon-main-raid", "faction": "germany", "points": [[1.86, 50.95], [1.2, 51.0], [0.62, 51.14], [0.2, 51.4], [-0.08, 51.5], [0.72, 51.08], [1.86, 50.95]], "start": "1940-09-15T13:45", "end": "1940-09-15T15:20" },
+    { "id": "channel-pursuit", "faction": "britain", "points": [[0.18, 51.36], [0.62, 51.1], [1.06, 50.96], [1.64, 50.9]], "start": "1940-09-15T15:05", "end": "1940-09-15T16:20" }
+  ],
+  "unitSets": [
+    { "id": "raf-spitfire", "faction": "britain", "assetId": "britain-spitfire-topdown", "count": 9, "markerPx": [50, 44], "minVisiblePx": 36, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1500 },
+    { "id": "raf-hurricane", "faction": "britain", "assetId": "britain-hurricane-topdown", "count": 9, "markerPx": [50, 44], "minVisiblePx": 36, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1450 },
+    { "id": "luftwaffe-do17-stream", "faction": "germany", "assetId": "luftwaffe-do17-topdown", "count": 12, "markerPx": [70, 58], "minVisiblePx": 40, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1700 },
+    { "id": "luftwaffe-he111-stream", "faction": "germany", "assetId": "luftwaffe-he111-topdown", "count": 12, "markerPx": [72, 62], "minVisiblePx": 40, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1750 },
+    { "id": "luftwaffe-bf109-escort", "faction": "germany", "assetId": "luftwaffe-bf109-topdown", "count": 10, "markerPx": [46, 40], "minVisiblePx": 34, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1900 },
+    { "id": "luftwaffe-bf110-escort", "faction": "germany", "assetId": "luftwaffe-bf110-topdown", "count": 8, "markerPx": [62, 54], "minVisiblePx": 36, "stages": ["britainAirRadar", "britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 1850 },
+    { "id": "morning-weather-cloud-overlay", "faction": "weather", "assetId": "morning-comfyui-weather-cloud", "count": 2, "markerPx": [420, 178], "minVisiblePx": 120, "stages": ["britainAirRadar", "britainAirCombat"], "verticalOffsetMeters": 2400 },
+    { "id": "afternoon-weather-cloud-overlay", "faction": "weather", "assetId": "afternoon-comfyui-weather-cloud", "count": 1, "markerPx": [420, 178], "minVisiblePx": 120, "stages": ["britainAirCombat", "britainAirReturn"], "verticalOffsetMeters": 2400 }
+  ],
+  "unitDensityStrategy": {
+    "preserveIndependentLogicalControl": true,
+    "lodMode": "route-formation-icons-plus-retained-trails",
+    "notes": "Aircraft are compact top-down game-unit icons with route-based headings; weather clouds are large bitmap overlays below aircraft and routes, not tactical units that block interaction."
+  },
+  "unitAssetPackage": {
+    "artifactDir": "artifacts/london-air-comfy-topdown-apply-20260614",
+    "toolchain": [
+      "scripts/run-comfyui-air-source-pass.py --view top-down",
+      "scripts/run-comfyui-britain-weather-assets.py",
+      "scripts/probe-london-air-visual-evidence.mjs"
+    ],
+    "toolchainContract": [
+      "aircraft runtime assets must be source-backed or data-constrained top-down PNGs with alpha, metal/fabric texture, and He 111-derived quality band gates",
+      "weather runtime assets must be ComfyUI bitmap cloud textures processed through controlled alpha masks, not CSS shapes or SVG blobs",
+      "runtime application requires browser evidence for versioned hrefs, no-cache/served image responses, no generic aircraft markers, no dark blocks, and no cloud/terrain occlusion above aircraft"
+    ],
+    "assets": [
+      { "id": "britain-spitfire-topdown", "kind": "aircraft-game-unit-icon", "faction": "britain", "runtime": "public/assets/unit-icons/britain-spitfire.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/602sqdn-spit1.jpg", "role": "Spitfire source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.27, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 40 } },
+      { "id": "britain-hurricane-topdown", "kind": "aircraft-game-unit-icon", "faction": "britain", "runtime": "public/assets/unit-icons/britain-hurricane.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/hawker-hurricane-xii-canada-side.jpg", "role": "Hurricane source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.27, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 40 } },
+      { "id": "luftwaffe-do17-topdown", "kind": "aircraft-game-unit-icon", "faction": "germany", "runtime": "public/assets/unit-icons/luftwaffe-do17.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/dornier-do17z-1942.jpg", "role": "Do 17 source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.32, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 44 } },
+      { "id": "luftwaffe-he111-topdown", "kind": "aircraft-game-unit-icon", "faction": "germany", "runtime": "public/assets/unit-icons/luftwaffe-he111.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/heinkel-he111-battle-of-britain.jpg", "role": "He 111 source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.32, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 44 } },
+      { "id": "luftwaffe-bf109-topdown", "kind": "aircraft-game-unit-icon", "faction": "germany", "runtime": "public/assets/unit-icons/luftwaffe-bf109.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/messerschmitt-bf109e3.jpg", "role": "Bf 109 source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.27, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 40 } },
+      { "id": "luftwaffe-bf110-topdown", "kind": "aircraft-game-unit-icon", "faction": "germany", "runtime": "public/assets/unit-icons/luftwaffe-bf110.png", "sources": [{ "path": "public/assets/unit-icons/source/britain-air/messerschmitt-bf110b-1940-side.jpg", "role": "Bf 110 source reference" }], "qualityThresholds": { "maxAlphaRatio": 0.27, "minLuminanceMean": 80, "minLuminanceStdDev": 46, "minShortSidePx": 40 } },
+      { "id": "morning-comfyui-weather-cloud", "kind": "weather-bitmap-overlay", "faction": "weather", "runtime": "public/assets/weather/battle-of-britain/morning-cloud-bank.png", "sources": [{ "path": "artifacts/london-air-comfy-weather-20260614-v5/manifest.json", "role": "ComfyUI weather generation and alpha-gate manifest" }], "qualityThresholds": { "maxAlphaRatio": 0.42, "minLuminanceMean": 46, "minOpaqueRatio": 0.08, "minShortSidePx": 512 } },
+      { "id": "afternoon-comfyui-weather-cloud", "kind": "weather-bitmap-overlay", "faction": "weather", "runtime": "public/assets/weather/battle-of-britain/afternoon-cloud-breaks.png", "sources": [{ "path": "artifacts/london-air-comfy-weather-20260614-v5/manifest.json", "role": "ComfyUI weather generation and alpha-gate manifest" }], "qualityThresholds": { "maxAlphaRatio": 0.42, "minLuminanceMean": 46, "minOpaqueRatio": 0.08, "minShortSidePx": 512 } }
+    ]
+  },
+  "cameraStages": [
+    { "id": "britainAirRadar", "center": [0.58, 51.13], "bbox": [0.1, 50.92, 1.44, 51.44], "pitch": 55, "bearing": -21, "zoom": 8.94 },
+    { "id": "britainAirCombat", "center": [0.18, 51.36], "bbox": [-0.42, 51.12, 0.88, 51.7], "pitch": 57, "bearing": -24, "zoom": 9.78 },
+    { "id": "britainAirReturn", "center": [0.82, 51.02], "bbox": [0.06, 50.72, 1.76, 51.34], "pitch": 56, "bearing": -18, "zoom": 9.66 }
+  ],
+  "visualEvidence": {
+    "artifactDir": "artifacts/london-air-terrain3d-20260614",
+    "keyframes": [
+      { "id": "opening-radar", "cameraStageId": "britainAirRadar", "eventId": "morning-radar-plots", "progress": 0, "purpose": "Opening radar camera follows Chain Home/Kent geometry without upper empty space dominance." },
+      { "id": "radar-contact", "cameraStageId": "britainAirRadar", "eventId": "morning-radar-contact", "progress": 0.12, "purpose": "Radar route, command vector, and terrain underlay stay visible." },
+      { "id": "morning-dogfight", "cameraStageId": "britainAirCombat", "eventId": "morning-dogfight-london", "progress": 0.34, "purpose": "Main combat core, aircraft icons, routes, and clouds remain readable." },
+      { "id": "afternoon-warning", "cameraStageId": "britainAirRadar", "eventId": "afternoon-radar-warning", "progress": 0.5, "purpose": "Afternoon weather phase transitions without hiding radar warning geometry." },
+      { "id": "afternoon-peak", "cameraStageId": "britainAirCombat", "eventId": "afternoon-all-squadrons-engaged", "progress": 0.68, "purpose": "Dense afternoon air combat remains readable above 3D terrain and cloud overlays." },
+      { "id": "channel-pursuit", "cameraStageId": "britainAirReturn", "eventId": "channel-pursuit-closes", "progress": 0.86, "purpose": "Return corridor and Channel pursuit stay centered above terrain." }
+    ],
+    "requiredMetrics": [
+      "terrain3D.renderer=maplibre-real-terrain",
+      "terrain3D.terrainLoaded=true",
+      "terrain3D.cloudBeforeAircraft=true",
+      "genericAircraftMarkers=0",
+      "darkBlocks=[]",
+      "weatherPngMetrics alphaRatio in accepted range"
+    ]
+  }
+}

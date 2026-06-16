@@ -54,6 +54,20 @@ Raw source/reference folders such as `public/assets/unit-icons/source/` and `pub
 
 `public/assets/unit-icons/source/`、`public/assets/maps/source/` 等原始来源/参考目录已从这个独立导出中有意省略。文档仍可能提到这些路径，因为它们曾存在于原始私有工作项目中，用于追溯来源。
 
+## Runtime Assets And Local Toolchain
+
+Runtime assets that the demo needs are committed when practical, including selected map tiles, unit icons, weather images, and audio under `public/`. For the current `伦敦上空的鹰` branch, the GitHub build can render the London animation from committed runtime assets plus npm dependencies.
+
+演示运行所需素材会在可行时提交，包括 `public/` 下的部分地图瓦片、单位图标、天气图片和音频。当前 `伦敦上空的鹰` 分支中，GitHub 构建可以通过已提交运行资产和 npm 依赖渲染伦敦动画。
+
+The full local production stack is not part of the Git runtime package. Local ComfyUI installations and model files, segmentation model caches under `engine-cache/`, QGIS/GDAL installations, Playwright browser caches, `node_modules`, generated `artifacts/`, and prototype `vendor/` or `tiles/` directories are intentionally excluded or ignored. They are needed to regenerate or improve assets, not to view the committed demo.
+
+完整本机生产栈不是 Git 运行包的一部分。本机 ComfyUI 安装和模型文件、`engine-cache/` 下的分割模型缓存、QGIS/GDAL 安装、Playwright 浏览器缓存、`node_modules`、生成的 `artifacts/`，以及原型 `vendor/` 或 `tiles/` 目录都被有意排除或忽略。它们用于重新生成或改进资产，不用于观看已提交的演示。
+
+See `docs/tools/london-air-map-weather-workflow.md`, `docs/tools/britain-air-comfyui-style-pass.md`, `docs/tools/unit-icon-production-workflow.md`, and `docs/tools/tactical-terrain-studio.md` for the documented production dependencies and boundaries.
+
+生产依赖和边界说明见 `docs/tools/london-air-map-weather-workflow.md`、`docs/tools/britain-air-comfyui-style-pass.md`、`docs/tools/unit-icon-production-workflow.md` 和 `docs/tools/tactical-terrain-studio.md`。
+
 ## Practical Rule
 
 Use the code freely under MIT. Audit or replace media assets before publishing derivative commercial work, redistributing asset packs, or claiming the whole repository is fully open-source under one license.

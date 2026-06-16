@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <defs>
+    <linearGradient id="airframe" x1="0" x2="1">
+      <stop offset="0" stop-color="#202722"/>
+      <stop offset="0.5" stop-color="#4d5a50"/>
+      <stop offset="1" stop-color="#202722"/>
+    </linearGradient>
+    <filter id="softShadow" x="-12%" y="-18%" width="124%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="5" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <path d="M420 178 C326 132 244 118 154 137 C220 177 314 197 420 204 Z" fill="url(#airframe)" stroke="#111819" stroke-width="4"/>
+    <path d="M420 178 C520 131 616 120 746 139 C654 181 536 202 420 204 Z" fill="url(#airframe)" stroke="#111819" stroke-width="4"/>
+    <path d="M205 186 C168 168 132 162 96 171 C132 196 168 207 206 205 Z" fill="url(#airframe)" stroke="#111819" stroke-width="3.4"/>
+    <path d="M214 192 C174 202 139 221 114 246 C156 241 190 229 220 208 Z" fill="url(#airframe)" stroke="#111819" stroke-width="3.4"/>
+    <path d="M196 185 C292 158 550 156 735 180 C782 186 809 194 825 198 C810 204 783 212 735 218 C546 243 289 239 196 210 C168 202 169 193 196 185 Z" fill="#4d5a50" stroke="#101719" stroke-width="5"/>
+    <path d="M594 166 C637 166 682 174 724 185 C690 192 642 194 584 187 C584 177 587 170 594 166 Z" fill="#7e9aa2" stroke="#12191a" stroke-width="3"/>
+    <g transform="translate(828 199)">
+    <ellipse cx="0" cy="-12.48" rx="4" ry="13.440000000000001" fill="rgba(34,33,29,0.58)" transform="rotate(0)"/>
+    <ellipse cx="0" cy="12.48" rx="4" ry="13.440000000000001" fill="rgba(34,33,29,0.58)" transform="rotate(0)"/>
+    <ellipse cx="12.48" cy="0" rx="13.440000000000001" ry="4" fill="rgba(34,33,29,0.58)" transform="rotate(0)"/>
+    <ellipse cx="-12.48" cy="0" rx="13.440000000000001" ry="4" fill="rgba(34,33,29,0.58)" transform="rotate(0)"/>
+    <circle r="6" fill="#2b2721"/>
+  </g>
+    <g transform="translate(292 171) scale(0.54)">
+    <circle r="18" fill="#1f3f6e" stroke="rgba(12,18,20,0.38)" stroke-width="1.6"/>
+    <circle r="11" fill="#ece8da"/>
+    <circle r="5.2" fill="#92332e"/>
+  </g>
+    <g transform="translate(548 171) scale(0.54)">
+    <circle r="18" fill="#1f3f6e" stroke="rgba(12,18,20,0.38)" stroke-width="1.6"/>
+    <circle r="11" fill="#ece8da"/>
+    <circle r="5.2" fill="#92332e"/>
+  </g>
+    <path d="M242 198 C356 213 560 211 724 196" fill="none" stroke="#b9b29a" stroke-width="3" opacity="0.58" stroke-linecap="round"/>
+    <line x1="285" y1="151" x2="552" y2="221" stroke="rgba(230,224,196,0.22)" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="285" y1="221" x2="552" y2="151" stroke="rgba(230,224,196,0.18)" stroke-width="1.3" stroke-linecap="round"/>
+  </g>
+</svg>

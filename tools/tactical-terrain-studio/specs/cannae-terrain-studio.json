@@ -1,0 +1,1125 @@
+{
+  "battle": {
+    "id": "cannae",
+    "title": "坎尼会战：双重围歼",
+    "period": "BCE-0216-08-02",
+    "qualityTarget": "Must exceed Gaixia/Nianzhuang for formation movement, independent unit control, oblique tactical camera, closed double envelopment, and winner remains on field."
+  },
+  "map": {
+    "bounds": [16.048, 41.256, 16.25, 41.331],
+    "renderer": {
+      "bearing": -38,
+      "maxZoom": 15.2,
+      "minZoom": 11.4,
+      "pitch": 60,
+      "viewport": [1412, 796]
+    },
+    "tileCache": {
+      "attribution": "Elevation: AWS Terrain Tiles / SRTM-GMTED cache, source to be replaced or cross-checked by OpenTopography/Copernicus before publication",
+      "encoding": "terrarium",
+      "exaggeration": 1,
+      "maxZoom": 14,
+      "minZoom": 10,
+      "terrainTemplate": "/assets/maps/cannae-real-terrain/terrarium/{z}/{x}-{y}.png",
+      "tileSize": 256
+    }
+  },
+  "sourceInputs": {
+    "minReferenceCount": 10,
+    "requiredReferenceCategories": [
+      "primary-ancient-narrative",
+      "ancient-place-gazetteer",
+      "historical-map-atlas",
+      "archaeological-site",
+      "modern-battle-study",
+      "secondary-reference"
+    ],
+    "confidence": {
+      "overall": "medium",
+      "controlArea": "medium for Canne della Battaglia / Ofanto valley alignment",
+      "exactBattlefield": "low-to-medium; exact deployment ground and river-bank interpretation remain debated",
+      "campsRoadsBoundary": "low; modeled as production control and uncertainty zones until historical GIS/map pass"
+    },
+    "references": [
+      {
+        "title": "Polybius, Histories, Book 3",
+        "url": "https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Polybius/3*.html",
+        "category": "primary-ancient-narrative",
+        "role": "primary narrative for Cannae deployment, Roman pressure, Carthaginian center yielding, wing infantry and cavalry envelopment",
+        "confidence": "high for tactical sequence; low for exact GIS placement"
+      },
+      {
+        "title": "Livy, History of Rome, Book 22",
+        "url": "https://www.yorku.ca/pswarney/Texts/livy-22.htm",
+        "category": "primary-ancient-narrative",
+        "role": "Roman literary narrative for the Cannae campaign, camp relationship, command dispute, battle and casualty tradition",
+        "confidence": "high for narrative tradition; medium for battlefield sequence; low for exact GIS placement"
+      },
+      {
+        "title": "Fordham Ancient History Sourcebook: Polybius, The Battle of Cannae, 216 BCE",
+        "url": "https://sourcebooks.web.fordham.edu/ancient/polybius-cannae.asp",
+        "category": "primary-ancient-narrative",
+        "role": "focused Polybius excerpt for production review and quick cross-check of sections 3.107-118",
+        "confidence": "high as a convenient excerpt of ancient narrative; not a separate archaeological source"
+      },
+      {
+        "title": "Pleiades: Cannae",
+        "url": "https://pleiades.stoa.org/places/442523",
+        "category": "ancient-place-gazetteer",
+        "role": "ancient-place gazetteer anchor for Cannae / Canne near the Aufidus",
+        "confidence": "high for settlement control point"
+      },
+      {
+        "title": "Trismegistos Places: Cannae / Canne",
+        "url": "https://www.trismegistos.org/place/33006",
+        "category": "historical-map-atlas",
+        "role": "gazetteer cross-check and Barrington Atlas pointer",
+        "confidence": "medium for atlas index control"
+      },
+      {
+        "title": "Digital Atlas of the Roman Empire: Cannae, Canne, Barletta",
+        "url": "https://imperium.ahlfeldt.se/places/29190.html",
+        "category": "historical-map-atlas",
+        "role": "digital historical gazetteer/map cross-check for Cannae location, elevation and external identifiers",
+        "confidence": "medium"
+      },
+      {
+        "title": "Musei Puglia: Museo e Parco Archeologico Canne della Battaglia",
+        "url": "https://museipuglia.cultura.gov.it/musei-puglia/museo-e-parco-archeologico-canne-della-battaglia/",
+        "category": "archaeological-site",
+        "role": "modern archaeological-park and Ofanto-valley control context; also notes lack of direct archaeological battle documentation",
+        "confidence": "high for modern site context; low for exact battle line"
+      },
+      {
+        "title": "Aditus: Antiquarium e Parco Archeologico di Canne della Battaglia",
+        "url": "https://aditusculture.com/en/esperienze/barletta/musei-parchi-archeologici/antiquarium-e-parco-archeologico-di-canne-della-battaglia-barletta",
+        "category": "archaeological-site",
+        "role": "modern site/park context and public-facing uncertainty cross-check",
+        "confidence": "medium"
+      },
+      {
+        "title": "World History Encyclopedia: Battle of Cannae",
+        "url": "https://www.worldhistory.org/Battle_of_Cannae/",
+        "category": "secondary-reference",
+        "role": "secondary cross-check for battle date, forces, double-envelopment summary and interpretive framing",
+        "confidence": "medium"
+      },
+      {
+        "title": "Encyclopaedia Britannica: Battle of Cannae",
+        "url": "https://www.britannica.com/event/Battle-of-Cannae",
+        "category": "secondary-reference",
+        "role": "secondary cross-check for location, participants, casualties range and tactical significance",
+        "confidence": "medium"
+      },
+      {
+        "title": "Osprey Publishing: Cannae 216 BC, Hannibal smashes Rome's Army",
+        "url": "https://www.ospreypublishing.com/us/cannae-216-bc-9781855324701/",
+        "category": "modern-battle-study",
+        "role": "modern battle-study reference for force scale, battlefield control framing and tactical map expectations",
+        "confidence": "medium; publication must be consulted directly for detailed maps before final production"
+      },
+      {
+        "title": "Gregory Daly, Cannae: The Experience of Battle in the Second Punic War",
+        "url": "https://archive.org/details/cannaeexperience0000daly",
+        "category": "modern-battle-study",
+        "role": "modern battle-experience study for unit density, physical contact, pressure and slaughter dynamics",
+        "confidence": "medium; use bibliographic/source pages unless full text is available to the operator"
+      },
+      {
+        "title": "Adrian Goldsworthy, Cannae: Hannibal's Greatest Victory",
+        "url": "https://www.hachettebookgroup.com/titles/adrian-goldsworthy/cannae/9781541699250/",
+        "category": "modern-battle-study",
+        "role": "modern military-history synthesis for tactical interpretation and source caution",
+        "confidence": "medium; publication must be consulted directly for detailed production claims"
+      }
+    ],
+    "modernControlPoints": [
+      {
+        "id": "canne-della-battaglia-representative",
+        "label": "Canne della Battaglia / Cannae representative control",
+        "point": [16.1518327589, 41.296683331],
+        "role": "settlement and archaeological-park control point, not exact battle-center claim",
+        "confidence": "medium"
+      },
+      {
+        "id": "ofanto-west-control",
+        "label": "Ofanto west river-control point",
+        "point": [16.07, 41.322],
+        "role": "west river-course alignment control inside animation bounds",
+        "confidence": "medium"
+      },
+      {
+        "id": "ofanto-east-control",
+        "label": "Ofanto east river-control point",
+        "point": [16.235, 41.316],
+        "role": "east river-course alignment control inside animation bounds",
+        "confidence": "medium"
+      },
+      {
+        "id": "central-plain-control",
+        "label": "central tactical plain control",
+        "point": [16.158, 41.287],
+        "role": "working control point for tactical-envelope center, not archaeological proof",
+        "confidence": "low-to-medium"
+      }
+    ],
+    "historicalMapRefs": [
+      {
+        "title": "Pleiades Cannae place map",
+        "url": "https://pleiades.stoa.org/places/442523",
+        "role": "ancient-place map reference and gazetteer alignment"
+      },
+      {
+        "title": "Barrington Atlas reference via Trismegistos Cannae / Canne",
+        "url": "https://www.trismegistos.org/place/33006",
+        "role": "Barrington Atlas, 2000, pl. 45 D2 pointer; use as atlas-index reference, not a local battle-plan"
+      },
+      {
+        "title": "Polybius spatial narrative",
+        "url": "https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Polybius/3*.html",
+        "role": "narrative constraints for river/camp/deployment relationship and tactical sequence"
+      }
+    ],
+    "requiredFeatureKinds": ["river", "road", "settlement", "high-ground", "camp", "battlefield-boundary"],
+    "uncertainties": [
+      "The precise battlefield location and the bank-side interpretation remain debated; this package uses a bounded tactical control area, not a final archaeological claim.",
+      "Roman and Carthaginian camp zones are broad production uncertainty polygons until a dedicated historical map/GIS pass confirms better constraints.",
+      "The south-bank track is a route-context reference for animation orientation; it is not yet asserted as a proven ancient road.",
+      "Monte di Canne and related high ground must be cross-checked against the DEM derivative phase before they drive camera or movement decisions.",
+      "Battlefield boundary is a camera/source-control envelope; exact deployment and casualty areas remain low-confidence."
+    ]
+  },
+  "terrainDerivatives": {
+    "required": [
+      "clipped-dem",
+      "hillshade",
+      "river-valley",
+      "high-ground",
+      "movement-corridors",
+      "obstacle-zones"
+    ],
+    "needsCrossCheck": true,
+    "outputs": [
+      {
+        "id": "clipped-dem",
+        "type": "terrarium-tile-cache",
+        "path": "public/assets/maps/cannae-real-terrain/terrarium/{z}/{x}-{y}.png",
+        "source": "AWS Terrain Tiles / SRTM-GMTED Terrarium cache",
+        "tool": "tools/tactical-terrain-studio/generate-web3d-prototype-tiles.py plus local tile cache",
+        "status": "runtime-available-cross-check-needed",
+        "notes": "Runtime DEM cache exists for z10-z14; cross-check against OpenTopography/Copernicus before final publication."
+      },
+      {
+        "id": "hillshade",
+        "type": "maplibre-hillshade-layer",
+        "path": "src/components/CannaeTerrain3D.tsx:cannae-dem-hillshade",
+        "source": "same Terrarium DEM cache",
+        "tool": "MapLibre hillshade layer, hillshadeExaggeration=0.08",
+        "status": "runtime-available",
+        "notes": "Stable runtime layer for first-draft terrain texture; not a substitute for GDAL hillshade export in a professional terrain pack."
+      },
+      {
+        "id": "river-valley",
+        "type": "feature-derived-control",
+        "path": "features:ofanto-river,river-corridor",
+        "source": "sourceInputs river controls and battlefield feature inventory",
+        "tool": "tactical-terrain-studio feature audit",
+        "status": "draft-control-available",
+        "notes": "River corridor is declared as movement obstacle/control band; refine with DEM derivatives later."
+      },
+      {
+        "id": "high-ground",
+        "type": "feature-derived-control",
+        "path": "features:monte-di-canne-rise",
+        "source": "sourceInputs modern/gazetteer controls and DEM visual check",
+        "tool": "tactical-terrain-studio feature audit",
+        "status": "draft-control-available",
+        "notes": "High-ground control exists for camera/basemap context; exact terrain analysis remains a GIS enhancement."
+      },
+      {
+        "id": "movement-corridors",
+        "type": "feature-and-route-derived-control",
+        "path": "features:south-bank-track-reference,central-dust-flat,compression-basin",
+        "source": "sourceInputs tactical narrative plus current route envelope",
+        "tool": "movement-audit and feature audit",
+        "status": "draft-control-available",
+        "notes": "Corridors constrain tactical reading; not a final least-cost pathfinding product."
+      },
+      {
+        "id": "obstacle-zones",
+        "type": "feature-derived-control",
+        "path": "features:ofanto-river,river-corridor",
+        "source": "sourceInputs river course controls",
+        "tool": "avoid-feature crossing audit",
+        "status": "draft-control-available",
+        "notes": "River and corridor are avoid features for movement preflight."
+      }
+    ],
+    "deferredEnhancements": [
+      "Generate GDAL slope raster from a cross-checked DEM source.",
+      "Generate GDAL aspect raster only if terrain lighting/route exposure needs it.",
+      "Generate contours or lowland polygons if visual review shows current hillshade/feature layers do not communicate terrain.",
+      "Replace draft feature-derived controls with QGIS/GDAL-derived river valley, high ground, movement corridors, and obstacle zones when the source DEM is finalized."
+    ]
+  },
+  "historicalBasemap": {
+    "styleTarget": "project-historical-tactical-map",
+    "modernImageryVisible": false,
+    "requiredLayers": [
+      "terrain-faces",
+      "river-course",
+      "roads-or-tracks",
+      "settlements",
+      "camps",
+      "contours-or-lowland",
+      "key-corridors",
+      "uncertainty-overlays"
+    ],
+    "layers": [
+      {
+        "id": "terrain-faces",
+        "source": "Cannae MapLibre terrain background plus central-dust-flat/compression-basin features",
+        "runtimePath": "src/components/CannaeTerrain3D.tsx",
+        "status": "draft-runtime-available",
+        "notes": "Historical tactical surface uses project-style muted terrain, not modern imagery."
+      },
+      {
+        "id": "river-course",
+        "source": "features:ofanto-river,river-corridor",
+        "runtimePath": "features.geojson",
+        "status": "draft-runtime-available",
+        "notes": "River is a styled historical/tactical obstacle layer."
+      },
+      {
+        "id": "roads-or-tracks",
+        "source": "features:south-bank-track-reference",
+        "runtimePath": "features.geojson",
+        "status": "reference-layer-available",
+        "notes": "Reference only until historical road evidence is improved."
+      },
+      {
+        "id": "settlements",
+        "source": "features:cannae-settlement-control",
+        "runtimePath": "features.geojson",
+        "status": "control-layer-available",
+        "notes": "Settlement control area supports orientation."
+      },
+      {
+        "id": "camps",
+        "source": "features:roman-camp-uncertainty-zone,carthaginian-camp-uncertainty-zone",
+        "runtimePath": "features.geojson",
+        "status": "uncertainty-layer-available",
+        "notes": "Camp zones are broad and must stay visually marked as uncertain."
+      },
+      {
+        "id": "contours-or-lowland",
+        "source": "features:central-dust-flat,compression-basin,monte-di-canne-rise",
+        "runtimePath": "features.geojson",
+        "status": "draft-vector-terrain-available",
+        "notes": "Draft lowland/high-ground visual language; replace or supplement with contours if needed."
+      },
+      {
+        "id": "key-corridors",
+        "source": "features:south-bank-track-reference,central-dust-flat,compression-basin",
+        "runtimePath": "features.geojson",
+        "status": "draft-runtime-available",
+        "notes": "Corridors support route and camera review."
+      },
+      {
+        "id": "uncertainty-overlays",
+        "source": "sourceInputs.uncertainties and uncertainty feature roles",
+        "runtimePath": "production-pipeline.json",
+        "status": "declared",
+        "notes": "Uncertainty must be visible in review artifacts and source docs, not used as an excuse for shallow research."
+      }
+    ],
+    "deferredEnhancements": [
+      "Georeference at least one historical battle map or modern scholarly battle plan in QGIS and record GCP evidence.",
+      "Promote draft GeoJSON features into a reusable historical tactical basemap package with explicit styles, not component-local drawing.",
+      "If visual review shows the river and lowland are still too abstract, add contour/lowland layers from the finalized DEM.",
+      "Keep modern imagery hidden in the product view; use it only as a source/reference layer."
+    ]
+  },
+  "features": [
+    {
+      "id": "ofanto-river",
+      "label": "奥凡托河 / Aufidus",
+      "type": "line",
+      "kind": "river",
+      "role": "obstacle",
+      "avoid": true,
+      "points": [
+        [16.07, 41.322],
+        [16.096, 41.32],
+        [16.128, 41.321],
+        [16.16, 41.318],
+        [16.194, 41.319],
+        [16.235, 41.316]
+      ]
+    },
+    {
+      "id": "river-corridor",
+      "label": "河岸侧翼限制带",
+      "type": "polygon",
+      "kind": "river-corridor",
+      "role": "obstacle",
+      "avoid": true,
+      "points": [
+        [16.075, 41.322],
+        [16.235, 41.321],
+        [16.232, 41.309],
+        [16.07, 41.309]
+      ]
+    },
+    {
+      "id": "central-dust-flat",
+      "label": "中军接触平原",
+      "type": "polygon",
+      "kind": "dust-flat",
+      "role": "engagement-area",
+      "points": [
+        [16.092, 41.278],
+        [16.13, 41.299],
+        [16.19, 41.298],
+        [16.222, 41.281],
+        [16.173, 41.269],
+        [16.117, 41.27]
+      ]
+    },
+    {
+      "id": "compression-basin",
+      "label": "罗马纵深压缩盆",
+      "type": "polygon",
+      "kind": "compression-basin",
+      "role": "kill-zone",
+      "points": [
+        [16.116, 41.277],
+        [16.134, 41.295],
+        [16.162, 41.299],
+        [16.188, 41.292],
+        [16.192, 41.28],
+        [16.166, 41.273],
+        [16.134, 41.273]
+      ]
+    },
+    {
+      "id": "cannae-settlement-control",
+      "label": "坎尼聚落控制区 / Canne della Battaglia",
+      "type": "polygon",
+      "kind": "settlement",
+      "role": "modern-ancient-place-control",
+      "confidence": "medium",
+      "notes": "Control polygon around Canne/Monte di Canne area; not a precise ancient town perimeter.",
+      "points": [
+        [16.1447, 41.2939],
+        [16.1547, 41.2936],
+        [16.1587, 41.2992],
+        [16.1528, 41.3041],
+        [16.1441, 41.3017]
+      ]
+    },
+    {
+      "id": "monte-di-canne-rise",
+      "label": "蒙特迪坎尼高地控制区",
+      "type": "polygon",
+      "kind": "high-ground",
+      "role": "terrain-control",
+      "confidence": "low-to-medium",
+      "notes": "Working high-ground envelope to be verified in DEM derivative phase.",
+      "points": [
+        [16.1474, 41.2949],
+        [16.1573, 41.2952],
+        [16.1596, 41.3018],
+        [16.1518, 41.3051],
+        [16.1452, 41.3014]
+      ]
+    },
+    {
+      "id": "south-bank-track-reference",
+      "label": "南岸道路/行军轴线参考",
+      "type": "line",
+      "kind": "road",
+      "role": "movement-context-reference",
+      "confidence": "low",
+      "notes": "Reference track for orientation and camera context only; not asserted as a proven ancient road.",
+      "points": [
+        [16.084, 41.291],
+        [16.112, 41.291],
+        [16.146, 41.288],
+        [16.181, 41.285],
+        [16.216, 41.286]
+      ]
+    },
+    {
+      "id": "roman-camp-uncertainty-zone",
+      "label": "罗马营区不确定控制区",
+      "type": "polygon",
+      "kind": "camp",
+      "role": "uncertainty-control",
+      "confidence": "low",
+      "notes": "Broad working camp zone; use only for source traceability and camera envelope until historical map pass.",
+      "points": [
+        [16.088, 41.266],
+        [16.122, 41.265],
+        [16.129, 41.276],
+        [16.101, 41.282],
+        [16.083, 41.275]
+      ]
+    },
+    {
+      "id": "carthaginian-camp-uncertainty-zone",
+      "label": "迦太基营区不确定控制区",
+      "type": "polygon",
+      "kind": "camp",
+      "role": "uncertainty-control",
+      "confidence": "low",
+      "notes": "Broad working camp zone; do not use as a precise archaeological claim.",
+      "points": [
+        [16.187, 41.295],
+        [16.225, 41.296],
+        [16.232, 41.309],
+        [16.199, 41.315],
+        [16.183, 41.306]
+      ]
+    },
+    {
+      "id": "battlefield-boundary-control",
+      "label": "坎尼战场制作边界",
+      "type": "polygon",
+      "kind": "battlefield-boundary",
+      "role": "camera-and-production-envelope",
+      "confidence": "low-to-medium",
+      "notes": "Animation production envelope for phase checks; not a final historical battlefield boundary.",
+      "points": [
+        [16.073, 41.264],
+        [16.229, 41.267],
+        [16.238, 41.319],
+        [16.076, 41.324],
+        [16.061, 41.292]
+      ]
+    }
+  ],
+  "formations": [
+    {
+      "id": "roman-deep-mass",
+      "label": "罗马重步兵纵深集团",
+      "faction": "roman",
+      "kind": "deep-infantry-block",
+      "points": [
+        [16.1782, 41.3020],
+        [16.1798, 41.2759],
+        [16.118, 41.2720],
+        [16.1165, 41.2981]
+      ]
+    },
+    {
+      "id": "roman-compressed-core",
+      "label": "罗马压缩核心",
+      "faction": "roman",
+      "kind": "compressed-pocket",
+      "points": [
+        [16.1573, 41.29075],
+        [16.1694, 41.2906],
+        [16.1731, 41.28805],
+        [16.1713, 41.2821],
+        [16.1577, 41.2821],
+        [16.1548, 41.286]
+      ]
+    },
+    {
+      "id": "carthaginian-concave-center",
+      "label": "迦太基凹袋中军",
+      "faction": "carthaginian",
+      "kind": "concave-center",
+      "points": [
+        [16.166, 41.298],
+        [16.176, 41.294],
+        [16.1754, 41.287],
+        [16.176, 41.281],
+        [16.166, 41.277]
+      ]
+    },
+    {
+      "id": "carthaginian-closed-pocket",
+      "label": "迦太基双层包围圈",
+      "faction": "carthaginian",
+      "kind": "closed-pocket",
+      "points": [
+        [16.1578, 41.2941],
+        [16.1648, 41.2952],
+        [16.1732, 41.2913],
+        [16.1732, 41.28695],
+        [16.1722, 41.2811],
+        [16.1648, 41.2776],
+        [16.1637, 41.27915],
+        [16.1586, 41.2836],
+        [16.1578, 41.2941]
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "id": "roman-deep-advance",
+      "label": "罗马重步兵压入",
+      "faction": "roman",
+      "kind": "advance",
+      "points": [
+        [16.126, 41.2862],
+        [16.136, 41.2869],
+        [16.152, 41.2878],
+        [16.164, 41.2876]
+      ]
+    },
+    {
+      "id": "roman-pocket-pursuit",
+      "label": "罗马追压入袋",
+      "faction": "roman",
+      "kind": "advance",
+      "continuesFrom": "roman-deep-advance",
+      "points": [
+        [16.164, 41.2876],
+        [16.167, 41.2876],
+        [16.1694, 41.2873],
+        [16.1704, 41.28715]
+      ]
+    },
+    {
+      "id": "roman-core-compression",
+      "label": "罗马核心被压缩",
+      "faction": "roman",
+      "kind": "compression",
+      "continuesFrom": "roman-pocket-pursuit",
+      "points": [
+        [16.1704, 41.28715],
+        [16.1686, 41.2868],
+        [16.16545, 41.28645]
+      ]
+    },
+    {
+      "id": "carthaginian-center-yield",
+      "label": "中军后退成凹袋",
+      "faction": "carthaginian",
+      "kind": "yield",
+      "points": [
+        [16.1668, 41.288],
+        [16.1702, 41.2878],
+        [16.1746, 41.2872],
+        [16.1734, 41.2869]
+      ]
+    },
+    {
+      "id": "african-left-inward-turn",
+      "label": "非洲左翼内折",
+      "faction": "carthaginian",
+      "kind": "wing-turn",
+      "points": [
+        [16.166, 41.2992],
+        [16.164, 41.2964],
+        [16.1647, 41.2949],
+        [16.1648, 41.2952]
+      ]
+    },
+    {
+      "id": "african-right-inward-turn",
+      "label": "非洲右翼内折",
+      "faction": "carthaginian",
+      "kind": "wing-turn",
+      "points": [
+        [16.166, 41.2748],
+        [16.164, 41.2772],
+        [16.1647, 41.2779],
+        [16.1648, 41.2776]
+      ]
+    },
+    {
+      "id": "heavy-cavalry-rear-ride",
+      "label": "迦太基重骑封后",
+      "faction": "carthaginian",
+      "kind": "rear-seal",
+      "allowFeatureCrossings": [],
+      "points": [
+        [16.132, 41.3018],
+        [16.118, 41.2989],
+        [16.1278, 41.2963],
+        [16.145, 41.2947],
+        [16.1578, 41.2941]
+      ]
+    },
+    {
+      "id": "numidian-rear-pressure",
+      "label": "努米底骑兵侧后压迫",
+      "faction": "carthaginian",
+      "kind": "rear-seal",
+      "points": [
+        [16.132, 41.2696],
+        [16.118, 41.2758],
+        [16.1282, 41.2781],
+        [16.1495, 41.2787],
+        [16.1637, 41.27915]
+      ]
+    }
+  ],
+  "unitSets": [
+    {
+      "id": "roman-opening-heavy-infantry",
+      "assetId": "cannae-roman-legion",
+      "faction": "roman",
+      "count": 64,
+      "markerPx": [45, 62],
+      "footprint": [16.1165, 41.272, 16.1798, 41.302],
+      "stages": ["deployment", "contact", "pocket"]
+    },
+    {
+      "id": "roman-collapsed-remnants",
+      "assetId": "cannae-roman-legion",
+      "faction": "roman",
+      "count": 30,
+      "markerPx": [45, 62],
+      "footprint": [16.1548, 41.2821, 16.1731, 41.29075],
+      "stages": ["compression", "result"]
+    },
+    {
+      "id": "roman-command-group",
+      "assetId": "cannae-roman-command",
+      "faction": "roman",
+      "count": 4,
+      "markerPx": [46, 58],
+      "footprint": [16.1505, 41.2849, 16.1618, 41.2854],
+      "stages": ["contact", "compression", "result"]
+    },
+    {
+      "id": "carthaginian-center",
+      "assetId": "cannae-carthaginian-infantry",
+      "faction": "carthaginian",
+      "count": 36,
+      "markerPx": [46, 62],
+      "footprint": [16.166, 41.277, 16.176, 41.298],
+      "stages": ["contact", "pocket", "compression", "result"]
+    },
+    {
+      "id": "african-wings",
+      "assetId": "cannae-african-infantry",
+      "faction": "carthaginian",
+      "count": 42,
+      "markerPx": [47, 62],
+      "footprint": [16.1637, 41.2776, 16.166, 41.2992],
+      "stages": ["pocket", "compression", "result"]
+    },
+    {
+      "id": "carthaginian-rear-cavalry",
+      "assetId": "cannae-carthaginian-cavalry",
+      "faction": "carthaginian",
+      "count": 30,
+      "markerPx": [91, 54],
+      "footprint": [16.118, 41.2781, 16.1637, 41.3018],
+      "stages": ["rearSeal", "compression", "result"]
+    },
+    {
+      "id": "carthaginian-command-group",
+      "assetId": "cannae-carthaginian-command",
+      "faction": "carthaginian",
+      "count": 4,
+      "markerPx": [46, 58],
+      "footprint": [16.1742, 41.28705, 16.1848, 41.28735],
+      "stages": ["deployment", "contact", "pocket", "compression", "result"]
+    }
+  ],
+  "visualEvidence": {
+    "capture": {
+      "campaignId": "cannae",
+      "frames": [
+        {
+          "id": "deployment-begins",
+          "screenshotName": "cannae-01-deployment.png"
+        },
+        {
+          "eventTitlePattern": "汉尼拔凸月形中军前出",
+          "id": "hannibal-convex-center",
+          "screenshotName": "cannae-02-convex.png"
+        },
+        {
+          "eventTitlePattern": "罗马纵深集团向中军压入",
+          "id": "roman-deep-advance",
+          "screenshotName": "cannae-03-contact.png"
+        },
+        {
+          "eventTitlePattern": "迦太基骑兵清理两翼",
+          "id": "cavalry-clearance",
+          "screenshotName": "cannae-04-cavalry.png"
+        },
+        {
+          "eventTitlePattern": "中军由凸转凹",
+          "id": "center-becomes-concave",
+          "screenshotName": "cannae-05-pocket.png"
+        },
+        {
+          "eventTitlePattern": "非洲重步兵从两翼内折",
+          "id": "african-wings-turn",
+          "screenshotName": "cannae-06-wings.png"
+        },
+        {
+          "eventTitlePattern": "骑兵绕后封闭罗马后口",
+          "id": "rear-seal",
+          "screenshotName": "cannae-07-rear-seal.png"
+        },
+        {
+          "eventTitlePattern": "包围圈压缩",
+          "id": "encirclement-compression",
+          "screenshotName": "cannae-08-compression.png"
+        },
+        {
+          "eventTitlePattern": "Paullus 殉战",
+          "id": "paullus-endgame",
+          "screenshotName": "cannae-09-endgame.png"
+        },
+        {
+          "id": "battle-result",
+          "screenshotName": "cannae-10-result.png",
+          "timelineValue": 1000
+        }
+      ],
+      "mapStageTestId": "map-stage",
+      "readySelector": "[data-testid=\"cannae-terrain-3d\"]",
+      "references": [
+        {
+          "campaignId": "gaixia",
+          "eventTitlePattern": "十面伏兵完成闭合",
+          "id": "gaixia",
+          "mapStageTestId": "map-stage",
+          "minUnitCount": 60,
+          "readySelector": "[data-testid=\"gaixia-terrain-3d\"]",
+          "screenshotName": "reference-gaixia-ten-sided-ring.png",
+          "terrainTestId": "gaixia-terrain-3d",
+          "title": "韩信十面埋伏：垓下之战",
+          "unitSelector": ".gaixia-unit-holder"
+        },
+        {
+          "campaignId": "nianzhuang",
+          "eventTitlePattern": "内圩核心失守",
+          "id": "nianzhuang",
+          "mapStageTestId": "map-stage",
+          "minUnitCount": 60,
+          "readySelector": "[data-testid=\"nianzhuang-terrain-3d\"]",
+          "screenshotName": "reference-nianzhuang-final-pocket.png",
+          "terrainTestId": "nianzhuang-terrain-3d",
+          "title": "淮海战役：碾庄圩围歼战",
+          "unitSelector": ".formation-unit"
+        }
+      ],
+      "screenshotPrefix": "cannae",
+      "terrainTestId": "cannae-terrain-3d",
+      "unitSelector": ".cannae-battle-unit",
+      "viewport": [1440, 900],
+      "waitAfterActionMs": 1400
+    },
+    "runtimeReviewThresholds": {
+      "maxAverageUnitShortSidePx": 48,
+      "maxFrameMarkerLoad": 0.36,
+      "maxPeakUnitsToReferenceRatio": 1.65,
+      "maxResultMarkerLoad": 0.32,
+      "maxResultUnitsToReferenceRatio": 1.45,
+      "maxUniformResultRouteCount": 26,
+      "minReferenceUnitCount": 20,
+      "minRuntimeHrefCoverage": 1
+    }
+  },
+  "unitDensityStrategy": {
+    "preserveIndependentControl": true,
+    "controlContract": [
+      "LOD changes only visual representation density; every tactical unit keeps its own logical route, heading, visibility window, and faction identity.",
+      "Formation clusters are temporary visual grouping surfaces for readability, not a return to block movement.",
+      "At close-contact stages, render front-rank and edge units with detailed billboards, use staggered depth and lighter rear-rank tokens for interior units, and keep contact/effect anchors tied to actual opposing unit positions.",
+      "Winner and remnant result units stay visible; LOD must not hide the victorious Carthaginian field presence."
+    ],
+    "stageStrategies": [
+      {
+        "stageId": "deployment",
+        "mode": "independent-visible-units-with-depth-stagger",
+        "maxVisibleInstances": 70,
+        "clusterPolicy": "none",
+        "purpose": "Show Roman depth without turning the opening into a solid carpet."
+      },
+      {
+        "stageId": "contact",
+        "mode": "front-rank-detail-plus-rear-rank-lod",
+        "maxVisibleInstances": 86,
+        "clusterPolicy": "center infantry rear ranks use low-contrast tokens while contact files remain detailed",
+        "purpose": "Keep the first collision readable while preserving Roman pressure and Carthaginian yield."
+      },
+      {
+        "stageId": "pocket",
+        "mode": "formation-cluster-lod-with-independent-edge-units",
+        "maxVisibleInstances": 96,
+        "clusterPolicy": "interior units aggregate visually; wing edges and contact units remain individual",
+        "purpose": "Avoid fog-like density while showing the bag forming and flank pressure."
+      },
+      {
+        "stageId": "rearSeal",
+        "mode": "independent-cavalry-billboards",
+        "maxVisibleInstances": 34,
+        "clusterPolicy": "none",
+        "purpose": "Cavalry rear closure must read as mobile units, not a stripe."
+      },
+      {
+        "stageId": "compression",
+        "mode": "multi-ring-pressure-lod",
+        "maxVisibleInstances": 104,
+        "clusterPolicy": "Roman remnants are broken visible subgroups; Carthaginian inner ring and cavalry seal keep individual edge units",
+        "purpose": "Show pressure, elasticity, and collapse without a dark mass."
+      },
+      {
+        "stageId": "result",
+        "mode": "winner-field-presence-plus-fragmented-remnants",
+        "maxVisibleInstances": 96,
+        "clusterPolicy": "victorious Carthaginian ring remains visible; Roman remnants stay fragmented and sparse",
+        "purpose": "Prevent the winner-disappears failure and avoid a final row of identical tokens."
+      }
+    ]
+  },
+  "unitAssetPackage": {
+    "artifactDir": "artifacts/tactical-terrain-studio/cannae/unit-assets",
+    "toolchain": [
+      "source reference collection",
+      "transparent raster candidate preparation",
+      "runtime alpha/readability audit",
+      "contact sheet review",
+      "browser keyframe evidence after application"
+    ],
+    "toolchainContract": [
+      "collect era-specific Roman Republican, Carthaginian, African infantry, and cavalry references before final publication",
+      "store source files under public/assets/unit-icons/source/<battle>/ and record URL, reference note, license status, and intended local/private scope",
+      "generate or process candidates into artifacts first; runtime assets may be applied only after contact-sheet review and alpha/readability gates",
+      "do not use file size, black silhouettes, geometric toys, photo cards, ground ellipses, or CSS/SVG shadows as asset quality substitutes",
+      "preserve faction-distinct readable runtime assets and save browser evidence under artifacts/"
+    ],
+    "qualityThresholds": {
+      "maxAlphaRatio": 0.58,
+      "maxBboxRatio": 0.9,
+      "maxCornerAlpha": 0,
+      "maxDarkVisibleRatio": 0.5,
+      "maxEdgeVisibleRatio": 0.01,
+      "minLuminanceMean": 38,
+      "minLuminanceStdDev": 10,
+      "minOpaqueRatio": 0.01,
+      "minShortSidePx": 96
+    },
+    "assets": [
+      {
+        "id": "cannae-roman-legion",
+        "faction": "roman",
+        "kind": "heavy-infantry",
+        "eraReference": "Roman Republican legionary infantry, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-roman-legion.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-roman-legion.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      },
+      {
+        "id": "cannae-carthaginian-infantry",
+        "faction": "carthaginian",
+        "kind": "center-infantry",
+        "eraReference": "Carthaginian/Iberian/Gaulish center infantry, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-iberian-gaul-infantry.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-iberian-gaul-infantry.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      },
+      {
+        "id": "cannae-african-infantry",
+        "faction": "carthaginian",
+        "kind": "african-heavy-infantry",
+        "eraReference": "Carthaginian African heavy infantry wing troops, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-african-infantry.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-african-infantry.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      },
+      {
+        "id": "cannae-roman-command",
+        "faction": "roman",
+        "kind": "command",
+        "eraReference": "Roman Republican command group, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-roman-command.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-roman-command.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      },
+      {
+        "id": "cannae-carthaginian-command",
+        "faction": "carthaginian",
+        "kind": "command",
+        "eraReference": "Carthaginian command group for Hannibal, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-carthaginian-command.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-carthaginian-command.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      },
+      {
+        "id": "cannae-carthaginian-cavalry",
+        "faction": "carthaginian",
+        "kind": "heavy-cavalry",
+        "eraReference": "Carthaginian heavy cavalry rear-seal force, local/private demo asset pending authorized replacement",
+        "runtime": "public/assets/unit-icons/cannae-carthaginian-cavalry.webp",
+        "sources": [
+          {
+            "path": "public/assets/unit-icons/source/cannae/cannae-carthaginian-cavalry.png",
+            "reference": "docs/sources/cannae-battle.md#单位图标",
+            "licenseStatus": "local-private-demo-uncertain; replace before public/commercial release"
+          }
+        ]
+      }
+    ]
+  },
+  "contacts": [
+    {
+      "id": "central-infantry-contact",
+      "maxDistanceMeters": 260,
+      "points": [
+        [16.1704, 41.28715],
+        [16.1734, 41.2869]
+      ]
+    },
+    {
+      "id": "left-wing-pressure",
+      "maxDistanceMeters": 300,
+      "points": [
+        [16.165, 41.293],
+        [16.1648, 41.2952]
+      ]
+    },
+    {
+      "id": "right-wing-pressure",
+      "maxDistanceMeters": 300,
+      "points": [
+        [16.1646, 41.28],
+        [16.1648, 41.2776]
+      ]
+    }
+  ],
+  "encirclements": [
+    {
+      "id": "double-envelopment-result-pocket",
+      "maxGapMeters": 420,
+      "points": [
+        [16.1578, 41.2941],
+        [16.1612, 41.2947],
+        [16.1648, 41.2952],
+        [16.1689, 41.2936],
+        [16.1732, 41.2913],
+        [16.1732, 41.2889],
+        [16.1732, 41.28695],
+        [16.1726, 41.284],
+        [16.1722, 41.2811],
+        [16.1685, 41.2791],
+        [16.1648, 41.2776],
+        [16.1637, 41.27915],
+        [16.1611, 41.2813],
+        [16.1586, 41.2836],
+        [16.1579, 41.287],
+        [16.1578, 41.2908],
+        [16.1578, 41.2941]
+      ]
+    }
+  ],
+  "cameraStages": [
+    {
+      "id": "deployment",
+      "bearing": 34,
+      "focus": [16.153, 41.2865],
+      "includeFeatureIds": ["ofanto-river", "central-dust-flat"],
+      "includeFormationIds": ["roman-deep-mass", "carthaginian-concave-center"],
+      "includeRouteIds": ["roman-deep-advance", "carthaginian-center-yield"],
+      "paddingRatio": 0.16,
+      "pitch": 60,
+      "zoomBias": -0.25
+    },
+    {
+      "id": "contact",
+      "bearing": 34,
+      "focus": [16.158, 41.2864],
+      "includeFormationIds": ["roman-deep-mass", "carthaginian-concave-center"],
+      "includeRouteIds": ["roman-deep-advance", "carthaginian-center-yield"],
+      "paddingRatio": 0.1,
+      "pitch": 60,
+      "zoomBias": 0.08
+    },
+    {
+      "id": "pocket",
+      "bearing": -38,
+      "focus": [16.163, 41.287],
+      "includeFormationIds": ["roman-deep-mass", "carthaginian-concave-center"],
+      "includeRouteIds": ["roman-pocket-pursuit", "african-left-inward-turn", "african-right-inward-turn"],
+      "paddingRatio": 0.08,
+      "pitch": 60,
+      "zoomBias": 0.18
+    },
+    {
+      "id": "rearSeal",
+      "bearing": -38,
+      "focus": [16.1682, 41.28635],
+      "includeFormationIds": ["roman-compressed-core", "carthaginian-closed-pocket"],
+      "includeRouteIds": ["heavy-cavalry-rear-ride", "numidian-rear-pressure", "roman-core-compression"],
+      "paddingRatio": 0.1,
+      "pitch": 60,
+      "zoomBias": 0.12
+    },
+    {
+      "id": "compression",
+      "bearing": -38,
+      "focus": [16.1681, 41.28635],
+      "includeFormationIds": ["roman-compressed-core", "carthaginian-closed-pocket"],
+      "includeRouteIds": ["roman-core-compression", "heavy-cavalry-rear-ride", "numidian-rear-pressure", "african-left-inward-turn", "african-right-inward-turn"],
+      "paddingRatio": 0.09,
+      "pitch": 60,
+      "zoomBias": 0.12
+    },
+    {
+      "id": "result",
+      "bearing": -38,
+      "focus": [16.167, 41.28625],
+      "includeFormationIds": ["roman-compressed-core", "carthaginian-closed-pocket"],
+      "includeRouteIds": ["heavy-cavalry-rear-ride", "numidian-rear-pressure"],
+      "paddingRatio": 0.08,
+      "pitch": 60,
+      "zoomBias": 0.1
+    }
+  ],
+  "result": {
+    "stage": "result",
+    "winnerFaction": "carthaginian",
+    "minLoserRemnants": 20,
+    "minWinnerUnits": 80
+  },
+  "audit": {
+    "maxContactGapMeters": 300,
+    "maxEncirclementGapMeters": 420,
+    "maxHandoffMeters": 180
+  },
+  "engineNeeds": {
+    "requiresTrue3DUnits": true,
+    "requiresTerrainHeightPlacement": true,
+    "requiresFormationCollisionPreview": true,
+    "requiresCinematicCameraBlocking": false,
+    "targetRuntime": "evaluate-maplibre-three-or-babylon-before-more-manual-svg"
+  }
+}

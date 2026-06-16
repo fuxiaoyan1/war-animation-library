@@ -66,6 +66,18 @@ const viewports: Record<string, [[number, number], [number, number]]> = {
     [-0.52, 51.18],
     [0.78, 51.72]
   ],
+  britainAirRadar: [
+    [-1.28, 50.62],
+    [2.45, 51.52]
+  ],
+  britainAirCombat: [
+    [-0.46, 51.04],
+    [0.86, 51.6]
+  ],
+  britainAirReturn: [
+    [0.18, 50.82],
+    [1.36, 51.32]
+  ],
   bigWeekWide: [
     [-1.0, 48.2],
     [16.0, 53.8]

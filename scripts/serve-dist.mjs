@@ -28,6 +28,8 @@ const indexPath = join(distDir, "index.html");
 const mimeTypes = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
   [".js", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
   [".map", "application/json; charset=utf-8"],
@@ -52,8 +54,10 @@ async function resolveRequestPath(urlPath) {
   const decodedPath = decodeURIComponent(urlPath.split("?")[0] || "/");
   const cleanPath = decodedPath === "/" ? "/index.html" : decodedPath;
   const filePath = resolve(distDir, `.${cleanPath}`);
+  const isAssetRequest = cleanPath.startsWith("/assets/");
+
   if (!isInsideDist(filePath)) {
-    return indexPath;
+    return isAssetRequest ? null : indexPath;
   }
 
   try {
@@ -62,14 +66,30 @@ async function resolveRequestPath(urlPath) {
       return filePath;
     }
   } catch {
-    return indexPath;
+    return isAssetRequest ? null : indexPath;
   }
 
-  return indexPath;
+  return isAssetRequest ? null : indexPath;
 }
 
 async function ensureDistReady() {
   await access(indexPath);
+}
+
+function cacheControlFor(filePath) {
+  if (filePath === indexPath) {
+    return "no-cache";
+  }
+
+  if (normalize(filePath).includes(`${sep}assets${sep}unit-icons${sep}`)) {
+    return "no-cache";
+  }
+
+  if (normalize(filePath).includes(`${sep}assets${sep}weather${sep}`)) {
+    return "no-cache";
+  }
+
+  return "public, max-age=31536000, immutable";
 }
 
 await ensureDistReady();
@@ -82,12 +102,22 @@ const server = createServer(async (request, response) => {
   }
 
   const filePath = await resolveRequestPath(request.url);
+  if (!filePath) {
+    const message = "Not Found";
+    response.writeHead(404, {
+      "Cache-Control": "no-cache",
+      "Content-Length": Buffer.byteLength(message),
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+    response.end(request.method === "HEAD" ? undefined : message);
+    return;
+  }
   const contentType = mimeTypes.get(extname(filePath)) ?? "application/octet-stream";
 
   try {
     const fileStat = statSync(filePath);
     response.writeHead(200, {
-      "Cache-Control": filePath === indexPath ? "no-cache" : "public, max-age=31536000, immutable",
+      "Cache-Control": cacheControlFor(filePath),
       "Content-Length": fileStat.size,
       "Content-Type": contentType
     });
