@@ -20,7 +20,7 @@ export default defineConfig({
   webServer: process.env.FRONTEND_URL
     ? undefined
     : {
-        command: "npm run preview",
+        command: "npm run serve:dist -- --port 4177",
         url: "http://127.0.0.1:4177",
         reuseExistingServer: !process.env.CI
       }
